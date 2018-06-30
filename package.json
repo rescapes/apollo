@@ -1,12 +1,12 @@
 {
-  "name": "sop-vml",
-  "version": "1.1.14",
-  "description": "SoP VML Library",
+  "name": "rescape-apollo",
+  "version": "0.0.2",
+  "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "es/index.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:StateOfPlace/sop-vml.git"
+    "url": "git@github.com:calocan/rescape-apollo.git"
   },
   "author": "calocan <andy@statofplace.co>",
   "license": "MIT",
