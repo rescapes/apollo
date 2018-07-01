@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -30,16 +30,13 @@
     "prepare": "yarn run clean && yarn run lint && yarn test && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
-    "docs:build": "yarn run docs:prepare && gitbook build -g calocan/resacpe-helpers && cp logo/apple-touch-icon.png _book/gitbook/images/apple-touch-icon-precomposed-152.png && cp logo/favicon.ico _book/gitbook/images",
+    "docs:build": "yarn run docs:prepare && gitbook build -g reactjs/redux && cp logo/apple-touch-icon.png _book/gitbook/images/apple-touch-icon-precomposed-152.png && cp logo/favicon.ico _book/gitbook/images",
     "docs:watch": "yarn run docs:prepare && gitbook serve",
-    "docs:publish": "yarn run docs:clean && yarn run docs:build && cp CNAME _book && cd _book && git init && git commit --allow-empty -m 'update book' && git checkout -b gh-pages && touch .nojekyll && git add . && git commit -am 'update book' && git push git@github.com:StateOfPlace/sop-vml gh-pages --force",
+    "docs:publish": "yarn run docs:clean && yarn run docs:build && cp CNAME _book && cd _book && git init && git commit --allow-empty -m 'update book' && git checkout -b gh-pages && touch .nojekyll && git add . && git commit -am 'update book' && git push git@github.com:reactjs/redux gh-pages --force",
     "build-publish-patch": "yarn run build && yarn run publish-patch",
     "build-publish-minor": "yarn run build && yarn run publish-minor",
-    "version-patch": "yarn --new-version version patch",
-    "version-minor": "yarn --new-version version minor",
-    "publish-patch": "yarn run version-patch && yarn publish",
-    "publish-minor": "yarn run version-minor && yarn publish",
-    "queryForStreetViews": "cross-env $NODE_DEBUG_OPTION BABEL_ENV=es NODE_ENV=development node_modules/.bin/babel-node --presets env src/scripts/queryForStreetviews.js"
+    "publish-patch": "yarn --new-version version patch && yarn publish",
+    "publish-minor": "yarn --new-version version minor && yarn publish"
   },
   "dependencies": {
     "data.either": "^1.5.1",
