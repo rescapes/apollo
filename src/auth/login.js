@@ -61,11 +61,11 @@ export const refreshToken = R.curry((authClient, values) => authClientRequest(au
 
 /**
  * Expects a GraphQLClient if already authenticated or login data if not
+ * @param {String} url The URL to create client with if authentication is not already a GraphQLClient
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
- * @param {String} url The URL to create client with if authentication is not already a GraphQLClient
  */
-export const authClientOrLoginTask = (authentication, url) => R.ifElse(
+export const authClientOrLoginTask = R.curry((url, authentication) => R.ifElse(
   R.is(GraphQLClient),
   // Just wrap it in a task to match the other option
   authClient => of({authClient, token: reqStrPathThrowing('options.headers.headers.Authorization', authClient)}),
@@ -75,4 +75,4 @@ export const authClientOrLoginTask = (authentication, url) => R.ifElse(
     // map userLogin to authClient and token
     auth => authClientTask(url, auth)
   )
-)(authentication);
+)(authentication));
