@@ -10,17 +10,19 @@
  */
 
 import * as R from 'ramda';
-import {authClientTask, testAuthorization} from './client';
-import {loginTask} from './login';
+import {authClientTask, testAuthorization, noAuthClient} from './client';
+import {loginTask} from '../auth/login';
 import {defaultRunConfig} from 'rescape-ramda';
+import {url} from '../sampleConfig';
 
 describe('client', () => {
 
   test('authClientTask', (done) => {
-    const login = loginTask(testAuthorization);
+    const client = noAuthClient(url);
+    const login = loginTask(client, testAuthorization);
     R.pipeK(
       R.always(login),
-      userLogin => authClientTask(userLogin)
+      userLogin => authClientTask(url, userLogin)
     )().run().listen(defaultRunConfig({
         onResolved:
           response => {

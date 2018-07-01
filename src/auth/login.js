@@ -11,7 +11,7 @@
 
 
 import * as R from 'ramda';
-import {authClientRequest, noAuthClientRequest, authClientTask} from './client';
+import {authClientRequest, noAuthClientRequest, authClientTask, noAuthClient} from '../client/client';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import {reqStrPathThrowing} from 'rescape-ramda';
@@ -24,16 +24,18 @@ const loginMutation = `mutation TokenAuth($username: String!, $password: String!
 
 /**
  * loginTask returning a User and token
+ * @param {Object} noAuthClient, Client an Apollo Client that doesn't need authentication
  * @param {Object} values
  * @param {String} values.username The username
  * @param {String} values.password The password
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = values => noAuthClientRequest(
+export const loginTask = R.curry((noAuthClient, values) => noAuthClientRequest(
+  noAuthClient,
   loginMutation,
   values
-);
+));
 
 const verifyTokenMutation = `mutation VerifyToken($token: String!) {
   verifyToken(token: $token) {
@@ -61,15 +63,16 @@ export const refreshToken = R.curry((authClient, values) => authClientRequest(au
  * Expects a GraphQLClient if already authenticated or login data if not
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
+ * @param {String} url The URL to create client with if authentication is not already a GraphQLClient
  */
-export const authClientOrLoginTask = authentication => R.ifElse(
+export const authClientOrLoginTask = (authentication, url) => R.ifElse(
   R.is(GraphQLClient),
   // Just wrap it in a task to match the other option
   authClient => of({authClient, token: reqStrPathThrowing('options.headers.headers.Authorization', authClient)}),
   R.pipeK(
     // map login values to token
-    loginTask,
+    loginTask(noAuthClient(url)),
     // map userLogin to authClient and token
-    authClientTask
+    auth => authClientTask(url, auth)
   )
 )(authentication);

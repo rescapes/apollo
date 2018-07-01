@@ -10,15 +10,17 @@
  */
 
 import * as R from 'ramda';
-import {authClientTask, testAuthorization} from './client';
+import {authClientTask, testAuthorization, noAuthClient} from '../client/client';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
+import {url} from '../sampleConfig';
 
 describe('loginTask', () => {
   test('testAuthorization', (done) => {
 
-    const login = loginTask(testAuthorization);
+    const client = noAuthClient(url);
+    const login = loginTask(client, testAuthorization);
 
     const verifyTokenTask = (authClient, {token}) => R.map(
       // Map the token info to the authClient and token for chaining
@@ -42,7 +44,7 @@ describe('loginTask', () => {
 
     R.pipeK(
       R.always(login),
-      userLogin => authClientTask(userLogin),
+      userLogin => authClientTask(url, userLogin),
       ({authClient, token}) => verifyTokenTask(authClient, {token}),
       ({authClient, token}) => refreshTokenTask(authClient, {token})
     )().run().listen(defaultRunConfig(
@@ -60,20 +62,21 @@ describe('loginTask', () => {
 
   test('authClientOrLoginTask', (done) => {
     // Try it with login info
-    authClientOrLoginTask(testAuthorization).run().listen(defaultRunConfig(
+    const task = authClientOrLoginTask(testAuthorization, url);
+    task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, authClient}) => {
           // Try it with an auth client
           authClientOrLoginTask(authClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, authClient: authClient2}) => {
-                expect(authClient).toEqual(authClient2)
-                done()
+                expect(authClient).toEqual(authClient2);
+                done();
               }
             })
-          )
+          );
         }
       }
-    ))
+    ));
   });
 }, 1000);

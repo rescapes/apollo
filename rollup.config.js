@@ -8,15 +8,11 @@ const env = process.env.NODE_ENV;
 const config = {
   input: [
     'src/index.js',
-    'src/apis/integration/locationStreetviewCategorization.js',
-    'src/apis/maps/googleMapsClient.js',
-    'src/apis/sop/categorization.js',
-    'src/apis/sop/client.js',
-    'src/apis/sop/location.js',
-    'src/apis/sop/login.js',
-    'src/apis/streetview/googleStreetview.js',
-    'src/apis/streetview/googleStreetviewHelpers.js',
-    'src/apis/watson/watsonVisualRecognitionHelpers.js'
+    'src/auth/login.js',
+    'src/client/client.js',
+    'src/helpers/categorizeHelpers.js',
+    'src/helpers/fetchHttpOrFile.js',
+    'src/helpers/queryHelpers.js'
   ],
   plugins: [
     // Automatically exclude dependencies and peerDependencies from cjs and es builds, (and excludes
