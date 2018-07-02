@@ -14,7 +14,7 @@ import * as R from 'ramda';
 
 /**
  * Creates graphql outputparms from the given list
- * @param {[String|Object]} outputParams List containing strings or objects with keys pointing at strings or objects
+ * @param {[String|Object]} outputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased
  * @param {Number} indentLevel recursively increases
  * Example
@@ -35,28 +35,45 @@ import * as R from 'ramda';
  *]
  * @returns {String} The output pararms in graphql format
  */
-export const formatOutputParams = (outputParams, indentLevel = 0) => {
-    const indent = R.join('', R.repeat('\t', indentLevel));
-    return R.join(
-      '\n',
-      R.map(
-        outputParam => R.cond([
-          // Value is a string, just return it on one line
-          [R.is(String), value => `${indent}${value}`],
-          [R.is(Object), param => mapObjToValues(
-            (value, key) => {
-              return `${indent}${key} {\n${indent}${formatOutputParams(value, indentLevel + 1)}\n${indent}}`;
-            },
-            param)
-          ],
-          [R.T, () => {
-            throw new Error(`Bad outputParam ${outputParam}`);
-          }]
-        ])(outputParam),
-        outputParams
-      )
-    );
-  };
+export const formatOutputParams = (outputParam, indentLevel = 0) => {
+  const indent = R.join('', R.repeat('\t', indentLevel));
+  const v = R.cond([
+    // Value is a string, just return it on one line
+    [R.is(String),
+      value => [
+        `${indent}${value}`
+      ]
+    ],
+    [R.is(Array),
+      list => R.flatten([
+        R.map(item => {
+            return `${indent}${formatOutputParams(item, indentLevel + 1)}`;
+          }, list
+        )
+      ])
+    ],
+    [R.is(Object),
+      obj => R.flatten(mapObjToValues(
+        (value, key) => {
+          return [
+            `${indent}${key} {`,
+            `${indent}${formatOutputParams(value, indentLevel + 1)}`,
+            `${indent}}`
+          ];
+        },
+        obj
+      ))
+    ],
+    [R.T, () => {
+      throw new Error(`Bad outputParam ${outputParam}`);
+    }]
+  ])(outputParam);
+
+  return R.join(
+    '\n',
+    v
+  );
+};
 
 /**
  * Resolve the GraphQL Type to pass to the query params. This
@@ -71,7 +88,7 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
     [R.is(Number), R.always('Int')],
     // Map directory anything else, for instance String to 'String'
     [R.T, R.type]
-  ])(value)
+  ])(value);
 });
 
 /**

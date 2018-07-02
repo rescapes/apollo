@@ -71,7 +71,7 @@ export const authClientOrLoginTask = R.curry((url, authentication) => R.ifElse(
   authClient => of({authClient, token: reqStrPathThrowing('options.headers.headers.Authorization', authClient)}),
   R.pipeK(
     // map login values to token
-    loginTask(noAuthClient(url)),
+    auth => loginTask(noAuthClient(url), auth),
     // map userLogin to authClient and token
     auth => authClientTask(url, auth)
   )

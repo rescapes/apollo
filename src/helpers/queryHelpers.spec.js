@@ -13,7 +13,7 @@ import * as R from 'ramda';
 import {authClientTask, testAuthorization} from '../client/client';
 import {loginTask} from '../auth/login';
 import {defaultRunConfig} from 'rescape-ramda';
-import {resolveGraphQLType} from './queryHelpers';
+import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
 import {noAuthClient} from '../client/client';
 import {url} from '../sampleConfig';
 
@@ -44,4 +44,26 @@ describe('client', () => {
     expect(resolve('foo', 23)).toEqual('Int');
     expect(resolve('foo', 'goo')).toEqual('String');
   });
+
+  test('formatOutputParameters', () => {
+    const outputParams = [
+      'id',
+      'name',
+      {
+        'data': {
+          'settings': [
+            'defaultLocation',
+            {
+              'stages': [
+                'key',
+                'targets'
+              ]
+            }
+          ]
+        }
+      }
+    ]
+    const output = formatOutputParams(outputParams)
+    expect(output).toMatchSnapshot()
+  })
 }, 1000);

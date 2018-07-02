@@ -62,12 +62,12 @@ describe('loginTask', () => {
 
   test('authClientOrLoginTask', (done) => {
     // Try it with login info
-    const task = authClientOrLoginTask(testAuthorization, url);
+    const task = authClientOrLoginTask(url, testAuthorization);
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, authClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(authClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(url, authClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, authClient: authClient2}) => {
                 expect(authClient).toEqual(authClient2);
