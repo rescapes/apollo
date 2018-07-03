@@ -9,18 +9,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as R from 'ramda';
-import {authClientTask, testAuthorization} from '../client/client';
-import {loginTask} from '../auth/login';
 import {defaultRunConfig} from 'rescape-ramda';
-import {makeQuery} from './queryHelpers';
-import {noAuthClient} from '../client/client';
-import {url} from '../sampleConfig';
-import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
+import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
+import {sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams} from './sampleData';
+import {makeMutation} from './mutationHelpers';
 
-describe('queryHelpers', () => {
-
-  test('makeQuery', () => {
-    expect(makeQuery('sampleResoureQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot()
+describe('mutationHelpers', () => {
+  test('makeMutation', () => {
+    const result = makeMutation('createSampleResource', sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams)
+    expect(result).toMatchSnapshot();
   })
-});
+}, 1000);

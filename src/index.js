@@ -20,10 +20,12 @@ import {
   noAuthClientRequest
 } from './client/client';
 import {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
-import {formatOutputParams, resolveGraphQLType, makeQuery} from './helpers/queryHelpers';
+import {makeQuery} from './helpers/queryHelpers';
+import {makeMutation} from './helpers/mutationHelpers';
+import {formatOutputParams, resolveGraphQLType, formatInputParams} from './helpers/requestHelpers';
 
 export {
   loginTask, authClientOrLoginTask, refreshToken, verifyToken, client, noAuthClient, authClientTask,
   testAuthorization, authClientRequest, getAuthClient, noAuthClientRequest,
-  categorizeStreetviewUrl, formatOutputParams, resolveGraphQLType, makeQuery
+  categorizeStreetviewUrl, formatOutputParams, formatInputParams, resolveGraphQLType, makeQuery, makeMutation
 };
