@@ -9,8 +9,8 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {loginTask, authClientOrLoginTask, refreshToken, verifyToken} from './auth/login';
-import {
+export {loginTask, authClientOrLoginTask, refreshToken, verifyToken} from './auth/login';
+export {
   client,
   noAuthClient,
   authClientTask,
@@ -18,16 +18,16 @@ import {
   authClientRequest,
   getAuthClient,
   noAuthClientRequest
-} from './client/client';
-import {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
-import {makeQuery} from './helpers/queryHelpers';
-import {makeMutation} from './helpers/mutationHelpers';
-import {fetch} from './helpers/fetchHttpOrFile'
-import {formatOutputParams, resolveGraphQLType, formatInputParams} from './helpers/requestHelpers';
-
-export {
-  loginTask, authClientOrLoginTask, refreshToken, verifyToken, client, noAuthClient, authClientTask,
-  testAuthorization, authClientRequest, getAuthClient, noAuthClientRequest,
-  categorizeStreetviewUrl, formatOutputParams, formatInputParams, resolveGraphQLType, makeQuery, makeMutation,
-  fetch
-};
+} from './helpers/clientHelpers';
+export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
+export {makeQuery} from './helpers/queryHelpers';
+export {makeMutation} from './helpers/mutationHelpers';
+export {fetch} from './helpers/fetchHttpOrFile'
+export {formatOutputParams, resolveGraphQLType, formatInputParams} from './helpers/requestHelpers';
+export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
+export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';
+export {activeUserRegionsSelector, activeUserSelectedRegionsSelector, regionIdsSelector, regionSelector, regionsSelector} from './selectors/regionSelectors';
+export {mapboxSettingsSelector, settingsSelector} from './selectors/settingsSelectors';
+export {makeActiveUserAndSettingsSelector, makeActiveUserRegionsAndSettingsSelector, makeActiveUserSelectedRegionAndSettingsSelector} from './selectors/storeSelectors';
+export {mergeAndApplyMatchingStyles, applyMatchingStyles, browserDimensionsSelector, makeBrowserProportionalDimensionsSelector, makeMergeDefaultStyleWithProps} from './selectors/styleSelectors';
+export {activeUsersSelector, activeUserSelectedRegionSelector, activeUserValueSelector, userRegionsSelector, userResolvedRegionsSelector, userSelectedRegionSelector, userSelector, usersSelector} from './selectors/userSelectors';

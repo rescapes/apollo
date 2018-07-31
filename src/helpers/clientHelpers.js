@@ -20,8 +20,13 @@ export const testAuthorization = {username: "test", password: "testpass"};
 
 /**
  * Creates a graphql client with the given headers
- * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param headers
+ * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} headers, e.g.
+ * {
+ *  headers: {
+ *   Authorization: authToken
+ *  }
+ * }
  * @return {GraphQLClient}
  */
 export const client = (url, headers) => new GraphQLClient(url, {headers});

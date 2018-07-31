@@ -10,11 +10,12 @@
  */
 
 import * as R from 'ramda';
-import {authClientTask, testAuthorization, noAuthClient} from '../client/client';
+import {authClientTask, testAuthorization, noAuthClient} from '../client/clientHelpers';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
-import {url} from '../sampleConfig';
+import {config} from 'rescape-sample-data'
+const {graphql: {url}} = config;
 
 describe('loginTask', () => {
   test('testAuthorization', (done) => {

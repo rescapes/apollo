@@ -8,17 +8,24 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import apolloClient from './apolloClient';
-import {gql} from 'apollo-client-preset';
-import storeCreator from 'store';
-import {getCurrentConfig} from 'rescape-sample-data';
+import gql from 'graphql-tag';
+import { printSchema } from 'graphql/utilities/schemaPrinter'
+import {getCurrentConfig, createInitialState, createSimpleResolvedSchema, createSchema, createSampleConfig, privateConfig} from 'rescape-sample-data';
 import {reqStrPath} from 'rescape-ramda';
 import * as Result from 'folktale/result';
+import {mockApolloClientWithSamples} from 'rescape-helpers-test'
+const initialState = createInitialState(getCurrentConfig());
+import createApolloClient from './apolloClient'
+import {config} from 'rescape-sample-data'
+const {graphql: {url}} = config;
 
 describe('apolloClient', () => {
   test('apolloClient with sample data', async () => {
-    const store = storeCreator(getCurrentConfig());
-    const response = await apolloClient({store}).query({
+    const stateLinkResolvers
+    const client = createApolloClient({url, stateLinkResolvers})
+    const schema = createSchema();
+    const sampleConfig = createSampleConfig(privateConfig);
+    const response = await mockApolloClientWithSamples(initialState, createSimpleResolvedSchema(schema, sampleConfig)).query({
         query: gql`
     query region($regionId: String!) {
         store {
@@ -34,8 +41,7 @@ describe('apolloClient', () => {
                 }
             },
         }
-    }
-  `,
+    }`,
         variables: {regionId: "belgium"}
       }
     );

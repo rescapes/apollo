@@ -12,7 +12,14 @@ const config = {
     'src/client/client.js',
     'src/helpers/categorizeHelpers.js',
     'src/helpers/fetchHttpOrFile.js',
-    'src/helpers/queryHelpers.js'
+    'src/helpers/queryHelpers.js',
+    'src/helpers/geojsonSelectors.js',
+    'src/helpers/mapboxSelectors.js',
+    'src/helpers/regionSelectors.js',
+    'src/helpers/settingsSelectors.js',
+    'src/helpers/storeSelectors.js',
+    'src/helpers/styleSelectors.js',
+    'src/helpers/userSelectors.js'
   ],
   plugins: [
     // Automatically exclude dependencies and peerDependencies from cjs and es builds, (and excludes

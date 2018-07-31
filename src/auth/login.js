@@ -11,7 +11,7 @@
 
 
 import * as R from 'ramda';
-import {authClientRequest, noAuthClientRequest, authClientTask, noAuthClient} from '../client/client';
+import {authClientRequest, noAuthClientRequest, authClientTask, noAuthClient} from '../client/clientHelpers';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import {reqStrPathThrowing} from 'rescape-ramda';

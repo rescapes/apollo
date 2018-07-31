@@ -9,15 +9,30 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as R from 'ramda';
+import {authClientTask, testAuthorization, noAuthClient} from './clientHelpers';
+import {loginTask} from '../auth/login';
 import {defaultRunConfig} from 'rescape-ramda';
-import {makeQuery} from './queryHelpers';
-import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {config} from 'rescape-sample-data'
 const {graphql: {url}} = config;
 
-describe('queryHelpers', () => {
+describe('client', () => {
 
-  test('makeQuery', () => {
-    expect(makeQuery('sampleResoureQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot()
-  })
-});
+  test('authClientTask', (done) => {
+    const client = noAuthClient(url);
+    const login = loginTask(client, testAuthorization);
+    R.pipeK(
+      R.always(login),
+      userLogin => authClientTask(url, userLogin)
+    )().run().listen(defaultRunConfig({
+        onResolved:
+          response => {
+            expect(response.token).not.toBeNull();
+            expect(response.authClient).not.toBeNull();
+            done();
+          }
+      })
+    );
+  });
+}, 1000);
+

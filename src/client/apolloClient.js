@@ -12,23 +12,37 @@ import {InMemoryCache} from 'apollo-cache-inmemory';
 import {getMainDefinition} from 'apollo-utilities';
 import {setContext} from 'apollo-link-context';
 import {ApolloClient} from 'apollo-client';
-import {split} from 'apollo-link';
-import {WebSocketLink} from 'apollo-link-ws';
+import {split, ApolloLink} from 'apollo-link';
+//import {WebSocketLink} from 'apollo-link-ws';
 import fetch from 'node-fetch';
 import {createHttpLink} from 'apollo-link-http';
 import {onError} from 'apollo-link-error';
 import * as R from 'ramda';
-import {mockApolloClientWithSamples} from 'rescape-helpers-component';
-
-const environment = process.env.NODE_ENV;
+import createStateLink from './clientState';
 
 
 /**
  * Creates an ApolloClient.
  * @params {String} uri The uri of the graphql server
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * Example
+ *  {
+    Mutation: {
+      updateNetworkStatus: (_, { isConnected }, { cache }) => {
+        const data = {
+          networkStatus: {
+            __typename: 'NetworkStatus',
+            isConnected
+          },
+        };
+        cache.writeData({ data });
+        return null;
+      },
+    },
+  }
  * @return {ApolloClient}
  */
-const createClient = ({uri}) => {
+export default ({uri, stateLinkResolvers}) => {
 
   const httpLink = createHttpLink({
     uri,
@@ -72,6 +86,7 @@ const createClient = ({uri}) => {
   });
 
   // Split queries between HTTP for Queries/Mutations and Websockets for Subscriptions.
+  // TODO not using this at the moment until I have a need for subscriptions
   const link = split(
     // query is the Operation
     ({query}) => {
@@ -85,27 +100,22 @@ const createClient = ({uri}) => {
     authLink.concat(httpLink)
   );
 
+  // THe InMemoryCache is passed to the StateLink and the ApolloClient
+  const cache = new InMemoryCache();
+
+  // Create the state link for local caching
+  const stateLink = createStateLink(
+    cache,
+    stateLinkResolvers
+  );
 
   // Create the ApolloClient using the following ApolloClientOptions
   return new ApolloClient({
-    // Ths split Link
-    link: authLink.concat(httpLink),
+    // This is just a guess at link order.
+    // I know stateLink goes after errorLink and before httpLink
+    // (https://www.apollographql.com/docs/link/links/state.html)
+    link: ApolloLink.from([errorLink, authLink, stateLink, httpLink]),
     // Use InMemoryCache
     cache: new InMemoryCache()
   });
 };
-
-/**
- * Create an apolloClient for the given environment
- * @param {String} env Defaults to process.env.NODE_ENV;
- * @param {String} uri For non-testing the uri to the apollo server
- * @param {Object} store The redux store. Required if env is 'test'.
- * For testing we use the store as a substitute for a remote datasource
- * @param {Object} resolvedSchema The resolved Apollo schema to use when testing
- * @returns {Object} An Apollo client for the given or default environment
- */
-export default ({env = environment, uri = null, store = null, resolvedSchema = null}) => R.cond([
-  // Set the client to the mockApolloClient for testing
-  [R.equals('test'), () => mockApolloClientWithSamples(store.getState(), resolvedSchema)],
-  [R.T, () => createClient({uri})]
-])(env);
