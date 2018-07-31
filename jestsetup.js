@@ -12,12 +12,14 @@
 // Enzyme setup
 import * as R from 'ramda';
 import {JSDOM} from 'jsdom';
+// Makes locaalStorage available in node to Apollo
+import 'localstorage-polyfill'
 
 global.navigator = {
   userAgent: 'node.js'
 };
 
-if (process.env.NODE_ENV !== 'production'){
+if (process.env.NODE_ENV !== 'production') {
   require('longjohn');
 }
 
@@ -50,33 +52,9 @@ window.URL.createObjectURL = () => {
 
 Error.stackTraceLimit = Infinity;
 
-class LocalStorageMock {
-  constructor() {
-    this.store = {};
-  }
-
-  clear() {
-    this.store = {};
-  }
-
-  getItem(key) {
-    return this.store[key] || null;
-  }
-
-  setItem(key, value) {
-    this.store[key] = value.toString();
-  }
-
-  removeItem(key) {
-    delete this.store[key];
-  }
-};
-
-global.localStorage = new LocalStorageMock;
-
 // Fail tests on any warning
 console.error = message => {
-    throw new Error(message);
+  throw new Error(message);
 };
 
 // https://github.com/facebook/jest/issues/3251

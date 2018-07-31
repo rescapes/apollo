@@ -10,17 +10,13 @@
  */
 
 import {makeGeojsonSelector} from '../selectors/geojsonSelectors';
-import {createSelectorResolvedSchema} from './selectorResolvers';
-import {createSampleConfig} from 'rescape-sample-data';
-import makeSchema from './schema';
 import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {mapped} from 'ramda-lens';
 import {activeUserSelectedRegionsSelector, regionSelector} from '../selectors/regionSelectors';
 import {mergeDeep} from 'rescape-ramda';
 
-const sampleConfig = createSampleConfig();
-const resolvedSchema = createSelectorResolvedSchema(makeSchema(), sampleConfig);
+
 
 describe('mockExecutableSchema', () => {
 

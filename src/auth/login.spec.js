@@ -10,17 +10,20 @@
  */
 
 import * as R from 'ramda';
-import {authClientTask, testAuthorization, noAuthClient} from '../client/clientHelpers';
+import {authClientTask, testAuthorization, noAuthClient} from '../helpers/clientHelpers';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
 import {config} from 'rescape-sample-data'
-const {graphql: {url}} = config;
+import {parseApiUrl} from 'rescape-helpers';
+
+const {settings: {api}} = config;
+const uri = parseApiUrl(api);
 
 describe('loginTask', () => {
   test('testAuthorization', (done) => {
 
-    const client = noAuthClient(url);
+    const client = noAuthClient(uri);
     const login = loginTask(client, testAuthorization);
 
     const verifyTokenTask = (authClient, {token}) => R.map(
@@ -45,7 +48,7 @@ describe('loginTask', () => {
 
     R.pipeK(
       R.always(login),
-      userLogin => authClientTask(url, userLogin),
+      userLogin => authClientTask(uri, userLogin),
       ({authClient, token}) => verifyTokenTask(authClient, {token}),
       ({authClient, token}) => refreshTokenTask(authClient, {token})
     )().run().listen(defaultRunConfig(
@@ -63,7 +66,7 @@ describe('loginTask', () => {
 
   test('authClientOrLoginTask', (done) => {
     // Try it with login info
-    const task = authClientOrLoginTask(url, testAuthorization);
+    const task = authClientOrLoginTask(uri, testAuthorization);
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, authClient}) => {

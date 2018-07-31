@@ -31,3 +31,4 @@ export {mapboxSettingsSelector, settingsSelector} from './selectors/settingsSele
 export {makeActiveUserAndSettingsSelector, makeActiveUserRegionsAndSettingsSelector, makeActiveUserSelectedRegionAndSettingsSelector} from './selectors/storeSelectors';
 export {mergeAndApplyMatchingStyles, applyMatchingStyles, browserDimensionsSelector, makeBrowserProportionalDimensionsSelector, makeMergeDefaultStyleWithProps} from './selectors/styleSelectors';
 export {activeUsersSelector, activeUserSelectedRegionSelector, activeUserValueSelector, userRegionsSelector, userResolvedRegionsSelector, userSelectedRegionSelector, userSelector, usersSelector} from './selectors/userSelectors';
+export {createSelectorResolvedSchema} from './schema/selectorResolvers'

@@ -60,14 +60,14 @@
     "path": "^0.12.7",
     "ramda": "^0.25.0",
     "request": "^2.87.0",
-    "rescape-helpers": "^1.1.53",
-    "rescape-ramda": "^1.4.50"
+    "rescape-helpers": "^1.1.56",
+    "rescape-ramda": "^1.4.51"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "6.26.3",
     "babel-eslint": "^8.2.6",
-    "babel-jest": "23.4.0",
+    "babel-jest": "23.4.2",
     "babel-loader": "7.1.5",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
@@ -86,17 +86,19 @@
     "eslint-plugin-react": "^7.10.0",
     "file-loader": "1.1.11",
     "fs-extra": "7.0.0",
-    "jest": "23.4.1",
-    "jest-cli": "^23.4.1",
+    "jest": "23.4.2",
+    "jest-cli": "^23.4.2",
     "jsdoc-babel": "^0.4.0",
+    "localstorage-polyfill": "^1.0.1",
     "longjohn": "^0.2.12",
     "promise": "8.0.1",
+    "redux-devtools-extension": "^2.13.5",
     "redux-mock-store": "^1.5.3",
     "rescape-helpers-test": "^0.0.4",
-    "rescape-sample-data": "^1.2.33",
+    "rescape-sample-data": "^1.2.35",
     "rimraf": "^2.6.2",
     "rollup": "^0.63.4",
-    "rollup-plugin-auto-external": "^1.2.0",
+    "rollup-plugin-auto-external": "^2.0.0",
     "rollup-plugin-babel": "^3.0.7",
     "rollup-plugin-commonjs": "^9.1.4",
     "rollup-plugin-json": "^3.0.0",
@@ -170,6 +172,14 @@
         ]
       },
       "test": {
+        "plugins": [
+          [
+            "transform-es2015-modules-commonjs-simple",
+            {
+              "noMangle": true
+            }
+          ]
+        ],
         "presets": [
           [
             "env",

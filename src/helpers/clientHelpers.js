@@ -12,7 +12,7 @@
 import {GraphQLClient} from 'graphql-request';
 import * as R from 'ramda';
 import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
-import { task, of } from 'folktale/concurrency/task';
+import {task, of} from 'folktale/concurrency/task';
 
 // TODO move to config settings
 export const testAuthorization = {username: "test", password: "testpass"};
@@ -43,7 +43,9 @@ export const noAuthClient = url => client(url, {});
  * @param args
  * @return {*}
  */
-export const noAuthClientRequest = (client, ...args) => promiseToTask(client.request(...args));
+export const noAuthClientRequest = (client, ...args) => {
+  return promiseToTask(client.request(...args));
+};
 
 /**
  * Given a token returns a GraphQL client

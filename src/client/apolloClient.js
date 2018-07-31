@@ -19,11 +19,12 @@ import {createHttpLink} from 'apollo-link-http';
 import {onError} from 'apollo-link-error';
 import * as R from 'ramda';
 import createStateLink from './clientState';
-
+import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
+import {task, of} from 'folktale/concurrency/task';
 
 /**
  * Creates an ApolloClient.
- * @params {String} uri The uri of the graphql server
+ * @param {String} uri The uri of the graphql server
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * Example
  *  {
@@ -42,11 +43,12 @@ import createStateLink from './clientState';
   }
  * @return {ApolloClient}
  */
-export default ({uri, stateLinkResolvers}) => {
+const createApolloClient = (uri, stateLinkResolvers) => {
 
   const httpLink = createHttpLink({
     uri,
-    credentials: 'include'
+    credentials: 'include',
+    fetch
   });
 
   const authLink = setContext((_, {headers}) => {
@@ -77,11 +79,11 @@ export default ({uri, stateLinkResolvers}) => {
 
   const errorLink = onError(({graphQLErrors, networkError}) => {
     if (graphQLErrors)
-      graphQLErrors.map(({message, locations, path}) =>
+      graphQLErrors.map(error => {
         console.log(
-          `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
-        )
-      );
+          `[GraphQL error]: Message: ${R.propOr('undefined', 'message', error)}, Location: ${R.propOr('undefined', 'locations', error)}, Path: ${R.propOr('undefined', 'path', error)}`
+        );
+      });
     if (networkError) console.log(`[Network error]: ${networkError}`);
   });
 
@@ -114,8 +116,58 @@ export default ({uri, stateLinkResolvers}) => {
     // This is just a guess at link order.
     // I know stateLink goes after errorLink and before httpLink
     // (https://www.apollographql.com/docs/link/links/state.html)
-    link: ApolloLink.from([errorLink, authLink, stateLink, httpLink]),
+    link: ApolloLink.from([
+      errorLink,
+      authLink,
+      stateLink,
+      httpLink]),
     // Use InMemoryCache
     cache: new InMemoryCache()
   });
 };
+
+/**
+ * Wrap an Apollo Client query into a promiseToTask converter
+ * @param client An Apollo Client that doesn't need authentication
+ * @param args
+ * @return {*}
+ */
+export const noAuthApolloClientRequest = (client, ...args) => {
+  return promiseToTask(client.query(...args));
+};
+
+/***
+ * Authenticated Apollo Client request
+ * @param authClient The authenticated Apollo Client
+ * @return {Task} A Task that makes the request when run
+ */
+export const authApolloClientRequest = authClient => (...args) => promiseToTask(authClient.request(...args));
+
+/**
+ * Chained task version of getAuthClient
+ * Given a userLogin with a tokenAuth.token create the authClient and return it and the token
+ * This method is synchronous but returns a Task to be used in API chains
+ * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} userLogin Return value from loginTask() api call
+ * @param {Object} userLogin.tokenAuth
+ * @param {String} userLogin.tokenAuth.token The user token
+ * @return {Task<Object>} Task containing and object with a authClient and token
+ */
+export const authApolloClientTask = R.curry((url, userLogin) => {
+  const token = reqStrPathThrowing('tokenAuth.token', userLogin);
+  return of({token, authClient: getApolloAuthClient(url, token)});
+});
+
+/**
+ * Given a token returns a GraphQL client
+ * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param authToken
+ * @return {ApolloClient}
+ */
+export const getApolloAuthClient = (url, authToken) => createApolloClient(url, {
+  headers: {
+    Authorization: authToken
+  }
+});
+
+export default createApolloClient;

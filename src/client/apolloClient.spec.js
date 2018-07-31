@@ -9,23 +9,64 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import gql from 'graphql-tag';
-import { printSchema } from 'graphql/utilities/schemaPrinter'
-import {getCurrentConfig, createInitialState, createSimpleResolvedSchema, createSchema, createSampleConfig, privateConfig} from 'rescape-sample-data';
+import {printSchema} from 'graphql/utilities/schemaPrinter';
+import {
+  getCurrentConfig,
+  createInitialState,
+  createSimpleResolvedSchema,
+  createSchema,
+  createSampleConfig,
+  privateConfig
+} from 'rescape-sample-data';
 import {reqStrPath} from 'rescape-ramda';
 import * as Result from 'folktale/result';
-import {mockApolloClientWithSamples} from 'rescape-helpers-test'
-const initialState = createInitialState(getCurrentConfig());
-import createApolloClient from './apolloClient'
-import {config} from 'rescape-sample-data'
-const {graphql: {url}} = config;
+import {sampleConfig} from '../helpers/testHelpers'
+import {parseApiUrl} from 'rescape-helpers';
 
+const {settings: {api}} = sampleConfig;
+const uri = parseApiUrl(api);
+
+import createApolloClient from './apolloClient';
+import {loginTask} from '../auth/login';
+import {authClientTask, testAuthorization} from '../helpers/clientHelpers';
+
+/**
+ * Requires a running graphql server at uri
+ */
 describe('apolloClient', () => {
   test('apolloClient with sample data', async () => {
-    const stateLinkResolvers
-    const client = createApolloClient({url, stateLinkResolvers})
-    const schema = createSchema();
-    const sampleConfig = createSampleConfig(privateConfig);
-    const response = await mockApolloClientWithSamples(initialState, createSimpleResolvedSchema(schema, sampleConfig)).query({
+    const stateLinkResolvers = {
+      Mutation: {
+        updateNetworkStatus: (_, {isConnected}, {cache}) => {
+          const data = {
+            networkStatus: {
+              __typename: 'NetworkStatus',
+              isConnected
+            }
+          };
+          cache.writeData({data});
+          return null;
+        }
+      }
+    };
+    const client = createApolloClient(uri, stateLinkResolvers);
+    const login = loginTask(client, testAuthorization);
+    R.pipeK(
+      R.always(login),
+      userLogin => authApolloClientTask(uri, userLogin),
+    )().run().listen(defaultRunConfig(
+      {
+        onResolved:
+          response => {
+            expect(response.authClient).not.toBeNull();
+            expect(response.token).not.toBeNull();
+            expect(response.payload).not.toBeNull();
+            done();
+          }
+      })
+    );
+    // Make sure it can query
+    const response = await client.query({
         query: gql`
     query region($regionId: String!) {
         store {
