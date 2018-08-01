@@ -11,13 +11,14 @@
 
 
 import * as R from 'ramda';
-import {authClientRequest, noAuthClientRequest, authClientTask, noAuthClient} from '../helpers/clientHelpers';
+import {authClientRequest, authClientTask, noAuthClient} from '../helpers/clientHelpers';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import {reqStrPathThrowing} from 'rescape-ramda';
-import {noAuthApolloClientRequest, authApolloClientRequest} from '../client/apolloClient';
+import {noAuthApolloClientMutationRequest, authApolloClientRequest} from '../client/apolloClient';
+import gql from 'graphql-tag';
 
-const loginMutation = `mutation TokenAuth($username: String!, $password: String!) {
+const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
   tokenAuth(username: $username, password: $password) {
     token
   }
@@ -32,7 +33,7 @@ const loginMutation = `mutation TokenAuth($username: String!, $password: String!
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = R.curry((noAuthClient, variables) => noAuthApolloClientRequest(
+export const loginTask = R.curry((noAuthClient, variables) => noAuthApolloClientMutationRequest(
   noAuthClient,
   {query: loginMutation, variables}
 ));

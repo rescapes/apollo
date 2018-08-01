@@ -127,13 +127,23 @@ const createApolloClient = (uri, stateLinkResolvers) => {
 };
 
 /**
- * Wrap an Apollo Client query into a promiseToTask converter
+ * Wrap an Apollo Client query into a promiseToTask converter and call a query
  * @param client An Apollo Client that doesn't need authentication
  * @param args
  * @return {*}
  */
-export const noAuthApolloClientRequest = (client, ...args) => {
-  return promiseToTask(client.query(...args));
+export const noAuthApolloClientQueryRequest = (client, args) => {
+  return promiseToTask(client.query(args));
+};
+
+/**
+ * Wrap an Apollo Client query into a promiseToTask converter and call a mutation
+ * @param client An Apollo Client that doesn't need authentication
+ * @param args
+ * @return {*}
+ */
+export const noAuthApolloClientMutationRequest = (client, args) => {
+  return promiseToTask(client.mutate(args));
 };
 
 /***
@@ -141,7 +151,9 @@ export const noAuthApolloClientRequest = (client, ...args) => {
  * @param authClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientRequest = authClient => (...args) => promiseToTask(authClient.request(...args));
+export const authApolloClientRequest = R.curry((authClient, args) => {
+  return promiseToTask(authClient.query(args))
+});
 
 /**
  * Chained task version of getAuthClient

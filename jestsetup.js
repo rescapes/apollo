@@ -58,6 +58,6 @@ console.error = message => {
 };
 
 // https://github.com/facebook/jest/issues/3251
-process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Promise', reason);
+process.on('unhandledRejection', reason => {
+  throw reason
 });
