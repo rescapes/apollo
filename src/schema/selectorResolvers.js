@@ -84,9 +84,11 @@ const makeSelectorResolvers = data => ({
 
   Settings: {},
 
-  // The resolvers here limit the user to the active user and regions to the active region(s)
-  // A different resolver setup could load all regions of a user (for user admin) or all regions for (overall admin)
-  Store: {
+
+
+  Query: {
+    // The resolvers here limit the user to the active user and regions to the active region(s)
+    // A different resolver setup could load all regions of a user (for user admin) or all regions for (overall admin)
     // Resolves store.settings
     settings: selectorValues(settingsSelector),
     // Resolves the active region(s) of the active user
@@ -96,12 +98,6 @@ const makeSelectorResolvers = data => ({
     users: selectorValues(activeUsersSelector),
     // Resolves the specified user
     user: selectorValue(userSelector)
-  },
-
-  Query: {
-    store(obj, args) {
-      return data;
-    }
   },
 
   Mutation: {

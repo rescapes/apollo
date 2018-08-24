@@ -11,14 +11,13 @@
 
 export {loginTask, authClientOrLoginTask, refreshToken, verifyToken} from './auth/login';
 export {
-  client,
-  noAuthClient,
-  authClientTask,
-  testAuthorization,
-  authClientRequest,
-  getAuthClient,
-  noAuthClientRequest
-} from './helpers/clientHelpers';
+  default as createApolloClient,
+  noAuthApolloClient,
+  authApolloClient,
+  noAuthApolloClientRequestTask
+  authApolloClientTask,
+  authApolloClientRequestTask,
+} from './client/apolloClient'
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
 export {makeQuery} from './helpers/queryHelpers';
 export {makeMutation} from './helpers/mutationHelpers';

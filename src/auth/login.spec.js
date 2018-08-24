@@ -10,24 +10,25 @@
  */
 
 import * as R from 'ramda';
-import {authClientTask, testAuthorization, noAuthClient} from '../helpers/clientHelpers';
+import {testLoginCredentials, testConfig} from '../helpers/testHelpers';
+import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient'
 import {reqStrPathThrowing} from 'rescape-ramda';
-import {loginTask, refreshToken, verifyToken, authClientOrLoginTask} from './login';
+import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
-import {config} from 'rescape-sample-data'
 import {parseApiUrl} from 'rescape-helpers';
+import {stateLinkResolvers} from '../helpers/testHelpers';
 
-const {settings: {api}} = config;
+const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
-describe('loginTask', () => {
-  test('testAuthorization', (done) => {
+describe('login', () => {
+  test('testLoginCredentials', (done) => {
 
-    const client = noAuthClient(uri);
-    const login = loginTask(client, testAuthorization);
+    const client = noAuthApolloClient(uri, {});
+    const login = loginTask(client, testLoginCredentials);
 
     const verifyTokenTask = (authClient, {token}) => R.map(
-      // Map the token info to the authClient and token for chaining
+      // Map the token info to the authApolloClient and token for chaining
       verify => ({
         authClient,
         token,
@@ -36,7 +37,7 @@ describe('loginTask', () => {
       verifyToken(authClient, {token})
     );
     const refreshTokenTask = (authClient, {token}) => R.map(
-      // Map the token info to the authClient and token for chaining
+      // Map the token info to the authApolloClient and token for chaining
       verify => ({
         authClient,
         token,
@@ -48,7 +49,7 @@ describe('loginTask', () => {
 
     R.pipeK(
       R.always(login),
-      userLogin => authClientTask(uri, userLogin),
+      userLoginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', userLoginResult)),
       ({authClient, token}) => verifyTokenTask(authClient, {token}),
       ({authClient, token}) => refreshTokenTask(authClient, {token})
     )().run().listen(defaultRunConfig(
@@ -66,12 +67,12 @@ describe('loginTask', () => {
 
   test('authClientOrLoginTask', (done) => {
     // Try it with login info
-    const task = authClientOrLoginTask(uri, testAuthorization);
+    const task = authClientOrLoginTask(uri, stateLinkResolvers, testLoginCredentials);
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, authClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(url, authClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(uri, stateLinkResolvers, authClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, authClient: authClient2}) => {
                 expect(authClient).toEqual(authClient2);
@@ -83,4 +84,18 @@ describe('loginTask', () => {
       }
     ));
   });
-}, 1000);
+
+  test('loginToAuthClientTask', async () => {
+
+    loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials).run().listen(defaultRunConfig(
+      {
+        onResolved:
+          response => {
+            expect(response.authClient).not.toBeNull();
+            expect(response.token).not.toBeNull();
+            done();
+          }
+      })
+    );
+  });
+});

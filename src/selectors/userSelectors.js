@@ -11,7 +11,7 @@
 
 import * as R from 'ramda';
 import {findOneThrowing, reqPathThrowing, onlyOneValueThrowing, findOneValueByParamsThrowing} from 'rescape-ramda';
-import {STATUS, status} from 'rescape-helpers'
+import {STATUS, status} from 'rescape-helpers';
 import {createSelector} from 'reselect';
 
 /**
@@ -50,8 +50,8 @@ export const usersSelector = reqPathThrowing(['users']);
  * @param {Object} params Object of properties and value to match on
  */
 export const userSelector = (state, {params}) => {
-  return findOneValueByParamsThrowing(params, reqPathThrowing(['users'], state))
-}
+  return findOneValueByParamsThrowing(params, reqPathThrowing(['users'], state));
+};
 
 /**
  * Returns the active users in a container by searching state.users for the one and only one isActive property
@@ -64,7 +64,7 @@ export const activeUsersSelector = state => {
     status[STATUS.IS_ACTIVE],
     reqPathThrowing(['users'], state)
   );
-}
+};
 
 /**
  * Returns the value of the only active user

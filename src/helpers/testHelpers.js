@@ -21,6 +21,23 @@ export const createTestSelectorResolvedSchema = () => {
   return createSelectorResolvedSchema(schema, sampleConfig);
 }
 
+export const stateLinkResolvers = {
+  Mutation: {
+    updateNetworkStatus: (_, {isConnected}, {cache}) => {
+      const data = {
+        networkStatus: {
+          __typename: 'NetworkStatus',
+          isConnected
+        }
+      };
+      cache.writeData({data});
+      return null;
+    }
+  }
+}
+
+export const testLoginCredentials = {username: "test", password: "testpass"};
+
 export const testConfig = {
   // Settings is merged into the overall application state
   settings: {

@@ -19,9 +19,8 @@ import {createHttpLink} from 'apollo-link-http';
 import {onError} from 'apollo-link-error';
 import * as R from 'ramda';
 import createStateLink from './clientState';
-import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
+import {promiseToTask, reqStrPathThrowing, mergeDeepAll} from 'rescape-ramda';
 import {task, of} from 'folktale/concurrency/task';
-
 /**
  * Creates an ApolloClient.
  * @param {String} uri The uri of the graphql server
@@ -41,9 +40,14 @@ import {task, of} from 'folktale/concurrency/task';
       },
     },
   }
+ * @param {Object} fixedHeaders an object such as   {
+ * headers: {
+ *     authorization: authToken
+ *   }
+ * } used for hard coding the authorization for testing
  * @return {ApolloClient}
  */
-const createApolloClient = (uri, stateLinkResolvers) => {
+const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
 
   const httpLink = createHttpLink({
     uri,
@@ -56,10 +60,14 @@ const createApolloClient = (uri, stateLinkResolvers) => {
     const token = localStorage.getItem('token');
     // return the headers to the context so httpLink can read them
     return {
-      headers: {
-        ...headers,
-        authorization: token ? `Bearer ${token}` : ""
-      }
+      headers: mergeDeepAll([
+        // headers from the request
+        headers,
+        // local storage authorization
+        {authorization: token ? `Bearer ${token}` : ""},
+        // fixed headers sent via createApolloClient, probably just for testing
+        fixedHeaders
+      ])
     };
   });
 
@@ -87,8 +95,8 @@ const createApolloClient = (uri, stateLinkResolvers) => {
     if (networkError) console.log(`[Network error]: ${networkError}`);
   });
 
-  // Split queries between HTTP for Queries/Mutations and Websockets for Subscriptions.
-  // TODO not using this at the moment until I have a need for subscriptions
+// Split queries between HTTP for Queries/Mutations and Websockets for Subscriptions.
+// TODO not using this at the moment until I have a need for subscriptions
   const link = split(
     // query is the Operation
     ({query}) => {
@@ -102,16 +110,16 @@ const createApolloClient = (uri, stateLinkResolvers) => {
     authLink.concat(httpLink)
   );
 
-  // THe InMemoryCache is passed to the StateLink and the ApolloClient
+// THe InMemoryCache is passed to the StateLink and the ApolloClient
   const cache = new InMemoryCache();
 
-  // Create the state link for local caching
+// Create the state link for local caching
   const stateLink = createStateLink(
     cache,
     stateLinkResolvers
   );
 
-  // Create the ApolloClient using the following ApolloClientOptions
+// Create the ApolloClient using the following ApolloClientOptions
   return new ApolloClient({
     // This is just a guess at link order.
     // I know stateLink goes after errorLink and before httpLink
@@ -132,7 +140,7 @@ const createApolloClient = (uri, stateLinkResolvers) => {
  * @param args
  * @return {*}
  */
-export const noAuthApolloClientQueryRequest = (client, args) => {
+export const noAuthApolloClientQueryRequestTask = (client, args) => {
   return promiseToTask(client.query(args));
 };
 
@@ -142,44 +150,97 @@ export const noAuthApolloClientQueryRequest = (client, args) => {
  * @param args
  * @return {*}
  */
-export const noAuthApolloClientMutationRequest = (client, args) => {
+export const noAuthApolloClientMutationRequestTask = (client, args) => {
   return promiseToTask(client.mutate(args));
 };
 
 /***
- * Authenticated Apollo Client request
+ * Authenticated Apollo Client mutation request
  * @param authClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientRequest = R.curry((authClient, args) => {
-  return promiseToTask(authClient.query(args))
+export const authApolloClientMutationRequestTask = R.curry((authClient, args) => {
+  return promiseToTask(authClient.mutate(args));
 });
 
-/**
- * Chained task version of getAuthClient
- * Given a userLogin with a tokenAuth.token create the authClient and return it and the token
- * This method is synchronous but returns a Task to be used in API chains
- * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} userLogin Return value from loginTask() api call
- * @param {Object} userLogin.tokenAuth
- * @param {String} userLogin.tokenAuth.token The user token
- * @return {Task<Object>} Task containing and object with a authClient and token
+/***
+ * Authenticated Apollo Client query request
+ * @param authClient The authenticated Apollo Client
+ * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientTask = R.curry((url, userLogin) => {
-  const token = reqStrPathThrowing('tokenAuth.token', userLogin);
-  return of({token, authClient: getApolloAuthClient(url, token)});
+export const authApolloClientQueryRequestTask = R.curry((authClient, args) => {
+  return promiseToTask(authClient.query(args));
 });
 
 /**
  * Given a token returns a GraphQL client
  * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param authToken
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} authToken: Probably just for tests, pass the auth token in so we don't have to use
+ * local storage to store are auth token
  * @return {ApolloClient}
  */
-export const getApolloAuthClient = (url, authToken) => createApolloClient(url, {
+export const getApolloAuthClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers,
+  {
+    headers: {
+      authorization: authToken
+    }
+  }
+);
+
+
+
+/**
+ * Non auth client for logging in
+ * @param {string} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ */
+export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClient(url, stateLinkResolvers);
+
+/**
+ * Given a token returns a GraphQL client
+ * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param authToken
+ * @return {GraphQLClient}
+ */
+export const authApolloClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers, {
   headers: {
     Authorization: authToken
   }
 });
+
+/**
+ * Wrap a loginClient into a promiseToTask converter
+ * @param client An Apollo Client that doesn't need authentication
+ * @param args
+ * @return {*}
+ */
+export const noAuthApolloClientRequestTask = (client, ...args) => {
+  return promiseToTask(client.request(...args));
+};
+
+/**
+ * Chained task version of authApolloClient
+ * Given a userLogin with a tokenAuth.token create the authApolloClient and return it and the token
+ * This method is synchronous but returns a Task to be used in API chains
+ * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} userLogin Return value from loginTask() api call
+ * @param {Object} userLogin.tokenAuth
+ * @param {String} userLogin.tokenAuth.token The user token
+ * @return {Task<Object>} Task containing and object with a authApolloClient and token
+ */
+export const authApolloClientTask = R.curry((url, stateLinkResolvers, userLogin) => {
+  const token = reqStrPathThrowing('tokenAuth.token', userLogin);
+  return of({token, authClient: authApolloClient(url, stateLinkResolvers, token)});
+});
+
+/***
+ * Authenticated Client request
+ * @param authClient The authenticated Apollo Client
+ * @return {Task} A Task that makes the request when run
+ */
+export const authApolloClientRequestTask = authClient => (...args) => promiseToTask(authClient.request(...args));
 
 export default createApolloClient;

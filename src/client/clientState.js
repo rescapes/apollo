@@ -11,6 +11,12 @@
 
 import { withClientState } from 'apollo-link-state';
 
+/**
+ * Create an Apollo Client State with the given cache and resolvers
+ * @param cache E.g. InMemoryCache
+ * @param resolvers The resolvers for the schema
+ * @return ApolloLinkState ClientState
+ */
 export default (cache, resolvers) => withClientState({
   cache,
   resolvers
