@@ -11,7 +11,7 @@
 
 import * as R from 'ramda';
 import {testLoginCredentials, testConfig} from '../helpers/testHelpers';
-import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient'
+import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
@@ -22,27 +22,33 @@ const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
 describe('login', () => {
-  test('testLoginCredentials', (done) => {
+  test('testLoginCredentials', done => {
 
     const client = noAuthApolloClient(uri, {});
     const login = loginTask(client, testLoginCredentials);
 
-    const verifyTokenTask = (authClient, {token}) => R.map(
-      // Map the token info to the authApolloClient and token for chaining
-      verify => ({
-        authClient,
-        token,
-        payload: reqStrPathThrowing('verifyToken.payload', verify)
-      }),
-      verifyToken(authClient, {token})
-    );
+    const verifyTokenTask = (authClient, {token}) => {
+      return R.map(
+        // Map the token info to the authApolloClient and token for chaining
+        verify => {
+          return {
+            authClient,
+            token,
+            payload: reqStrPathThrowing('data.verifyToken.payload', verify)
+          };
+        },
+        verifyToken(authClient, {token})
+      );
+    };
     const refreshTokenTask = (authClient, {token}) => R.map(
       // Map the token info to the authApolloClient and token for chaining
-      verify => ({
-        authClient,
-        token,
-        payload: reqStrPathThrowing('verifyToken.payload', verify)
-      }),
+      verify => {
+        return {
+          authClient,
+          token,
+          payload: reqStrPathThrowing('data.verifyToken.payload', verify)
+        };
+      },
       refreshToken(authClient, {token})
     );
 
@@ -65,7 +71,7 @@ describe('login', () => {
     );
   });
 
-  test('authClientOrLoginTask', (done) => {
+  test('authClientOrLoginTask', done => {
     // Try it with login info
     const task = authClientOrLoginTask(uri, stateLinkResolvers, testLoginCredentials);
     task.run().listen(defaultRunConfig(
@@ -85,7 +91,7 @@ describe('login', () => {
     ));
   });
 
-  test('loginToAuthClientTask', async () => {
+  test('loginToAuthClientTask', done => {
 
     loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials).run().listen(defaultRunConfig(
       {

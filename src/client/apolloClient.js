@@ -21,6 +21,7 @@ import * as R from 'ramda';
 import createStateLink from './clientState';
 import {promiseToTask, reqStrPathThrowing, mergeDeepAll} from 'rescape-ramda';
 import {task, of} from 'folktale/concurrency/task';
+
 /**
  * Creates an ApolloClient.
  * @param {String} uri The uri of the graphql server
@@ -64,7 +65,7 @@ const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
         // headers from the request
         headers,
         // local storage authorization
-        {authorization: token ? `Bearer ${token}` : ""},
+        {Authorization: token ? `JWT ${token}` : ""},
         // fixed headers sent via createApolloClient, probably just for testing
         fixedHeaders
       ])
@@ -147,11 +148,11 @@ export const noAuthApolloClientQueryRequestTask = (client, args) => {
 /**
  * Wrap an Apollo Client query into a promiseToTask converter and call a mutation
  * @param client An Apollo Client that doesn't need authentication
- * @param args
+ * @param options
  * @return {*}
  */
-export const noAuthApolloClientMutationRequestTask = (client, args) => {
-  return promiseToTask(client.mutate(args));
+export const noAuthApolloClientMutationRequestTask = (client, options) => {
+  return promiseToTask(client.mutate(options));
 };
 
 /***
@@ -159,8 +160,8 @@ export const noAuthApolloClientMutationRequestTask = (client, args) => {
  * @param authClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientMutationRequestTask = R.curry((authClient, args) => {
-  return promiseToTask(authClient.mutate(args));
+export const authApolloClientMutationRequestTask = R.curry((authClient, options) => {
+  return promiseToTask(authClient.mutate(options));
 });
 
 /***
@@ -168,8 +169,8 @@ export const authApolloClientMutationRequestTask = R.curry((authClient, args) =>
  * @param authClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientQueryRequestTask = R.curry((authClient, args) => {
-  return promiseToTask(authClient.query(args));
+export const authApolloClientQueryRequestTask = R.curry((authClient, options) => {
+  return promiseToTask(authClient.query(options));
 });
 
 /**
@@ -182,12 +183,9 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, args) => {
  */
 export const getApolloAuthClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers,
   {
-    headers: {
-      authorization: authToken
-    }
+    Authorization: `JWT ${authToken}`
   }
 );
-
 
 
 /**
@@ -205,9 +203,7 @@ export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClien
  * @return {GraphQLClient}
  */
 export const authApolloClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers, {
-  headers: {
-    Authorization: authToken
-  }
+  Authorization: `JWT ${authToken}`
 });
 
 /**
@@ -241,6 +237,6 @@ export const authApolloClientTask = R.curry((url, stateLinkResolvers, userLogin)
  * @param authClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientRequestTask = authClient => (...args) => promiseToTask(authClient.request(...args));
+export const authApolloClientRequestTask = R.curry((authClient, args) => promiseToTask(authClient.request(args)));
 
 export default createApolloClient;

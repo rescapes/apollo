@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
-import {createSampleConfig, createSchema} from 'rescape-sample-data';
+import {createSampleConfig, createSchema, createDefaultConfig} from 'rescape-sample-data';
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
@@ -19,7 +19,7 @@ export const createTestSelectorResolvedSchema = () => {
   const sampleConfig = createSampleConfig();
   const schema = createSchema();
   return createSelectorResolvedSchema(schema, sampleConfig);
-}
+};
 
 export const stateLinkResolvers = {
   Mutation: {
@@ -34,11 +34,11 @@ export const stateLinkResolvers = {
       return null;
     }
   }
-}
+};
 
 export const testLoginCredentials = {username: "test", password: "testpass"};
 
-export const testConfig = {
+export const testConfig = createDefaultConfig({
   // Settings is merged into the overall application state
   settings: {
     domain: 'localhost',
@@ -79,7 +79,9 @@ export const testConfig = {
         api: 'HTTP'
       }
     }
-  }
-};
+  },
+  regions: {},
+  users: {}
+});
 
 export const sampleConfig = createSampleConfig(testConfig);

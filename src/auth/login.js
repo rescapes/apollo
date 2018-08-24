@@ -49,32 +49,32 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
   const login = loginTask(noAuthApolloClient(uri, stateLinkResolvers));
   return R.pipeK(
     login,
-    userLogin => {
-      return authApolloClientTask(uri, stateLinkResolvers, userLogin)
+    loginResult => {
+      return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult))
     }
   )(variables)
 });
 
-const verifyTokenMutation = `mutation VerifyToken($token: String!) {
+const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
   verifyToken(token: $token) {
     payload
   }
 }`;
 
-export const verifyToken = R.curry((authClient, variables) => authApolloClientMutationRequestTask(authClient)(
-  verifyTokenMutation,
+export const verifyToken = R.curry((authClient, variables) => authApolloClientMutationRequestTask(
+  authClient,
   {mutation: verifyTokenMutation, variables}
 ));
 
-const refreshTokenMutation = `mutation RefreshToken($token: String!) {
+const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
   verifyToken(token: $token) {
     payload
   }
 }`;
 
-export const refreshToken = R.curry((authClient, values) => authApolloClientRequestTask(authClient)(
-  refreshTokenMutation,
-  values
+export const refreshToken = R.curry((authClient, variables) => authApolloClientMutationRequestTask(
+  authClient,
+  {mutation: refreshTokenMutation, variables}
 ));
 
 /**
