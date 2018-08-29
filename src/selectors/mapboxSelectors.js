@@ -80,7 +80,7 @@ export const viewportSelector = v((state, {mapbox}) => {
       // Should not be needed, refetch in the container should update regions.[id].mapbox.viewport
       // to the reduced version
       fromImmutable(
-          reqPathThrowing(['regions', 'belgium', 'mapbox', 'viewport'], state)
+          reqPathThrowing(['regions', 'paris', 'mapbox', 'viewport'], state)
       )
     ])
   )(state, {mapbox});

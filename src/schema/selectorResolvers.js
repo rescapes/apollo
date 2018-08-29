@@ -32,7 +32,7 @@ const parentSelectorValues = (parentKey, selector) => (parent, props, {options: 
 };
 
 // Original example from: https://github.com/apollographql/graphql-tools
-const makeSelectorResolvers = data => ({
+export const makeSelectorResolvers = () => ({
   //Operation: {
 
   //},
@@ -123,11 +123,11 @@ const makeSelectorResolvers = data => ({
  * The reselect selectors represent the way that we filter data for Components
  * by, for instance, limited the Regions to the one marked active
  * @param {Object} schema A GraphlQL SchemaObject
- * @param {Object} data A full data structure that matches
+ * @param {Object} data A full data structure that matches to serve as a lookup for resolvers
  * the structure the schema
  * @returns {Object} The given GraphQLSchema with resolvers added
  */
 export const createSelectorResolvedSchema = (schema, data) => {
-  addResolveFunctionsToSchema({schema, resolvers: makeSelectorResolvers(data)});
+  addResolveFunctionsToSchema({schema, resolvers: makeSelectorResolvers()});
   return schema;
 };

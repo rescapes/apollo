@@ -61,6 +61,7 @@
     "ramda": "^0.25.0",
     "request": "^2.88.0",
     "rescape-helpers": "^1.1.56",
+    "rescape-helpers-component": "^1.5.24",
     "rescape-ramda": "^1.4.51"
   },
   "devDependencies": {

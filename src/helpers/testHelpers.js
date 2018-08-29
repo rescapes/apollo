@@ -11,16 +11,6 @@
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {createSampleConfig, createSchema, createDefaultConfig} from 'rescape-sample-data';
 
-/**
- * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
- * @return {*}
- */
-export const createTestSelectorResolvedSchema = () => {
-  const sampleConfig = createSampleConfig();
-  const schema = createSchema();
-  return createSelectorResolvedSchema(schema, sampleConfig);
-};
-
 export const stateLinkResolvers = {
   Mutation: {
     updateNetworkStatus: (_, {isConnected}, {cache}) => {
@@ -85,3 +75,12 @@ export const testConfig = createDefaultConfig({
 });
 
 export const sampleConfig = createSampleConfig(testConfig);
+
+/**
+ * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
+ * @return {*}
+ */
+export const createTestSelectorResolvedSchema = () => {
+  const schema = createSchema();
+  return createSelectorResolvedSchema(schema, sampleConfig);
+};

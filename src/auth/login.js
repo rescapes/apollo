@@ -46,10 +46,12 @@ export const loginTask = R.curry((noAuthClient, variables) => noAuthApolloClient
  * @param {String} values.password The password
  */
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
+  // Use unauthenticated ApolloClient for login
   const login = loginTask(noAuthApolloClient(uri, stateLinkResolvers));
   return R.pipeK(
     login,
     loginResult => {
+      // loginResult.data contains {tokenAuth: token}
       return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult))
     }
   )(variables)

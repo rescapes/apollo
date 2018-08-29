@@ -23,8 +23,9 @@ const uri = parseApiUrl(api);
  */
 describe('apolloClient', () => {
 
-  test('apolloClient with sample data', async () => {
+  test('createApolloClient with sample data', async () => {
 
+    // Login, this calls createApolloClient
     const {authClient, token} = await taskToPromise(loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials));
     // Make sure it can query
     // Pass our authApolloClient and token here

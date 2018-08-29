@@ -49,6 +49,34 @@ import {task, of} from 'folktale/concurrency/task';
  * @return {ApolloClient}
  */
 const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
+  const networkInterface = createBatchingNetworkInterface({
+    uri: 'http://localhost:8000/gql/',
+    batchInterval: 10,
+    opts: {
+      credentials: 'same-origin',
+    },
+  });
+
+// Add this new part:
+  networkInterface.use([
+    {
+      applyBatchMiddleware(req, next) {
+        if (!req.options.headers) {
+          req.options.headers = {}
+        }
+
+        const token = localStorage.getItem('token')
+          ? localStorage.getItem('token')
+          : null
+        req.options.headers['authorization'] = `JWT ${token}`
+        next()
+      },
+    },
+  ])
+
+  const client = new ApolloClient({
+    networkInterface: networkInterface,
+  })
 
   const httpLink = createHttpLink({
     uri,
@@ -72,18 +100,20 @@ const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
     };
   });
 
+  // https://github.com/apollographql/subscriptions-transport-ws/issues/293
   /*
-  // Create a WebSocketLink to handle subscriptions from our subscription URI
-  // null out for node
-  const wsLink = process.browser ? new WebSocketLink({
-    uri: `wss://subscriptions.graph.cool/v1/${serviceIdKey}`,
-    options: {
-      reconnect: true,
-      connectionParams: {
-        authToken: localStorage.getItem(authTokenKey)
-      }
+  const wsClient = new SubscriptionClient(ws, {
+    reconnect: true,
+    connectionParams: () => ({
+      authorization: `Bearer ${localStorage.getItem('mytoken')}`,
+    }),
+  });
+
+  wsClient.connectionCallback = err => {
+    if (get(err, 'message') === 'Authentication Failure!') {
+      wsClient.close();
     }
-  }) : null;
+  };
   */
 
   const errorLink = onError(({graphQLErrors, networkError}) => {

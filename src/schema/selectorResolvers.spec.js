@@ -15,6 +15,7 @@ import * as R from 'ramda';
 import {mapped} from 'ramda-lens';
 import {activeUserSelectedRegionsSelector, regionSelector} from '../selectors/regionSelectors';
 import {mergeDeep} from 'rescape-ramda';
+import {sampleConfig} from '../helpers/testHelpers';
 
 
 
