@@ -17,7 +17,6 @@ import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuth
 import {defaultRunConfig} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {stateLinkResolvers} from '../helpers/testHelpers';
-
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 

@@ -49,102 +49,42 @@ import {task, of} from 'folktale/concurrency/task';
  * @return {ApolloClient}
  */
 const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
-  const networkInterface = createBatchingNetworkInterface({
-    uri: 'http://localhost:8000/gql/',
-    batchInterval: 10,
-    opts: {
-      credentials: 'same-origin',
-    },
-  });
-
-// Add this new part:
-  networkInterface.use([
-    {
-      applyBatchMiddleware(req, next) {
-        if (!req.options.headers) {
-          req.options.headers = {}
-        }
-
-        const token = localStorage.getItem('token')
-          ? localStorage.getItem('token')
-          : null
-        req.options.headers['authorization'] = `JWT ${token}`
-        next()
-      },
-    },
-  ])
-
-  const client = new ApolloClient({
-    networkInterface: networkInterface,
-  })
-
   const httpLink = createHttpLink({
-    uri,
-    credentials: 'include',
-    fetch
+    uri
   });
 
+  // Authorization link
+  // This code is adapted from https://www.apollographql.com/docs/react/recipes/authentication.html
   const authLink = setContext((_, {headers}) => {
     // get the authentication token from local storage if it exists
     const token = localStorage.getItem('token');
     // return the headers to the context so httpLink can read them
     return {
-      headers: mergeDeepAll([
-        // headers from the request
-        headers,
-        // local storage authorization
-        {Authorization: token ? `JWT ${token}` : ""},
-        // fixed headers sent via createApolloClient, probably just for testing
+      headers: R.merge(
+        {
+          // Using JWT instead of Bearer here for Django JWT
+          authorization: token ? `JWT ${token}` : ""
+        },
         fixedHeaders
-      ])
+      )
     };
   });
 
-  // https://github.com/apollographql/subscriptions-transport-ws/issues/293
-  /*
-  const wsClient = new SubscriptionClient(ws, {
-    reconnect: true,
-    connectionParams: () => ({
-      authorization: `Bearer ${localStorage.getItem('mytoken')}`,
-    }),
-  });
-
-  wsClient.connectionCallback = err => {
-    if (get(err, 'message') === 'Authentication Failure!') {
-      wsClient.close();
-    }
-  };
-  */
-
+  // Error handling link so errors don't get swallowed, which Apollo seems to like doing
   const errorLink = onError(({graphQLErrors, networkError}) => {
     if (graphQLErrors)
       graphQLErrors.map(error => {
-        console.log(
+        console.error(
           `[GraphQL error]: Message: ${R.propOr('undefined', 'message', error)}, Location: ${R.propOr('undefined', 'locations', error)}, Path: ${R.propOr('undefined', 'path', error)}`
         );
       });
-    if (networkError) console.log(`[Network error]: ${networkError}`);
+    if (networkError) console.error(`[Network error]: ${networkError}`);
   });
 
-// Split queries between HTTP for Queries/Mutations and Websockets for Subscriptions.
-// TODO not using this at the moment until I have a need for subscriptions
-  const link = split(
-    // query is the Operation
-    ({query}) => {
-      const {kind, operation} = getMainDefinition(query);
-      return kind === 'OperationDefinition' && operation === 'subscription';
-    },
-    // Use WebSocketLink
-    //wsLink,
-    errorLink,
-    // Else use HttpLink with auth token
-    authLink.concat(httpLink)
-  );
-
-// THe InMemoryCache is passed to the StateLink and the ApolloClient
+  // The InMemoryCache is passed to the StateLink and the ApolloClient
   const cache = new InMemoryCache();
 
-// Create the state link for local caching
+  // Create the state link for local caching
   const stateLink = createStateLink(
     cache,
     stateLinkResolvers
@@ -213,7 +153,7 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, options) =>
  */
 export const getApolloAuthClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers,
   {
-    Authorization: `JWT ${authToken}`
+    authorization: `JWT ${authToken}`
   }
 );
 
@@ -233,7 +173,7 @@ export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClien
  * @return {GraphQLClient}
  */
 export const authApolloClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers, {
-  Authorization: `JWT ${authToken}`
+  authorization: `JWT ${authToken}`
 });
 
 /**

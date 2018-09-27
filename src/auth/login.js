@@ -48,12 +48,12 @@ export const loginTask = R.curry((noAuthClient, variables) => noAuthApolloClient
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
   // Use unauthenticated ApolloClient for login
   const login = loginTask(noAuthApolloClient(uri, stateLinkResolvers));
-  return R.pipeK(
-    login,
+  return R.composeK(
     loginResult => {
       // loginResult.data contains {tokenAuth: token}
       return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult))
-    }
+    },
+    args => login(args)
   )(variables)
 });
 

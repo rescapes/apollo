@@ -11,10 +11,12 @@
 import gql from 'graphql-tag';
 import {reqStrPath, defaultRunConfig, taskToPromise} from 'rescape-ramda';
 import * as Result from 'folktale/result';
-import {sampleConfig, testLoginCredentials} from '../helpers/testHelpers'
+import {sampleConfig, testLoginCredentials} from '../helpers/testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import {loginToAuthClientTask} from '../auth/login';
 import {stateLinkResolvers} from '../helpers/testHelpers';
+import {noAuthApolloClient} from './apolloClient';
+
 const {settings: {api}} = sampleConfig;
 const uri = parseApiUrl(api);
 
@@ -23,7 +25,23 @@ const uri = parseApiUrl(api);
  */
 describe('apolloClient', () => {
 
-  test('createApolloClient with sample data', async () => {
+
+  test('Confirm queries work', async () => {
+    const noAuthClient = noAuthApolloClient(uri, stateLinkResolvers);
+    const response = await noAuthClient.query({
+      query: gql`query goalsQuery {
+	goals {
+    key
+    name
+    number
+    imageName
+  }
+}`
+    });
+    expect(reqStrPath('data.goals.0.name', response)).toEqual(Result.Ok('walkability'));
+  });
+
+  test('createApolloClient with sample data', async() => {
 
     // Login, this calls createApolloClient
     const {authClient, token} = await taskToPromise(loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials));
@@ -31,22 +49,16 @@ describe('apolloClient', () => {
     // Pass our authApolloClient and token here
     const response = await authClient.query({
         query: gql`
-    query region($regionId: String!) {
-          region(id: $regionId) {
+    query region($key: String!) {
+          region(key: $key) {
               id
+              key
               name
-              mapbox {
-                viewport {
-                  latitude
-                  longitude
-                  zoom
-                }
-              }
           }
     }`,
-        variables: {regionId: "belgium"}
+        variables: {key: "earth"}
       }
     );
-    expect(reqStrPath('data.region.id', response)).toEqual(Result.Ok('belgium'));
+    expect(reqStrPath('data.region.key', response)).toEqual(Result.Ok('earth'));
   });
 });

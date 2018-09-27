@@ -36,7 +36,7 @@ export const testConfig = createDefaultConfig({
       protocol: 'http',
       host: 'localhost',
       port: '8000',
-      path: '/graphql/'
+      path: '/sop_api/graphql/'
     },
     /*
     // Graphcool configuration. This probably belongs in a graphcool config
