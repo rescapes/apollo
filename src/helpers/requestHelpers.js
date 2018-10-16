@@ -64,6 +64,10 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
         obj
       ))
     ],
+    // Convert null to .... null
+    [R.isNil, () => [
+      `${indent}null`
+    ]],
     [R.T, () => {
       throw new Error(`Bad outputParam ${outputParam}`);
     }]
@@ -139,6 +143,10 @@ export const formatInputParams = (inputParam, indentLevel = 0) => {
         `${indent}${value}`
       ]
     ],
+    // Convert null to .... null
+    [R.isNil, () => [
+      `${indent}null`
+    ]],
     [R.T, () => {
       throw new Error(`Bad outputParam ${inputParam}`);
     }]

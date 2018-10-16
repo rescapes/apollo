@@ -9,17 +9,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {InMemoryCache} from 'apollo-cache-inmemory';
-import {getMainDefinition} from 'apollo-utilities';
 import {setContext} from 'apollo-link-context';
 import {ApolloClient} from 'apollo-client';
 import {split, ApolloLink} from 'apollo-link';
-//import {WebSocketLink} from 'apollo-link-ws';
-import fetch from 'node-fetch';
 import {createHttpLink} from 'apollo-link-http';
 import {onError} from 'apollo-link-error';
 import * as R from 'ramda';
 import createStateLink from './clientState';
-import {promiseToTask, reqStrPathThrowing, mergeDeepAll} from 'rescape-ramda';
+import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
 import {task, of} from 'folktale/concurrency/task';
 
 /**
@@ -137,6 +134,17 @@ export const authApolloClientMutationRequestTask = R.curry((authClient, options)
 /***
  * Authenticated Apollo Client query request
  * @param authClient The authenticated Apollo Client
+ * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
+ * The main arguments for options are QueryOptions with query and variables. Example
+ * query: gql`
+   query region($key: String!) {
+          region(key: $key) {
+              id
+              key
+              name
+          }
+    }`,
+   variables: {key: "earth"}
  * @return {Task} A Task that makes the request when run
  */
 export const authApolloClientQueryRequestTask = R.curry((authClient, options) => {

@@ -71,15 +71,15 @@ export const makeSelectorResolvers = () => ({
   },
 
   MapboxSettings: {
-    // Default resolve store.settings.mapbox
+    // Default resolve settings.mapbox
   },
 
   ApiSettings: {
-    // Default resolve store.settings.api
+    // Default resolve settings.api
   },
 
   OverpassSettings: {
-    // Default Resolve store.settings.overpass
+    // Default Resolve settings.overpass
   },
 
   Settings: {},
@@ -89,8 +89,8 @@ export const makeSelectorResolvers = () => ({
   Query: {
     // The resolvers here limit the user to the active user and regions to the active region(s)
     // A different resolver setup could load all regions of a user (for user admin) or all regions for (overall admin)
-    // Resolves store.settings
-    settings: selectorValues(settingsSelector),
+    // Resolves settings
+    //settings: selectorValues(settingsSelector),
     // Resolves the active region(s) of the active user
     regions: selectorValues(activeUserSelectedRegionsSelector),
     region: selectorValue(regionSelector),

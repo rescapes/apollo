@@ -16,6 +16,10 @@ import {onlyOneValueThrowing, reqPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 
 /**
+ * Store here restores to a redux store. TODO replace redux with apollo-link-state
+ */
+
+/**
  * This selector creates a state that narrows down the state to the active user and their regions
  * Any ComponentContainer that must operate in the context of a single user and their regions can
  * use this selector.

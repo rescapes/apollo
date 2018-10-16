@@ -15,44 +15,39 @@ import * as R from 'ramda';
 import {mapped} from 'ramda-lens';
 import {activeUserSelectedRegionsSelector, regionSelector} from '../selectors/regionSelectors';
 import {mergeDeep} from 'rescape-ramda';
-import {sampleConfig} from '../helpers/testHelpers';
-
-
+import {createTestSelectorResolvedSchema, sampleConfig} from '../helpers/testHelpers';
 
 describe('mockExecutableSchema', () => {
 
   test('queryRegionsSelector', async () => {
     const query = `
         query activeUsersSelectedRegions {
-            store {
-                regions {
-                    id
-                    mapbox {
-                      viewport {
-                        zoom
-                      }
+              regions {
+                  id
+                  mapbox {
+                    viewport {
+                      zoom
                     }
-                },
-            }
+                  }
+              }
         }`;
 
     // We expect the resolver to resolve the selected regions for the active user, not all regions
     const regionsFromSelector = activeUserSelectedRegionsSelector(sampleConfig);
-    const schemaRegionLens = R.compose(R.lensPath(['data', 'store', 'regions']), mapped, R.lensProp('id'));
+    const schemaRegionLens = R.compose(R.lensPath(['data', 'regions']), mapped, R.lensProp('id'));
     // Here's what we expect back
     const expected = R.view(schemaRegionLens,
       ({
         data: {
-          store: {
-            regions: regionsFromSelector
-          }
+          regions: regionsFromSelector
         }
       })
     );
     // graphql params are schema, query, rootValue, context, variables
+    const resolvedSchema = createTestSelectorResolvedSchema();
     const regions = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}).then(
       result => R.ifElse(
-        R.view(R.lensPath(['data', 'store'])),
+        R.view(R.lensPath(['data'])),
         R.view(schemaRegionLens),
         result => {
           throw new Error(`Query error ${result.errors}`);
@@ -65,18 +60,16 @@ describe('mockExecutableSchema', () => {
   test('query region', async () => {
     const query = `
         query region($id: String!) {
-        store {
           region(id: $id) {
             id
             name
           },
-        }
       }
     `;
     // We expect the resolver to resolve the selected regions for the active user, not all regions
     const region = R.head(R.values(sampleConfig.regions));
     //const regionFromSelector = regionSelector(sampleConfig, {params: R.pick(['id'], region)});
-    const schemaRegionLens = R.lensPath(['data', 'store', 'region']);
+    const schemaRegionLens = R.lensPath(['data', 'region']);
     // Here's what we expect back
     const expected =
       ({
@@ -84,6 +77,7 @@ describe('mockExecutableSchema', () => {
         name: region.name
       });
     // graphql params are schema, query, rootValue, context, variables
+    const resolvedSchema = createTestSelectorResolvedSchema();
     const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}, R.pick(['id'], region)).then(
       result => R.ifElse(
         R.prop('data'),
@@ -100,7 +94,6 @@ describe('mockExecutableSchema', () => {
   test('query region with children', async () => {
     const query = `
         query regionWithChildren($id: String!) {
-        store {
           region(id: $id) {
             id
             name
@@ -122,15 +115,15 @@ describe('mockExecutableSchema', () => {
                 }
               }
             }
-          },
+          }
         }
-      }
     `;
     // We expect the resolver to resolve the selected regions for the active user, not all regions
     const region = R.head(R.values(sampleConfig.regions));
-    const schemaRegionLens = R.lensPath(['data', 'store', 'region']);
+    const schemaRegionLens = R.lensPath(['data', 'region']);
 
     // graphql params are schema, query, rootValue, context, variables
+    const resolvedSchema = createTestSelectorResolvedSchema();
     const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}, R.pick(['id'], region)).then(
       result => R.ifElse(
         R.prop('data'),
@@ -172,4 +165,3 @@ describe('mockExecutableSchema', () => {
     expect(result).toEqual(expected);
   });
 });
-
