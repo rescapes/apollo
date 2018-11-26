@@ -119,7 +119,14 @@ export const noAuthApolloClientQueryRequestTask = (client, args) => {
  * @return {*}
  */
 export const noAuthApolloClientMutationRequestTask = (client, options) => {
-  return promiseToTask(client.mutate(options));
+  return task(resolver => {
+    return client.mutate(options).then(
+      resolved => resolver.resolve(resolved)
+    ).catch(
+      error => resolver.reject(error)
+    )
+  })
+  //return promiseToTask(client.mutate(options));
 };
 
 /***

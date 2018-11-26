@@ -159,16 +159,23 @@ export const formatInputParams = (inputParam, indentLevel = 0) => {
 };
 
 /**
- * Resolve the GraphQL Type to pass to the query params. This
+ * Resolve the GraphQL Type to pass to the query params.
+ * TODO. This should be replaced with reading the schema from the server and using it to derive types
  * @param {String} key The param name. Mapped with inputParamTypeMapper. If a match is found it is used
- * @param {Object} value The param value used to guess the type
+ * @param {Object} value The param value used to guess the type. This can also be a type if the value isn't known
+ * ahead of creating the query, such as Number of String
  * @return {String} The resolved string
  */
 export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => {
   const mappedType = R.prop(key, inputParamTypeMapper);
   return R.cond([
     [R.always(mappedType), R.always(mappedType)],
-    [R.is(Number), R.always('Int')],
+    [Number.isInteger, R.always('Int')],
+    [R.is(Number), R.always('Float')],
+    // Assume functions are indicating types, e.g. Number, String
+    // Construct the type and return it's type. Thus String => 'String', Number => 'Number'
+    // There is currently no way to produce other types like Float.
+    [R.is(Function), type => R.type(type())],
     // Map directory anything else, for instance String to 'String'
     [R.T, R.type]
   ])(value);
