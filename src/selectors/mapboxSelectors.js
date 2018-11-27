@@ -75,13 +75,13 @@ export const viewportSelector = v((state, {mapbox}) => {
       // state.mapbox.settings gets lowest priority
       R.defaultTo({}, mapboxSettings.viewport),
       // Get mutable form from mapbox
-      fromImmutable(viewport),
+      fromImmutable(viewport)
       // Temporarily merge the updated viewport from the state, since we are updating it via redux
       // Should not be needed, refetch in the container should update regions.[id].mapbox.viewport
       // to the reduced version
-      fromImmutable(
-          reqPathThrowing(['regions', 'paris', 'mapbox', 'viewport'], state)
-      )
+      //fromImmutable(
+      //    reqPathThrowing(['regions', 'paris', 'mapbox', 'viewport'], state)
+      //)
     ])
   )(state, {mapbox});
 }, [
