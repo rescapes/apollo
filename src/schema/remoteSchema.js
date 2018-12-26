@@ -34,24 +34,15 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
 // const link = new HttpLink({ uri: 'http://api.githunt.com/graphql', fetch });
 
 
-/**
- * Generates a reolsved schema from the server
- * https://www.apollographql.com/docs/graphql-tools/remote-schemas.html
- * @return {Promise<GraphQLSchema>}
- */
-export default config => {
+export const remoteSchemaTask = config => {
   return R.composeK(
-    ({schema, link}) => of(makeRemoteExecutableSchema({
-      schema,
-      link
-    })),
     // Create a link that concats HTTP to Authentication
     // Our authenticated link hard-codes the token. I don't know how to use the context
     ({uri, token}) => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
         schema => ({schema, link}),
-        promiseToTask(introspectSchema(link).then(wtf => wtf))
+        promiseToTask(introspectSchema(link))
       );
     },
     // Authenticate
@@ -65,7 +56,22 @@ export default config => {
           {},
           reqStrPathThrowing('settings.apiAuthorization', config)
         )
-      )
+      );
     }
   )(config);
-}
+};
+
+/**
+ * Generates a reolsved schema from the server
+ * https://www.apollographql.com/docs/graphql-tools/remote-schemas.html
+ * @return {Task<GraphQLSchema>}
+ */
+export const remoteLinkedSchemaTask = config => {
+  return R.composeK(
+    ({schema, link}) => of(makeRemoteExecutableSchema({
+      schema,
+      link
+    })),
+    config => remoteSchemaTask(config)
+  )(config);
+};

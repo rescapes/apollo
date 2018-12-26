@@ -9,16 +9,28 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import schemaTask from './remoteSchema';
-
+import {remoteSchemaTask, remoteLinkedSchemaTask} from './remoteSchema';
 import {defaultRunConfig} from 'rescape-ramda';
 import {sampleConfig} from '../helpers/testHelpers';
 
 describe('schema', () => {
-  test('default', done => {
-    schemaTask(sampleConfig).run().listen(
+  test('remoteSchemaTask', done => {
+    remoteSchemaTask(sampleConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
+          // TODO add test resolvers and query
+          expect(schema).toBeTruthy();
+          done();
+        }
+      })
+    );
+  }, 200000);
+
+  test('remoteLinkedSchemaTask', done => {
+    remoteLinkedSchemaTask(sampleConfig).run().listen(
+      defaultRunConfig({
+        onResolved: schema => {
+          // TODO test queries
           expect(schema).toBeTruthy();
           done();
         }

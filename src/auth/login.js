@@ -10,12 +10,20 @@
  */
 
 import * as R from 'ramda';
-import {noAuthApolloClient, authApolloClientRequestTask, authApolloClientTask, noAuthApolloClientMutationRequestTask, authApolloClientMutationRequestTask} from '../client/apolloClient'
+import {
+  noAuthApolloClient,
+  authApolloClientRequestTask,
+  authApolloClientTask,
+  noAuthApolloClientMutationRequestTask,
+  authApolloClientMutationRequestTask
+} from '../client/apolloClient';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {ApolloClient} from 'apollo-client';
+import {PropTypes} from 'prop-types';
+import {v} from 'rescape-validate';
 
 const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
   tokenAuth(username: $username, password: $password) {
@@ -32,10 +40,16 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = R.curry((noAuthClient, variables) => noAuthApolloClientMutationRequestTask(
+export const loginTask = v(R.curry((noAuthClient, variables) => noAuthApolloClientMutationRequestTask(
   noAuthClient,
   {mutation: loginMutation, variables}
-));
+)), [
+  ['noAuthClient', PropTypes.shape().isRequired],
+  ['variables', PropTypes.shape({
+    username: PropTypes.string.isRequired,
+    password: PropTypes.string.isRequired,
+  }).isRequired]
+]);
 
 /**
  * Login and return an authenticated client task
@@ -51,10 +65,10 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
   return R.composeK(
     loginResult => {
       // loginResult.data contains {tokenAuth: token}
-      return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult))
+      return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult));
     },
     args => login(args)
-  )(variables)
+  )(variables);
 });
 
 const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
@@ -85,15 +99,16 @@ export const refreshToken = R.curry((authClient, variables) => authApolloClientM
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
+ * @returns {Object} Authorized Apollo Client
  */
 export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentication) => R.ifElse(
   auth => R.is(ApolloClient, auth),
   // Just wrap it in a task to match the other option
   authClient => of({authClient}),
-  R.pipeK(
-    // map login values to token
-    auth => loginTask(noAuthApolloClient(url, stateLinkResolvers), auth),
+  R.composeK(
     // map userLogin to authApolloClient and token
-    auth => authApolloClientTask(url, stateLinkResolvers, R.prop('data', auth))
+    auth => authApolloClientTask(url, stateLinkResolvers, R.prop('data', auth)),
+    // map login values to token
+    auth => loginTask(noAuthApolloClient(url, stateLinkResolvers), auth)
   )
 )(authentication));

@@ -22,17 +22,43 @@ export {
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
   noAuthApolloClientRequestTask
-} from './client/apolloClient'
+} from './client/apolloClient';
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
 export {makeQuery} from './helpers/queryHelpers';
 export {makeMutation} from './helpers/mutationHelpers';
-export {fetch} from './helpers/fetchHttpOrFile'
+export {fetch} from './helpers/fetchHttpOrFile';
 export {formatOutputParams, resolveGraphQLType, formatInputParams} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
 export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';
-export {activeUserRegionsSelector, activeUserSelectedRegionsSelector, regionIdsSelector, regionSelector, regionsSelector} from './selectors/regionSelectors';
+export {
+  activeUserRegionsSelector,
+  activeUserSelectedRegionsSelector,
+  regionIdsSelector,
+  regionSelector,
+  regionsSelector
+} from './selectors/regionSelectors';
 export {mapboxSettingsSelector, settingsSelector} from './selectors/settingsSelectors';
-export {makeActiveUserAndSettingsSelector, makeActiveUserRegionsAndSettingsSelector, makeActiveUserSelectedRegionAndSettingsSelector} from './selectors/storeSelectors';
-export {mergeAndApplyMatchingStyles, applyMatchingStyles, browserDimensionsSelector, makeBrowserProportionalDimensionsSelector, makeMergeDefaultStyleWithProps} from './selectors/styleSelectors';
-export {activeUsersSelector, activeUserSelectedRegionSelector, activeUserValueSelector, userRegionsSelector, userResolvedRegionsSelector, userSelectedRegionSelector, userSelector, usersSelector} from './selectors/userSelectors';
-export {createSelectorResolvedSchema} from './schema/selectorResolvers'
+export {
+  makeActiveUserAndSettingsSelector,
+  makeActiveUserRegionsAndSettingsSelector,
+  makeActiveUserSelectedRegionAndSettingsSelector
+} from './selectors/storeSelectors';
+export {
+  mergeAndApplyMatchingStyles,
+  applyMatchingStyles,
+  browserDimensionsSelector,
+  makeBrowserProportionalDimensionsSelector,
+  makeMergeDefaultStyleWithProps
+} from './selectors/styleSelectors';
+export {
+  activeUsersSelector,
+  activeUserSelectedRegionSelector,
+  activeUserValueSelector,
+  userRegionsSelector,
+  userResolvedRegionsSelector,
+  userSelectedRegionSelector,
+  userSelector,
+  usersSelector
+} from './selectors/userSelectors';
+export {createSelectorResolvedSchema} from './schema/selectorResolvers';
+export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';

@@ -10,6 +10,8 @@
  */
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {createSampleConfig, createSchema, createDefaultConfig} from 'rescape-sample-data';
+import {parseApiUrl} from 'rescape-helpers';
+import * as R from 'ramda';
 
 export const stateLinkResolvers = {
   Mutation: {
@@ -37,6 +39,10 @@ export const testConfig = createDefaultConfig({
       host: 'localhost',
       port: '8000',
       path: '/sop_api/graphql/'
+    },
+    apiAuthorization: {
+      username: 'test',
+      password: 'testpass'
     },
     /*
     // Graphcool configuration. This probably belongs in a graphcool config
@@ -74,7 +80,16 @@ export const testConfig = createDefaultConfig({
   users: {}
 });
 
-export const sampleConfig = createSampleConfig(testConfig);
+const createConfig = () => {
+  const config = createSampleConfig(testConfig);
+  // Create the uri parameter in the config
+  return R.over(
+    R.lensPath(['settings', 'api']),
+    obj => R.merge(obj, {uri: parseApiUrl(obj)}),
+    config
+  );
+};
+export const sampleConfig = createConfig();
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
