@@ -12,7 +12,7 @@
 // Enzyme setup
 import * as R from 'ramda';
 import {JSDOM} from 'jsdom';
-// Makes locaalStorage available in node to Apollo
+// Makes localStorage available in node to Apollo
 import 'localstorage-polyfill'
 
 global.navigator = {

@@ -64,7 +64,8 @@ export const remoteSchemaTask = config => {
 /**
  * Generates a reolsved schema from the server
  * https://www.apollographql.com/docs/graphql-tools/remote-schemas.html
- * @return {Task<GraphQLSchema>}
+ * @param {Object} config Needs settings.api.uri and settings.apiAithorization = {username=..., password=...}
+ * @return {Task<{schema: GraphQLSchema, link: HttpLink}>}
  */
 export const remoteLinkedSchemaTask = config => {
   return R.composeK(
