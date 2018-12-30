@@ -15,7 +15,7 @@ import * as R from 'ramda';
 import {mapped} from 'ramda-lens';
 import {activeUserSelectedRegionsSelector, regionSelector} from '../selectors/regionSelectors';
 import {mergeDeep} from 'rescape-ramda';
-import {createTestSelectorResolvedSchema, sampleConfig} from '../helpers/testHelpers';
+import {createTestSelectorResolvedSchema, testConfig} from '../helpers/testHelpers';
 
 describe('mockExecutableSchema', () => {
 
@@ -33,7 +33,7 @@ describe('mockExecutableSchema', () => {
         }`;
 
     // We expect the resolver to resolve the selected regions for the active user, not all regions
-    const regionsFromSelector = activeUserSelectedRegionsSelector(sampleConfig);
+    const regionsFromSelector = activeUserSelectedRegionsSelector(testConfig);
     const schemaRegionLens = R.compose(R.lensPath(['data', 'regions']), mapped, R.lensProp('id'));
     // Here's what we expect back
     const expected = R.view(schemaRegionLens,
@@ -45,7 +45,7 @@ describe('mockExecutableSchema', () => {
     );
     // graphql params are schema, query, rootValue, context, variables
     const resolvedSchema = createTestSelectorResolvedSchema();
-    const regions = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}).then(
+    const regions = await graphql(resolvedSchema, query, {}, {options: {dataSource: testConfig}}).then(
       result => R.ifElse(
         R.view(R.lensPath(['data'])),
         R.view(schemaRegionLens),
@@ -67,8 +67,8 @@ describe('mockExecutableSchema', () => {
       }
     `;
     // We expect the resolver to resolve the selected regions for the active user, not all regions
-    const region = R.head(R.values(sampleConfig.regions));
-    //const regionFromSelector = regionSelector(sampleConfig, {params: R.pick(['id'], region)});
+    const region = R.head(R.values(testConfig.regions));
+    //const regionFromSelector = regionSelector(testConfig, {params: R.pick(['id'], region)});
     const schemaRegionLens = R.lensPath(['data', 'region']);
     // Here's what we expect back
     const expected =
@@ -78,7 +78,7 @@ describe('mockExecutableSchema', () => {
       });
     // graphql params are schema, query, rootValue, context, variables
     const resolvedSchema = createTestSelectorResolvedSchema();
-    const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}, R.pick(['id'], region)).then(
+    const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: testConfig}}, R.pick(['id'], region)).then(
       result => R.ifElse(
         R.prop('data'),
         R.view(schemaRegionLens),
@@ -103,28 +103,26 @@ describe('mockExecutableSchema', () => {
               }
             }
             geojson {
-              osm {
-                features {
-                  id
+              features {
+                id
+                type
+                geometry {
                   type
-                  geometry {
-                    type
-                    coordinates
-                  }
-                  properties
+                  coordinates
                 }
+                properties
               }
             }
           }
         }
     `;
     // We expect the resolver to resolve the selected regions for the active user, not all regions
-    const region = R.head(R.values(sampleConfig.regions));
+    const region = R.head(R.values(testConfig.regions));
     const schemaRegionLens = R.lensPath(['data', 'region']);
 
     // graphql params are schema, query, rootValue, context, variables
     const resolvedSchema = createTestSelectorResolvedSchema();
-    const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: sampleConfig}}, R.pick(['id'], region)).then(
+    const result = await graphql(resolvedSchema, query, {}, {options: {dataSource: testConfig}}, R.pick(['id'], region)).then(
       result => R.ifElse(
         R.prop('data'),
         R.view(schemaRegionLens),
@@ -150,15 +148,10 @@ describe('mockExecutableSchema', () => {
         ),
         // I just want these from the region.[id|name|mapbox|geojson] geojson is selected below
         R.pick(['id', 'name', 'mapbox'])
-      )(regionSelector(sampleConfig, {params: R.pick(['id'], region)})),
+      )(regionSelector(testConfig, {params: R.pick(['id'], region)})),
       {
-        geojson: R.over(
-          R.lensProp('osm'),
-          // I want just features from region.geojson.osm
-          R.pick(['features']),
-          // I want just osm from region.geojson
-          R.pick(['osm'], makeGeojsonSelector()(sampleConfig, {region}))
-        )
+        // I want just features from region.geojson
+        geojson: R.pick(['features'], makeGeojsonSelector()(testConfig, {region}))
       }
     );
 

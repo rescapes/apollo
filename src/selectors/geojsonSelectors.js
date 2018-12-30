@@ -24,7 +24,7 @@ export const makeFeaturesByTypeSelector = () => (state, {region}) => {
   return createSelector(
     [
       (state, {region}) => {
-        return R.view(R.lensPath(['geojson', 'osm']), region);
+        return R.view(R.lensPath(['geojson']), region);
       }
     ],
     geojsonByType
@@ -52,16 +52,9 @@ export const makeMarkersByTypeSelector = () => (state, {region}) => {
  */
 export const makeGeojsonSelector = () => (state, {region}) => createSelector(
   [
-    makeFeaturesByTypeSelector(),
-    makeMarkersByTypeSelector()
+    (state, {region}) => {
+      return R.view(R.lensPath(['geojson']), region);
+    }
   ],
-  (featuresByType, locationsByType) =>
-    mergeDeep(
-      reqPathThrowing(['geojson'], region),
-      {
-        osm: {
-          featuresByType,
-          locationsByType
-        }
-      })
+  R.identity
 )(state, {region});

@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
-import {createSampleConfig, createSchema, createDefaultConfig} from 'rescape-sample-data';
+import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 
@@ -30,7 +30,7 @@ export const stateLinkResolvers = {
 
 export const testLoginCredentials = {username: "test", password: "testpass"};
 
-export const testConfig = createDefaultConfig({
+export const testConfig = getCurrentConfig({
   // Settings is merged into the overall application state
   settings: {
     domain: 'localhost',
@@ -80,16 +80,6 @@ export const testConfig = createDefaultConfig({
   users: {}
 });
 
-const createConfig = () => {
-  const config = createSampleConfig(testConfig);
-  // Create the uri parameter in the config
-  return R.over(
-    R.lensPath(['settings', 'api']),
-    obj => R.merge(obj, {uri: parseApiUrl(obj)}),
-    config
-  );
-};
-export const sampleConfig = createConfig();
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
@@ -97,5 +87,5 @@ export const sampleConfig = createConfig();
  */
 export const createTestSelectorResolvedSchema = () => {
   const schema = createSchema();
-  return createSelectorResolvedSchema(schema, sampleConfig);
+  return createSelectorResolvedSchema(schema, testConfig);
 };

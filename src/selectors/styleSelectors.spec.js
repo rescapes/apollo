@@ -16,7 +16,6 @@ import {
 } from './styleSelectors';
 import {makeMergeDefaultStyleWithProps} from './styleSelectors';
 import * as R from 'ramda';
-import {styleMultiplier} from 'rescape-helpers-component';
 
 describe('styleSelectors', () => {
   test('makeMergeDefaultStyleWithProps', () => {
@@ -85,8 +84,8 @@ describe('styleSelectors', () => {
     }, {
       bird: 3,
       position: 'absolute',
-      width: styleMultiplier(2),
-      height: styleMultiplier(3)
+      width: value => value * 2,
+      height: value => value * 3,
     })).toEqual({
       cow: 1,
       bird: 3,
@@ -104,8 +103,8 @@ describe('styleSelectors', () => {
     }, {
       position: 'absolute',
       cow: 2,
-      width: styleMultiplier(2),
-      height: styleMultiplier(3)
+      width: value => value * 2,
+      height: value => value * 3,
     }, ['sankeyFiltererItem'])).toEqual({
       position: 'absolute',
       cow: 2,

@@ -9,7 +9,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeGeojsonSelector} from '../selectors/geojsonSelectors';
+import {
+  makeFeaturesByTypeSelector, makeGeojsonSelector,
+  makeMarkersByTypeSelector
+} from '../selectors/geojsonSelectors';
 import {addResolveFunctionsToSchema} from 'graphql-tools';
 import * as R from 'ramda';
 import {reqPathThrowing} from 'rescape-ramda';
@@ -21,7 +24,9 @@ import {
 import {mapboxSelector} from '../selectors/mapboxSelectors';
 
 // Trivial resolver for our dataSource, just strips object keys and returns values
-const objectValues = field => parent => R.values(reqPathThrowing([field], parent));
+const objectValues = field => parent => {
+  return R.values(reqPathThrowing([field], parent));
+};
 // Calls the given selector, treating the dataSource state and passing props through
 const selectorValues = selector => (parent, params, {options: {dataSource}}) => R.values(selector(dataSource, {params}));
 const selectorValue = selector => (parent, params, {options: {dataSource}}) => selector(dataSource, {params});
@@ -43,11 +48,8 @@ export const makeSelectorResolvers = () => ({
     //permissions: objectValues('permissions'),
     regions: objectValues('regions')
   },
-  OpenStreetMap: {
-    features: objectValues('features')
-  },
   Location: {
-    features: objectValues('features')
+    features: parent => objectValues('features')(parent)
   },
   Sankey: {},
 
@@ -57,7 +59,9 @@ export const makeSelectorResolvers = () => ({
 
   //SankeyStage: {},
 
-  Geojson: {},
+  Geojson: {
+    features: parent => objectValues('features')(parent)
+  },
 
   Bounds: {},
   Geospatial: {},
@@ -83,7 +87,6 @@ export const makeSelectorResolvers = () => ({
   },
 
   Settings: {},
-
 
 
   Query: {

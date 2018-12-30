@@ -11,11 +11,11 @@
 
 import {remoteSchemaTask, remoteLinkedSchemaTask} from './remoteSchema';
 import {defaultRunConfig} from 'rescape-ramda';
-import {sampleConfig} from '../helpers/testHelpers';
+import {testConfig} from '../helpers/testHelpers';
 
 describe('schema', () => {
   test('remoteSchemaTask', done => {
-    remoteSchemaTask(sampleConfig).run().listen(
+    remoteSchemaTask(testConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO add test resolvers and query
@@ -27,7 +27,7 @@ describe('schema', () => {
   }, 200000);
 
   test('remoteLinkedSchemaTask', done => {
-    remoteLinkedSchemaTask(sampleConfig).run().listen(
+    remoteLinkedSchemaTask(testConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO test queries

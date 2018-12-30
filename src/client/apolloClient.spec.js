@@ -11,13 +11,13 @@
 import gql from 'graphql-tag';
 import {reqStrPath, defaultRunConfig, taskToPromise} from 'rescape-ramda';
 import * as Result from 'folktale/result';
-import {sampleConfig, testLoginCredentials} from '../helpers/testHelpers';
+import {testConfig, testLoginCredentials} from '../helpers/testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import {loginToAuthClientTask} from '../auth/login';
 import {stateLinkResolvers} from '../helpers/testHelpers';
 import {noAuthApolloClient} from './apolloClient';
 
-const {settings: {api}} = sampleConfig;
+const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
 /**

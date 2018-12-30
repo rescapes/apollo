@@ -42,18 +42,18 @@ describe('geojsonSelectors', () => {
           viewport: {some: 'thing'}
         },
         geojson: {
-          osm: {features},
-          locations
-        }
+          features
+        },
+        locations
       },
       boo: {
         mapbox: {
           viewport: {what: 'ever'}
         },
         geojson: {
-          osm: {features},
-          locations
-        }
+          features
+        },
+        locations
       }
     },
     users: {
@@ -68,12 +68,7 @@ describe('geojsonSelectors', () => {
 
     const region = state.regions.foo;
     const expected = {
-      osm: {
-        features,
-        featuresByType: makeFeaturesByTypeSelector()(state, {region}),
-        locationsByType: makeMarkersByTypeSelector()(state, {region})
-      },
-      locations
+      features,
     };
     expect(makeGeojsonSelector()(state, {region})).toEqual(expected);
   });
