@@ -64,6 +64,38 @@ describe('apolloClient', () => {
     expect(reqStrPathThrowing('data.region.key', response)).toEqual('earth');
   });
 
+  test('test query caching', async () => {
+    // Login, this calls createApolloClient
+    const {apolloClient, unsubscribe} = await taskToPromise(loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, testLoginCredentials));
+
+    const queryArticles = gql`
+    query region($key: String!) {
+          region(key: $key) {
+              id
+              key
+              name
+          }
+    }`;
+
+    const response = await apolloClient.query({
+        query: queryArticles,
+        variables: {key: "earth"}
+      }
+    );
+    expect(reqStrPathThrowing('data.region.key', response)).toEqual('earth');
+
+    // Make sure the data is now in the cache
+    const localResponse = apolloClient.readQuery({
+        query: queryArticles,
+        variables: {key: "earth"}
+      }
+    );
+
+    // Note that the result is not wrapped in data: {}
+    expect(reqStrPathThrowing('region.key', localResponse)).toEqual('earth');
+  });
+
+
   test('test linkState caching', async () => {
 
     const {apolloClient, unsubscribe} = await taskToPromise(
@@ -119,6 +151,7 @@ describe('apolloClient', () => {
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponse)).toEqual(true);
     expect(reqStrPathThrowing('data.region.key', queryResponse)).toEqual('earth');
 
+    // Make sure unsubscribe clears the local state
     unsubscribe();
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryInitialResponse)).toEqual(false);
   });
