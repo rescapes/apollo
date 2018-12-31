@@ -13,7 +13,11 @@ import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data'
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 
-export const stateLinkResolvers = {
+/**
+ * StateLink resolvers for testing.
+ * @type {{Mutation: {updateNetworkStatus: function(*, {isConnected: *}, {cache: *})}}}
+ */
+const sampleStateLinkResolvers = {
   Mutation: {
     updateNetworkStatus: (_, {isConnected}, {cache}) => {
       const data = {
@@ -25,7 +29,38 @@ export const stateLinkResolvers = {
       cache.writeData({data});
       return null;
     }
+  },
+  Query: {
+    // State Link resolvers
+    //networkStatus: (obj, args, context, info) =>
   }
+};
+
+/**
+ * Deafult values for StateLink resolvers
+ * @type {{networkStatus: {__typename: string, isConnected: boolean}}}
+ */
+const stateLinkDefaults = {
+  networkStatus: {
+    __typename: 'NetworkStatus',
+    isConnected: false
+  }
+  /*
+  // Same as passing defaults above
+cache.writeData({
+  data: {
+    networkStatus: {
+      __typename: 'NetworkStatus',
+     isConnected: true,
+    },
+  },
+});
+   */
+};
+
+
+export const sampleStateLinkResolversAndDefaults = {
+  resolvers: sampleStateLinkResolvers, defaults: stateLinkDefaults
 };
 
 export const testLoginCredentials = {username: "test", password: "testpass"};

@@ -47,7 +47,7 @@ export const loginTask = v(R.curry((noAuthClient, variables) => noAuthApolloClie
   ['noAuthClient', PropTypes.shape().isRequired],
   ['variables', PropTypes.shape({
     username: PropTypes.string.isRequired,
-    password: PropTypes.string.isRequired,
+    password: PropTypes.string.isRequired
   }).isRequired]
 ]);
 
@@ -58,15 +58,15 @@ export const loginTask = v(R.curry((noAuthClient, variables) => noAuthApolloClie
  * @param {Object} values
  * @param {String} values.username The username
  * @param {String} values.password The password
+ * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
  */
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
   // Use unauthenticated ApolloClient for login
-  const login = loginTask(noAuthApolloClient(uri, stateLinkResolvers));
+  const {apolloClient} = noAuthApolloClient(uri, stateLinkResolvers);
+  const login = loginTask(apolloClient);
   return R.composeK(
-    loginResult => {
-      // loginResult.data contains {tokenAuth: token}
-      return authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult));
-    },
+    // loginResult.data contains {tokenAuth: token}
+    loginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult)),
     args => login(args)
   )(variables);
 });

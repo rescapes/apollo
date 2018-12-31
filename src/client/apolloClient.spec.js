@@ -9,13 +9,12 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import gql from 'graphql-tag';
-import {reqStrPath, defaultRunConfig, taskToPromise} from 'rescape-ramda';
+import {reqStrPathThrowing, defaultRunConfig, taskToPromise} from 'rescape-ramda';
 import * as Result from 'folktale/result';
-import {testConfig, testLoginCredentials} from '../helpers/testHelpers';
+import {sampleStateLinkResolversAndDefaults, testConfig, testLoginCredentials} from '../helpers/testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import {loginToAuthClientTask} from '../auth/login';
-import {stateLinkResolvers} from '../helpers/testHelpers';
-import {noAuthApolloClient} from './apolloClient';
+import {authApolloClientMutationRequestTask, getUnsubscribe, noAuthApolloClient} from './apolloClient';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -27,8 +26,8 @@ describe('apolloClient', () => {
 
 
   test('Confirm queries work', async () => {
-    const noAuthClient = noAuthApolloClient(uri, stateLinkResolvers);
-    const response = await noAuthClient.query({
+    const {apolloClient, unsubscribe} = noAuthApolloClient(uri, sampleStateLinkResolversAndDefaults);
+    const response = await apolloClient.query({
       query: gql`query goalsQuery {
 	goals {
     key
@@ -38,27 +37,89 @@ describe('apolloClient', () => {
   }
 }`
     });
-    expect(reqStrPath('data.goals.0.name', response)).toEqual(Result.Ok('walkability'));
+    expect(reqStrPathThrowing('data.goals.0.name', response)).toEqual('walkability');
   });
 
-  test('createApolloClient with sample data', async() => {
+  test('createApolloClient with sample data', async () => {
 
     // Login, this calls createApolloClient
-    const {authClient, token} = await taskToPromise(loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials));
-    // Make sure it can query
-    // Pass our authApolloClient and token here
-    const response = await authClient.query({
-        query: gql`
+    const {apolloClient, unsubscribe} = await taskToPromise(loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, testLoginCredentials));
+
+    const queryArticles = gql`
     query region($key: String!) {
           region(key: $key) {
               id
               key
               name
           }
-    }`,
+    }`;
+
+    // Make sure it can query
+    // Pass our authApolloClient and token here
+    const response = await apolloClient.query({
+        query: queryArticles,
         variables: {key: "earth"}
       }
     );
-    expect(reqStrPath('data.region.key', response)).toEqual(Result.Ok('earth'));
+    expect(reqStrPathThrowing('data.region.key', response)).toEqual('earth');
+  });
+
+  test('test linkState caching', async () => {
+
+    const {apolloClient, unsubscribe} = await taskToPromise(
+      loginToAuthClientTask(
+        uri,
+        sampleStateLinkResolversAndDefaults,
+        testLoginCredentials
+      )
+    );
+
+    const mutateNetworkStatus = gql`
+  mutation updateNetworkStatus($isConnected: Boolean) {
+    updateNetworkStatus(isConnected: $isConnected) @client
+  }
+`;
+
+    const queryRegion = gql`
+  query($key: String) {
+    networkStatus @client {
+      isConnected
+    }
+    region(key: $key) {
+        id
+        key
+        name
+    }
+  }
+`;
+
+    // Initially our networkStatus.isConnected is false because we defaulted it thus
+    const queryInitialResponse = await apolloClient.query({
+        query: queryRegion,
+        variables: {key: "earth"}
+      }
+    );
+    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryInitialResponse)).toEqual(false);
+    expect(reqStrPathThrowing('data.region.key', queryInitialResponse)).toEqual('earth');
+
+    // Update the network status
+    const murateResponse = await apolloClient.mutate(
+      {
+        mutation: mutateNetworkStatus,
+        variables: {isConnected: true}
+      }
+    );
+
+    // Query it again
+    const queryResponse = await apolloClient.query({
+        query: queryRegion,
+        variables: {key: "earth"}
+      }
+    );
+    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponse)).toEqual(true);
+    expect(reqStrPathThrowing('data.region.key', queryResponse)).toEqual('earth');
+
+    unsubscribe();
+    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryInitialResponse)).toEqual(false);
   });
 });

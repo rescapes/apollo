@@ -100,7 +100,7 @@ export const makeSelectorResolvers = () => ({
     // Resolves the active user in a container
     users: selectorValues(activeUsersSelector),
     // Resolves the specified user
-    user: selectorValue(userSelector)
+    user: selectorValue(userSelector),
   },
 
   Mutation: {

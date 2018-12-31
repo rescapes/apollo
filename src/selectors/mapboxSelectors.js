@@ -33,8 +33,8 @@ import PropTypes from 'prop-types';
  * @param {Object} region Region containing mapbox
  * @return {Mapbox} A complete Mapbox object
  */
-export const mapboxSelector = v((state, {region}) => {
-  const mapbox = reqStrPathThrowing('mapbox', region);
+export const mapboxSelector = v((state, {scope}) => {
+  const mapbox = reqStrPathThrowing('region.mapbox', scope);
   return createSelector(
     [
       mapboxSettingsSelector,
@@ -55,6 +55,7 @@ export const mapboxSelector = v((state, {region}) => {
 }, [
   ['state', PropTypes.shape().isRequired],
   ['props', PropTypes.shape({
+    scope: PropTypes.shape().isRequired,
     region: PropTypes.shape().isRequired
   }).isRequired]
 ], 'mapboxSelector');

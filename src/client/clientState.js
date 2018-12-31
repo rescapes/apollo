@@ -9,15 +9,25 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { withClientState } from 'apollo-link-state';
+import {withClientState} from 'apollo-link-state';
+import * as R from 'ramda'
 
 /**
  * Create an Apollo Client State with the given cache and stateLinkResolvers
  * @param cache E.g. InMemoryCache
- * @param stateLinkResolvers The stateLinkResolvers for the schema
+ * @param {Object} stateLinkResolvers The stateLinkResolvers for the schema or
+ * And object with resolvers and defaults keys to pass both resolvers and defaults
  * @return ApolloLinkState ClientState
  */
-export default (cache, stateLinkResolvers) => withClientState({
-  cache,
-  resolvers: stateLinkResolvers
-})
+export default (cache, stateLinkResolvers) => withClientState(
+  R.merge(
+    {
+      cache
+    },
+    R.ifElse(
+      R.has('resolvers'),
+      R.identity,
+      resolvers => ({resolvers})
+    )(stateLinkResolvers)
+  )
+);
