@@ -66,4 +66,4 @@ describe('requestHelpers', () => {
     expect(resolve('foo', 23.1)).toEqual('Float');
     expect(resolve('foo', Number)).toEqual('Number');
   });
-}, 1000);
+});

@@ -24,8 +24,8 @@ export {
   noAuthApolloClientRequestTask
 } from './client/apolloClient';
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
-export {makeQuery} from './helpers/queryHelpers';
-export {makeMutation} from './helpers/mutationHelpers';
+export {makeQuery, makeQueryTask} from './helpers/queryHelpers';
+export {makeMutation, makeMutationTask} from './helpers/mutationHelpers';
 export {fetch} from './helpers/fetchHttpOrFile';
 export {formatOutputParams, resolveGraphQLType, formatInputParams} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';

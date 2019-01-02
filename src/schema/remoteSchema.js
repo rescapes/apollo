@@ -54,7 +54,7 @@ export const remoteSchemaTask = config => {
           uri,
           // StateLinkResolvers are empty for now
           {},
-          reqStrPathThrowing('settings.apiAuthorization', config)
+          reqStrPathThrowing('settings.testAuthorization', config)
         )
       );
     }

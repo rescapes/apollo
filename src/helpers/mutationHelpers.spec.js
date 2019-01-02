@@ -11,11 +11,41 @@
 
 import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams} from './sampleData';
-import {makeMutation} from './mutationHelpers';
+import {makeMutation, makeMutationTask} from './mutationHelpers';
+import {sampleStateLinkResolversAndDefaults, testConfig} from './testHelpers';
+import {authClientOrLoginTask} from '../auth/login';
+import {parseApiUrl} from 'rescape-helpers';
+import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import * as R from 'ramda';
+import moment from 'moment';
 
 describe('mutationHelpers', () => {
   test('makeMutation', () => {
-    const result = makeMutation('createSampleResource', sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams)
+    const result = makeMutation('createSampleResource', sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams);
     expect(result).toMatchSnapshot();
-  })
-}, 1000);
+  });
+
+  test('makeMutationTask', done => {
+    const {settings: {api}} = testConfig;
+    const uri = parseApiUrl(api);
+    const task = R.composeK(
+      ({apolloClient}) => makeMutationTask(
+        apolloClient,
+        {name: 'region'},
+        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+        {
+          key: `test${moment().format('HH-mm-SS')}`,
+          name: `Test${moment().format('HH-mm-SS')}`
+        }
+      ),
+      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+    )();
+    task.run().listen(defaultRunConfig({
+      onResolved:
+        region => {
+          expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          done();
+        }
+    }));
+  }, 1000);
+});

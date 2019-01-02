@@ -31,7 +31,7 @@ const sampleStateLinkResolvers = {
     }
   },
   Query: {
-    // State Link resolvers
+    // State Link resolvers. Only needed to do fancy stuff
     //networkStatus: (obj, args, context, info) =>
   }
 };
@@ -63,8 +63,6 @@ export const sampleStateLinkResolversAndDefaults = {
   resolvers: sampleStateLinkResolvers, defaults: stateLinkDefaults
 };
 
-export const testLoginCredentials = {username: "test", password: "testpass"};
-
 export const testConfig = getCurrentConfig({
   // Settings is merged into the overall application state
   settings: {
@@ -72,23 +70,14 @@ export const testConfig = getCurrentConfig({
     api: {
       protocol: 'http',
       host: 'localhost',
-      port: '8000',
-      path: '/sop_api/graphql/'
+      port: '8008',
+      path: '/graphql/'
     },
-    apiAuthorization: {
+    // Used to authenticate with the API above in tests
+    testAuthorization: {
       username: 'test',
       password: 'testpass'
     },
-    /*
-    // Graphcool configuration. This probably belongs in a graphcool config
-    graphcool: {
-      userId: 'graphcool-user-id',
-      authTokenKey: 'graphcool-auth-token',
-      serviceIdKey:'cjajyycub38710185wt87zsm8',
-      // This is just from the tutorial code
-      linksPerPage: 5,
-    },
-    */
     // Overpass API configuration to play nice with the server's strict throttling
     overpass: {
       cellSize: 100,
@@ -104,11 +93,6 @@ export const testConfig = getCurrentConfig({
       showZoomControls: true,
       // Universal Mapbox parameters to apply to any mapbox instance
       preventStyleDiffing: false
-    },
-    cycle: {
-      drivers: {
-        api: 'HTTP'
-      }
     }
   },
   regions: {},

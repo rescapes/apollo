@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {testLoginCredentials, testConfig} from '../helpers/testHelpers';
+import {testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
@@ -24,7 +24,7 @@ describe('login', () => {
   test('testLoginCredentials', done => {
 
     const client = noAuthApolloClient(uri, {});
-    const login = loginTask(client, testLoginCredentials);
+    const login = loginTask(client, reqStrPathThrowing('settings.testAuthorization', testConfig));
 
     const verifyTokenTask = (authClient, {token}) => {
       return R.map(
@@ -72,15 +72,15 @@ describe('login', () => {
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
-    const task = authClientOrLoginTask(uri, stateLinkResolvers, testLoginCredentials);
+    const task = authClientOrLoginTask(uri, stateLinkResolvers, reqStrPathThrowing('settings.testAuthorization', testConfig));
     task.run().listen(defaultRunConfig(
       {
-        onResolved: ({token, authClient}) => {
+        onResolved: ({token, apolloClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(uri, stateLinkResolvers, authClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(uri, stateLinkResolvers, apolloClient).run().listen(defaultRunConfig(
             {
-              onResolved: ({token, authClient: authClient2}) => {
-                expect(authClient).toEqual(authClient2);
+              onResolved: ({token, apolloClient: apolloClient2}) => {
+                expect(apolloClient).toEqual(apolloClient2);
                 done();
               }
             })
@@ -92,7 +92,7 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
 
-    loginToAuthClientTask(uri, stateLinkResolvers, testLoginCredentials).run().listen(defaultRunConfig(
+    loginToAuthClientTask(uri, stateLinkResolvers, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {

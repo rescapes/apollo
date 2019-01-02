@@ -9,12 +9,52 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQuery} from './queryHelpers';
+import {makeQuery, makeQueryTask} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
+import {authClientOrLoginTask} from '../auth/login';
+import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import {sampleStateLinkResolversAndDefaults, testConfig} from './testHelpers';
+import {parseApiUrl} from 'rescape-helpers';
+import * as R from 'ramda';
+import {makeMutationTask} from './mutationHelpers';
+import moment from 'moment';
 
 describe('queryHelpers', () => {
 
   test('makeQuery', () => {
-    expect(makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot()
-  })
+    expect(makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot();
+  });
+
+  test('makeQueryTask', done => {
+    const {settings: {api}} = testConfig;
+    const uri = parseApiUrl(api);
+    const task = R.composeK(
+      ({apolloClient, region}) => makeQueryTask(
+        apolloClient,
+        {name: 'region', readInputTypeMapper: {}},
+        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+        {key: region.key}
+      ),
+      ({apolloClient}) => R.map(
+        region => ({apolloClient, region}),
+        makeMutationTask(
+          apolloClient,
+          {name: 'region'},
+          ['key'],
+          {
+            key: `test${moment().format('HH-mm-SS')}`,
+            name: `Test${moment().format('HH-mm-SS')}`
+          }
+        )
+      ),
+      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+    )();
+    task.run().listen(defaultRunConfig({
+      onResolved:
+        region => {
+          expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          done();
+        }
+    }));
+  }, 1000);
 });

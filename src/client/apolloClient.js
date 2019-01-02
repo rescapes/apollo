@@ -22,8 +22,8 @@ import {task, of} from 'folktale/concurrency/task';
 /**
  * Creates an ApolloClient.
  * @param {String} uri The uri of the graphql server
- * @param {Object} stateLinkResolvers The stateLinkResolvers for the schema or
- * And object with resolvers and defaults keys to pass both resolvers and defaults
+ * @param {Object} stateLinkResolversAndDefaults The stateLinkResolvers for the schema or
+ * An object with resolvers and defaults keys to pass both resolvers and defaults
  * Example {
  *  resolvers: {
     Mutation: {
@@ -53,7 +53,7 @@ import {task, of} from 'folktale/concurrency/task';
  * } used for hard coding the authorization for testing
  * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
  */
-const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
+const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}) => {
   const httpLink = createHttpLink({
     uri
   });
@@ -92,7 +92,7 @@ const createApolloClient = (uri, stateLinkResolvers, fixedHeaders = {}) => {
   // Create the state link for local caching
   const stateLink = createStateLink(
     cache,
-    stateLinkResolvers
+    stateLinkResolversAndDefaults
   );
 
 
@@ -197,11 +197,12 @@ export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClien
 /**
  * Given a token returns a GraphQL client
  * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} stateLinkResolverAndDefaults: Resolvers for the stateLink, meaning local caching
+ * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param authToken
  * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
  */
-export const authApolloClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers, {
+export const authApolloClient = (url, stateLinkResolverAndDefaults, authToken) => createApolloClient(url, stateLinkResolverAndDefaults, {
   authorization: `JWT ${authToken}`
 });
 
@@ -220,16 +221,17 @@ export const noAuthApolloClientRequestTask = (client, ...args) => {
  * Given a userLogin with a tokenAuth.token create the authApolloClient and return it and the token
  * This method is synchronous but returns a Task to be used in API chains
  * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} stateLinkResolversAndDefaults: Resolvers for the stateLink, meaning local caching.
+ * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param {Object} userLogin Return value from loginTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
  * @return {Task<Object>} Task containing and object with a apolloClient, unsubscribe, token. unsubscribe
  * can be used to clear the local state on logout
  */
-export const authApolloClientTask = R.curry((url, stateLinkResolvers, userLogin) => {
+export const authApolloClientTask = R.curry((url, stateLinkResolversAndDefaults, userLogin) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
-  return of({token, ...authApolloClient(url, stateLinkResolvers, token)});
+  return of({token, ...authApolloClient(url, stateLinkResolversAndDefaults, token)});
 });
 
 /***

@@ -11,11 +11,13 @@
 import gql from 'graphql-tag';
 import {reqStrPathThrowing, defaultRunConfig, taskToPromise} from 'rescape-ramda';
 import * as Result from 'folktale/result';
-import {sampleStateLinkResolversAndDefaults, testConfig, testLoginCredentials} from '../helpers/testHelpers';
+import {sampleStateLinkResolversAndDefaults, testConfig} from  '../helpers/testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
-import {loginToAuthClientTask} from '../auth/login';
+import {authClientOrLoginTask, loginToAuthClientTask} from '../auth/login';
 import {authApolloClientMutationRequestTask, getUnsubscribe, noAuthApolloClient} from './apolloClient';
+import {makeMutationTask} from '../helpers/mutationHelpers';
 
+import * as R from 'ramda'
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
@@ -29,24 +31,43 @@ describe('apolloClient', () => {
     const {apolloClient, unsubscribe} = noAuthApolloClient(uri, sampleStateLinkResolversAndDefaults);
     const response = await apolloClient.query({
       query: gql`query goalsQuery {
-	goals {
+	regions {
     key
     name
-    number
-    imageName
   }
 }`
     });
-    expect(reqStrPathThrowing('data.goals.0.name', response)).toEqual('walkability');
+    expect(reqStrPathThrowing('data.regions', response)).toBeTruthy()
   });
 
   test('createApolloClient with sample data', async () => {
 
-    // Login, this calls createApolloClient
-    const {apolloClient, unsubscribe} = await taskToPromise(loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, testLoginCredentials));
+    // Make sample region. This will update if the key: 'earth' already exists, since key is a unique prop on Region
+    // and there is not automatic incrementor on region
+    await taskToPromise(R.composeK(
+      ({apolloClient}) => makeMutationTask(
+        apolloClient,
+        {name: 'region'},
+        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+        {
+          key: 'earth',
+          name: 'Earth'
+        }
+      ),
+      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+    )());
 
-    const queryArticles = gql`
-    query region($key: String!) {
+    // Login, this calls createApolloClient
+    const {apolloClient, unsubscribe} = await taskToPromise(
+      loginToAuthClientTask(
+        uri,
+        sampleStateLinkResolversAndDefaults,
+        reqStrPathThrowing('settings.testAuthorization', testConfig)
+      )
+    );
+
+    const queryRegions = gql`
+    query regions($key: String!) {
           region(key: $key) {
               id
               key
@@ -57,16 +78,16 @@ describe('apolloClient', () => {
     // Make sure it can query
     // Pass our authApolloClient and token here
     const response = await apolloClient.query({
-        query: queryArticles,
+        query: queryRegions,
         variables: {key: "earth"}
       }
     );
-    expect(reqStrPathThrowing('data.region.key', response)).toEqual('earth');
+    expect(reqStrPathThrowing('data.region', response)).toBeTruthy()
   });
 
   test('test query caching', async () => {
     // Login, this calls createApolloClient
-    const {apolloClient, unsubscribe} = await taskToPromise(loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, testLoginCredentials));
+    const {apolloClient, unsubscribe} = await taskToPromise(loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig)));
 
     const queryArticles = gql`
     query region($key: String!) {
@@ -102,7 +123,7 @@ describe('apolloClient', () => {
       loginToAuthClientTask(
         uri,
         sampleStateLinkResolversAndDefaults,
-        testLoginCredentials
+        reqStrPathThrowing('settings.testAuthorization', testConfig)
       )
     );
 

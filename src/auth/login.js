@@ -99,7 +99,8 @@ export const refreshToken = R.curry((authClient, variables) => authApolloClientM
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
- * @returns {Object} Authorized Apollo Client
+ * @returns {Object} {apolloClient: Authorized Apollo Client, token: The authentication token, unsubscribe: unsubscribe
+ * function to clear the link state}
  */
 export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentication) => R.ifElse(
   auth => R.is(ApolloClient, auth),
@@ -109,6 +110,9 @@ export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentic
     // map userLogin to authApolloClient and token
     auth => authApolloClientTask(url, stateLinkResolvers, R.prop('data', auth)),
     // map login values to token
-    auth => loginTask(noAuthApolloClient(url, stateLinkResolvers), auth)
+    auth => {
+      const {apolloClient} = noAuthApolloClient(url, stateLinkResolvers);
+      return loginTask(apolloClient, auth);
+    }
   )
 )(authentication));

@@ -19,23 +19,73 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues} from 'rescape-ramda';
 import * as R from 'ramda';
 import {formatOutputParams, formatInputParams} from './requestHelpers';
+import {authApolloClientMutationRequestTask} from '../client/apolloClient';
+import {debug} from './logHelpers';
+import {replaceValuesWithCountAtDepthAndStringify, reqPathThrowing, capitalize} from 'rescape-ramda';
+import gql from 'graphql-tag';
 
 /**
  * Makes the location query based on the queryParams
  * @param {String} queryName
- * @param {Object} inputParamTypeMapper maps Object params paths to the correct input type for the query
- * e.g. { 'data': 'DataTypeRelatedReadInputType' }
  * @param {Object} inputParams input object for the mutation. These are in javascript in a the same format as
  * graphql, then translated here to a graphql string
  * @param {Object} outputParams
  */
-export const makeMutation = R.curry((mutationName, inputParamTypeMapper, inputParams, outputParams) => {
+export const makeMutation = R.curry((mutationName, inputParams, outputParams) => {
   return `mutation ${mutationName}Mutation { 
 ${mutationName}(${formatInputParams(inputParams)}) {
   ${formatOutputParams(outputParams)}
   }
 }`;
+});
+
+
+/**
+ * Makes a mutation task
+ * @param {Object} apolloClient An authorized Apollo Client
+ * @param {String} name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
+ * @param [String|Object] outputParams output parameters for the query in this style json format:
+ *  ['id',
+ *   {
+ *        data: [
+ *         'foo',
+ *         {
+ *            properties: [
+ *             'type',
+ *            ]
+ *         },
+ *         'bar',
+ *       ]
+ *    }
+ *  ]
+ *  @param {Object} inputParams Object matching the shape of a region. E.g.
+ *  {id: 1, city: "Stavanger", data: {foo: 2}}
+ *  Creates need all required fields and updates need at minimum the id
+ *  @param {Task} An apollo mutation task that resolves to return parameters of the mutation
+ */
+export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inputParams) => {
+  const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;
+  const mutation = makeMutation(
+    createOrUpdateName,
+    {[`${name}Data`]: inputParams},
+    {[name]: outputParams}
+  );
+  if (R.any(R.isNil, R.values(inputParams))) {
+    throw new Error(`inputParams have null values ${inputParams}`);
+  }
+
+  return R.map(
+    mutationResponse => {
+      debug(`makeMutationTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
+      return reqPathThrowing(['data', createOrUpdateName, name], mutationResponse)
+    },
+    authApolloClientMutationRequestTask(
+      apolloClient,
+      {
+        mutation: gql`${mutation}`
+      }
+    )
+  );
 });

@@ -9,9 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues} from 'rescape-ramda';
+import {mapObjToValues, reqPathThrowing, capitalize} from 'rescape-ramda';
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams} from './requestHelpers';
+import {authApolloClientQueryRequestTask} from '../client/apolloClient';
+import {debug} from './logHelpers';
+import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
+import gql from 'graphql-tag';
 
 /**
  * Makes the location query based on the queryParams
@@ -47,4 +51,46 @@ ${queryName}(${variables}) {
   ${formatOutputParams(outputParams)}
   }
 }`;
+});
+
+/**
+ * Creates a query task for any type
+ * @params {Object} client The Apollo client, authenticated for most calls
+ * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
+ * @param [String|Object] outputParams output parameters for the query in this style json format:
+ *  [
+ *    'id',
+ *    {
+ *        data: [
+ *         'foo',
+ *         {
+ *            properties: [
+ *             'type',
+ *            ]
+ *         },
+ *         'bar',
+ *       ]
+ *    }
+ *  ]
+ *  @param {Object} queryParams Object of simple or complex parameters. Example:
+ *  {city: "Stavanger", data: {foo: 2}}
+ *  @param {Task} An apollo query task that resolves to the params being queried
+ */
+export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryParams) => {
+  const query = makeQuery(name, readInputTypeMapper, outputParams, queryParams);
+  return R.map(
+    queryResponse => {
+      debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      return reqPathThrowing(['data', name], queryResponse)
+    },
+    authApolloClientQueryRequestTask(
+      apolloClient,
+      {
+        query: gql`${query}`,
+        variables: queryParams
+      }
+    )
+  );
 });

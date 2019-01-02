@@ -38,8 +38,8 @@ import * as R from 'ramda';
 export const formatOutputParams = (outputParam, indentLevel = 0) => {
   const indent = R.join('', R.repeat('\t', indentLevel));
   const v = R.cond([
-    // Value is a string, just return it on one line
-    [R.is(String),
+    // Value is a string or number, just return it on one line
+    [R.either(R.is(String), R.is(Number)),
       value => [
         `${indent}${value}`
       ]
