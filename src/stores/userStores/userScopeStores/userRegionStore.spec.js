@@ -10,21 +10,25 @@
  */
 
 import {makeUserRegionQueryTask, userStateOutputParams} from './userRegionStore';
-import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, tas} from 'rescape-ramda';
 import {stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryTask, userOutputParams} from '../userStore';
 
 describe('userRegionStore', () => {
   test('makeUserRegionQueryTask', done => {
+    const someRegionKeys = ['id', 'key', 'name', 'data'];
     R.composeK(
-      ({apolloClient}) => makeUserRegionQueryTask(apolloClient, userStateOutputParams, {user: {id: userId}}, {}),
-      ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams),
+      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, userStateOutputParams, {user: {id: userId}}, {}),
+      ({apolloClient}) => R.map(
+        response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
+        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+      ),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
-        region => {
-          expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+        response => {
+          expect(R.keys(R.pick(someRegionKeys, response))).toEqual(someRegionKeys);
           done();
         }
     }));

@@ -106,7 +106,6 @@ export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArgumen
   }),
   [
     ['apolloClient', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.array.isRequired],
     ['userStateArguments', PropTypes.shape({
       user: PropTypes.shape({
         id: PropTypes.oneOfType([

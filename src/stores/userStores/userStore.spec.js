@@ -16,13 +16,21 @@ import {makeCurrentUserQueryTask, userOutputParams} from './userStore';
 
 describe('userStore', () => {
   test('makeUserUserQueryTask', done => {
+    const someUserKeys = ['id', 'email', 'username'];
     R.composeK(
       ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams),
       () => testAuthTask
-  )().run().listen(defaultRunConfig({
+    )().run().listen(defaultRunConfig({
       onResolved:
-        user => {
-          expect(R.keys(user)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+        response => {
+          expect(
+            R.keys(
+              R.pick(someUserKeys,
+                reqStrPathThrowing('data.currentUser', response
+                )
+              )
+            )
+          ).toEqual(someUserKeys);
           done();
         }
     }));
