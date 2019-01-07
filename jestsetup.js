@@ -52,11 +52,6 @@ window.URL.createObjectURL = () => {
 
 Error.stackTraceLimit = Infinity;
 
-// Fail tests on any warning
-console.error = message => {
-  throw new Error(message);
-};
-
 // https://github.com/facebook/jest/issues/3251
 process.on('unhandledRejection', reason => {
   throw reason

@@ -23,9 +23,10 @@ import gql from 'graphql-tag';
  * @param {Object} inputParamTypeMapper maps Object params paths to the correct input type for the query
  * e.g. { 'data': 'DataTypeRelatedReadInputType' }
  * @param {Object} outputParams
- * @param {Object} queryParams
+ * @param {Object} queryArguments
+ * @returns {String} The query in a string
  */
-export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryParams) => {
+export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
 
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
@@ -36,18 +37,22 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
       // Map the key to the inputParamTypeMapper value for that key if given
       // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
       return `$${key}: ${resolve(key, value)}!`;
-    }, queryParams)
+    }, queryArguments)
   );
-  // These are the second line variables that map parameters to variables
-  const variables = R.join(
+  // These are the second line arguments that map parameters to variables
+  const args = R.join(
     ', ',
     mapObjToValues((value, key) => {
       return `${key}: $${key}`;
-    }, queryParams)
+    }, queryArguments)
   );
 
-  return `query(${params}) { 
-${queryName}(${variables}) {
+  // Only use parens if there are actually variables/arguments
+  const variableString = R.ifElse(R.length, R.always(`(${params})`), R.always(''))(R.keys(queryArguments));
+
+  // We use the queryName as the label of the query and the name that matches the schema
+  return `query ${queryName} ${variableString} { 
+${queryName}${args} {
   ${formatOutputParams(outputParams)}
   }
 }`;
@@ -74,22 +79,26 @@ ${queryName}(${variables}) {
  *       ]
  *    }
  *  ]
- *  @param {Object} queryParams Object of simple or complex parameters. Example:
+ *
+ *  In other words, start every type as a list and embed object types using {objectTypeKey: [...]}
+ *  @param {Object} queryArgs Object of simple or complex parameters. Example:
  *  {city: "Stavanger", data: {foo: 2}}
- *  @param {Task} An apollo query task that resolves to the params being queried
+ *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
+ *  are in obj.data[name]. Errors are in obj.errors
  */
-export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryParams) => {
-  const query = makeQuery(name, readInputTypeMapper, outputParams, queryParams);
+export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+  const query = makeQuery(name, readInputTypeMapper, outputParams, queryArgs);
+  console.debug(`Query: ${query}, Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      return reqPathThrowing(['data', name], queryResponse)
+      return queryResponse
     },
     authApolloClientQueryRequestTask(
       apolloClient,
       {
         query: gql`${query}`,
-        variables: queryParams
+        variables: queryArgs
       }
     )
   );

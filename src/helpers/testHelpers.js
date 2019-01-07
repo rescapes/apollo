@@ -12,6 +12,9 @@ import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
+import {loginToAuthClientTask} from '../auth/login';
+import {reqStrPathThrowing} from 'rescape-ramda';
+import privateTestConfig from './privateTestConfig';
 
 /**
  * StateLink resolvers for testing.
@@ -63,42 +66,7 @@ export const sampleStateLinkResolversAndDefaults = {
   resolvers: sampleStateLinkResolvers, defaults: stateLinkDefaults
 };
 
-export const testConfig = getCurrentConfig({
-  // Settings is merged into the overall application state
-  settings: {
-    domain: 'localhost',
-    api: {
-      protocol: 'http',
-      host: 'localhost',
-      port: '8008',
-      path: '/graphql/'
-    },
-    // Used to authenticate with the API above in tests
-    testAuthorization: {
-      username: 'test',
-      password: 'testpass'
-    },
-    // Overpass API configuration to play nice with the server's strict throttling
-    overpass: {
-      cellSize: 100,
-      sleepBetweenCalls: 1000
-    },
-    markers: {},
-    mapbox: {
-      mapboxApiAccessToken: 'pk.eyJ1IjoiY2Fsb2NhbiIsImEiOiJjaXl1aXkxZjkwMG15MndxbmkxMHczNG50In0.07Zu3XXYijL6GJMuxFtvQg',
-      // This will probably not be used unless we need to cluster something on the map
-      iconAtlas: 'data/location-icon-atlas.png',
-      // ditto
-      showCluster: true,
-      showZoomControls: true,
-      // Universal Mapbox parameters to apply to any mapbox instance
-      preventStyleDiffing: false
-    }
-  },
-  regions: {},
-  users: {}
-});
-
+export const testConfig = getCurrentConfig(privateTestConfig);
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
@@ -108,3 +76,13 @@ export const createTestSelectorResolvedSchema = () => {
   const schema = createSchema();
   return createSelectorResolvedSchema(schema, testConfig);
 };
+
+/**
+ * Task to return and authorized client for tests
+ * Returns an object {apolloClient:An authorized client, unsubscribe: Function to clear local state}
+ */
+export const testAuthTask = loginToAuthClientTask(
+  reqStrPathThrowing('settings.api.uri', testConfig),
+  sampleStateLinkResolversAndDefaults,
+  reqStrPathThrowing('settings.testAuthorization', testConfig)
+);

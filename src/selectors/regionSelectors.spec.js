@@ -62,7 +62,7 @@ describe('regionSelectors', () => {
           [IS_ACTIVE]: true,
           regions: {foo: {id: 'foo'}, boo: {id: 'boo', [IS_SELECTED]: true}}
         },
-        pinky: {}
+        pinky: {
       }
     };
     // only the selected region of the active user should be selected

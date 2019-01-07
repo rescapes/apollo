@@ -10,13 +10,16 @@
  */
 
 import gql from 'graphql-tag';
-import {graphql} from 'react-apollo';
-import * as R from 'ramda'
-import {debug} from '../../helpers/logHelpers';
-import {makeQuery} from '../../helpers/queryHelpers';
-import {makeMutation} from '../../helpers/mutationHelpers';
+import {graphql} from 'graphql';
+import * as R from 'ramda';
+import {makeQueryTask, makeQuery} from '../../../helpers/queryHelpers';
+import {makeMutationTask, makeMutation} from '../../../helpers/mutationHelpers';
+import PropTypes from 'prop-types';
+import {v} from 'rescape-validate';
+import {reqStrPath, reqStrPathThrowing, resultToTaskWithResult} from 'rescape-ramda';
+import {makeRegionQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
 
-// Every complex input type needs a type specified in graphql. Our type names are
+// Variables of complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
 // Following this location.data is represented as follows:
 // TODO These value should be dervived from the schema
@@ -24,12 +27,96 @@ const readInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
 };
 
+// Default outputParams for UserState
+export const userStateOutputParams = [
+  'id',
+  {
+    data: [
+      {
+        userRegions: [
+          {
+            region: [
+              'id'
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
+export const userStateWithFullRegionsOutputParams = [
+  'id',
+  {
+    data: [
+      {
+        userRegions: [
+          {
+            region: [
+              'id'
+            ]
+          }
+        ]
+      }
+    ]
+  }
+];
+
 /**
  * Queries regions that are in the scope of the user and the values of that region
+ * @params {Object} apolloClient The Apollo Client
+ * @params {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
+ * the query to one user
+ * @params {Object} regionArguments arguments for the Regions query. This can be {} or null to not filter.
+ * Regions will be limited to those returned by the UserState query. These should not specify ids since
+ * the UserState query selects the ids
+ * @returns {Object} The resulting Regions in a Task
  */
-export const makeUserRegionQueryTask = R.curry((apolloClient, outputParams, queryParams)
-  return makeUserTask
-});
+export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArguments, regionArguments) => {
+    // Function to tell whether regionArguments are defined
+    const hasRegionParams = () => R.compose(R.length, R.keys)(R.defaultTo({}, regionArguments));
+
+    // Since we only store the id of the region in the userState, if there are other queryParams
+    // besides id we need to do a second query on the regions directly
+    return R.composeK(
+      // If we got Result.Ok and there are regionParams, query for the user's regions
+      resultToTaskWithResult(
+        R.when(
+          hasRegionParams,
+          userRegions => makeRegionQueryTask(
+            apolloClient,
+            regionOutputParams,
+            R.merge(regionArguments, {id__in: R.map(reqStrPathThrowing('region.id'), userRegions)})
+          )
+        ),
+        // First query for UserState
+        () => R.map(
+          // Dig into the results and return a Result.Ok with the userRegions or a Result.Error if not found
+          response => reqStrPath('data.userStates.data.userRegions', response).mapError(() => response.errors),
+          makeQueryTask(
+            apolloClient,
+            {name: 'userStates', readInputTypeMapper},
+            // If we have to query for regions separately use the limited output userStateOutputParams
+            R.when(hasRegionParams, R.always(userStateOutputParams))(userStateWithFullRegionsOutputParams),
+            R.merge(userStateArguments, {})
+          )
+        )()
+      )
+    );
+  }),
+  [
+    ['apolloClient', PropTypes.shape().isRequired],
+    ['outputParams', PropTypes.array.isRequired],
+    ['userStateArguments', PropTypes.shape({
+      user: PropTypes.shape({
+        id: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ])
+      })
+    }).isRequired],
+    ['regionArguments', PropTypes.shape().isRequired]
+  ], 'makeUserRegionQueryTask');
 
 export const makeUserRegionMutation = R.curry((outputParams, inputParams) => {
   const mutation = makeMutation('updateRegion', {}, {locationData: inputParams}, {location: outputParams});
@@ -41,8 +128,7 @@ export const makeUserRegionMutation = R.curry((outputParams, inputParams) => {
   LinkState Defaults
 */
 
-const defaults = {
-};
+const defaults = {};
 
 /*
   LinkState queries and mutations
@@ -75,24 +161,24 @@ const addTodoQuery = gql`
 
 const mutations = {
   // These are examples of mutating the cache
-/*  addTodo: (_obj, {item}, {cache}) => {
-    const query = todoQuery;
-    // Read the todo's from the cache
-    const {currentTodos} = cache.readQuery({query});
+  /*  addTodo: (_obj, {item}, {cache}) => {
+      const query = todoQuery;
+      // Read the todo's from the cache
+      const {currentTodos} = cache.readQuery({query});
 
-    // Add the item to the current todos
-    const updatedTodos = currentTodos.concat(item);
+      // Add the item to the current todos
+      const updatedTodos = currentTodos.concat(item);
 
-    // Update the cached todos
-    cache.writeQuery({query, data: {currentTodos: updatedTodos}});
+      // Update the cached todos
+      cache.writeQuery({query, data: {currentTodos: updatedTodos}});
 
-    return null;
-  },
+      return null;
+    },
 
-  clearTodo: (_obj, _args, {cache}) => {
-    cache.writeQuery({query: todoQuery, data: todoDefaults});
-    return null;
-  }*/
+    clearTodo: (_obj, _args, {cache}) => {
+      cache.writeQuery({query: todoQuery, data: todoDefaults});
+      return null;
+    }*/
 };
 
 /*
@@ -115,17 +201,15 @@ export const userRegionStore = {
 const todoQueryHandler = {
   props: ({ownProps, data: {currentTodos = []}}) => ({
     ...ownProps,
-    currentTodos,
-  }),
+    currentTodos
+  })
 };
 
+/*
 const withTodo = R.compose(
   graphql(todoQuery, todoQueryHandler),
   graphql(addTodoQuery, {name: 'addTodoMutation'}),
-  graphql(clearTodoQuery, {name: 'clearTodoMutation'}),
+  graphql(clearTodoQuery, {name: 'clearTodoMutation'})
 );
+*/
 
-export {
-  store,
-  withTodo,
-};

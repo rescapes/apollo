@@ -63,7 +63,8 @@ ${mutationName}(${formatInputParams(inputParams)}) {
  *  @param {Object} inputParams Object matching the shape of a region. E.g.
  *  {id: 1, city: "Stavanger", data: {foo: 2}}
  *  Creates need all required fields and updates need at minimum the id
- *  @param {Task} An apollo mutation task that resolves to return parameters of the mutation
+ *  @param {Task} An apollo mutation task containing an object with the result of the outputParams query
+ *  in an obj at obj.data.name or an errors at obj.errors
  */
 export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inputParams) => {
   const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;
@@ -76,10 +77,17 @@ export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inp
     throw new Error(`inputParams have null values ${inputParams}`);
   }
 
+  console.debug(`Mutation: ${mutation}`);
+
   return R.map(
     mutationResponse => {
       debug(`makeMutationTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
-      return reqPathThrowing(['data', createOrUpdateName, name], mutationResponse)
+      // Put the result in data[name] to match the style of queries
+      return {
+        data: {
+          [name]: reqPathThrowing(['data', createOrUpdateName, name], mutationResponse)
+        }
+      };
     },
     authApolloClientMutationRequestTask(
       apolloClient,

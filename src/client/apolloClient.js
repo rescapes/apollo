@@ -165,7 +165,8 @@ export const authApolloClientMutationRequestTask = R.curry((authClient, options)
           }
     }`,
  variables: {key: "earth"}
- * @return {Task} A Task that makes the request when run
+ * @return {Task} A Task that makes the request when run an returns the query results or an error
+ * Results are returned in {data: ...} and errors in {errors:...}
  */
 export const authApolloClientQueryRequestTask = R.curry((authClient, options) => {
   return promiseToTask(authClient.query(options));

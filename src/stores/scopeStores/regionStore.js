@@ -9,13 +9,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {graphql} from 'react-apollo';
+import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda'
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
 import {debug} from '../../helpers/logHelpers';
+import {reqStrPath} from 'rescape-ramda';
 import {makeQuery} from '../../helpers/queryHelpers';
 import {makeMutation} from '../../helpers/mutationHelpers';
 import {authApolloClientQueryRequestTask, authApolloClientMutationRequestTask} from '../../client/apolloClient';
+import {v} from 'rescape-validate';
+import {makeQueryTask} from '../../helpers/queryHelpers';
+import PropTypes from 'prop-types';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -25,47 +29,63 @@ const readInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
 };
 
-/**
- * Makes a Region query
- * @param {Object} authClient An authorized Apollo Client
- * @param [String|Object] outputParams output parameters for the query in this style json format:
- *  [
- *    'id',
- *    {
- *        data: [
- *         'foo',
- *         {
- *            properties: [
- *             'type',
- *            ]
- *         },
- *         'bar',
- *       ]
- *    }
- *  ]
- *  @param {Object} queryParams Object of simple or complex parameters. Example:
- *  {city: "Stavanger", data: {foo: 2}}
- *  @param {Task} An apollo query task
- */
-export const makeRegionQueryTask = R.curry((apolloClient, outputParams, queryParams) => {
-  const query = makeQuery('regions', readInputTypeMapper, outputParams, queryParams);
-  return R.map(
-    queryResponse => {
-      debug(`queryRegionsTask responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      return ({
-        queryParams,
-        regions: reqStrPathThrowing('data.regions', queryResponse)
-      });
-    },
-    authApolloClientQueryRequestTask(
-      apolloClient,
+export const regionOutputParams = [
+  'id',
+  'deleted',
+  'key',
+  'name',
+  'createdAt',
+  'updatedAt',
+  {
+    geojson: [
+      'type',
       {
-        query,
-        variables: queryParams
+        features: [
+          'type',
+          'id',
+          {
+            geometry: [
+              'type',
+              'coordinates'
+            ]
+          },
+          'properties'
+        ]
+      },
+      'generator',
+      'copyright'
+    ],
+    data: [
+      {
+        locations: [
+          'params'
+        ]
       }
-    )
-  );
-});
+    ]
+  }
+];
+
+/**
+ * Queries regions
+ * @params {Object} apolloClient The Apollo Client
+ * @params {Object} ouptputParams OutputParams for the query such as regionOutputParams
+ * @params {Object} regionArguments Arguments for the Regions query. This can be {} or null to not filter.
+ * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
+ */
+export const makeRegionQueryTask = v(R.curry((apolloClient, outputParams, regionArguments) => {
+    return makeQueryTask(
+      apolloClient,
+      {name: 'regions', readInputTypeMapper},
+      // If we have to query for regions separately use the limited output userStateOutputParams
+      outputParams,
+      arguments
+    );
+  }),
+  [
+    ['apolloClient', PropTypes.shape().isRequired],
+    ['outputParams', PropTypes.array.isRequired],
+    ['regionArguments', PropTypes.shape().isRequired]
+  ], 'makeRegionQueryTask');
 
 /**
  * Makes a Region mutation
