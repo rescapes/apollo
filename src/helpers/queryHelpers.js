@@ -11,7 +11,7 @@
 
 import {mapObjToValues, reqPathThrowing, capitalize} from 'rescape-ramda';
 import * as R from 'ramda';
-import {resolveGraphQLType, formatOutputParams} from './requestHelpers';
+import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {authApolloClientQueryRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
@@ -39,6 +39,9 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
       return `$${key}: ${resolve(key, value)}!`;
     }, queryArguments)
   );
+
+  const parenWrapIfNotEmpty = str => R.unless(R.isEmpty, str => `(${str})`, str);
+
   // These are the second line arguments that map parameters to variables
   const args = R.join(
     ', ',
@@ -48,11 +51,11 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
   );
 
   // Only use parens if there are actually variables/arguments
-  const variableString = R.ifElse(R.length, R.always(`(${params})`), R.always(''))(R.keys(queryArguments));
+  const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(queryArguments));
 
   // We use the queryName as the label of the query and the name that matches the schema
-  return `query ${queryName} ${variableString} { 
-${queryName}${args} {
+  return `query ${queryName} ${parenWrapIfNotEmpty(variableString)} { 
+${queryName}${parenWrapIfNotEmpty(args)} {
   ${formatOutputParams(outputParams)}
   }
 }`;
@@ -84,7 +87,9 @@ ${queryName}${args} {
  *  @param {Object} queryArgs Object of simple or complex parameters. Example:
  *  {city: "Stavanger", data: {foo: 2}}
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
- *  are in obj.data[name]. Errors are in obj.errors
+ *  are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
+ *  of different could be merged together into the data field. This also matches what Apollo components expect.
+ *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult
  */
 export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = makeQuery(name, readInputTypeMapper, outputParams, queryArgs);
@@ -92,7 +97,7 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
   return R.map(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      return queryResponse
+      return queryResponse;
     },
     authApolloClientQueryRequestTask(
       apolloClient,

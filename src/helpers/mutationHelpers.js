@@ -64,7 +64,8 @@ ${mutationName}(${formatInputParams(inputParams)}) {
  *  {id: 1, city: "Stavanger", data: {foo: 2}}
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task containing an object with the result of the outputParams query
- *  in an obj at obj.data.name or an errors at obj.errors
+ *  in an obj at obj.data.name or an errors at obj.errors. This matches what Apollo Components expect. If you need
+ *  a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult
  */
 export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inputParams) => {
   const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;

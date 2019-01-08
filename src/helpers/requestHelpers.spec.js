@@ -9,7 +9,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {resolveGraphQLType, formatOutputParams, formatInputParams} from './requestHelpers';
+import {resolveGraphQLType, formatOutputParams, formatInputParams, responseAsResult} from './requestHelpers';
+import Result from 'folktale/result';
+import * as R from 'ramda'
+import {reqStrPathThrowing, reqStrPath} from 'rescape-ramda';
 
 describe('requestHelpers', () => {
 
@@ -50,7 +53,7 @@ describe('requestHelpers', () => {
           }
         ]
       }
-    }
+    };
     const input = formatInputParams(inputParams);
     expect(input).toMatchSnapshot();
   });
@@ -65,5 +68,29 @@ describe('requestHelpers', () => {
     expect(resolve('foo', 'goo')).toEqual('String');
     expect(resolve('foo', 23.1)).toEqual('Float');
     expect(resolve('foo', Number)).toEqual('Number');
+  });
+
+  test('responseAsResult', () => {
+    expect(responseAsResult({data: 'superduper'})).toEqual(Result.Ok({data: 'superduper'}));
+    expect(responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.nose', 'nose')).toEqual(Result.Ok({data: {nose: 'superduper'}}));
+    const responsePathError = responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.tooth', 'nose');
+    expect(R.length(reqStrPathThrowing('errors', responsePathError.merge()))).toEqual(1);
+    const responseError = responseAsResult({errors: [new Error('What the heck?')]})
+    expect(R.length(reqStrPathThrowing('errors', responseError.merge()))).toEqual(1);
+
+    // If we have a custom resolver
+    expect(responseAsResult(
+      {data: {flowings: [{nose: {wipe: 'superduper'}}, {nose: {wipe: 'cavity'}}]}},
+      // This is silly, but it demonstrates extracting an embedded array of noses from results
+      // Note that it has to return a single Result.Ok
+      x => R.sequence(
+        Result.Ok,
+        R.compose(
+          result => result.chain(R.map(reqStrPath('nose'))),
+          reqStrPath('flowings')
+        )(x)
+      ),
+      'noses'
+    )).toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
   });
 });

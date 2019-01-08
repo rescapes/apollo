@@ -9,8 +9,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues} from 'rescape-ramda';
+import {mapObjToValues, reqStrPath} from 'rescape-ramda';
 import * as R from 'ramda';
+import Result from 'folktale/result';
 
 /**
  * Creates graphql outputparms from the given object
@@ -128,7 +129,7 @@ export const formatInputParams = (inputParam, indentLevel = 0) => {
           },
           obj
         )),
-        R.ifElse(R.equals(0), R.always(''), R.always(`${indent}}`))(indentLevel),
+        R.ifElse(R.equals(0), R.always(''), R.always(`${indent}}`))(indentLevel)
       ]
     ],
     [R.is(String),
@@ -181,3 +182,36 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
   ])(value);
 });
 
+
+/**
+ * Extracts the value from the result to give {data: {[query|mutationName]: ...}} or {errors: []}
+ * @param {Object} response Contains {data: ...} or {errors: ...}
+ * @param {String|Function} stringPathOrResolver The path to the desired value within the response.data property.
+ * If just response.data is desired, leave stringPath and queryName blank. If a function then it expects
+ * response.data and returns a Result.Ok with the desired values or Result.Error if values aren't found where expected
+ * @param {String} queryName The name of the query to user for the result data structure
+ * @return {Result} Result.Ok with value in {data: {[queryName]: value}} or Result.Error instance
+ * If stringPath and queryName are omited, the result Result.Ok just wraps response
+ */
+export const responseAsResult = (response, stringPathOrResolver=null, queryName=null) => R.ifElse(
+  R.has('errors'),
+  Result.Error,
+  R.ifElse(
+    R.always(R.isNil(stringPathOrResolver)),
+    // If stringPath is not specified just wrap response in Result.Ok
+    Result.Ok,
+    // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
+    r => (R.ifElse(
+      R.always(R.is(Function, stringPathOrResolver)),
+      // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
+      x => R.chain(stringPathOrResolver)(x),
+      // If it's a string call reqStrPath, expecting a Result.Ok
+      x => R.chain(reqStrPath(stringPathOrResolver))(x)
+    )(reqStrPath('data', r))).map(
+      v => ({data: {[queryName]: v}})
+    ).mapError(
+      // If our path is incorrect, this is probably a coding error, but put it in errors
+      error => ({errors: [new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(r)}`)]})
+    )
+  )
+)(response);

@@ -10,11 +10,12 @@
  */
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
-import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import privateTestConfig from './privateTestConfig';
+import PropTypes from 'prop-types';
+import {v} from 'rescape-validate';
 
 /**
  * StateLink resolvers for testing.
@@ -86,3 +87,37 @@ export const testAuthTask = loginToAuthClientTask(
   sampleStateLinkResolversAndDefaults,
   reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
+
+/**
+ * Convenient way to check if an object has a few expected keys
+ * @param {[String]} keys keys of the object to check
+ * @param {Object} obj The object to check
+ * @return {*} Expects the object has the given keys. Throws if expect fails
+ */
+export const expectKeys = v(R.curry((keys, obj) => expect(
+  R.compose(a => new Set(a), R.keys, R.pick(keys))(obj)
+  ).toEqual(
+  new Set(keys)
+  )),
+  [
+    ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
+    ['obj', PropTypes.shape().isRequired]
+  ]
+);
+
+/**
+ * Convenient way to check if an object has a few expected keys at the given path
+ * @param {[String]} keys keys of the object to check
+ * @param {String} strPath Dot separated path of keys into the object
+ * @param {Object} obj The object to check
+ * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
+ */
+export const expectKeysAtStrPath = v(R.curry((keys, strPath, obj) => expect(
+  R.compose(a => new Set(a), R.keys, R.pick(keys), reqStrPathThrowing(strPath))(obj)
+).toEqual(
+  new Set(keys)
+)), [
+  ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
+  ['strPath', PropTypes.string.isRequired],
+  ['obj', PropTypes.shape({}).isRequired]
+]);

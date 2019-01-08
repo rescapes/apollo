@@ -10,7 +10,7 @@
  */
 
 import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
-import {stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
+import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryTask, userOutputParams} from './userStore';
 
@@ -23,14 +23,7 @@ describe('userStore', () => {
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(
-            R.keys(
-              R.pick(someUserKeys,
-                reqStrPathThrowing('data.currentUser', response
-                )
-              )
-            )
-          ).toEqual(someUserKeys);
+          expectKeysAtStrPath(someUserKeys, 'data.currentUser', response);
           done();
         }
     }));

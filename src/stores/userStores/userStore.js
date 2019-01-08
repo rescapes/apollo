@@ -47,7 +47,8 @@ export const userOutputParams = [
  * Queries users
  * @params {Object} apolloClient The Apollo Client
  * @params {Object} ouptputParams OutputParams for the query such as userOutputParams
- * @returns {Task} A Task containing the User in an object with obj.data.currentUser or errors in obj.errors
+ * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
+ * or errors in Result.Error({errors: [...]})
  */
 export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) => {
     return makeQueryTask(

@@ -19,7 +19,7 @@ describe('userRegionStore', () => {
   test('makeUserRegionQueryTask', done => {
     const someRegionKeys = ['id', 'key', 'name', 'data'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, userStateOutputParams, {user: {id: userId}}, {}),
+      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, {user: {id: userId}}, {}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)
