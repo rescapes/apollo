@@ -12,7 +12,7 @@
 import {mapObjToValues, reqPathThrowing, capitalize} from 'rescape-ramda';
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
-import {authApolloClientQueryRequestTask} from '../client/apolloClient';
+import {authApolloClientQueryReadRequestTask, authApolloClientQueryRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
@@ -101,6 +101,28 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
       return queryResponse;
     },
     authApolloClientQueryRequestTask(
+      apolloClient,
+      {
+        query,
+        variables: queryArgs
+      }
+    )
+  );
+});
+
+/**
+ * Like makeQueryTask but only reads from the cache. This is just for testing the read cache. Normally you
+ * should always call makeQueryTask and it will consult the cache before querying externally
+ */
+export const makeReadQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
+  console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
+  return R.map(
+    queryResponse => {
+      debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      return queryResponse;
+    },
+    authApolloClientQueryReadRequestTask(
       apolloClient,
       {
         query,

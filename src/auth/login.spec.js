@@ -16,14 +16,14 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
-import {stateLinkResolvers} from '../helpers/testHelpers';
+import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
 describe('login', () => {
   test('testLoginCredentials', done => {
 
-    const client = noAuthApolloClient(uri, {});
+    const client = noAuthApolloClient(uri, sampleStateLinkResolversAndDefaults);
     const login = loginTask(client, reqStrPathThrowing('settings.testAuthorization', testConfig));
 
     const verifyTokenTask = (authClient, {token}) => {

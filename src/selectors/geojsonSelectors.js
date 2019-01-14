@@ -12,7 +12,6 @@
 import {createSelector} from 'reselect';
 import * as R from 'ramda';
 import {geojsonByType} from 'rescape-helpers';
-import {mergeDeep, reqPathThrowing} from 'rescape-ramda';
 
 /**
  * Resolves the openstreetmap features of a region and categorizes them by type (way, node, relation).

@@ -173,6 +173,25 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, options) =>
 });
 
 /**
+ * Only for testing. Reads value only from the cache.
+ * @param authClient The authenticated Apollo Client
+ * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
+ * The main arguments for options are QueryOptions with query and variables. Example
+ * query: gql`
+ query region($key: String!) {
+          region(key: $key) {
+              id
+              key
+              name
+          }
+    }`,
+ variables: {key: "earth"}
+ */
+export const authApolloClientQueryReadRequestTask = R.curry((authClient, options) => {
+  return promiseToTask(authClient.readQuery(options));
+});
+
+/**
  * Given a token returns a GraphQL client
  * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching

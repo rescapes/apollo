@@ -25,7 +25,7 @@ import PropTypes from 'prop-types';
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
 // Following this location.data is represented as follows:
 // TODO These value should be derived from the schema
-const readInputTypeMapper = {
+export const readInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
   'geojson': 'FeatureCollectionDataTypeofRegionTypeRelatedReadInputType'
 };
