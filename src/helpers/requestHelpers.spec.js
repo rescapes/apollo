@@ -11,7 +11,7 @@
 
 import {resolveGraphQLType, formatOutputParams, formatInputParams, responseAsResult} from './requestHelpers';
 import Result from 'folktale/result';
-import * as R from 'ramda'
+import * as R from 'ramda';
 import {reqStrPathThrowing, reqStrPath} from 'rescape-ramda';
 
 describe('requestHelpers', () => {
@@ -75,22 +75,22 @@ describe('requestHelpers', () => {
     expect(responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.nose', 'nose')).toEqual(Result.Ok({data: {nose: 'superduper'}}));
     const responsePathError = responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.tooth', 'nose');
     expect(R.length(reqStrPathThrowing('errors', responsePathError.merge()))).toEqual(1);
-    const responseError = responseAsResult({errors: [new Error('What the heck?')]})
+    const responseError = responseAsResult({errors: [new Error('What the heck?')]});
     expect(R.length(reqStrPathThrowing('errors', responseError.merge()))).toEqual(1);
 
     // If we have a custom resolver
     expect(responseAsResult(
       {data: {flowings: [{nose: {wipe: 'superduper'}}, {nose: {wipe: 'cavity'}}]}},
-      // This is silly, but it demonstrates extracting an embedded array of noses from results
+      // This demonstrates extracting an embedded array of noses from results
       // Note that it has to return a single Result.Ok
-      x => R.sequence(
-        Result.Ok,
-        R.compose(
-          result => result.chain(R.map(reqStrPath('nose'))),
-          reqStrPath('flowings')
-        )(x)
+      R.compose(
+        R.sequence(Result.Ok),
+        result => result.chain(R.map(reqStrPath('nose'))),
+        reqStrPath('flowings')
       ),
       'noses'
-    )).toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
+    )
+  ).
+    toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
   });
 });

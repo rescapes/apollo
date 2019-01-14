@@ -16,9 +16,11 @@ import {makeQueryTask, makeQuery} from '../../../helpers/queryHelpers';
 import {makeMutationTask, makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {reqStrPath, reqStrPathThrowing, resultToTaskWithResult} from 'rescape-ramda';
+import {reqStrPath, reqStrPathThrowing, resultToTask, compact} from 'rescape-ramda';
 import {makeRegionQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
+import Result from 'folktale/result';
 import {responseAsResult} from '../../../helpers/requestHelpers';
+import {of} from 'folktale/concurrency/task';
 
 // Variables of complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -54,9 +56,7 @@ export const userStateWithFullRegionsOutputParams = [
       {
         userRegions: [
           {
-            region: [
-              'id'
-            ]
+            region: regionOutputParams
           }
         ]
       }
@@ -82,24 +82,53 @@ export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArgumen
     // besides id we need to do a second query on the regions directly
     return R.composeK(
       // If we got Result.Ok and there are regionParams, query for the user's regions
-      result => resultToTaskWithResult(
-        ({data: userRegions}) => R.when(
-          hasRegionParams,
-          userRegions => makeRegionQueryTask(
-            apolloClient,
-            regionOutputParams,
-            R.merge(regionArguments, {id__in: R.map(reqStrPathThrowing('region.id'), userRegions)})
-          )
-        )(userRegions),
+      // Result Object -> Task Object
+      result => R.chain(
+        ({data: {userRegions}}) =>
+          R.map(
+            userRegions => ({data: {userRegions}}),
+            R.ifElse(
+              hasRegionParams,
+              // TODO Extract this and generalize next time a similar case comes up
+              userRegions => R.map(
+                // Match any returned regions with the corresponding userRegions
+                regionsResponse => {
+                  const matchingRegions = reqStrPathThrowing('data.regions', regionsResponse);
+                  const matchingRegionById = R.indexBy(R.prop('id'), matchingRegions);
+                  return R.compose(
+                    compact,
+                    R.map(
+                      R.ifElse(
+                        ur => R.has(ur.region.id, matchingRegionById),
+                        ur => R.merge(ur, {region: R.prop(ur.region.id, matchingRegionById)}),
+                        R.always(null)
+                      )
+                    )
+                  )(userRegions);
+                },
+                // Find regions matching the ids and the given region arguments
+                makeRegionQueryTask(
+                  apolloClient,
+                  regionOutputParams,
+                  // Map each userRegion to its region id
+                  R.merge(regionArguments, {idIn: R.map(R.compose(s => parseInt(s), reqStrPathThrowing('region.id')), userRegions)})
+                )
+              ),
+              of
+            )(userRegions)
+          ),
         result
       ),
       // First query for UserState
       () => R.map(
         // Dig into the results and return a Result.Ok with the userRegions or a Result.Error if not found
+        // Result.Error prevents the next query from running
         response => responseAsResult(
           response,
-          data => R.map(reqStrPath('data.usersRegions'))(data),
-          'userRegions')
+          // We only ever get 1 userState since we are querying by user
+          'userStates.0.data.userRegions',
+          'userRegions'
+        ),
         makeQueryTask(
           apolloClient,
           {name: 'userStates', readInputTypeMapper},

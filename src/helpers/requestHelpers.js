@@ -177,6 +177,8 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
     // Construct the type and return it's type. Thus String => 'String', Number => 'Number'
     // There is currently no way to produce other types like Float.
     [R.is(Function), type => R.type(type())],
+    // If we have an array look at the first item and resolve its type recursively and wrap it in [...]
+    [R.is(Array), type => `[${resolveGraphQLType(inputParamTypeMapper, key, R.head(type))}]`],
     // Map directory anything else, for instance String to 'String'
     [R.T, R.type]
   ])(value);
@@ -204,9 +206,9 @@ export const responseAsResult = (response, stringPathOrResolver=null, queryName=
     r => (R.ifElse(
       R.always(R.is(Function, stringPathOrResolver)),
       // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
-      x => R.chain(stringPathOrResolver)(x),
+      R.chain(stringPathOrResolver),
       // If it's a string call reqStrPath, expecting a Result.Ok
-      x => R.chain(reqStrPath(stringPathOrResolver))(x)
+      R.chain(reqStrPath(stringPathOrResolver))
     )(reqStrPath('data', r))).map(
       v => ({data: {[queryName]: v}})
     ).mapError(

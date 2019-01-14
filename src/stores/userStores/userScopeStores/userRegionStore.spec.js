@@ -11,7 +11,7 @@
 
 import {makeUserRegionQueryTask, userStateOutputParams} from './userRegionStore';
 import {defaultRunConfig, reqStrPathThrowing, tas} from 'rescape-ramda';
-import {stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
+import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryTask, userOutputParams} from '../userStore';
 
@@ -28,7 +28,27 @@ describe('userRegionStore', () => {
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(R.keys(R.pick(someRegionKeys, response))).toEqual(someRegionKeys);
+          expectKeysAtStrPath(someRegionKeys, 'data.userRegions.0.region', response);
+          done();
+        }
+    }));
+  });
+
+  test('makeUserRegionQueryTaskWithRegionFilter', done => {
+    const someRegionKeys = ['id', 'key', 'name', 'data'];
+    R.composeK(
+      // Filter for regions where the geojson.type is 'FeatureCollection'
+      // This forces a separate query on Regions so we can filter by Region
+      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, {user: {id: userId}}, {geojson: {type: 'FeatureCollection'}}),
+      ({apolloClient}) => R.map(
+        response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
+        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+      ),
+      () => testAuthTask
+    )().run().listen(defaultRunConfig({
+      onResolved:
+        response => {
+          expectKeysAtStrPath(someRegionKeys, 'data.userRegions.0.region', response);
           done();
         }
     }));

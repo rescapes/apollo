@@ -25,6 +25,7 @@ import {authApolloClientMutationRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify, reqPathThrowing, capitalize} from 'rescape-ramda';
 import gql from 'graphql-tag';
+import {print} from 'graphql';
 
 /**
  * Makes the location query based on the queryParams
@@ -69,16 +70,16 @@ ${mutationName}(${formatInputParams(inputParams)}) {
  */
 export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inputParams) => {
   const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;
-  const mutation = makeMutation(
+  const mutation = gql`${makeMutation(
     createOrUpdateName,
     {[`${name}Data`]: inputParams},
     {[name]: outputParams}
-  );
+  )}`;
   if (R.any(R.isNil, R.values(inputParams))) {
     throw new Error(`inputParams have null values ${inputParams}`);
   }
 
-  console.debug(`Mutation: ${mutation}`);
+  console.debug(`Mutation: ${print(mutation)}`);
 
   return R.map(
     mutationResponse => {
@@ -93,7 +94,7 @@ export const makeMutationTask = R.curry((apolloClient, {name}, outputParams, inp
     authApolloClientMutationRequestTask(
       apolloClient,
       {
-        mutation: gql`${mutation}`
+        mutation
       }
     )
   );

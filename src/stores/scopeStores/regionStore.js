@@ -24,9 +24,10 @@ import PropTypes from 'prop-types';
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
 // Following this location.data is represented as follows:
-// TODO These value should be dervived from the schema
+// TODO These value should be derived from the schema
 const readInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
+  'geojson': 'FeatureCollectionDataTypeofRegionTypeRelatedReadInputType'
 };
 
 export const regionOutputParams = [
@@ -78,7 +79,7 @@ export const makeRegionQueryTask = v(R.curry((apolloClient, outputParams, region
       {name: 'regions', readInputTypeMapper},
       // If we have to query for regions separately use the limited output userStateOutputParams
       outputParams,
-      arguments
+      regionArguments
     );
   }),
   [

@@ -16,6 +16,7 @@ import {authApolloClientQueryRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
+import {print} from 'graphql'
 
 /**
  * Makes the location query based on the queryParams
@@ -92,8 +93,8 @@ ${queryName}${parenWrapIfNotEmpty(args)} {
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult
  */
 export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
-  const query = makeQuery(name, readInputTypeMapper, outputParams, queryArgs);
-  console.debug(`Query: ${query}, Arguments: ${JSON.stringify(queryArgs)}`);
+  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
+  console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
@@ -102,7 +103,7 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
     authApolloClientQueryRequestTask(
       apolloClient,
       {
-        query: gql`${query}`,
+        query,
         variables: queryArgs
       }
     )
