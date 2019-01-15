@@ -17,7 +17,7 @@ import {makeMutationTask, makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {reqStrPath, reqStrPathThrowing, resultToTask, compact} from 'rescape-ramda';
-import {makeRegionQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
+import {makeRegionsQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
 import Result from 'folktale/result';
 import {responseAsResult} from '../../../helpers/requestHelpers';
 import {of} from 'folktale/concurrency/task';
@@ -107,7 +107,7 @@ export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArgumen
                   )(userRegions);
                 },
                 // Find regions matching the ids and the given region arguments
-                makeRegionQueryTask(
+                makeRegionsQueryTask(
                   apolloClient,
                   regionOutputParams,
                   // Map each userRegion to its region id

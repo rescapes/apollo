@@ -51,7 +51,7 @@ import {task, of} from 'folktale/concurrency/task';
  *     authorization: authToken
  *   }
  * } used for hard coding the authorization for testing
- * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
+ * @return {{apolloClient: ApolloClient}}
  */
 const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}) => {
   const httpLink = createHttpLink({
@@ -110,10 +110,10 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     // Use InMemoryCache
     cache: new InMemoryCache()
   });
-  const unsubscribe = apolloClient.onResetStore(stateLink.writeDefaults);
+  apolloClient.onResetStore(stateLink.writeDefaults);
 
-  // Return unsubscribe separately. Otherwise the user would have to pass stateLink to this function, lame
-  return {apolloClient, unsubscribe}
+  // Return apolloClient
+  return {apolloClient}
 };
 
 /**
@@ -157,8 +157,8 @@ export const authApolloClientMutationRequestTask = R.curry((authClient, options)
  * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
  * query: gql`
- query region($key: String!) {
-          region(key: $key) {
+ query regions($key: String!) {
+          regions(key: $key) {
               id
               key
               name
@@ -178,8 +178,8 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, options) =>
  * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
  * query: gql`
- query region($key: String!) {
-          region(key: $key) {
+ query regions($key: String!) {
+          regions(key: $key) {
               id
               key
               name
@@ -188,7 +188,8 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, options) =>
  variables: {key: "earth"}
  */
 export const authApolloClientQueryReadRequestTask = R.curry((authClient, options) => {
-  return promiseToTask(authClient.readQuery(options));
+  // readQuery isn't a promise, just a direct call I guess
+  return of(authClient.readQuery(options));
 });
 
 /**
@@ -197,7 +198,7 @@ export const authApolloClientQueryReadRequestTask = R.curry((authClient, options
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {Object} authToken: Probably just for tests, pass the auth token in so we don't have to use
  * local storage to store are auth token
- * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
+ * @return {{apolloClient: ApolloClient}}
  */
 export const getApolloAuthClient = (url, stateLinkResolvers, authToken) => createApolloClient(url, stateLinkResolvers,
   {
@@ -210,7 +211,7 @@ export const getApolloAuthClient = (url, stateLinkResolvers, authToken) => creat
  * Non auth client for logging in
  * @param {string} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
- * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
+ * @return {{apolloClient: ApolloClient}}
  */
 export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClient(url, stateLinkResolvers);
 
@@ -220,7 +221,7 @@ export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClien
  * @param {Object} stateLinkResolverAndDefaults: Resolvers for the stateLink, meaning local caching
  * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param authToken
- * @return {{apolloClient: ApolloClient, unsubscribe: Function}}
+ * @return {{apolloClient: ApolloClient}}
  */
 export const authApolloClient = (url, stateLinkResolverAndDefaults, authToken) => createApolloClient(url, stateLinkResolverAndDefaults, {
   authorization: `JWT ${authToken}`
@@ -246,8 +247,7 @@ export const noAuthApolloClientRequestTask = (client, ...args) => {
  * @param {Object} userLogin Return value from loginTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
- * @return {Task<Object>} Task containing and object with a apolloClient, unsubscribe, token. unsubscribe
- * can be used to clear the local state on logout
+ * @return {Task<Object>} Task containing and object with a apolloClient, token.
  */
 export const authApolloClientTask = R.curry((url, stateLinkResolversAndDefaults, userLogin) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);

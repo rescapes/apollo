@@ -12,7 +12,7 @@ import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
-import {reqStrPathThrowing} from 'rescape-ramda';
+import {reqStrPathThrowing, overDeep} from 'rescape-ramda';
 import privateTestConfig from './privateTestConfig';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
@@ -40,34 +40,45 @@ const sampleStateLinkResolvers = {
   }
 };
 
+
 /**
- * Deafult values for StateLink resolvers
- * @type {{networkStatus: {__typename: string, isConnected: boolean}}}
+ * Default values for StateLink resolvers
  */
-const stateLinkDefaults = {
-  networkStatus: {
-    __typename: 'NetworkStatus',
-    isConnected: false
-  }
-  /*
-  // Same as passing defaults above
-cache.writeData({
-  data: {
-    networkStatus: {
-      __typename: 'NetworkStatus',
-     isConnected: true,
+const testCreateStateLinkDefaults = config => overDeep(
+  (key, obj) => R.merge(obj, {__typename: key}),
+  R.merge(
+    config,
+    {
+      networkStatus: {
+        __typename: 'NetworkStatus',
+        isConnected: false
+      }
+    }
+    /*
+    // Same as passing defaults above
+  cache.writeData({
+    data: {
+      networkStatus: {
+        __typename: 'NetworkStatus',
+       isConnected: true,
+      },
     },
-  },
-});
-   */
-};
+  });
+     */
+  )
+);
 
 
 export const sampleStateLinkResolversAndDefaults = {
-  resolvers: sampleStateLinkResolvers, defaults: stateLinkDefaults
+  resolvers: sampleStateLinkResolvers, defaults: testStateLinkDefaults
 };
 
 export const testConfig = getCurrentConfig(privateTestConfig);
+
+// Apollo Link State defaults are based on the config.
+// TODO I've limited the keys here to keep out regions and users. If all tests are based on a server
+// we should remove users and regions from our testConfig
+const testStateLinkDefaults = testCreateStateLinkDefaults(R.pick(['settings', 'browser'], testConfig));
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
@@ -80,7 +91,7 @@ export const createTestSelectorResolvedSchema = () => {
 
 /**
  * Task to return and authorized client for tests
- * Returns an object {apolloClient:An authorized client, unsubscribe: Function to clear local state}
+ * Returns an object {apolloClient:An authorized client}
  */
 export const testAuthTask = loginToAuthClientTask(
   reqStrPathThrowing('settings.api.uri', testConfig),

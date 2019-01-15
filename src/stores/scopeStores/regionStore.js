@@ -11,12 +11,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
-import {debug} from '../../helpers/logHelpers';
-import {reqStrPath} from 'rescape-ramda';
-import {makeQuery} from '../../helpers/queryHelpers';
-import {makeMutation} from '../../helpers/mutationHelpers';
-import {authApolloClientQueryRequestTask, authApolloClientMutationRequestTask} from '../../client/apolloClient';
+import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
@@ -73,7 +68,7 @@ export const regionOutputParams = [
  * @params {Object} regionArguments Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeRegionQueryTask = v(R.curry((apolloClient, outputParams, regionArguments) => {
+export const makeRegionsQueryTask = v(R.curry((apolloClient, outputParams, regionArguments) => {
     return makeQueryTask(
       apolloClient,
       {name: 'regions', readInputTypeMapper},
@@ -86,7 +81,7 @@ export const makeRegionQueryTask = v(R.curry((apolloClient, outputParams, region
     ['apolloClient', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired],
     ['regionArguments', PropTypes.shape().isRequired]
-  ], 'makeRegionQueryTask');
+  ], 'makeRegionsQueryTask');
 
 /**
  * Makes a Region mutation
@@ -110,25 +105,9 @@ export const makeRegionQueryTask = v(R.curry((apolloClient, outputParams, region
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutation = R.curry((apolloClient, outputParams, inputParams) => {
-  const mutation = makeMutation('updateRegion', {locationData: inputParams}, {location: outputParams});
-  if (R.any(R.isNil, R.values(inputParams))) {
-    throw new Error(`inputParams have null values ${inputParams}`);
-  }
-
-  return R.map(
-    mutationResponse => {
-      debug(`mutateRegionTask responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
-      return ({
-        inputParams,
-        regions: reqStrPathThrowing('data.regions', mutationResponse)
-      });
-    },
-    authApolloClientMutationRequestTask(
-      apolloClient,
-      {
-        mutation
-      }
-    )
-  );
-});
+export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
+  apolloClient,
+  {name: 'region'},
+  outputParams,
+  inputParams
+));
