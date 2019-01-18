@@ -173,7 +173,7 @@ export const authApolloClientQueryRequestTask = R.curry((authClient, options) =>
 });
 
 /**
- * Only for testing. Reads value only from the cache.
+ * Only for testing. Reads values loaded from the server that we know are now in the cache
  * @param authClient The authenticated Apollo Client
  * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example

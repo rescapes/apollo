@@ -74,7 +74,7 @@ export const userStateWithFullRegionsOutputParams = [
  * the UserState query selects the ids
  * @returns {Object} The resulting Regions in a Task
  */
-export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArguments, regionArguments) => {
+export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArguments, regionArguments) => {
     // Function to tell whether regionArguments are defined
     const hasRegionParams = () => R.compose(R.length, R.keys)(R.defaultTo({}, regionArguments));
 
@@ -89,30 +89,11 @@ export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArgumen
             userRegions => ({data: {userRegions}}),
             R.ifElse(
               hasRegionParams,
-              // TODO Extract this and generalize next time a similar case comes up
-              userRegions => R.map(
-                // Match any returned regions with the corresponding userRegions
-                regionsResponse => {
-                  const matchingRegions = reqStrPathThrowing('data.regions', regionsResponse);
-                  const matchingRegionById = R.indexBy(R.prop('id'), matchingRegions);
-                  return R.compose(
-                    compact,
-                    R.map(
-                      R.ifElse(
-                        ur => R.has(ur.region.id, matchingRegionById),
-                        ur => R.merge(ur, {region: R.prop(ur.region.id, matchingRegionById)}),
-                        R.always(null)
-                      )
-                    )
-                  )(userRegions);
-                },
-                // Find regions matching the ids and the given region arguments
-                makeRegionsQueryTask(
-                  apolloClient,
-                  regionOutputParams,
-                  // Map each userRegion to its region id
-                  R.merge(regionArguments, {idIn: R.map(R.compose(s => parseInt(s), reqStrPathThrowing('region.id')), userRegions)})
-                )
+              userRegions => queryRegionsOfUserStateTask(
+                apolloClient,
+                regionOutputParams,
+                regionArguments,
+                userRegions
               ),
               of
             )(userRegions)
@@ -150,7 +131,49 @@ export const makeUserRegionQueryTask = v(R.curry((apolloClient, userStateArgumen
       })
     }).isRequired],
     ['regionArguments', PropTypes.shape().isRequired]
-  ], 'makeUserRegionQueryTask');
+  ], 'makeUserRegionsQueryTask');
+
+
+/**
+ * TODO Extract this and generalize next time a similar case comes up
+ * Given resolved userRegions and regionArguments that need to filter those regions, this resolves the regions
+ * of the userRegions that also match the regionArguments
+ * @params {Object} apolloClient The Apollo Client
+ * @params {[Object]} regionOutputParams Output parameters for each the region query
+ * @params {[Object]} regionArguments Arguments for the region query
+ * @params {[Object]} userRegions The UserRegion objects. We extract the region ids from these and combine them
+ * with the regionArguments
+ * @return {[Object]} Task that returns the userRegions that have regions that passed the query.
+ */
+export const queryRegionsOfUserStateTask = R.curry((apolloClient, regionOutputParams, regionArguments, userRegions) => {
+  return R.map(
+    // Match any returned regions with the corresponding userRegions
+    regionsResponse => {
+      const matchingRegions = reqStrPathThrowing('data.regions', regionsResponse);
+      const matchingRegionById = R.indexBy(R.prop('id'), matchingRegions);
+      return R.compose(
+        compact,
+        R.map(
+          R.ifElse(
+            // Does this user region's region match one of the region ids
+            ur => R.has(ur.region.id, matchingRegionById),
+            // If so merge the query result for that region with the user region
+            ur => R.merge(ur, {region: R.prop(ur.region.id, matchingRegionById)}),
+            // Otherwise return null, which will remove the user region from the list
+            R.always(null)
+          )
+        )
+      )(userRegions);
+    },
+    // Find regions matching the ids and the given region arguments
+    makeRegionsQueryTask(
+      apolloClient,
+      regionOutputParams,
+      // Map each userRegion to its region id
+      R.merge(regionArguments, {idIn: R.map(R.compose(s => parseInt(s), reqStrPathThrowing('region.id')), userRegions)})
+    )
+  );
+});
 
 export const makeUserRegionMutation = R.curry((outputParams, inputParams) => {
   const mutation = makeMutation('updateRegion', {}, {locationData: inputParams}, {location: outputParams});

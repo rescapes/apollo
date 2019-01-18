@@ -32,6 +32,10 @@ export default {
     markers: {},
     mapbox: {
       mapboxApiAccessToken: 'pk.eyJ1IjoiY2Fsb2NhbiIsImEiOiJjaXl1aXkxZjkwMG15MndxbmkxMHczNG50In0.07Zu3XXYijL6GJMuxFtvQg',
+      // Initial viewport
+      viewport: {
+
+      },
       // This will probably not be used unless we need to cluster something on the map
       iconAtlas: 'data/location-icon-atlas.png',
       // ditto

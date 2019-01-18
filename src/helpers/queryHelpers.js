@@ -9,17 +9,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqPathThrowing, capitalize} from 'rescape-ramda';
+import {mapObjToValues, reqPathThrowing, capitalize, compact} from 'rescape-ramda';
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {authApolloClientQueryReadRequestTask, authApolloClientQueryRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
-import {print} from 'graphql'
+import {print} from 'graphql';
 
 /**
- * Makes the location query based on the queryParams
+ * Makes a graphql query based on the queryParams
  * @param {String} queryName
  * @param {Object} inputParamTypeMapper maps Object params paths to the correct input type for the query
  * e.g. { 'data': 'DataTypeRelatedReadInputType' }
@@ -28,7 +28,23 @@ import {print} from 'graphql'
  * @returns {String} The query in a string
  */
 export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
+  return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+});
 
+/**
+ * Makes a graphql client query based on the queryParams
+ * @param {String} queryName
+ * @param {Object} inputParamTypeMapper maps Object params paths to the correct input type for the query
+ * e.g. { 'data': 'DataTypeRelatedReadInputType' }
+ * @param {Object} outputParams
+ * @param {Object} queryArguments
+ * @returns {String} The query in a string
+ */
+export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
+  return _makeQuery({client: true}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+});
+
+export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, queryArguments) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
   // These are the first line parameter definitions of the query, which list the name and type
@@ -54,13 +70,15 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
   // Only use parens if there are actually variables/arguments
   const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(queryArguments));
 
+  const clientTokenIfClientQuery = R.ifElse(R.prop('client'), R.always('@client'), R.always(null))(queryConfig);
+
   // We use the queryName as the label of the query and the name that matches the schema
   return `query ${queryName} ${parenWrapIfNotEmpty(variableString)} { 
-${queryName}${parenWrapIfNotEmpty(args)} {
+${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery]))} {
   ${formatOutputParams(outputParams)}
   }
 }`;
-});
+};
 
 /**
  * Creates a query task for any type
@@ -111,12 +129,45 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
 });
 
 /**
+ * Like makeQueryTasks but creates a query with a client directive so values come back from the link state and not
+ * the server
+ * @params {Object} client The Apollo client, authenticated for most calls
+ * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
+ * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryTask
+ * @returns {Object} Task that resolves to and object with the results of the query. Successful results
+ * are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
+ * of different could be merged together into the data field. This also matches what Apollo components expect.
+ * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult.
+ */
+export const makeClientQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
+  console.debug(`Client Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
+  return R.map(
+    queryResponse => {
+      debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      return queryResponse;
+    },
+    authApolloClientQueryRequestTask(
+      apolloClient,
+      {
+        query,
+        variables: queryArgs
+      }
+    )
+  );
+});
+
+
+/**
  * Like makeQueryTask but only reads from the cache. This is just for testing the read cache. Normally you
- * should always call makeQueryTask and it will consult the cache before querying externally
+ * should always call makeQueryTask and it will consult the cache before querying externally. Or for
+ * data only in the cache, loaded via ApolloLinkState, use makeClientQueryTask
  */
 export const makeReadQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
-  console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
+  console.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);

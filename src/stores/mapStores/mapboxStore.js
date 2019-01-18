@@ -13,8 +13,10 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeQueryTask} from '../../helpers/queryHelpers';
+import {makeClientQueryTask, makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
+import {waitAll} from 'folktale/concurrency/task';
+import {reqStrPathThrowing, chainMDeep} from 'rescape-ramda';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -25,7 +27,11 @@ export const readInputTypeMapper = {
   'geojson': 'FeatureCollectionDataTypeofRegionTypeRelatedReadInputType'
 };
 
-export const mapboxOutputParams = [
+/**
+ * Mapbox state of Global, UserGlobal, UserProjects
+ * @type {*[]}
+ */
+export const mapboxOutputParamsFragment = [
   {
     mapbox: [{
       viewport: [
@@ -37,12 +43,17 @@ export const mapboxOutputParams = [
   }
 ];
 
+/**
+ * Creates state output params
+ * @param [Object] mapboxFragment The mapboxFragment of the params
+ * @return {*[]}
+ */
 export const userStateMapboxOutputParams = mapboxFragment => [
   {
     userStates: [{
       data: [{
         userGlobal: mapboxFragment,
-        userRegions: mapboxFragment
+        userProjects: mapboxFragment
       }]
     }]
   }
@@ -55,11 +66,11 @@ export const userStateMapboxOutputParams = mapboxFragment => [
  *  Queries:
  *      viewport, style
  *
- * Region that is active for User
+ * Region that is specified
  *  Queries:
  *      viewport (bounds override Global)
  *
- * Project that is active for that Region
+ * Project that is specified
  *  Queries:
  *      viewport (locations' composite bounds override),
  *      locations (geojson and properties)
@@ -70,7 +81,7 @@ export const userStateMapboxOutputParams = mapboxFragment => [
  *  Mutations:
  *      style
  *
- * User Project
+ * User Project for specified Project
  *  Queries:
  *      viewport (user input overrides)
  *      location selections
@@ -79,25 +90,58 @@ export const userStateMapboxOutputParams = mapboxFragment => [
  *      location selections
  */
 
+export const nullUnless = R.curry((condition, onTrue) => R.ifElse(condition, onTrue, R.always(null)));
+
 /**
+ * Given user and scope ids in the arguments (e.g. Region, Project, etc) resolves the mapbox state.
+ * The merge precedence is documented above
+ *
  * @params {Object} apolloClient The Apollo Client
- * @params {Object} ouptputParams OutputParams for the query such as regionOutputParams
- * @params {Object} arguments Arguments for the query. This can be {} or null to not filter.
+ * @params {Object} outputParams OutputParams for the query such as regionOutputParams
+ * @params {Object} argumentSets Arguments for each query as follows
+ * @params {Object} argumentSets.users Arguments to limit the user to zero or one user. If unspecified no
+ * user-specific queries are made, meaning no user state is merged into the result
+ * @params {Object} argumentSets.regions Arguments to limit the region to zero or one region. If unspecified no
+ * region queries are made
+ * @params {Object} argumentSets.projects Arguments to limit the project to zero or one project. If unspecified no
+ * project queries are made
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeViewportQueryTask = v(R.curry((apolloClient, outputParams, arguments) => {
-    return makeQueryTask(
-      apolloClient,
-      {name: 'regions', readInputTypeMapper},
-      // If we have to query for regions separately use the limited output userStateOutputParams
-      outputParams,
-      arguments
-    );
+export const makeMapboxQueryTask = v(R.curry((apolloClient, outputParams, arguments) => {
+    return R.composeK(
+      of(R.mergeAll),
+      arguments => waitAll(R.sequence(Result.Ok, [
+        R.map(
+          () => makeClientQueryTask(
+            apolloClient,
+            {name: 'settings', readInputTypeMapper},
+            // If we have to query for regions separately use the limited output userStateOutputParams
+            outputParams,
+            // No args for global
+            {}
+          ).map('data.settings.mapbox')
+        )(Result.Ok({})),
+
+        R.map(
+          arguments => makeQueryTask(
+            apolloClient,
+            {name: 'regions', readInputTypeMapper},
+            // If we have to query for regions separately use the limited output userStateOutputParams
+            outputParams,
+            arguments
+          ).map(reqStrPathThrowing('data.regions.mapbox'))
+        )(reqStrPath('regions', arguments))
+      ]))
+    )(arguments);
   }),
   [
     ['apolloClient', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired],
-    ['regionArguments', PropTypes.shape().isRequired]
+    ['arguments', PropTypes.shape({
+      users: PropTypes.shape().isRequired,
+      regions: PropTypes.shape().isRequired,
+      projects: PropTypes.shape().isRequired
+    }).isRequired]
   ], 'makeRegionsQueryTask');
 
 /**

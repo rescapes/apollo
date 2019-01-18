@@ -9,17 +9,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeUserRegionQueryTask, userStateOutputParams} from './userRegionStore';
+import {makeUserRegionsQueryTask, userStateOutputParams} from './userRegionStore';
 import {defaultRunConfig, reqStrPathThrowing, tas} from 'rescape-ramda';
 import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryTask, userOutputParams} from '../userStore';
 
 describe('userRegionStore', () => {
-  test('makeUserRegionQueryTask', done => {
+  test('makeUserRegionsQueryTask', done => {
     const someRegionKeys = ['id', 'key', 'name', 'data'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, {user: {id: userId}}, {}),
+      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)
@@ -39,7 +39,7 @@ describe('userRegionStore', () => {
     R.composeK(
       // Filter for regions where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Regions so we can filter by Region
-      ({apolloClient, userId}) => makeUserRegionQueryTask(apolloClient, {user: {id: userId}}, {geojson: {type: 'FeatureCollection'}}),
+      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {geojson: {type: 'FeatureCollection'}}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)
@@ -53,4 +53,22 @@ describe('userRegionStore', () => {
         }
     }));
   });
+
+  test('makeActiveUserRegionQuery', done => {
+    const someRegionKeys = ['id', 'key', 'name', 'data'];
+    R.composeK(
+      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}, }, {}),
+      ({apolloClient}) => R.map(
+        response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
+        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+      ),
+      () => testAuthTask
+    )().run().listen(defaultRunConfig({
+      onResolved:
+        response => {
+          expectKeysAtStrPath(someRegionKeys, 'data.userRegions.0.region', response);
+          done();
+        }
+    }));
+  })
 });
