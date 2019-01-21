@@ -1,14 +1,13 @@
 import {expectKeysAtStrPath, testAuthTask} from '../../helpers/testHelpers';
 import {makeCurrentUserQueryTask, userOutputParams} from '../userStores/userStore';
-import {makeMapboxsQueryTask} from '../userStores/userScopeStores/mapboxStore';
+import {makeMapboxesQueryTask} from '../mapStores/mapboxStore';
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeClientQueryTask, makeQueryTask} from '../../helpers/queryHelpers';
-import PropTypes from 'prop-types';
 import {waitAll} from 'folktale/concurrency/task';
 import {reqStrPathThrowing, defaultRunConfig} from 'rescape-ramda';
+import {mapboxOutputParamsFragment} from './mapboxStore';
+import {makeUserRegionsQueryTask} from '../userStores/userScopeStores/userRegionStore';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -24,7 +23,23 @@ describe('mapboxStore', () => {
   test('makeMapboxStore', done => {
     const someMapboxKeys = ['viewport'];
     R.composeK(
-      ({apolloClient, userId}) => makeMapboxsQueryTask(apolloClient, {user: {id: userId}}, {}),
+      ({apolloClient, userId, regionId}) => makeMapboxesQueryTask(
+        apolloClient,
+        mapboxOutputParamsFragment,
+        {
+          users: {id: parseInt(userId)},
+          regions: {id: parseInt(regionId)},
+          projects: {id: projectId},
+        },
+      ),
+      ({apolloClient, userId, regionId}) => R.map(
+        response => ({apolloClient, userId, regionId, projectId: reqStrPathThrowing('data.userProjects.0.id', response)}),
+        makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
+      ),
+      ({apolloClient, userId}) => R.map(
+        response => ({apolloClient, userId, regionId: reqStrPathThrowing('data.userRegions.0.region.id', response)}),
+        makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})
+      ),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)

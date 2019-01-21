@@ -17,11 +17,13 @@ import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'res
 import {debug} from '../../helpers/logHelpers';
 import {reqStrPath} from 'rescape-ramda';
 import {makeQuery} from '../../helpers/queryHelpers';
-import {makeMutation} from '../../helpers/mutationHelpers';
+import {makeMutation, makeMutationTask} from '../../helpers/mutationHelpers';
 import {authApolloClientQueryRequestTask, authApolloClientMutationRequestTask} from '../../client/apolloClient';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
+import {userRegionsParamsCreator} from './userScopeStores/userRegionStore';
+import {userProjectsParamsCreator} from './userScopeStores/userProjectStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -43,6 +45,18 @@ export const userOutputParams = [
   'dateJoined'
 ];
 
+export const userStateMutateOutputParams = [
+  'id',
+  {
+    data: [
+      {
+        userRegions: userRegionsParamsCreator(['id']),
+        userProjects: userProjectsParamsCreator(['id']),
+      }
+    ]
+  }
+];
+
 /**
  * Queries users
  * @params {Object} apolloClient The Apollo Client
@@ -54,7 +68,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
     return makeQueryTask(
       apolloClient,
       {name: 'currentUser', readInputTypeMapper},
-      // If we have to query for users separately use the limited output userStateOutputParams
+      // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
       // No arguments, the server resolves the current user based on authentication
       {}
@@ -64,3 +78,18 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
     ['apolloClient', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired]
   ], 'makeUserQueryTask');
+
+
+/**
+ * Mutate the user state of the given user
+ * @params {Object} apolloClient The Apollo Client
+ * @params {Object} outputParams OutputParams for the query such as userStateMutateOutputParams
+ * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
+ * or errors in Result.Error({errors: [...]})
+ */
+export const makeUserStateMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
+  apolloClient,
+  {name: 'userState'},
+  outputParams,
+  inputParams
+));

@@ -56,7 +56,7 @@ describe('apolloClient', () => {
       ({apolloClient, region}) => makeReadQueryTask(
         apolloClient,
         {name: 'regions', readInputTypeMapper},
-        // If we have to query for regions separately use the limited output userStateOutputParams
+        // If we have to query for regions separately use the limited output userStateOutputParamsCreator
         regionOutputParams,
         {key: region.key}
       ),
@@ -66,7 +66,7 @@ describe('apolloClient', () => {
         makeQueryTask(
           apolloClient,
           {name: 'regions', readInputTypeMapper},
-          // If we have to query for regions separately use the limited output userStateOutputParams
+          // If we have to query for regions separately use the limited output userStateOutputParamsCreator
           regionOutputParams,
           {key: region.key}
         )

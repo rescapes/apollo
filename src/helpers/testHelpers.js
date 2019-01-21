@@ -100,35 +100,47 @@ export const testAuthTask = loginToAuthClientTask(
 );
 
 /**
- * Convenient way to check if an object has a few expected keys
- * @param {[String]} keys keys of the object to check
- * @param {Object} obj The object to check
- * @return {*} Expects the object has the given keys. Throws if expect fails
- */
-export const expectKeys = v(R.curry((keys, obj) => expect(
-  R.compose(a => new Set(a), R.keys, R.pick(keys))(obj)
-  ).toEqual(
-  new Set(keys)
-  )),
-  [
-    ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
-    ['obj', PropTypes.shape().isRequired]
-  ]
-);
-
-/**
  * Convenient way to check if an object has a few expected keys at the given path
- * @param {[String]} keys keys of the object to check
+ * @param {[String]} keyPaths keys or dot-separated key paths of the object to check
  * @param {String} strPath Dot separated path of keys into the object
  * @param {Object} obj The object to check
  * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
  */
-export const expectKeysAtStrPath = v(R.curry((keys, strPath, obj) => expect(
-  R.compose(a => new Set(a), R.keys, R.pick(keys), reqStrPathThrowing(strPath))(obj)
-).toEqual(
-  new Set(keys)
-)), [
+export const expectKeysAtStrPath = v(R.curry((keyPaths, strPath, obj) =>
+  expectKeys(keyPaths, reqStrPathThrowing(strPath)(obj))
+), [
   ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
   ['strPath', PropTypes.string.isRequired],
+  ['obj', PropTypes.shape({}).isRequired]
+]);
+
+// TODO get from rescape-ramda
+export const keyStringToLensPath = keyString => R.map(
+  R.when(R.compose(R.complement(R.equals)(NaN), parseInt), parseInt),
+  R.split('.', keyString)
+);
+
+/**
+ * Convenient way to check if an object has a few expected keys at the given path
+ * @param {[String]} keyPaths keys or dot-separated key paths of the object to check
+ * @param {Object} obj The object to check
+ * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
+ */
+export const expectKeys = v(R.curry((keyPaths, obj) => expect(
+  R.compose(
+    // Put the keyPaths that survive in a set for comparison
+    a => new Set(a),
+    // Filter out keyPaths that don't resolve to a non-nil value
+    obj => R.filter(
+      keyPath => R.complement(R.isNil)(
+        R.view(R.lensPath(keyStringToLensPath(keyPath)), obj)
+      ),
+      keyPaths
+    )
+  )(obj)
+).toEqual(
+  new Set(keyPaths)
+)), [
+  ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
   ['obj', PropTypes.shape({}).isRequired]
 ]);

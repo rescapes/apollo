@@ -72,7 +72,7 @@ export const makeRegionsQueryTask = v(R.curry((apolloClient, outputParams, regio
     return makeQueryTask(
       apolloClient,
       {name: 'regions', readInputTypeMapper},
-      // If we have to query for regions separately use the limited output userStateOutputParams
+      // If we have to query for regions separately use the limited output userStateOutputParamsCreator
       outputParams,
       regionArguments
     );

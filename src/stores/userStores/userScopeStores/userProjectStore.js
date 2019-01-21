@@ -12,14 +12,10 @@
 import gql from 'graphql-tag';
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeQueryTask, makeQuery} from '../../../helpers/queryHelpers';
-import {makeMutationTask, makeMutation} from '../../../helpers/mutationHelpers';
+import {makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {reqStrPath, reqStrPathThrowing, resultToTask, compact} from 'rescape-ramda';
-import {makeRegionsQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
-import Result from 'folktale/result';
-import {responseAsResult} from '../../../helpers/requestHelpers';
+import {makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryTask, queryScopeObjsOfUserStateTask} from './scopeHelpers';
 
@@ -33,13 +29,13 @@ const readInputTypeMapper = {
 };
 
 /**
- * The output params fragment for a userRegions of UserState.data.userRegions
+ * The output params fragment for a userProjects of UserState.data.userProjects
  * @param scopeOutputParams
  * @return {*[]}
  */
-export const userRegionsParamsCreator = scopeOutputParams => [
+export const userProjectsParamsCreator = scopeOutputParams => [
   {
-    region: scopeOutputParams
+    project: scopeOutputParams
   }
 ];
 
@@ -49,34 +45,33 @@ export const userStateOutputParamsCreator = scopeOutputParams => [
   {
     data: [
       {
-        userRegions: userRegionsParamsCreator(scopeOutputParams)
+        userProjects: userProjectsParamsCreator(scopeOutputParams)
       }
     ]
   }
 ];
 
-
 /**
- * Queries regions that are in the scope of the user and the values of that region
+ * Queries projects that are in the scope of the user and the values of that project
  * @params {Object} apolloClient The Apollo Client
  * @params {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
- * @params {Object} regionArguments arguments for the Regions query. This can be {} or null to not filter.
- * Regions will be limited to those returned by the UserState query. These should not specify ids since
+ * @params {Object} projectArguments arguments for the Projects query. This can be {} or null to not filter.
+ * Projects will be limited to those returned by the UserState query. These should not specify ids since
  * the UserState query selects the ids
- * @returns {Object} The resulting Regions in a Task in {data: usersRegions: [...]}}
+ * @returns {Object} The resulting Projects in a Task in {data: usersProjects: [...]}}
  */
-export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArguments, regionArguments) => {
+export const makeUserProjectsQueryTask = v(R.curry((apolloClient, userStateArguments, projectArguments) => {
     return makeUserScopeObjsQueryTask(
       apolloClient,
       {
-        scopeQueryTask: makeRegionsQueryTask,
-        scopeName: 'region',
+        scopeQueryTask: makeProjectsQueryTask,
+        scopeName: 'project',
         readInputTypeMapper,
         userStateOutputParamsCreator,
-        scopeOutputParams: regionOutputParams
+        scopeOutputParams: projectOutputParams
       },
-      {userStateArguments, scopeArguments: regionArguments}
+      {userStateArguments, scopeArguments: projectArguments}
     );
   }),
   [
@@ -89,9 +84,14 @@ export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArgume
         ])
       })
     }).isRequired],
-    ['regionArguments', PropTypes.shape().isRequired]
-  ], 'makeUserRegionsQueryTask');
+    ['projectArguments', PropTypes.shape().isRequired]
+  ], 'makeUserProjectsQueryTask');
 
+export const makeUserProjectMutation = R.curry((outputParams, inputParams) => {
+  const mutation = makeMutation('updateProject', {}, {locationData: inputParams}, {location: outputParams});
+  debug(mutation);
+  return gql`${mutation}`;
+});
 
 /*
   LinkState Defaults
@@ -105,7 +105,7 @@ const defaults = {};
 
 /*
 Example queries and mutations
-const userRegionLocalQuery = gql`
+const userProjectLocalQuery = gql`
   query GetTodo {
     currentTodos @client
   }
@@ -158,7 +158,7 @@ const mutations = {
  * The Store object used to construct
  * Apollo Link State's Client State
  */
-export const userRegionStore = {
+export const userProjectStore = {
   defaults,
   mutations
 };
