@@ -16,13 +16,15 @@ import {reqStrPathThrowing, overDeep} from 'rescape-ramda';
 import privateTestConfig from './privateTestConfig';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
+import gql from 'graphql-tag';
 
+let nextTodoId = 1;
 /**
  * StateLink resolvers for testing.
- * @type {{Mutation: {updateNetworkStatus: function(*, {isConnected: *}, {cache: *})}}}
  */
 const sampleStateLinkResolvers = {
   Mutation: {
+    // Example of a simple cache property networkStatus
     updateNetworkStatus: (_, {isConnected}, {cache}) => {
       const data = {
         networkStatus: {
@@ -31,6 +33,43 @@ const sampleStateLinkResolvers = {
         }
       };
       cache.writeData({data});
+      return null;
+    },
+    // Example of adding a TODO
+    addTodo: (_, {text}, {cache}) => {
+      const query = gql`
+          query GetTodos {
+              todos @client {
+                  id
+                  text
+                  completed
+              }
+          }
+      `;
+
+      const previous = cache.readQuery({query});
+      const newTodo = {id: nextTodoId++, text, completed: false, __typename: 'TodoItem'};
+      const data = {
+        todos: previous.todos.concat([newTodo])
+      };
+
+      // you can also do cache.writeData({ data }) here if you prefer
+      cache.writeQuery({query, data});
+      return newTodo;
+    },
+    // Example of list of cache items where we toggle one
+    toggleTodo: (_, variables, {cache}) => {
+      const id = `TodoItem:${variables.id}`;
+      const fragment = gql`
+          fragment completeTodo on TodoItem {
+              completed
+          }
+      `;
+      const todo = cache.readFragment({fragment, id});
+      const data = {...todo, completed: !todo.completed};
+
+      // you can also do cache.writeData({ data, id }) here if you prefer
+      cache.writeFragment({fragment, id, data});
       return null;
     }
   },
@@ -52,7 +91,10 @@ const testCreateStateLinkDefaults = config => overDeep(
       networkStatus: {
         __typename: 'NetworkStatus',
         isConnected: false
-      }
+      },
+      todos: [
+
+      ]
     }
     /*
     // Same as passing defaults above
@@ -68,17 +110,16 @@ const testCreateStateLinkDefaults = config => overDeep(
   )
 );
 
-
-export const sampleStateLinkResolversAndDefaults = {
-  resolvers: sampleStateLinkResolvers, defaults: testStateLinkDefaults
-};
-
 export const testConfig = getCurrentConfig(privateTestConfig);
 
 // Apollo Link State defaults are based on the config.
 // TODO I've limited the keys here to keep out regions and users. If all tests are based on a server
 // we should remove users and regions from our testConfig
 const testStateLinkDefaults = testCreateStateLinkDefaults(R.pick(['settings', 'browser'], testConfig));
+
+export const sampleStateLinkResolversAndDefaults = {
+  resolvers: sampleStateLinkResolvers, defaults: testStateLinkDefaults
+};
 
 /**
  * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state

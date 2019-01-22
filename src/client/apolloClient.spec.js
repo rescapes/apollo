@@ -89,11 +89,49 @@ describe('apolloClient', () => {
     expect(reqStrPathThrowing('regions.0', response)).toBeTruthy();
   });
 
-  test('test linkState caching', async () => {
+  test('test linkState inital state', async () => {
 
+    const {apolloClient} = await taskToPromise(testAuthTask);
+    const queryDefaults = gql`
+        query {
+            networkStatus @client {
+                isConnected
+            }
+            settings @client {
+                mapbox {
+                    viewport
+                }
+            }
+        }
+    `;
+    const queryDefaultsResponse = await apolloClient.query({
+        query: queryDefaults
+      }
+    );
+
+    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryDefaultsResponse)).toEqual(false);
+    expect(reqStrPathThrowing('data.settings.mapbox.viewport', queryDefaultsResponse)).toBeTruthy();
+  });
+
+  test('test linkState mutation', async () => {
+
+    const {apolloClient} = await taskToPromise(testAuthTask);
+    // Mutate the network status
     const mutateNetworkStatus = gql`
         mutation updateNetworkStatus($isConnected: Boolean) {
             updateNetworkStatus(isConnected: $isConnected) @client
+        }
+    `;
+
+    const mutateAddTodo = gql`
+        mutation addTodo($text: String) {
+            addTodo(text: $text) @client
+        }
+    `;
+
+    const mutateToggleTodo = gql`
+        mutation toggleTodo($id: String) {
+            toggleTodo(id: $id) @client
         }
     `;
 
@@ -101,6 +139,11 @@ describe('apolloClient', () => {
         query($key: String) {
             networkStatus @client {
                 isConnected
+            }
+            todos @client {
+                id
+                text
+                completed
             }
             regions(key: $key) {
                 id
@@ -110,8 +153,8 @@ describe('apolloClient', () => {
         }
     `;
 
-    // Initially our networkStatus.isConnected is false because we defaulted it thus
-    const {apolloClient} = await taskToPromise(testAuthTask);
+
+    // Create a Region
     await taskToPromise(makeMutationTask(
       apolloClient,
       {name: 'region'},
@@ -137,14 +180,39 @@ describe('apolloClient', () => {
       }
     );
 
+    // Add a todo
+    await apolloClient.mutate(
+      {
+        mutation: mutateAddTodo,
+        variables: {text: 'Help Me Rhonda'}
+      }
+    );
+    await apolloClient.mutate(
+      {
+        mutation: mutateAddTodo,
+        variables: {text: 'Sloop John B'}
+      }
+    );
+
+    await apolloClient.mutate(
+      {
+        mutation: mutateToggleTodo,
+        variables: {id: '1'}
+      }
+    );
+
     // Query the cache
-    const queryResponse = await apolloClient.readQuery({
+    const queryResponse = await apolloClient.query({
         query: queryRegions,
         variables: {key: "earth"}
       }
     );
-    expect(reqStrPathThrowing('networkStatus.isConnected', queryResponse)).toEqual(true);
-    expect(reqStrPathThrowing('regions.0.key', queryResponse)).toEqual('earth');
+
+    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponse)).toEqual(true);
+    const todos = reqStrPathThrowing('data.todos', queryResponse);
+    expect(R.length(todos)).toEqual(2);
+    expect(R.find(todo => R.propEq('id', 2, todo), todos).text).toEqual('Sloop John B');
+    expect(reqStrPathThrowing('data.regions.0.key', queryResponse)).toEqual('earth');
 
     // Make sure store can be reset
     // TODO this seems to be a bug. The defaults aren't being propery restored

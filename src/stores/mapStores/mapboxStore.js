@@ -15,7 +15,8 @@ import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeClientQueryTask, makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
-import {waitAll} from 'folktale/concurrency/task';
+import {of, waitAll} from 'folktale/concurrency/task';
+import Result from 'folktale/result';
 import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath} from 'rescape-ramda';
 
 // Every complex input type needs a type specified in graphql. Our type names are
@@ -112,29 +113,36 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
       of(R.mergeAll),
       // Each Result.Ok is mapped to a Task. Result.Errors are mapped to a Task.of
       // [Result] -> [Task Object]
-      args => R.filter(
+      args => R.map(
         values => R.complement(R.has)('error', values),
         waitAll([
           // The given Region's Mapbox state
           resultToTaskNeedingResult(
-            args => makeQueryTask(
-              apolloClient,
-              {name: 'regions', readInputTypeMapper},
-              outputParams,
-              args
-            ).map(reqStrPathThrowing('data.regions.mapbox'))
-          )(reqStrPath('regions', args)),
+            args => R.map(
+              value => reqStrPathThrowing('data.regions.mapbox', value),
+              makeQueryTask(
+                apolloClient,
+                {name: 'regions', readInputTypeMapper},
+                outputParams,
+                args
+              )
+            ),
+            reqStrPath('regions', args)
+          ),
 
           // Tht Global Mapbox state
           resultToTaskNeedingResult(
-            () => makeClientQueryTask(
-              apolloClient,
-              {name: 'settings', readInputTypeMapper},
-              // If we have to query for regions separately use the limited output userStateOutputParamsCreator
-              outputParams,
-              // No args for global
-              {}
-            ).map('data.settings.mapbox')
+            () => R.map(
+              value => reqStrPathThrowing('data.settings.mapbox', value),
+              makeClientQueryTask(
+                apolloClient,
+                {name: 'settings', readInputTypeMapper},
+                // If we have to query for regions separately use the limited output userStateOutputParamsCreator
+                outputParams,
+                // No args for global
+                {}
+              )
+            )
           )(Result.Ok({}))
         ])
       )

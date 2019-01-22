@@ -8,6 +8,7 @@ import {waitAll} from 'folktale/concurrency/task';
 import {reqStrPathThrowing, defaultRunConfig} from 'rescape-ramda';
 import {mapboxOutputParamsFragment} from './mapboxStore';
 import {makeUserRegionsQueryTask} from '../userStores/userScopeStores/userRegionStore';
+import {makeUserProjectsQueryTask} from '../userStores/userScopeStores/userProjectStore';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -23,17 +24,17 @@ describe('mapboxStore', () => {
   test('makeMapboxStore', done => {
     const someMapboxKeys = ['viewport'];
     R.composeK(
-      ({apolloClient, userId, regionId}) => makeMapboxesQueryTask(
+      ({apolloClient, userId, regionId, projectId}) => makeMapboxesQueryTask(
         apolloClient,
         mapboxOutputParamsFragment,
         {
           users: {id: parseInt(userId)},
           regions: {id: parseInt(regionId)},
-          projects: {id: projectId},
+          projects: {id: parseInt(projectId)},
         },
       ),
       ({apolloClient, userId, regionId}) => R.map(
-        response => ({apolloClient, userId, regionId, projectId: reqStrPathThrowing('data.userProjects.0.id', response)}),
+        response => ({apolloClient, userId, regionId, projectId: reqStrPathThrowing('data.userProjects.0.project.id', response)}),
         makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
       ),
       ({apolloClient, userId}) => R.map(

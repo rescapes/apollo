@@ -13,12 +13,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
-import {debug} from '../../helpers/logHelpers';
-import {reqStrPath} from 'rescape-ramda';
-import {makeQuery} from '../../helpers/queryHelpers';
-import {makeMutation, makeMutationTask} from '../../helpers/mutationHelpers';
-import {authApolloClientQueryRequestTask, authApolloClientMutationRequestTask} from '../../client/apolloClient';
+import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
