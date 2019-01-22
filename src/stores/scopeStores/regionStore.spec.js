@@ -8,21 +8,22 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, mapToResponseAndInputs} from 'rescape-ramda';
 import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeRegionMutationTask, makeRegionsQueryTask, regionOutputParams} from './regionStore';
+import {createSampleRegionTask} from './regionStore.sample';
 
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
 describe('regionStore', () => {
   test('makeRegionMutationTask', done => {
     R.composeK(
-      ({apolloClient}) => makeRegionMutationTask(apolloClient, regionOutputParams, {key: 'earth', name: 'Earth'}),
+      createSampleRegionTask,
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expectKeysAtStrPath(someRegionKeys, 'data.region', response);
+          expectKeysAtStrPath(someRegionKeys, 'region', response);
           done();
         }
     }));
@@ -30,7 +31,8 @@ describe('regionStore', () => {
 
   test('makeRegionsQueryTask', done => {
     R.composeK(
-      ({apolloClient}) => makeRegionsQueryTask(apolloClient, regionOutputParams, {key: 'earth'}),
+      ({apolloClient, region}) => makeRegionsQueryTask(apolloClient, regionOutputParams, {key: reqStrPathThrowing('key', region)}),
+      createSampleRegionTask,
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

@@ -12,7 +12,7 @@ import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
 import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
-import {reqStrPathThrowing, overDeep} from 'rescape-ramda';
+import {reqStrPathThrowing, overDeep, keyStringToLensPath} from 'rescape-ramda';
 import privateTestConfig from './privateTestConfig';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
@@ -154,12 +154,6 @@ export const expectKeysAtStrPath = v(R.curry((keyPaths, strPath, obj) =>
   ['strPath', PropTypes.string.isRequired],
   ['obj', PropTypes.shape({}).isRequired]
 ]);
-
-// TODO get from rescape-ramda
-export const keyStringToLensPath = keyString => R.map(
-  R.when(R.compose(R.complement(R.equals)(NaN), parseInt), parseInt),
-  R.split('.', keyString)
-);
 
 /**
  * Convenient way to check if an object has a few expected keys at the given path

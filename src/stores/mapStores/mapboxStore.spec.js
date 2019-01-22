@@ -5,10 +5,11 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {v} from 'rescape-validate';
 import {waitAll} from 'folktale/concurrency/task';
-import {reqStrPathThrowing, defaultRunConfig} from 'rescape-ramda';
+import {reqStrPathThrowing, defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {mapboxOutputParamsFragment} from './mapboxStore';
 import {makeUserRegionsQueryTask} from '../userStores/userScopeStores/userRegionStore';
 import {makeUserProjectsQueryTask} from '../userStores/userScopeStores/userProjectStore';
+import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -30,21 +31,18 @@ describe('mapboxStore', () => {
         {
           users: {id: parseInt(userId)},
           regions: {id: parseInt(regionId)},
-          projects: {id: parseInt(projectId)},
-        },
+          projects: {id: parseInt(projectId)}
+        }
       ),
-      ({apolloClient, userId, regionId}) => R.map(
-        response => ({apolloClient, userId, regionId, projectId: reqStrPathThrowing('data.userProjects.0.project.id', response)}),
-        makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
+      mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
+        ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
       ),
-      ({apolloClient, userId}) => R.map(
-        response => ({apolloClient, userId, regionId: reqStrPathThrowing('data.userRegions.0.region.id', response)}),
-        makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})
-      ),
-      ({apolloClient}) => R.map(
-        response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask(apolloClient, userOutputParams)
-      ),
+      mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
+        ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})),
+      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
+        ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams)),
+      createSampleProjectTask,
+      createSampleRegionTask,
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

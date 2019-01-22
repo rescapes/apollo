@@ -49,10 +49,22 @@ export const mapboxOutputParamsFragment = [
  * @param [Object] mapboxFragment The mapboxFragment of the params
  * @return {*[]}
  */
-export const userStateMapboxOutputParams = mapboxFragment => [
+export const userStateMapboxOutputParamsCreator = mapboxFragment => [
   {
     userStates: [{
       data: [{
+        userGlobal: mapboxFragment,
+        userProjects: mapboxFragment
+      }]
+    }]
+  }
+];
+
+export const scopeObjMapboxOutputParamsCreator = (scopeName, mapboxFragment) => [
+  {
+    [`${scopeName}s`]: [{
+      data: [{
+        mapbox: mapboxFragment
         userGlobal: mapboxFragment,
         userProjects: mapboxFragment
       }]
@@ -69,12 +81,11 @@ export const userStateMapboxOutputParams = mapboxFragment => [
  *
  * Region that is specified
  *  Queries:
- *      viewport (bounds override Global)
+ *      geojson (bounds override Global viewport)
  *
  * Project that is specified
  *  Queries:
- *      viewport (locations' composite bounds override),
- *      locations (geojson and properties)
+ *      locations (geojson and properties, combined geojson overrides Region viewport)
  *
  * User Global
  *  Queries:
@@ -84,7 +95,7 @@ export const userStateMapboxOutputParams = mapboxFragment => [
  *
  * User Project for specified Project
  *  Queries:
- *      viewport (user input overrides)
+ *      viewport (user input overrides Project viewport)
  *      location selections
  *  Mutations
  *      viewport
@@ -123,7 +134,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
               makeQueryTask(
                 apolloClient,
                 {name: 'regions', readInputTypeMapper},
-                outputParams,
+                userStateMapboxOutputParamsCreator(outputParams),
                 args
               )
             ),
