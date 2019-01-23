@@ -44,6 +44,7 @@ export const mapboxOutputParamsFragment = [
   }
 ];
 
+
 /**
  * Creates state output params
  * @param [Object] mapboxFragment The mapboxFragment of the params
@@ -64,7 +65,7 @@ export const scopeObjMapboxOutputParamsCreator = (scopeName, mapboxFragment) => 
   {
     [`${scopeName}s`]: [{
       data: [{
-        mapbox: mapboxFragment
+        mapbox: mapboxFragment,
         userGlobal: mapboxFragment,
         userProjects: mapboxFragment
       }]
@@ -148,7 +149,6 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
               makeClientQueryTask(
                 apolloClient,
                 {name: 'settings', readInputTypeMapper},
-                // If we have to query for regions separately use the limited output userStateOutputParamsCreator
                 outputParams,
                 // No args for global
                 {}

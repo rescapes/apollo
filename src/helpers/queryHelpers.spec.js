@@ -13,11 +13,12 @@ import {makeClientQueryTask, makeQuery, makeQueryForComponentTask, makeQueryTask
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
 import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
-import {sampleStateLinkResolversAndDefaults, testConfig} from './testHelpers';
+import {expectKeysAtStrPath, sampleStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationTask} from './mutationHelpers';
 import moment from 'moment';
+import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
 
 describe('queryHelpers', () => {
 
@@ -59,8 +60,6 @@ describe('queryHelpers', () => {
   }, 1000);
 
   test('makeClientQueryTask', done => {
-    const {settings: {api}} = testConfig;
-    const uri = parseApiUrl(api);
     const task = R.composeK(
       // Query the client to confirm it's in the cache
       ({apolloClient, region}) => makeClientQueryTask(
@@ -91,12 +90,33 @@ describe('queryHelpers', () => {
           }
         )
       ),
-      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+      () => testAuthTask
     )();
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
           expect(R.keys(reqStrPathThrowing('data.regions.0', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          done();
+        }
+    }));
+  }, 1000);
+
+  test('makeClientQueryTaskForSettings', done => {
+    const someMapboxKeys = ['viewport'];
+    const task = R.composeK(
+      // Query the client to confirm it's in the cache
+      ({apolloClient}) => makeClientQueryTask(
+        apolloClient,
+        {name: 'settings', readInputTypeMapper: {}},
+        mapboxOutputParamsFragment,
+        {}
+      ),
+      () => testAuthTask
+    )();
+    task.run().listen(defaultRunConfig({
+      onResolved:
+        response => {
+          expectKeysAtStrPath(someMapboxKeys, 'data.settings.mapbox', response);
           done();
         }
     }));

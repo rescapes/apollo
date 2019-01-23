@@ -10,6 +10,7 @@ import {mapboxOutputParamsFragment} from './mapboxStore';
 import {makeUserRegionsQueryTask} from '../userStores/userScopeStores/userRegionStore';
 import {makeUserProjectsQueryTask} from '../userStores/userScopeStores/userProjectStore';
 import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
+import {createSampleProjectTask} from '../scopeStores/projectStore.sample';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -47,7 +48,7 @@ describe('mapboxStore', () => {
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expectKeysAtStrPath(someMapboxKeys, 'data.mapboxs.0.region', response);
+          expectKeysAtStrPath(someMapboxKeys, 'data.mapboxes.0.region', response);
           done();
         }
     }));
