@@ -33,7 +33,7 @@ const readInputTypeMapper = {
  * @param scopeOutputParams
  * @return {*[]}
  */
-export const userProjectsParamsCreator = scopeOutputParams => [
+export const userProjectsFragmentCreator = scopeOutputParams => [
   {
     project: scopeOutputParams
   }
@@ -45,7 +45,7 @@ export const userStateOutputParamsCreator = scopeOutputParams => [
   {
     data: [
       {
-        userProjects: userProjectsParamsCreator(scopeOutputParams)
+        userProjects: userProjectsFragmentCreator(scopeOutputParams)
       }
     ]
   }

@@ -9,19 +9,19 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {defaultRunConfig, reqStrPathThrowing, capitalize} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
 import * as R from 'ramda';
-import {of} from 'folktale/concurrency/task'
+import {of} from 'folktale/concurrency/task';
 import {
-  makeCurrentUserQueryTask, makeUserStateMutationTask, userOutputParams,
-  userStateMutateOutputParams
+  makeCurrentUserQueryTask, makeUserStateMutationTask, makeUserStateQueryTask, userOutputParams,
+  userStateMutateOutputParams, userStateOutputParamsFull
 } from './userStore';
-import {makeRegionMutationTask, makeRegionsQueryTask, regionOutputParams} from '../scopeStores/regionStore';
-import {makeProjectMutationTask, makeProjectsQueryTask, projectOutputParams} from '../scopeStores/projectStore';
+import {makeRegionMutationTask, regionOutputParams} from '../scopeStores/regionStore';
+import {makeProjectMutationTask, projectOutputParams} from '../scopeStores/projectStore';
 
 describe('userStore', () => {
-  test('makeUserUserQueryTask', done => {
+  test('makeUserQueryTask', done => {
     const someUserKeys = ['id', 'email', 'username'];
     R.composeK(
       ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams),
@@ -30,6 +30,23 @@ describe('userStore', () => {
       onResolved:
         response => {
           expectKeysAtStrPath(someUserKeys, 'data.currentUser', response);
+          done();
+        }
+    }));
+  });
+
+  test('makeUserStateQueryTask', done => {
+    const someUserStateKeys = ['user.id', 'data.userRegions.0.region.id'];
+    R.composeK(
+      ({apolloClient, userId}) => makeUserStateQueryTask(apolloClient, userStateOutputParamsFull, {user: {id: parseInt(userId)}}),
+      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
+        ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams)
+      ),
+      () => testAuthTask
+    )().run().listen(defaultRunConfig({
+      onResolved:
+        response => {
+          expectKeysAtStrPath(someUserStateKeys, 'data.userStates.0', response);
           done();
         }
     }));
@@ -91,7 +108,7 @@ describe('userStore', () => {
       // We user state structure should match what we expect
       ({apolloClient, user, userState}) => {
         expectKeys(someUserStateKeys, userState);
-        return of({apolloClient, user})
+        return of({apolloClient, user});
       },
       // Set the UserState
       ({apolloClient, user}) => mutateUserStateWithProjectAndRegion({

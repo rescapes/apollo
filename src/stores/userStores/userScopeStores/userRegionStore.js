@@ -37,23 +37,12 @@ const readInputTypeMapper = {
  * @param scopeOutputParams
  * @return {*[]}
  */
-export const userRegionsParamsCreator = scopeOutputParams => [
+export const userRegionsFragmentCreator = scopeOutputParams => [
   {
     region: scopeOutputParams
   }
 ];
 
-// Default outputParams for UserState
-export const userStateOutputParamsCreator = scopeOutputParams => [
-  'id',
-  {
-    data: [
-      {
-        userRegions: userRegionsParamsCreator(scopeOutputParams)
-      }
-    ]
-  }
-];
 
 
 /**

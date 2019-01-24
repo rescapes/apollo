@@ -10,23 +10,29 @@
  */
 
 
-
 import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
-import {userRegionsParamsCreator} from './userScopeStores/userRegionStore';
-import {userProjectsParamsCreator} from './userScopeStores/userProjectStore';
+import {userRegionsFragmentCreator} from './userScopeStores/userRegionStore';
+import {userProjectsFragmentCreator} from './userScopeStores/userProjectStore';
+import {reqStrPathThrowing} from 'rescape-ramda';
+import {regionOutputParams} from '../scopeStores/regionStore';
+import {projectOutputParams} from '../scopeStores/projectStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
 // Following this location.data is represented as follows:
 // TODO These value should be dervived from the schema
-const readInputTypeMapper = {
+const userReadInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
 };
+const userStateReadInputTypeMapper = {
+  'user': 'UserTypeofUserStateTypeRelatedReadInputType'
+};
+
 
 export const userOutputParams = [
   'id',
@@ -40,17 +46,53 @@ export const userOutputParams = [
   'dateJoined'
 ];
 
-export const userStateMutateOutputParams = [
+const userStateOutputParamsCreator = scopeFragments => [
   'id',
-  {
+  [{
+    user: ['id'],
     data: [
-      {
-        userRegions: userRegionsParamsCreator(['id']),
-        userProjects: userProjectsParamsCreator(['id']),
-      }
+      scopeFragments
     ]
-  }
+  }]
 ];
+
+/**
+ * Creates userState scope output params
+ * @param {Object} userScopeFragmentOutputParams Object keyed by 'userRegions', 'userProjects', etc with
+ * the ouput params those should return within userState.data.[userRegions|userProject|...]
+ * @return {*} The complete UserState output params
+ */
+export const userStateScopeOutputParamsFragmentCreator = userScopeFragmentOutputParams => {
+  const fragmentCreators = {
+    userRegions: userRegionsFragmentCreator,
+    userProjects: userProjectsFragmentCreator
+  };
+  return R.mapObjIndexed(
+    (v, k) => reqStrPathThrowing(k, fragmentCreators)(v),
+    userScopeFragmentOutputParams
+  );
+};
+
+/**
+ * User state output params with full scope output params. This should only be used for quering when values of the scope
+ * instances are needed beyond the ids
+ */
+export const userStateOutputParamsFull = userStateOutputParamsCreator(userStateScopeOutputParamsFragmentCreator({
+  userRegions: regionOutputParams,
+  userProjects: projectOutputParams
+}));
+
+/**
+ * User state output params with id-only scope output params. Should be used for mutations and common cases when
+ * only the scope ids of the user state are needed (because scope instances are already loaded, for instance)
+ */
+export const userStateOutputPararmsOnlyIds = userStateOutputParamsCreator(userStateScopeOutputParamsFragmentCreator({
+  userRegions: ['id'],
+  userProjects: ['id']
+}));
+
+
+export const userStateMutateOutputParams = userStateOutputParamsCreator;
 
 /**
  * Queries users
@@ -62,7 +104,7 @@ export const userStateMutateOutputParams = [
 export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) => {
     return makeQueryTask(
       apolloClient,
-      {name: 'currentUser', readInputTypeMapper},
+      {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
       // No arguments, the server resolves the current user based on authentication
@@ -74,6 +116,28 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
     ['outputParams', PropTypes.array.isRequired]
   ], 'makeUserQueryTask');
 
+
+/**
+ * Queries userState.
+ * @params {Object} apolloClient The Apollo Client
+ * @params {Object} outputParams OutputParams for the query such as regionOutputParams
+ * @params {Object} userStateArguments Arguments for the UserState query. This can be {} or null to not filter.
+ * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
+ */
+export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, userStateArguments) => {
+    return makeQueryTask(
+      apolloClient,
+      {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper},
+      // If we have to query for users separately use the limited output userStateOutputParamsCreator
+      outputParams,
+      userStateArguments
+    );
+  }),
+  [
+    ['apolloClient', PropTypes.shape().isRequired],
+    ['outputParams', PropTypes.array.isRequired],
+    ['userStateArguments', PropTypes.shape().isRequired]
+  ], 'makeUserStateQueryTask');
 
 /**
  * Mutate the user state of the given user
