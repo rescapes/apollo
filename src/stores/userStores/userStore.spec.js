@@ -77,23 +77,26 @@ describe('userStore', () => {
 
     const mutateUserStateWithProjectAndRegion = R.composeK(
       // Set the user state of the given user to the region and project
-      ({apolloClient, user, region, project}) => R.map(
-        userStateData => ({apolloClient, user, userState: reqStrPathThrowing('data.userState', userStateData)}),
-        makeUserStateMutationTask(
+      mapToNamedPathAndInputs('userState', 'data.userState',
+        ({apolloClient, user, region, project}) => makeUserStateMutationTask(
           apolloClient,
           userStateMutateOutputParams,
           createInputParams({user, region, project})
         )
       ),
       // Create a project
-      ({apolloClient, user, region, projectKey}) => R.map(
-        projectData => ({apolloClient, user, region, project: reqStrPathThrowing('data.project', projectData)}),
-        makeProjectMutationTask(apolloClient, projectOutputParams, {key: projectKey, name: capitalize(projectKey)})
+      mapToNamedPathAndInputs('project', 'data.project',
+        ({apolloClient, user, region, projectKey}) => makeProjectMutationTask(apolloClient, projectOutputParams, {
+          key: projectKey,
+          name: capitalize(projectKey)
+        })
       ),
       // Create a region
-      ({apolloClient, user, regionKey, projectKey}) => R.map(
-        regionData => ({apolloClient, user, region: reqStrPathThrowing('data.region', regionData), projectKey}),
-        makeRegionMutationTask(apolloClient, regionOutputParams, {key: regionKey, name: capitalize(regionKey)})
+      mapToNamedPathAndInputs('region', 'data.region',
+        ({apolloClient, user, regionKey}) => makeRegionMutationTask(apolloClient, regionOutputParams, {
+          key: regionKey,
+          name: capitalize(regionKey)
+        })
       )
     );
 
@@ -117,9 +120,8 @@ describe('userStore', () => {
         regionKey: 'earth',
         projectKey: 'shrangrila'
       }),
-      ({apolloClient}) => R.map(
-        userData => ({apolloClient, user: reqStrPathThrowing('data.currentUser', userData)}),
-        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+      mapToNamedPathAndInputs('user', 'data.currentUser',
+        ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams)
       ),
       () => testAuthTask
     )().run().listen(defaultRunConfig({

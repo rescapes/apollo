@@ -22,28 +22,7 @@ import Result from 'folktale/result';
 import {responseAsResult} from '../../../helpers/requestHelpers';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryTask, queryScopeObjsOfUserStateTask} from './scopeHelpers';
-
-// Variables of complex input type needs a type specified in graphql. Our type names are
-// always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
-// Following this location.data is represented as follows:
-// TODO These value should be derived from the schema
-const readInputTypeMapper = {
-  //'data': 'DataTypeofLocationTypeRelatedReadInputType'
-  'user': 'UserTypeofUserStateTypeRelatedReadInputType'
-};
-
-/**
- * The output params fragment for a userRegions of UserState.data.userRegions
- * @param scopeOutputParams
- * @return {*[]}
- */
-export const userRegionsFragmentCreator = scopeOutputParams => [
-  {
-    region: scopeOutputParams
-  }
-];
-
-
+import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
 
 /**
  * Queries regions that are in the scope of the user and the values of that region
@@ -61,8 +40,8 @@ export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArgume
       {
         scopeQueryTask: makeRegionsQueryTask,
         scopeName: 'region',
-        readInputTypeMapper,
-        userStateOutputParamsCreator,
+        readInputTypeMapper: userStateReadInputTypeMapper,
+        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({region: scopeOutputParams}),
         scopeOutputParams: regionOutputParams
       },
       {userStateArguments, scopeArguments: regionArguments}

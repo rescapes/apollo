@@ -39,7 +39,7 @@ describe('userRegionStore', () => {
     R.composeK(
       // Filter for regions where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Regions so we can filter by Region
-      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {geojson: {type: 'FeatureCollection'}}),
+      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: parseInt(userId)}}, {geojson: {type: 'FeatureCollection'}}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)
@@ -57,7 +57,7 @@ describe('userRegionStore', () => {
   test('makeActiveUserRegionQuery', done => {
     const someRegionKeys = ['id', 'key', 'name', 'data'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}, }, {}),
+      ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: parseInt(userId)}, }, {}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
         makeCurrentUserQueryTask(apolloClient, userOutputParams)

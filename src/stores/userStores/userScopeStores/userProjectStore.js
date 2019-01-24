@@ -18,6 +18,7 @@ import {v} from 'rescape-validate';
 import {makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryTask, queryScopeObjsOfUserStateTask} from './scopeHelpers';
+import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
 
 // Variables of complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -27,29 +28,6 @@ const readInputTypeMapper = {
   //'data': 'DataTypeofLocationTypeRelatedReadInputType'
   'user': 'UserTypeofUserStateTypeRelatedReadInputType'
 };
-
-/**
- * The output params fragment for a userProjects of UserState.data.userProjects
- * @param scopeOutputParams
- * @return {*[]}
- */
-export const userProjectsFragmentCreator = scopeOutputParams => [
-  {
-    project: scopeOutputParams
-  }
-];
-
-// Default outputParams for UserState
-export const userStateOutputParamsCreator = scopeOutputParams => [
-  'id',
-  {
-    data: [
-      {
-        userProjects: userProjectsFragmentCreator(scopeOutputParams)
-      }
-    ]
-  }
-];
 
 /**
  * Queries projects that are in the scope of the user and the values of that project
@@ -67,8 +45,8 @@ export const makeUserProjectsQueryTask = v(R.curry((apolloClient, userStateArgum
       {
         scopeQueryTask: makeProjectsQueryTask,
         scopeName: 'project',
-        readInputTypeMapper,
-        userStateOutputParamsCreator,
+        readInputTypeMapper: userStateReadInputTypeMapper,
+        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({project: scopeOutputParams}),
         scopeOutputParams: projectOutputParams
       },
       {userStateArguments, scopeArguments: projectArguments}
