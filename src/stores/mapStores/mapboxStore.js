@@ -19,7 +19,7 @@ import {of, waitAll} from 'folktale/concurrency/task';
 import Result from 'folktale/result';
 import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath} from 'rescape-ramda';
 import {makeRegionsQueryTask} from '../scopeStores/regionStore';
-import {makeUserStateMutationTask} from '../userStores/userStore';
+import {makeUserStateMutationTask, makeUserStateQueryTask} from '../userStores/userStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -147,22 +147,38 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
 
           // The given Region's Mapbox state
           resultToTaskNeedingResult(
+            args => {
+              return R.map(
+                value => R.mergeAll([
+                  reqStrPathThrowing('data.userGlobal.mapbox', value),
+                  reqStrPathThrowing('data.userRegion.mapbox', value)
+                ]),
+                makeUserStateQueryTask(
+                  apolloClient,
+                  userStateMapboxOutputParamsCreator(outputParams),
+                  args
+                )
+              );
+            },
+            // user arg is required
+            reqStrPathThrowing('user', args)
+          ),
+
+          // The optional given Project's Mapbox state
+          resultToTaskNeedingResult(
             args => R.map(
-              value => R.mergeAll([
-                reqStrPathThrowing('data.userGlobal.mapbox', value),
-                reqStrPathThrowing('data.userRegion.mapbox', value),
-              ]),
-              makeUserStateQueryTask(
+              value => reqStrPathThrowing('data.projects.mapbox', value),
+              makeRegionsQueryTask(
                 apolloClient,
-                {name: 'userState', readInputTypeMapper},
-                userStateMapboxOutputParamsCreator(outputParams),
+                {name: 'regions', readInputTypeMapper},
+                regionMapboxOutputParamsCreator(outputParams),
                 args
               )
             ),
-            reqStrPath('regions', args)
+            reqStrPath('project', args)
           ),
 
-          // The given Region's Mapbox state
+          // The optional given Region's Mapbox state
           resultToTaskNeedingResult(
             args => R.map(
               value => reqStrPathThrowing('data.regions.mapbox', value),
@@ -173,7 +189,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
                 args
               )
             ),
-            reqStrPath('regions', args)
+            reqStrPath('region', args)
           ),
 
           // Tht Global Mapbox state

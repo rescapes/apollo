@@ -30,16 +30,20 @@ describe('mapboxStore', () => {
         apolloClient,
         mapboxOutputParamsFragment,
         {
-          users: {id: parseInt(userId)},
-          regions: {id: parseInt(regionId)},
-          projects: {id: parseInt(projectId)}
+          user: {id: parseInt(userId)},
+          region: {id: parseInt(regionId)},
+          project: {id: parseInt(projectId)}
         }
       ),
+      // Get the first project in the userState to use as a pretend scope
       mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
         ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
       ),
+      // Get the first region in the userState to use as a pretend scope
       mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
-        ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})),
+        ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})
+      ),
+      // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
         ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams)),
       createSampleProjectTask,

@@ -108,9 +108,9 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
  *  are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
  *  of different could be merged together into the data field. This also matches what Apollo components expect.
- *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult
+ *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+export const makeQueryTask = R.curry((apolloClientOrComponent, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
   console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
@@ -119,7 +119,7 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
       return queryResponse;
     },
     authApolloClientQueryRequestTask(
-      apolloClient,
+      apolloClientOrComponent,
       {
         query,
         variables: queryArgs
@@ -139,7 +139,7 @@ export const makeQueryTask = R.curry((apolloClient, {name, readInputTypeMapper},
  * @returns {Object} Task that resolves to and object with the results of the query. Successful results
  * are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
  * of different could be merged together into the data field. This also matches what Apollo components expect.
- * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.responseAsResult.
+ * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs.
  */
 export const makeClientQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;

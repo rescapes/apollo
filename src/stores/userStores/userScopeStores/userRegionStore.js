@@ -9,19 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import gql from 'graphql-tag';
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeQueryTask, makeQuery} from '../../../helpers/queryHelpers';
-import {makeMutationTask, makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {reqStrPath, reqStrPathThrowing, resultToTask, compact} from 'rescape-ramda';
 import {makeRegionsQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
-import Result from 'folktale/result';
-import {responseAsResult} from '../../../helpers/requestHelpers';
 import {of} from 'folktale/concurrency/task';
-import {makeUserScopeObjsQueryTask, queryScopeObjsOfUserStateTask} from './scopeHelpers';
+import {makeUserScopeObjsQueryTask} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
 
 /**

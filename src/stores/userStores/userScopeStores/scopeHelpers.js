@@ -15,7 +15,7 @@ import {v} from 'rescape-validate';
 import {reqStrPathThrowing, compact, capitalize, reqPathThrowing} from 'rescape-ramda';
 import {of} from 'folktale/concurrency/task';
 import {makeQueryTask} from '../../../helpers/queryHelpers';
-import {responseAsResult} from '../../../helpers/requestHelpers';
+import {mapQueryTaskToNamedResultAndInputs} from '../../../helpers/requestHelpers';
 import PropTypes from 'prop-types';
 
 /**
@@ -64,29 +64,27 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
               ),
               of
             )(userScopeObjs)
-          )
+          );
         },
         result
       ),
       // First query for UserState
-      () => R.map(
-        // Dig into the results and return a Result.Ok with the userScopeNames or a Result.Error if not found,
-        // where scope names is 'Regions', 'Projects', etc
-        // Result.Error prevents the next query from running
-        response => responseAsResult(
-          response,
+      // Dig into the results and return a Result.Ok with the userScopeNames or a Result.Error if not found,
+      // where scope names is 'Regions', 'Projects', etc
+      // Result.Error prevents the next query from running
+      () =>
+        mapQueryTaskToNamedResultAndInputs(
+          makeQueryTask(
+            apolloClient,
+            {name: 'userStates', readInputTypeMapper},
+            // If we have to query for scope objs separately then just query for their ids here
+            userStateOutputParamsCreator(R.when(hasScopeParams, R.always(['id']))(scopeOutputParams)),
+            R.merge(userStateArguments, {})
+          ),
           // We only ever get 1 userState since we are querying by user
           `userStates.0.data.${userScopeNames}`,
           userScopeNames
-        ),
-        makeQueryTask(
-          apolloClient,
-          {name: 'userStates', readInputTypeMapper},
-          // If we have to query for scope objs separately then just query for their ids here
-          userStateOutputParamsCreator(R.when(hasScopeParams, R.always(['id']))(scopeOutputParams)),
-          R.merge(userStateArguments, {})
         )
-      )
     )();
   }),
   [

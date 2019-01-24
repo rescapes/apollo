@@ -26,7 +26,7 @@ export {
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
 export {makeQuery, makeQueryTask} from './helpers/queryHelpers';
 export {makeMutation, makeMutationTask} from './helpers/mutationHelpers';
-export {formatOutputParams, resolveGraphQLType, formatInputParams, responseAsResult} from './helpers/requestHelpers';
+export {formatOutputParams, resolveGraphQLType, formatInputParams, mapQueryTaskToNamedResultAndInputs} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
 export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';
 export {

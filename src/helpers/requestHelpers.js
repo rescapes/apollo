@@ -186,34 +186,37 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
 
 
 /**
- * Extracts the value from the result to give {data: {[query|mutationName]: ...}} or {errors: []}
- * @param {Object} response Contains {data: ...} or {errors: ...}
+ * Runs a query task that resolves to {data: {[query|mutationName]: ...}} or {errors: []}. Then
+ * process that to return a Result.Ok if there is a day and a Result.Error if there is an error
+ * @param {Object} queryTask Contains {data: ...} or {errors: ...}
  * @param {String|Function} stringPathOrResolver The path to the desired value within the response.data property.
  * If just response.data is desired, leave stringPath and queryName blank. If a function then it expects
  * response.data and returns a Result.Ok with the desired values or Result.Error if values aren't found where expected
- * @param {String} queryName The name of the query to user for the result data structure
- * @return {Result} Result.Ok with value in {data: {[queryName]: value}} or Result.Error instance
+ * @param {String} queryName The name of the query to use for the result data structure
+ * @return {Task<Result>} Task with Result.Ok with value in {data: {[queryName]: value}} or Result.Error instance
  * If stringPath and queryName are omited, the result Result.Ok just wraps response
  */
-export const responseAsResult = (response, stringPathOrResolver=null, queryName=null) => R.ifElse(
-  R.has('errors'),
-  Result.Error,
+export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolver = null, queryName = null) => R.map(
   R.ifElse(
-    R.always(R.isNil(stringPathOrResolver)),
-    // If stringPath is not specified just wrap response in Result.Ok
-    Result.Ok,
-    // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
-    r => (R.ifElse(
-      R.always(R.is(Function, stringPathOrResolver)),
-      // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
-      R.chain(stringPathOrResolver),
-      // If it's a string call reqStrPath, expecting a Result.Ok
-      R.chain(reqStrPath(stringPathOrResolver))
-    )(reqStrPath('data', r))).map(
-      v => ({data: {[queryName]: v}})
-    ).mapError(
-      // If our path is incorrect, this is probably a coding error, but put it in errors
-      error => ({errors: [new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(r)}`)]})
+    R.has('errors'),
+    Result.Error,
+    R.ifElse(
+      R.always(R.isNil(stringPathOrResolver)),
+      // If stringPath is not specified just wrap response in Result.Ok
+      Result.Ok,
+      // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
+      r => (R.ifElse(
+        R.always(R.is(Function, stringPathOrResolver)),
+        // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
+        R.chain(stringPathOrResolver),
+        // If it's a string call reqStrPath, expecting a Result.Ok
+        R.chain(reqStrPath(stringPathOrResolver))
+      )(reqStrPath('data', r))).map(
+        v => ({data: {[queryName]: v}})
+      ).mapError(
+        // If our path is incorrect, this is probably a coding error, but put it in errors
+        error => ({errors: [new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(r)}`)]})
+      )
     )
   )
-)(response);
+)(queryTask);

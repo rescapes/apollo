@@ -16,8 +16,6 @@ import {makeMutationTask} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
-import {userRegionsFragmentCreator} from './userScopeStores/userRegionStore';
-import {userProjectsFragmentCreator} from './userScopeStores/userProjectStore';
 import {mapKeysAndValues, capitalize} from 'rescape-ramda';
 import {regionOutputParams} from '../scopeStores/regionStore';
 import {projectOutputParams} from '../scopeStores/projectStore';
@@ -125,7 +123,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
  * @params {Object} apolloClient The Apollo Client
  * @params {Object} outputParams OutputParams for the query such as regionOutputParams
  * @params {Object} userStateArguments Arguments for the UserState query. This can be {} or null to not filter.
- * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
+ * @returns {Task} A Task containing the Regions in an object with obj.data.userStates or errors in obj.errors
  */
 export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, userStateArguments) => {
     return makeQueryTask(

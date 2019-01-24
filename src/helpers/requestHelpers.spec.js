@@ -9,10 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {resolveGraphQLType, formatOutputParams, formatInputParams, responseAsResult} from './requestHelpers';
+import {
+  resolveGraphQLType,
+  formatOutputParams,
+  formatInputParams,
+  mapQueryTaskToNamedResultAndInputs
+} from './requestHelpers';
 import Result from 'folktale/result';
+import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
-import {reqStrPathThrowing, reqStrPath} from 'rescape-ramda';
+import {reqStrPathThrowing, reqStrPath, taskToPromise} from 'rescape-ramda';
 
 describe('requestHelpers', () => {
 
@@ -70,17 +76,19 @@ describe('requestHelpers', () => {
     expect(resolve('foo', Number)).toEqual('Number');
   });
 
-  test('responseAsResult', () => {
-    expect(responseAsResult({data: 'superduper'})).toEqual(Result.Ok({data: 'superduper'}));
-    expect(responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.nose', 'nose')).toEqual(Result.Ok({data: {nose: 'superduper'}}));
-    const responsePathError = responseAsResult({data: {flowing: {nose: 'superduper'}}}, 'flowing.tooth', 'nose');
+  test('mapQueryTaskToNamedResultAndInputs', async () => {
+    const result = await taskToPromise(mapQueryTaskToNamedResultAndInputs(of({data: 'superduper'})));
+    expect(result).toEqual(Result.Ok({data: 'superduper'}));
+    const result1 = await taskToPromise(mapQueryTaskToNamedResultAndInputs(of({data: {flowing: {nose: 'superduper'}}}), 'flowing.nose', 'nose'));
+    expect(result1).toEqual(Result.Ok({data: {nose: 'superduper'}}));
+    const responsePathError = await taskToPromise(mapQueryTaskToNamedResultAndInputs(of({data: {flowing: {nose: 'superduper'}}}), 'flowing.tooth', 'nose'));
     expect(R.length(reqStrPathThrowing('errors', responsePathError.merge()))).toEqual(1);
-    const responseError = responseAsResult({errors: [new Error('What the heck?')]});
+    const responseError = await taskToPromise(mapQueryTaskToNamedResultAndInputs(of({errors: [new Error('What the heck?')]})));
     expect(R.length(reqStrPathThrowing('errors', responseError.merge()))).toEqual(1);
 
     // If we have a custom resolver
-    expect(responseAsResult(
-      {data: {flowings: [{nose: {wipe: 'superduper'}}, {nose: {wipe: 'cavity'}}]}},
+    const customResult = await taskToPromise(mapQueryTaskToNamedResultAndInputs(
+      of({data: {flowings: [{nose: {wipe: 'superduper'}}, {nose: {wipe: 'cavity'}}]}}),
       // This demonstrates extracting an embedded array of noses from results
       // Note that it has to return a single Result.Ok
       R.compose(
@@ -89,8 +97,7 @@ describe('requestHelpers', () => {
         reqStrPath('flowings')
       ),
       'noses'
-    )
-  ).
-    toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
+    ));
+    expect(customResult).toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
   });
 });
