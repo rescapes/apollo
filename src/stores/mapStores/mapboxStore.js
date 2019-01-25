@@ -221,7 +221,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
 
 /**
  * Makes a Region mutation
- * @param {Object} authClient An authorized Apollo Client
+ * @param {Object} apolloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -242,7 +242,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
  *  @param {Task} An apollo mutation task
  */
 export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  apolloClient,
+  {apolloClient},
   {name: 'region'},
   outputParams,
   inputParams

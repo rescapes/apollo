@@ -12,7 +12,11 @@
 import {mapObjToValues, reqPathThrowing, capitalize, compact} from 'rescape-ramda';
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
-import {authApolloClientQueryReadRequestTask, authApolloClientQueryRequestTask} from '../client/apolloClient';
+import {
+  authApolloClientOrComponentQueryReadRequestTask,
+  authApolloQueryRequestTask,
+  authApolloClientQueryRequestTask
+} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
@@ -82,9 +86,17 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
 
 /**
  * Creates a query task for any type
- * @params {Object} client The Apollo client, authenticated for most calls
- * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
- * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
+ * Apollo wrapped Component for browser work
+ * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
+ * @param {Object} apolloConfig.apolloComponent Optional Apollo component
+ * @param {Function} apolloConfig.apolloComponent.options Required for ApolloComponent container queries.
+ * A unary function expecting components from the parent component or container
+ * @param {Object} apolloConfig.apolloComponent.options.variables Variables for the ApolloComponent container
+ * @param {Object} apolloConfig.apolloComponent.options.errorPolicy Optional errorPolicy string for the ApolloComponent
+ * container
+ * @param {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @param {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  [
@@ -103,27 +115,31 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  ]
  *
  *  In other words, start every type as a list and embed object types using {objectTypeKey: [...]}
- *  @param {Object} queryArgs Object of simple or complex parameters. Example:
+ *  @param {Object} propStructure: For direct ApolloClient queries this can be identical to the props. Otherwise
+ *  supply the structure of the props so the query can be constructed to expect the right props.
+ *  Example of direct client query:
  *  {city: "Stavanger", data: {foo: 2}}
+ *  Exmple of component query
+ *  {city: String.em, data: {foo: 2}}
+ *  @param {Object} componentOrProps The props for the query or an Apollo container that will supply the props
+ *  {city: '', data: {foo: 0}}
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
  *  are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
  *  of different could be merged together into the data field. This also matches what Apollo components expect.
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeQueryTask = R.curry((apolloClientOrComponent, {name, readInputTypeMapper}, outputParams, queryArgs) => {
-  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
-  console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
+export const makeQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, propStructure}, componentOrProps) => {
+  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, propStructure)}`;
+  console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(componentOrProps)}`);
   return R.map(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
-    authApolloClientQueryRequestTask(
-      apolloClientOrComponent,
-      {
-        query,
-        variables: queryArgs
-      }
+    authApolloQueryRequestTask(
+      apolloConfig,
+      query,
+      componentOrProps
     )
   );
 });
@@ -131,7 +147,10 @@ export const makeQueryTask = R.curry((apolloClientOrComponent, {name, readInputT
 /**
  * Like makeQueryTasks but creates a query with a client directive so values come back from the link state and not
  * the server
- * @params {Object} client The Apollo client, authenticated for most calls
+ * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
+ * Apollo wrapped Component for browser work
+ * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
+ * @param {Object} apolloConfig.apolloComponent Optional Apollo component
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
@@ -141,7 +160,7 @@ export const makeQueryTask = R.curry((apolloClientOrComponent, {name, readInputT
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs.
  */
-export const makeClientQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+export const makeClientQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
   console.debug(`Client Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
@@ -150,7 +169,7 @@ export const makeClientQueryTask = R.curry((apolloClient, {name, readInputTypeMa
       return queryResponse;
     },
     authApolloClientQueryRequestTask(
-      apolloClient,
+      apolloConfig.apolloClient,
       {
         query,
         variables: queryArgs
@@ -165,7 +184,7 @@ export const makeClientQueryTask = R.curry((apolloClient, {name, readInputTypeMa
  * should always call makeQueryTask and it will consult the cache before querying externally. Or for
  * data only in the cache, loaded via ApolloLinkState, use makeClientQueryTask
  */
-export const makeReadQueryTask = R.curry((apolloClient, {name, readInputTypeMapper}, outputParams, queryArgs) => {
+export const makeReadQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper}, outputParams, queryArgs) => {
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
   console.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
@@ -173,8 +192,8 @@ export const makeReadQueryTask = R.curry((apolloClient, {name, readInputTypeMapp
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
-    authApolloClientQueryReadRequestTask(
-      apolloClient,
+    authApolloClientOrComponentQueryReadRequestTask(
+      apolloConfig,
       {
         query,
         variables: queryArgs

@@ -104,7 +104,7 @@ export const userStateMutateOutputParams = userStateOutputPararmsOnlyIds;
  */
 export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) => {
     return makeQueryTask(
-      apolloClient,
+      {apolloClient},
       {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
@@ -127,7 +127,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
  */
 export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, userStateArguments) => {
     return makeQueryTask(
-      apolloClient,
+      {apolloClient},
       {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
@@ -148,7 +148,7 @@ export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, use
  * or errors in Result.Error({errors: [...]})
  */
 export const makeUserStateMutationTask = v(R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  apolloClient,
+  {apolloClient},
   {name: 'userState'},
   outputParams,
   inputParams

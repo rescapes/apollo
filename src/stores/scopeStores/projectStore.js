@@ -63,7 +63,7 @@ export const projectOutputParams = [
  */
 export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, projectArguments) => {
     return makeQueryTask(
-      apolloClient,
+      {apolloClient},
       {name: 'projects', readInputTypeMapper},
       // If we have to query for projects separately use the limited output userStateOutputParamsCreator
       outputParams,
@@ -78,7 +78,7 @@ export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, proj
 
 /**
  * Makes a Project mutation
- * @param {Object} authClient An authorized Apollo Client
+ * @param {Object} apoloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -99,7 +99,7 @@ export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, proj
  *  @param {Task} An apollo mutation task
  */
 export const makeProjectMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  apolloClient,
+  {apolloClient},
   {name: 'project'},
   outputParams,
   inputParams

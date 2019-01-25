@@ -30,7 +30,7 @@ describe('mutationHelpers', () => {
     const uri = parseApiUrl(api);
     const task = R.composeK(
       ({apolloClient}) => makeMutationTask(
-        apolloClient,
+        {apolloClient},
         {name: 'region'},
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
         {

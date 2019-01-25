@@ -10,58 +10,59 @@
  */
 
 import * as R from 'ramda';
-import {testConfig} from '../helpers/testHelpers';
+import {testAuthTask, testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
+
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
 
 describe('login', () => {
   test('testLoginCredentials', done => {
 
-    const client = noAuthApolloClient(uri, sampleStateLinkResolversAndDefaults);
-    const login = loginTask(client, reqStrPathThrowing('settings.testAuthorization', testConfig));
-
-    const verifyTokenTask = (authClient, {token}) => {
+    const verifyTokenTask = (apolloClient, {token}) => {
       return R.map(
         // Map the token info to the authApolloClient and token for chaining
         verify => {
           return {
-            authClient,
+            apolloClient,
             token,
             payload: reqStrPathThrowing('data.verifyToken.payload', verify)
           };
         },
-        verifyToken(authClient, {token})
+        verifyToken(apolloClient, {token})
       );
     };
-    const refreshTokenTask = (authClient, {token}) => R.map(
+    const refreshTokenTask = (apolloClient, {token}) => R.map(
       // Map the token info to the authApolloClient and token for chaining
       verify => {
         return {
-          authClient,
+          apolloClient,
           token,
           payload: reqStrPathThrowing('data.verifyToken.payload', verify)
         };
       },
-      refreshToken(authClient, {token})
+      refreshToken(apolloClient, {token})
     );
 
 
-    R.pipeK(
-      R.always(login),
-      userLoginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', userLoginResult)),
-      ({authClient, token}) => verifyTokenTask(authClient, {token}),
-      ({authClient, token}) => refreshTokenTask(authClient, {token})
+    R.composeK(
+      ({apolloClient, token}) => refreshTokenTask(apolloClient, {token}),
+      ({apolloClient, token}) => verifyTokenTask(apolloClient, {token}),
+      userLoginResult => authApolloClientTask(
+        uri,
+        sampleStateLinkResolversAndDefaults,
+        {tokenAuth: R.pick(['token'], userLoginResult)}),
+      () => testAuthTask
     )().run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
-            expect(response.authClient).not.toBeNull();
+            expect(response.apolloClient).not.toBeNull();
             expect(response.token).not.toBeNull();
             expect(response.payload).not.toBeNull();
             done();
@@ -72,12 +73,12 @@ describe('login', () => {
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
-    const task = authClientOrLoginTask(uri, stateLinkResolvers, reqStrPathThrowing('settings.testAuthorization', testConfig));
+    const task = authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig));
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, apolloClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(uri, stateLinkResolvers, apolloClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, apolloClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
                 expect(apolloClient).toEqual(apolloClient2);
@@ -92,11 +93,11 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
 
-    loginToAuthClientTask(uri, stateLinkResolvers, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
+    loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
-            expect(response.authClient).not.toBeNull();
+            expect(response.apolloClient).not.toBeNull();
             expect(response.token).not.toBeNull();
             done();
           }

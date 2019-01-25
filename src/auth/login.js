@@ -40,8 +40,8 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = v(R.curry((noAuthClient, variables) => noAuthApolloClientMutationRequestTask(
-  noAuthClient,
+export const loginTask = v(R.curry((apolloConfig, variables) => noAuthApolloClientMutationRequestTask(
+  apolloConfig,
   {mutation: loginMutation, variables}
 )), [
   ['noAuthClient', PropTypes.shape().isRequired],
@@ -63,7 +63,7 @@ export const loginTask = v(R.curry((noAuthClient, variables) => noAuthApolloClie
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
   // Use unauthenticated ApolloClient for login
   const {apolloClient} = noAuthApolloClient(uri, stateLinkResolvers);
-  const login = loginTask(apolloClient);
+  const login = loginTask({apolloClient});
   return R.composeK(
     // loginResult.data contains {tokenAuth: token}
     loginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult)),
@@ -77,8 +77,8 @@ const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
   }
 }`;
 
-export const verifyToken = R.curry((authClient, variables) => authApolloClientMutationRequestTask(
-  authClient,
+export const verifyToken = R.curry((apolloClient, variables) => authApolloClientMutationRequestTask(
+  apolloClient,
   {mutation: verifyTokenMutation, variables}
 ));
 
@@ -88,8 +88,8 @@ const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
   }
 }`;
 
-export const refreshToken = R.curry((authClient, variables) => authApolloClientMutationRequestTask(
-  authClient,
+export const refreshToken = R.curry((apolloClient, variables) => authApolloClientMutationRequestTask(
+  apolloClient,
   {mutation: refreshTokenMutation, variables}
 ));
 
@@ -105,14 +105,14 @@ export const refreshToken = R.curry((authClient, variables) => authApolloClientM
 export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentication) => R.ifElse(
   auth => R.is(ApolloClient, auth),
   // Just wrap it in a task to match the other option
-  authClient => of({authClient}),
+  apolloClient => of({apolloClient}),
   R.composeK(
     // map userLogin to authApolloClient and token
     auth => authApolloClientTask(url, stateLinkResolvers, R.prop('data', auth)),
     // map login values to token
     auth => {
       const {apolloClient} = noAuthApolloClient(url, stateLinkResolvers);
-      return loginTask(apolloClient, auth);
+      return loginTask({apolloClient}, auth);
     }
   )
 )(authentication));

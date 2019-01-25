@@ -31,7 +31,7 @@ describe('queryHelpers', () => {
     const uri = parseApiUrl(api);
     const task = R.composeK(
       ({apolloClient, region}) => makeQueryTask(
-        apolloClient,
+        {apolloClient},
         {name: 'region', readInputTypeMapper: {}},
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
         {key: region.key}
@@ -39,7 +39,7 @@ describe('queryHelpers', () => {
       ({apolloClient}) => R.map(
         region => ({apolloClient, region}),
         makeMutationTask(
-          apolloClient,
+          {apolloClient},
           {name: 'region'},
           ['key'],
           {
@@ -72,7 +72,7 @@ describe('queryHelpers', () => {
       ({apolloClient, region}) => R.map(
         () => ({apolloClient, region}),
         makeQueryTask(
-          apolloClient,
+          {apolloClient},
           {name: 'regions', readInputTypeMapper: {}},
           ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
           {key: region.key}
@@ -81,7 +81,7 @@ describe('queryHelpers', () => {
       ({apolloClient}) => R.map(
         regionResponse => ({apolloClient, region: reqStrPathThrowing('data.region', regionResponse)}),
         makeMutationTask(
-          apolloClient,
+          {apolloClient},
           {name: 'region'},
           ['key'],
           {

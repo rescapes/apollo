@@ -75,7 +75,7 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
       () =>
         mapQueryTaskToNamedResultAndInputs(
           makeQueryTask(
-            apolloClient,
+            {apolloClient},
             {name: 'userStates', readInputTypeMapper},
             // If we have to query for scope objs separately then just query for their ids here
             userStateOutputParamsCreator(R.when(hasScopeParams, R.always(['id']))(scopeOutputParams)),

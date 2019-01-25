@@ -63,29 +63,32 @@ export const regionOutputParams = [
 
 /**
  * Queries regions
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} ouptputParams OutputParams for the query such as regionOutputParams
- * @params {Object} regionArguments Arguments for the Regions query. This can be {} or null to not filter.
+ * @params {Object} apolloConfig The Apollo config. See makeQueryTask for options
+ * @params {Object} outputParams OutputParams for the query such as regionOutputParams
+ * @params {Object} propsStructure OutputParams for the query such as regionOutputParams
+ * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeRegionsQueryTask = v(R.curry((apolloClient, outputParams, regionArguments) => {
+export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams, propsStructure}, componentOrProps) => {
     return makeQueryTask(
-      apolloClient,
-      {name: 'regions', readInputTypeMapper},
-      // If we have to query for regions separately use the limited output userStateOutputParamsCreator
-      outputParams,
-      regionArguments
+      apolloConfig,
+      {name: 'regions', readInputTypeMapper, outputParams, propsStructure},
+      componentOrProps
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.array.isRequired],
-    ['regionArguments', PropTypes.shape().isRequired]
+    ['apolloConfig', PropTypes.shape().isRequired],
+    ['queryStructure', PropTypes.shape({
+      outputParams: PropTypes.array.isRequired,
+      propsStructure: PropTypes.shape()
+    })
+    ],
+    ['componentOrProps', PropTypes.oneOfType([PropTypes.shape(), PropTypes.func]).isRequired]
   ], 'makeRegionsQueryTask');
 
 /**
  * Makes a Region mutation
- * @param {Object} authClient An authorized Apollo Client
+ * @param {Object} apolloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -106,7 +109,7 @@ export const makeRegionsQueryTask = v(R.curry((apolloClient, outputParams, regio
  *  @param {Task} An apollo mutation task
  */
 export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  apolloClient,
+  {apolloClient},
   {name: 'region'},
   outputParams,
   inputParams
