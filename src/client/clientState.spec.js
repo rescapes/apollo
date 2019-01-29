@@ -10,11 +10,11 @@
  */
 import createClientState from './clientState';
 import {InMemoryCache} from 'apollo-cache-inmemory';
-import {stateLinkResolvers} from '../helpers/testHelpers';
+import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 
 describe('clientState', () => {
   test('createClientState', () => {
     const cache = new InMemoryCache();
-    createClientState(cache, stateLinkResolvers)
+    createClientState(cache, sampleStateLinkResolversAndDefaults)
   });
 });

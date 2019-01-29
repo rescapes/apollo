@@ -65,7 +65,7 @@ export const regionOutputParams = [
  * Queries regions
  * @params {Object} apolloConfig The Apollo config. See makeQueryTask for options
  * @params {Object} outputParams OutputParams for the query such as regionOutputParams
- * @params {Object} propsStructure OutputParams for the query such as regionOutputParams
+ * @params {Object} propsStructure Optional structure of the props if componentOrProps is not props
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
@@ -77,7 +77,9 @@ export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams, prop
     );
   }),
   [
-    ['apolloConfig', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape({
+      apolloClient: PropTypes.shape()
+    }).isRequired],
     ['queryStructure', PropTypes.shape({
       outputParams: PropTypes.array.isRequired,
       propsStructure: PropTypes.shape()
@@ -108,8 +110,8 @@ export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams, prop
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  {apolloClient},
+export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams, inputParams}) => makeMutationTask(
+  apolloConfig,
   {name: 'region'},
   outputParams,
   inputParams

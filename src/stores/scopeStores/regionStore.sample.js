@@ -1,5 +1,5 @@
 import {makeRegionMutationTask, regionOutputParams} from './regionStore';
-import {mapToNamedPathAndInputs} from 'rescape-ramda'
+import {mapToNamedPathAndInputs} from 'rescape-ramda';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -17,7 +17,9 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda'
  * @params apolloClient
  * @return {Object} {apolloClient,  value: {data: region: {...}}}
  */
-export const createSampleRegionTask = mapToNamedPathAndInputs('region', 'data.region', ({apolloClient}) => makeRegionMutationTask(apolloClient, regionOutputParams, {
+export const createSampleRegionTask = mapToNamedPathAndInputs(
+  'region', 'data.region',
+  ({apolloClient}) => makeRegionMutationTask({apolloClient}, regionOutputParams, {
     key: 'pincherCreek',
     name: 'Pincher Creek',
     geojson: {

@@ -78,7 +78,7 @@ describe('apolloClient', () => {
     expect(reqStrPathThrowing('region', response)).toBeTruthy();
   });
 
-  test('test linkState inital state', async () => {
+  test('test linkState initial state', async () => {
 
     const {apolloClient} = await taskToPromise(testAuthTask);
     const queryDefaults = gql`

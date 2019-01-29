@@ -102,9 +102,9 @@ export const userStateMutateOutputParams = userStateOutputPararmsOnlyIds;
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) => {
+export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams) => {
     return makeQueryTask(
-      {apolloClient},
+      apolloConfig,
       {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
@@ -113,7 +113,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired]
   ], 'makeUserQueryTask');
 
@@ -125,9 +125,9 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloClient, outputParams) =
  * @params {Object} userStateArguments Arguments for the UserState query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.userStates or errors in obj.errors
  */
-export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, userStateArguments) => {
+export const makeUserStateQueryTask = v(R.curry((apolloConfig, outputParams, userStateArguments) => {
     return makeQueryTask(
-      {apolloClient},
+      apolloConfig,
       {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
       outputParams,
@@ -135,7 +135,7 @@ export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, use
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired],
     ['userStateArguments', PropTypes.shape().isRequired]
   ], 'makeUserStateQueryTask');
@@ -147,14 +147,14 @@ export const makeUserStateQueryTask = v(R.curry((apolloClient, outputParams, use
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeUserStateMutationTask = v(R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
-  {apolloClient},
+export const makeUserStateMutationTask = v(R.curry((apolloConfig, outputParams, inputParams) => makeMutationTask(
+  apolloConfig,
   {name: 'userState'},
   outputParams,
   inputParams
 )),
 [
-  ['apolloClient', PropTypes.shape().isRequired],
+  ['apolloConfig', PropTypes.shape().isRequired],
   ['outputParams', PropTypes.array.isRequired],
   ['inputParams', PropTypes.shape().isRequired]
 ], 'makeUserStateMutationTask');

@@ -149,14 +149,14 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  * @param apolloClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientMutationRequestTask = R.curry((aplloClient, options) => {
-  return promiseToTask(aplloClient.mutate(options));
+export const authApolloClientMutationRequestTask = R.curry((apolloConfig, options) => {
+  return promiseToTask(reqStrPathThrowing('apolloClient', apolloConfig).mutate(options));
 });
 
 /***
  * Authenticated Apollo Client query request
  * @param apolloClient The authenticated Apollo Client
- * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
+ * @param {Object} query Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
  * query: gql`
  query regions($key: String!) {
@@ -166,27 +166,46 @@ export const authApolloClientMutationRequestTask = R.curry((aplloClient, options
               name
           }
     }`,
- variables: {key: "earth"}
+ # @param {Object} variable: Argument values for the query. Example {key: "earth"}
  * @return {Task} A Task that makes the request when run an returns the query results or an error
  * Results are returned in {data: ...} and errors in {errors:...}
  */
-export const authApolloClientQueryRequestTask = R.curry((apolloClient, options) => {
-  return promiseToTask(apolloClient.query(options));
+export const authApolloClientQueryRequestTask = R.curry((apolloClient, query, variables) => {
+  return promiseToTask(apolloClient.query({query, variables}));
 });
 
 /**
- * Takes an apolloComponent, which might be a React component or a React component wrapped in other
- * graphql queries
+ * Wraps a React component in an Apollo component containing the given query with the given options.
+ * This is analogous to the authApolloClientQueryRequestTask in that it is the delayed execution of a graphql
+ * query. Unlike authApolloClientQueryRequestTask, the variable values needed to execute the query
+ * are passed by the wrapped apolloComponent as props rather than as part of the options
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} options
  * @param {Object} options.query required query to use
  * @param {Object} options.options optional react-apollo options
- * @param {Object} options.options.variables optional mapping of input props to other values
+ * @param {Object} options.options.variables optional.
  * @param {Object} options.options.errorPolicy optional error policy
  * @param {Object} options.prop optional mapping of props returned by the query.
  */
-export const authApolloComponentQueryRequestTask = R.curry((query, options, apolloComponent) => {
-  return of(graphql(query, options)(apolloComponent))
+export const authApolloComponentMutationRequestClass = R.curry((query, options, apolloComponent) => {
+  return of(graphql(query, options)(apolloComponent));
+});
+
+/**
+ * Wraps a React component in an Apollo component containing the given query with the given options.
+ * This is analogous to the authApolloClientQueryRequestTask in that it is the delayed execution of a graphql
+ * query. Unlike authApolloClientQueryRequestTask, the variable values needed to execute the query
+ * are passed by the wrapped apolloComponent as props rather than as part of the options
+ * @param {Object} apolloComponent The apolloComponent
+ * @param {Object} options
+ * @param {Object} options.query required query to use
+ * @param {Object} options.options optional react-apollo options
+ * @param {Object} options.options.variables optional.
+ * @param {Object} options.options.errorPolicy optional error policy
+ * @param {Object} options.prop optional mapping of props returned by the query.
+ */
+export const authApolloComponentQueryRequestClass = R.curry((query, options, apolloComponent) => {
+  return of(graphql(query, options)(apolloComponent));
 });
 
 
@@ -202,9 +221,12 @@ export const authApolloComponentQueryRequestTask = R.curry((query, options, apol
  * container
  * @param {Object} queryAndArgs Options for ApolloClient or ApolloComponent container queries
  * @param {Object} queryAndArgs.query graphql query
- * @param {Object} queryAndArgs.variables Required for direct ApolloClient queries that need variables
- * Object of simple or complex parameters. Example:
+ * @param {Object} queryAndArgs.variables Required if the query is to accept arguments. If this is a component
+ * query, values must be supplied initially to inform the structure of the arguments
+ * Object of simple or complex parameters. Example of client execution variables
  * {city: "Stavanger", data: {foo: 2}}
+ * Example of the same variables for a component, where only the type of the values matter
+ * {city: "", data: {foo: 0}}
  */
 export const authApolloQueryRequestTask = R.curry((apolloConfig, query, componentOrProps) => {
   return R.cond([
@@ -221,14 +243,16 @@ export const authApolloQueryRequestTask = R.curry((apolloConfig, query, componen
     [() => R.is(Function, componentOrProps),
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
-      apolloConfig => authApolloComponentQueryRequestTask(
+      apolloConfig => authApolloComponentQueryRequestClass(
         query,
         R.pick(['options', 'props'], apolloConfig),
         // component
         componentOrProps
       )
     ],
-    [R.T, () => { throw new Error(`apolloConfig is neither for an Apollo Client nor Apollo Component: ${JSON.stringify(apolloConfig)}`)}]
+    [R.T, () => {
+      throw new Error(`apolloConfig is neither for an Apollo Client nor Apollo Component: ${JSON.stringify(apolloConfig)}`);
+    }]
   ])(apolloConfig);
 });
 
@@ -252,27 +276,25 @@ export const authApolloClientQueryReadRequestTask = R.curry((apolloClient, optio
   return of(apolloClient.readQuery(options));
 });
 
-export const authApolloComponentQueryReadRequestTask = R.curry((apolloClient, options) => {
-  // TODO
-  // readQuery isn't a promise, just a direct call I guess
-  return of(apolloClient.readQuery(options));
+export const authApolloComponentQueryReadRequestTask = R.curry((query, options, apolloComponent) => {
+  return of(graphql(query, options)(apolloComponent));
 });
 
-export const authApolloClientOrComponentQueryReadRequestTask = R.curry((apolloConfig, queryAndArgs) => {
+export const authApolloClientOrComponentQueryReadRequestTask = R.curry((apolloConfig, query, componentOrProps) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => authApolloClientQueryReadRequestTask(
         R.prop('apolloClient', apolloConfig),
-        queryAndArgs
+        query
       )
     ],
     [R.has('apolloComponent'),
       // Extract the apolloConfig.apolloComponent--the React container, the options for the Apollo component query,
       // the props function for the Apollo component
       apolloConfig => authApolloComponentQueryReadRequestTask(
-        R.pick(['apolloComponent', 'options', 'props'], apolloConfig),
-        queryAndArgs
+        R.pick(['options', 'props'], apolloConfig),
+        componentOrProps
       )
     ]
   ])(apolloConfig);
@@ -333,7 +355,7 @@ export const noAuthApolloClientRequestTask = (client, ...args) => {
  * @param {Object} userLogin Return value from loginTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
- * @return {Task<Object>} Task containing and object with a apolloClient, token.
+ * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
  */
 export const authApolloClientTask = R.curry((url, stateLinkResolversAndDefaults, userLogin) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);

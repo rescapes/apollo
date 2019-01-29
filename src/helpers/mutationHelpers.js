@@ -23,7 +23,12 @@ import * as R from 'ramda';
 import {formatOutputParams, formatInputParams} from './requestHelpers';
 import {authApolloClientMutationRequestTask} from '../client/apolloClient';
 import {debug} from './logHelpers';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing, reqPathThrowing, capitalize} from 'rescape-ramda';
+import {
+  replaceValuesWithCountAtDepthAndStringify,
+  reqStrPathThrowing,
+  reqPathThrowing,
+  capitalize
+} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 
@@ -71,7 +76,7 @@ ${mutationName}(${formatInputParams(inputParams)}) {
  *  in an obj at obj.data.name or an errors at obj.errors. This matches what Apollo Components expect. If you need
  *  a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeMutationTask = R.curry((apolloConfig, {name}, outputParams, inputParams) => {
+export const makeMutationTask = R.curry((apolloConfig, {name, outputParams, inputParams}, inputParamsOrComponent) => {
   const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;
   const mutation = gql`${makeMutation(
     createOrUpdateName,
@@ -94,11 +99,17 @@ export const makeMutationTask = R.curry((apolloConfig, {name}, outputParams, inp
         }
       };
     },
-    authApolloClientMutationRequestTask(
-      reqStrPathThrowing('apolloClient', apolloConfig),
-      {
-        mutation
-      }
-    )
+    R.cond([
+      [R.has('apolloClient'),
+        apolloConfig => authApolloClientMutationRequestTask(
+        apolloConfig,
+        {
+          mutation
+        }
+      )],
+      [apolloConfig => authApolloComponentMutationRequestClass(
+
+      )
+      ]])(apolloConfig)
   );
 });

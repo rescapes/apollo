@@ -31,7 +31,7 @@ describe('regionStore', () => {
 
   test('makeRegionsQueryTask', done => {
     R.composeK(
-      ({apolloClient, region}) => makeRegionsQueryTask(apolloClient, regionOutputParams, {key: reqStrPathThrowing('key', region)}),
+      ({apolloClient, region}) => makeRegionsQueryTask({apolloClient}, {outputParams: regionOutputParams}, {key: reqStrPathThrowing('key', region)}),
       createSampleRegionTask,
       () => testAuthTask
     )().run().listen(defaultRunConfig({

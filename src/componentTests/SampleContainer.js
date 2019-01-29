@@ -29,12 +29,12 @@ const graphqlTasks = [
     }
   )
 ];
-const composeGraphqlRequests = tasks => traverseReduce(
+const composeGraphqlRequestsTask = tasks => traverseReduce(
   (prev, currentTaskMaker) => currentTaskMaker(prev),
   of(Sample),
   tasks
 );
 
 // Create the GraphQL Container.
-export default ContainerWithData = composeGraphqlRequests(graphqlTasks);
+export default ContainerWithData = composeGraphqlRequestsTask(graphqlTasks);
 

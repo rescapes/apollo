@@ -27,7 +27,7 @@ describe('mapboxStore', () => {
     const someMapboxKeys = ['viewport'];
     R.composeK(
       ({apolloClient, userId, regionId, projectId}) => makeMapboxesQueryTask(
-        apolloClient,
+        {apolloClient},
         mapboxOutputParamsFragment,
         {
           user: {id: parseInt(userId)},
@@ -37,15 +37,15 @@ describe('mapboxStore', () => {
       ),
       // Get the first project in the userState to use as a pretend scope
       mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
-        ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: userId}}, {})
+        ({apolloClient, userId}) => makeUserProjectsQueryTask({apolloClient}, {user: {id: userId}}, {})
       ),
       // Get the first region in the userState to use as a pretend scope
       mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
-        ({apolloClient, userId}) => makeUserRegionsQueryTask(apolloClient, {user: {id: userId}}, {})
+        ({apolloClient, userId}) => makeUserRegionsQueryTask({apolloClient}, {user: {id: userId}}, {})
       ),
       // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask(apolloClient, userOutputParams)),
+        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)),
       createSampleProjectTask,
       createSampleRegionTask,
       () => testAuthTask

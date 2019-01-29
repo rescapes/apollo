@@ -136,46 +136,45 @@ export const nullUnless = R.curry((condition, onTrue) => R.ifElse(condition, onT
  * project queries are made
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args) => {
+export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, componentOrProps) => {
     return R.composeK(
       of(R.mergeAll),
       // Each Result.Ok is mapped to a Task. Result.Errors are mapped to a Task.of
       // [Result] -> [Task Object]
-      args => R.map(
+      componentOrProps => R.map(
         values => R.complement(R.has)('error', values),
         waitAll([
-
           // The given Region's Mapbox state
           resultToTaskNeedingResult(
-            args => {
+            componentOrProps => {
               return R.map(
                 value => R.mergeAll([
                   reqStrPathThrowing('data.userGlobal.mapbox', value),
                   reqStrPathThrowing('data.userRegion.mapbox', value)
                 ]),
                 makeUserStateQueryTask(
-                  apolloClient,
+                  apolloConfig,
                   userStateMapboxOutputParamsCreator(outputParams),
-                  args
+                  componentOrProps
                 )
               );
             },
             // user arg is required
-            reqStrPathThrowing('user', args)
+            reqStrPathThrowing('user', componentOrProps)
           ),
 
           // The optional given Project's Mapbox state
           resultToTaskNeedingResult(
-            args => R.map(
+            componentOrProps => R.map(
               value => reqStrPathThrowing('data.projects.mapbox', value),
               makeRegionsQueryTask(
-                apolloClient,
+                apolloConfig,
                 {name: 'regions', readInputTypeMapper},
                 regionMapboxOutputParamsCreator(outputParams),
-                args
+                componentOrProps
               )
             ),
-            reqStrPath('project', args)
+            reqStrPath('project', componentOrProps)
           ),
 
           // The optional given Region's Mapbox state
@@ -183,13 +182,13 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
             args => R.map(
               value => reqStrPathThrowing('data.regions.mapbox', value),
               makeRegionsQueryTask(
-                apolloClient,
+                apolloConfig,
                 {name: 'regions', readInputTypeMapper},
                 regionMapboxOutputParamsCreator(outputParams),
                 args
               )
             ),
-            reqStrPath('region', args)
+            reqStrPath('region', componentOrProps)
           ),
 
           // Tht Global Mapbox state
@@ -197,7 +196,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
             () => R.map(
               value => reqStrPathThrowing('data.settings.mapbox', value),
               makeClientQueryTask(
-                apolloClient,
+                apolloConfig,
                 {name: 'settings', readInputTypeMapper},
                 outputParams,
                 // No args for global
@@ -207,16 +206,16 @@ export const makeMapboxesQueryTask = v(R.curry((apolloClient, outputParams, args
           )(Result.Ok({}))
         ])
       )
-    )(args);
+    )(componentOrProps);
   }),
   [
     ['apolloClient', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired],
-    ['arguments', PropTypes.shape({
+    ['componentOrProps', PropTypes.oneOf([PropTypes.func, PropTypes.shape({
       users: PropTypes.shape().isRequired,
       regions: PropTypes.shape().isRequired,
       projects: PropTypes.shape().isRequired
-    }).isRequired]
+    })]).isRequired]
   ], 'makeMapboxesQueryTask');
 
 /**

@@ -77,19 +77,34 @@ const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
   }
 }`;
 
-export const verifyToken = R.curry((apolloClient, variables) => authApolloClientMutationRequestTask(
-  apolloClient,
+/**
+ * Verifies an apolloClient auth token.
+ * @param {Object} apolloClient
+ * @param {Object} variables
+ * @param {String} variables.token The token to verify
+ * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
+ */
+export const verifyTokenTask = R.curry((apolloConfig, variables) => authApolloClientMutationRequestTask(
+  apolloConfig,
   {mutation: verifyTokenMutation, variables}
 ));
 
 const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
-  verifyToken(token: $token) {
+  refreshToken(token: $token) {
     payload
   }
 }`;
 
-export const refreshToken = R.curry((apolloClient, variables) => authApolloClientMutationRequestTask(
-  apolloClient,
+/**
+ * Refresh an apolloClient auth token.
+ * @param {Object} apolloClient
+ * @param {Object} variables
+ * @param {String} variables.token The token to verify
+ * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
+ *
+ */
+export const refreshTokenTask = R.curry((apolloConfig, variables) => authApolloClientMutationRequestTask(
+  apolloConfig,
   {mutation: refreshTokenMutation, variables}
 ));
 

@@ -129,7 +129,19 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
 export const makeQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, propStructure}, componentOrProps) => {
-  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, propStructure)}`;
+  // We need the structure of the query variables.
+  // If propStructure is given, we use it. Otherwise if componentOrProps is props, we use them. Otherwise we fail
+  const structure = R.when(
+    R.isNil,
+    () => R.when(
+      R.complement(R.is)(Object),
+      () => {
+        throw new Error(`No propStructure given and componentOrProps is not and object, rather ${JSON.stringify(componentOrProps)}`);
+      }
+    )(componentOrProps)
+  )(propStructure);
+
+  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, structure)}`;
   console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(componentOrProps)}`);
   return R.map(
     queryResponse => {
@@ -160,8 +172,20 @@ export const makeQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, 
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs.
  */
-export const makeClientQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper}, outputParams, queryArgs) => {
-  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, queryArgs)}`;
+export const makeClientQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, propStructure}, componentOrProps) => {
+  // We need the structure of the query variables.
+  // If propStructure is given, we use it. Otherwise if componentOrProps is props, we use them. Otherwise we fail
+  const structure = R.when(
+    R.isNil,
+    () => R.when(
+      R.complement(R.is)(Object),
+      () => {
+        throw new Error(`No propStructure given and componentOrProps is not and object, rather ${JSON.stringify(componentOrProps)}`);
+      }
+    )(componentOrProps)
+  )(propStructure);
+
+  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, structure)}`;
   console.debug(`Client Query: ${print(query)} Arguments: ${JSON.stringify(queryArgs)}`);
   return R.map(
     queryResponse => {
@@ -169,11 +193,9 @@ export const makeClientQueryTask = R.curry((apolloConfig, {name, readInputTypeMa
       return queryResponse;
     },
     authApolloClientQueryRequestTask(
-      apolloConfig.apolloClient,
-      {
-        query,
-        variables: queryArgs
-      }
+      apolloConfig,
+      query,
+      componentOrProps
     )
   );
 });

@@ -13,8 +13,8 @@ import * as R from 'ramda';
 import {testAuthTask, testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
-import {loginTask, refreshToken, verifyToken, authClientOrLoginTask, loginToAuthClientTask} from './login';
-import {defaultRunConfig} from 'rescape-ramda';
+import {loginTask, refreshTokenTask, verifyTokenTask, authClientOrLoginTask, loginToAuthClientTask} from './login';
+import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 
@@ -24,39 +24,20 @@ const uri = parseApiUrl(api);
 describe('login', () => {
   test('testLoginCredentials', done => {
 
-    const verifyTokenTask = (apolloClient, {token}) => {
-      return R.map(
-        // Map the token info to the authApolloClient and token for chaining
-        verify => {
-          return {
-            apolloClient,
-            token,
-            payload: reqStrPathThrowing('data.verifyToken.payload', verify)
-          };
-        },
-        verifyToken(apolloClient, {token})
-      );
-    };
-    const refreshTokenTask = (apolloClient, {token}) => R.map(
-      // Map the token info to the authApolloClient and token for chaining
-      verify => {
-        return {
-          apolloClient,
-          token,
-          payload: reqStrPathThrowing('data.verifyToken.payload', verify)
-        };
-      },
-      refreshToken(apolloClient, {token})
-    );
-
-
     R.composeK(
-      ({apolloClient, token}) => refreshTokenTask(apolloClient, {token}),
-      ({apolloClient, token}) => verifyTokenTask(apolloClient, {token}),
-      userLoginResult => authApolloClientTask(
+      mapToNamedPathAndInputs(
+        'refreshToken', 'data.refreshToken.payload',
+        ({apolloClient, token}) => refreshTokenTask({apolloClient}, {token})
+      ),
+      mapToNamedPathAndInputs(
+        'verifyToken', 'data.verifyToken.payload',
+        ({apolloClient, token}) => verifyTokenTask({apolloClient}, {token})
+      ),
+      ({token}) => authApolloClientTask(
         uri,
         sampleStateLinkResolversAndDefaults,
-        {tokenAuth: R.pick(['token'], userLoginResult)}),
+        {tokenAuth: {token}}
+      ),
       () => testAuthTask
     )().run().listen(defaultRunConfig(
       {
@@ -64,7 +45,8 @@ describe('login', () => {
           response => {
             expect(response.apolloClient).not.toBeNull();
             expect(response.token).not.toBeNull();
-            expect(response.payload).not.toBeNull();
+            expect(response.verifyToken).not.toBeNull();
+            expect(response.refreshToken).not.toBeNull();
             done();
           }
       })

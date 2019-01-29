@@ -17,7 +17,7 @@ const someProjectKeys = ['id', 'key', 'geojson'];
 describe('projectStore', () => {
   test('makeProjectMutationTask', done => {
     R.composeK(
-      ({apolloClient}) => makeProjectMutationTask(apolloClient, projectOutputParams, {key: 'shrangrila', name: 'Shrangrila'}),
+      ({apolloClient}) => makeProjectMutationTask({apolloClient}, projectOutputParams, {key: 'shrangrila', name: 'Shrangrila'}),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
@@ -30,7 +30,7 @@ describe('projectStore', () => {
 
   test('makeProjectsQueryTask', done => {
     R.composeK(
-      ({apolloClient}) => makeProjectsQueryTask(apolloClient, projectOutputParams, {key: 'shrangrila'}),
+      ({apolloClient}) => makeProjectsQueryTask({apolloClient}, projectOutputParams, {key: 'shrangrila'}),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

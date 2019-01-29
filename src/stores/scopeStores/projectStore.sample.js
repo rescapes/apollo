@@ -18,7 +18,7 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda'
  * @return {Object} {apolloClient,  value: {data: project: {...}}}
  */
 export const createSampleProjectTask = mapToNamedPathAndInputs('project', 'data.project',
-  ({apolloClient}) => makeProjectMutationTask(apolloClient, projectOutputParams, {
+  ({apolloClient}) => makeProjectMutationTask({apolloClient}, projectOutputParams, {
     key: 'downtownPincher',
     name: 'Downtown Pincher Creek',
     geojson: {

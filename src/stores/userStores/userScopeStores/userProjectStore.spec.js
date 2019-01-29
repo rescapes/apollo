@@ -19,10 +19,10 @@ describe('userProjectStore', () => {
   test('makeUserProjectsQueryTask', done => {
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: parseInt(userId)}}, {}),
+      ({apolloClient, userId}) => makeUserProjectsQueryTask({apolloClient}, {user: {id: parseInt(userId)}}, {}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
       ),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
@@ -39,10 +39,10 @@ describe('userProjectStore', () => {
     R.composeK(
       // Filter for projects where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Projects so we can filter by Project
-      ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: parseInt(userId)}}, {geojson: {type: 'FeatureCollection'}}),
+      ({apolloClient, userId}) => makeUserProjectsQueryTask({apolloClient}, {user: {id: parseInt(userId)}}, {geojson: {type: 'FeatureCollection'}}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
       ),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
@@ -57,10 +57,10 @@ describe('userProjectStore', () => {
   test('makeActiveUserProjectQuery', done => {
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserProjectsQueryTask(apolloClient, {user: {id: parseInt(userId)}, }, {}),
+      ({apolloClient, userId}) => makeUserProjectsQueryTask({apolloClient}, {user: {id: parseInt(userId)}, }, {}),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask(apolloClient, userOutputParams)
+        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
       ),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
