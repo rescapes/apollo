@@ -8,12 +8,10 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {mapDispatchToProps, mapStateToProps, queries} from 'components/region/RegionContainer';
-import {apolloTestPropsTaskMaker, propsFromParentPropsHelperTask} from 'helpers/testHelpers';
-import {parentPropsForContainerTask} from 'rescape-helpers-test';
+import {parentPropsForContainerTask, makeApolloTestPropsTaskFunction} from 'rescape-helpers-test';
+import {queries} from './SampleContainer';
 import {of} from 'folktale/concurrency/task';
 import {Ok} from 'folktale/result';
-import * as R from 'ramda';
 
 /**
  * @file Links sample props from a parent component to a Region component
@@ -22,7 +20,7 @@ import * as R from 'ramda';
 /**
  * Returns a function that expects state and parentProps for testing and returns a Task that resolves the props
  */
-export const samplePropsTaskMaker = apolloTestPropsTaskMaker(mapStateToProps, mapDispatchToProps, queries.region);
+//export const samplePropsTaskMaker = makeApolloTestPropsTaskFunction(mapStateToProps, mapDispatchToProps, queries.samples);
 
 
 /**
@@ -57,4 +55,4 @@ export const chainedParentPropsTask = parentPropsForContainerTask(
 /**
  * Task returning sample props from all the way up the view hierarchy
  */
-export const chainedSamplePropsTask = propsFromParentPropsHelperTask(chainedParentPropsTask, samplePropsTaskMaker);
+//export const chainedSamplePropsTask = propsFromParentPropsHelperTask(chainedParentPropsTask, samplePropsTaskMaker);

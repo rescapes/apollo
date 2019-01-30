@@ -12,8 +12,12 @@
 // Enzyme setup
 import * as R from 'ramda';
 import {JSDOM} from 'jsdom';
+import enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
 // Makes localStorage available in node to Apollo
 import 'localstorage-polyfill'
+
+enzyme.configure({adapter: new Adapter()});
 
 global.navigator = {
   userAgent: 'node.js'

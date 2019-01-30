@@ -66,7 +66,7 @@
     "request": "^2.88.0",
     "rescape-geospatial-sankey": "^0.7.14",
     "rescape-helpers": "^1.1.66",
-    "rescape-ramda": "^1.5.15",
+    "rescape-ramda": "^1.5.16",
     "rescape-validate": "^1.2.11"
   },
   "devDependencies": {
@@ -85,6 +85,7 @@
     "cross-env": "^5.2.0",
     "dotenv": "6.0.0",
     "enzyme": "^3.4.4",
+    "enzyme-adapter-react-16": "^1.8.0",
     "enzyme-wait": "^1.0.9",
     "eslint": "5.4.0",
     "eslint-loader": "2.1.0",

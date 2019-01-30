@@ -65,15 +65,16 @@ export const regionOutputParams = [
  * Queries regions
  * @params {Object} apolloConfig The Apollo config. See makeQueryTask for options
  * @params {Object} outputParams OutputParams for the query such as regionOutputParams
- * @params {Object} propsStructure Optional structure of the props if componentOrProps is not props
+ * @params {Object} component Optional component for ApolloComponent queries. Leave null for client queries
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams, propsStructure}, componentOrProps) => {
+export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams}, component, props) => {
     return makeQueryTask(
       apolloConfig,
-      {name: 'regions', readInputTypeMapper, outputParams, propsStructure},
-      componentOrProps
+      {name: 'regions', readInputTypeMapper, outputParams},
+      component,
+      props
     );
   }),
   [
@@ -85,7 +86,8 @@ export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams, prop
       propsStructure: PropTypes.shape()
     })
     ],
-    ['componentOrProps', PropTypes.oneOfType([PropTypes.shape(), PropTypes.func]).isRequired]
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape().isRequired]
   ], 'makeRegionsQueryTask');
 
 /**

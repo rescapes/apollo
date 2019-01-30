@@ -1,24 +1,18 @@
 import {mergeDeep, taskToPromise, traverseReduce} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import Sample from './SampleComponent';
 import {makeRegionsQueryTask, regionOutputParams} from '../stores/scopeStores/regionStore';
-import {of} from 'folktale/concurrency/task'
+import {of} from 'folktale/concurrency/task';
+import Sample from './SampleComponent';
 
-const graphqlTasks = [
+export const graphqlTasks = [
   makeRegionsQueryTask(
     {
-      options: ({data: {sample}}) => ({
-        variables: {
-          id: sample.id
-        },
+      options: {
+        variables: (props) => ({
+          id: props.region.id
+        }),
         // Pass through error so we can handle it in the component
         errorPolicy: 'all'
-      }),
-      props: ({data, ownProps}) => {
-        return mergeDeep(
-          ownProps,
-          {data}
-        );
       }
     },
     {
@@ -29,12 +23,23 @@ const graphqlTasks = [
     }
   )
 ];
-const composeGraphqlRequestsTask = tasks => traverseReduce(
+
+const composeGraphqlRequestsTaskMaker = component => graphqlTasks[0](component);
+
+/*  traverseReduce(
   (prev, currentTaskMaker) => currentTaskMaker(prev),
-  of(Sample),
-  tasks
-);
+  of(component),
+  graphqlTasks
+);*/
 
 // Create the GraphQL Container.
-export default ContainerWithData = composeGraphqlRequestsTask(graphqlTasks);
+const ContainerWithData = child => {
+  const taskMaker = composeGraphqlRequestsTaskMaker(child);
+  return function(props) {
+    return taskMaker(props).matchWith({
+      Just: ({value}) => value
+    })
+  }
+};
 
+export default ContainerWithData(Sample)

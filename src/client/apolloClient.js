@@ -19,6 +19,11 @@ import * as R from 'ramda';
 import createStateLink from './clientState';
 import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
 import {task, of} from 'folktale/concurrency/task';
+import {Query as query} from "react-apollo";
+import {eMap} from 'rescape-helpers-component';
+import {Just} from 'folktale/maybe'
+
+const [Query] = eMap([query]);
 
 /**
  * Creates an ApolloClient.
@@ -188,7 +193,7 @@ export const authApolloClientQueryRequestTask = R.curry((apolloClient, query, va
  * @param {Object} options.prop optional mapping of props returned by the query.
  */
 export const authApolloComponentMutationRequestClass = R.curry((query, options, apolloComponent) => {
-  return of(graphql(query, options)(apolloComponent));
+  return of(Query(query, options)(apolloComponent));
 });
 
 /**
@@ -198,62 +203,58 @@ export const authApolloComponentMutationRequestClass = R.curry((query, options, 
  * are passed by the wrapped apolloComponent as props rather than as part of the options
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} options
- * @param {Object} options.query required query to use
  * @param {Object} options.options optional react-apollo options
- * @param {Object} options.options.variables optional.
- * @param {Object} options.options.errorPolicy optional error policy
- * @param {Object} options.prop optional mapping of props returned by the query.
+ * @param {Object|Function} options.variables optional. If a function props are passed in
+ * @param {Object} options.errorPolicy optional error policy
  */
-export const authApolloComponentQueryRequestClass = R.curry((query, options, apolloComponent) => {
-  return of(graphql(query, options)(apolloComponent));
+export const authApolloQueryRequestComponent = R.curry((query, options, apolloComponent, props) => {
+  const updatedOptions = R.over(
+    R.lensPath(['options', 'variables']),
+    R.when(R.is(Function), R.applyTo(props)),
+    options);
+  return Just(Query({query, ...R.propOr({}, 'options', updatedOptions)}, apolloComponent));
 });
 
 
 /**
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work
- * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
- * @param {Object} apolloConfig.apolloComponent Optional Apollo component
- * @param {Function} apolloConfig.apolloComponent.options Required for ApolloComponent container queries.
- * A unary function expecting components from the parent component or container
- * @param {Object} apolloConfig.apolloComponent.options.variables Variables for the ApolloComponent container
- * @param {Object} apolloConfig.apolloComponent.options.errorPolicy Optional errorPolicy string for the ApolloComponent
- * container
- * @param {Object} queryAndArgs Options for ApolloClient or ApolloComponent container queries
- * @param {Object} queryAndArgs.query graphql query
- * @param {Object} queryAndArgs.variables Required if the query is to accept arguments. If this is a component
+ * @param {Object} config.apolloClient Optional Apollo client for client calls, authenticated for most calls
+ * @param {Object|Function} config.variables Variables for the ApolloComponent container
+ * @param {Object} config.errorPolicy Optional errorPolicy string for the ApolloComponent container
+ * @param {Object} component Apollo Component for component calls, otherwise leave null
+ * @param {Object} props Required if the query is to accept arguments. If this is a component
  * query, values must be supplied initially to inform the structure of the arguments
  * Object of simple or complex parameters. Example of client execution variables
  * {city: "Stavanger", data: {foo: 2}}
  * Example of the same variables for a component, where only the type of the values matter
  * {city: "", data: {foo: 0}}
  */
-export const authApolloQueryRequestTask = R.curry((apolloConfig, query, componentOrProps) => {
+export const authApolloQueryRequestTask = R.curry((config, query, component, props) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => authApolloClientQueryRequestTask(
         R.prop('apolloClient', apolloConfig),
         query,
-        // props
-        componentOrProps
+        props
       )
     ],
     // Apollo Component
-    [() => R.is(Function, componentOrProps),
+    [() => R.not(R.isNil(component)),
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
-      apolloConfig => authApolloComponentQueryRequestClass(
+      apolloConfig => authApolloQueryRequestComponent(
         query,
-        R.pick(['options', 'props'], apolloConfig),
-        // component
-        componentOrProps
+        apolloConfig,
+        component,
+        props
       )
     ],
     [R.T, () => {
-      throw new Error(`apolloConfig is neither for an Apollo Client nor Apollo Component: ${JSON.stringify(apolloConfig)}`);
+      throw new Error(`apolloConfig doesn't have an Apollo client and component is null: ${JSON.stringify(config)}`);
     }]
-  ])(apolloConfig);
+  ])(config);
 });
 
 /**

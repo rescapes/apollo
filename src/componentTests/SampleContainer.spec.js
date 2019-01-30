@@ -1,11 +1,12 @@
 import * as R from 'ramda';
 import {c} from './SampleComponent';
-import SampleContainer, {queries, mapStateToProps} from './SampleContainer';
+import SampleContainer, {graphqlTasks} from './SampleContainer';
 import {chainedParentPropsTask} from './SampleContainer.sample';
 import {apolloContainerTests} from 'rescape-helpers-test';
 import {of} from 'folktale/concurrency/task';
 import {testConfig} from '../helpers/testHelpers';
 import {remoteSchemaTask} from '../schema/remoteSchema';
+import {eMap} from 'rescape-helpers-component'
 
 // Test this container
 const [Container] = eMap([SampleContainer]);
@@ -17,12 +18,11 @@ const childClassDataName = c.sampleMapboxOuter;
 const childClassLoadingName = c.sampleLoading;
 // Find this class in the error renderer
 const childClassErrorName = c.sampleError;
-const queryConfig = queries.sample;
 const errorMaker = parentProps => R.set(R.lensPath(['sample', 'id']), 'foo', parentProps);
 
 describe('SampleContainer', () => {
 
-  const {testMapStateToProps, testQuery, testRenderError, testRender} = apolloContainerTests({
+  const {testQuery, testRenderError, testRender} = apolloContainerTests({
     // This was for Redux. We shouldn't need it now since our Apollo LinkState stores all state
     initialState: {},
     // Get the remote schema based on the test config
@@ -32,13 +32,26 @@ describe('SampleContainer', () => {
     childClassDataName,
     childClassLoadingName,
     childClassErrorName,
-    queryConfig,
+    graphqlTasks: graphqlTasks,
     chainedParentPropsTask,
-    mapStateToProps,
     errorMaker
   });
-  test('testMapStateToProps', testMapStateToProps);
-  test('testQuery', testQuery);
   test('testRender', testRender);
   test('testRenderError', testRenderError);
 });
+
+/*
+const ContainerWithData = child => R.composeK(
+  child,
+  mapToNamedResponseAndInputs(
+    'queryTwo',
+    ({props, value: queryOne}) => query({query: queryTwo}),
+  ),
+  mapToNamedResponseAndInputs(
+    'queryOne',
+    props => query({query: queryOne})
+  )
+);
+ContainerWithData(Sample);
+*/
+
