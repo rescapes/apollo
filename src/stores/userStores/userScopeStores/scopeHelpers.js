@@ -22,7 +22,7 @@ import PropTypes from 'prop-types';
  * Queries scope objects (Region, Project, etc) that are in the scope of the given user. If scopeArguments are
  * specified the returned scope objects are queried by the scopeArguments to possibly reduce those matching
  * @params {Object} apolloClient The Apollo Client
- * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryTask
+ * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryTaskMaker
  * @params {String} scopeName The name of the scope, such as 'region' or 'project'
  * @params {Function} userStateOutputParamsCreator Unary function expecting scopeOutputParams
  * and returning output parameters for each the scope class query. If don't have to query scope seperately
@@ -112,7 +112,7 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
  * Given resolved objects from the user state about the scope and further arguments to filter those scope objects,
  * query for the scope objects
  * @params {Object} apolloClient The Apollo Client
- * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryTask
+ * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryTaskMaker
  * @params {String} scopeName The name of the scope, such as 'region' or 'project'
  * @params {[Object]} scopeOutputParams Output parameters for each the scope class query
  * @params {[Object]} scopeArguments Arguments for the scope class query

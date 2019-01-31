@@ -69,12 +69,11 @@ export const regionOutputParams = [
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams}, component, props) => {
+export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams, templateProps}, component) => {
     return makeQueryTask(
       apolloConfig,
-      {name: 'regions', readInputTypeMapper, outputParams},
+      {name: 'regions', readInputTypeMapper, outputParams, templateProps},
       component,
-      props
     );
   }),
   [
@@ -83,12 +82,12 @@ export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams}, com
     }).isRequired],
     ['queryStructure', PropTypes.shape({
       outputParams: PropTypes.array.isRequired,
-      propsStructure: PropTypes.shape()
+      templateProps: PropTypes.shape()
     })
     ],
     ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
-  ], 'makeRegionsQueryTask');
+  ], 'makeRegionsQueryTaskMaker');
 
 /**
  * Makes a Region mutation
@@ -112,7 +111,7 @@ export const makeRegionsQueryTask = v(R.curry((apolloConfig, {outputParams}, com
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams, inputParams}) => makeMutationTask(
+export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams}, inputParams) => makeMutationTask(
   apolloConfig,
   {name: 'region'},
   outputParams,

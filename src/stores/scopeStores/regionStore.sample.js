@@ -19,18 +19,22 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
  */
 export const createSampleRegionTask = mapToNamedPathAndInputs(
   'region', 'data.region',
-  ({apolloClient}) => makeRegionMutationTask({apolloClient}, regionOutputParams, {
-    key: 'pincherCreek',
-    name: 'Pincher Creek',
-    geojson: {
-      'type': 'FeatureCollection',
-      'features': [{
-        "type": "Feature",
-        "geometry": {
-          "type": "Polygon",
-          "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
-        }
-      }]
+  ({apolloClient}) => makeRegionMutationTask(
+    {apolloClient},
+    {regionOutputParams},
+    {
+      key: 'pincherCreek',
+      name: 'Pincher Creek',
+      geojson: {
+        'type': 'FeatureCollection',
+        'features': [{
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
+          }
+        }]
+      }
     }
-  })
+  )
 );

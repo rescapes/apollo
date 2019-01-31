@@ -81,6 +81,7 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
 };
 
 /**
+ * // TODO remove indentLevel and use pretty printing
  * Creates graphql inputparams from the given object
  * @param {[String|List|Object]} inputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased

@@ -14,8 +14,8 @@ import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {
   authApolloClientOrComponentQueryReadRequestTask,
-  authApolloQueryRequestTask,
-  authApolloClientQueryRequestTask
+  authApolloQueryRequest,
+  authApolloClientQueryClientFunction
 } from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
@@ -122,19 +122,18 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  of different could be merged together into the data field. This also matches what Apollo components expect.
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, component, props) => {
-  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
+export const makeQueryTask = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, templateProps}, component) => {
+  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, templateProps)}`;
   console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
-  return R.map(
+  return R.compose(
     queryResponse => {
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
-    authApolloQueryRequestTask(
+    authApolloQueryRequest(
       apolloConfig,
       query,
-      component,
-      props
+      component
     )
   );
 });
@@ -175,7 +174,7 @@ export const makeClientQueryTask = R.curry((apolloConfig, {name, readInputTypeMa
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
-    authApolloClientQueryRequestTask(
+    authApolloClientQueryClientFunction(
       apolloConfig,
       query,
       componentOrProps

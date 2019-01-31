@@ -13,7 +13,7 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {makeRegionsQueryTask, regionOutputParams} from '../../scopeStores/regionStore';
+import {makeRegionsQueryTaskMaker, regionOutputParams} from '../../scopeStores/regionStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryTask} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
@@ -32,7 +32,7 @@ export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArgume
     return makeUserScopeObjsQueryTask(
       apolloClient,
       {
-        scopeQueryTask: makeRegionsQueryTask,
+        scopeQueryTask: makeRegionsQueryTaskMaker,
         scopeName: 'region',
         readInputTypeMapper: userStateReadInputTypeMapper,
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({region: scopeOutputParams}),

@@ -1,11 +1,13 @@
 import {mergeDeep, taskToPromise, traverseReduce} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import {makeRegionsQueryTask, regionOutputParams} from '../stores/scopeStores/regionStore';
+import {makeRegionsQueryTaskMaker, regionOutputParams} from '../stores/scopeStores/regionStore';
 import {of} from 'folktale/concurrency/task';
 import Sample from './SampleComponent';
+import {asyncComponent} from 'react-async-component';
+import {eMap} from 'rescape-helpers-component';
 
 export const graphqlTasks = [
-  makeRegionsQueryTask(
+  makeRegionsQueryTaskMaker(
     {
       options: {
         variables: (props) => ({
@@ -24,7 +26,7 @@ export const graphqlTasks = [
   )
 ];
 
-const composeGraphqlRequestsTaskMaker = component => graphqlTasks[0](component);
+const composeGraphqlRequestsTaskMaker = (component, templateProps) => graphqlTasks[0](component, templateProps);
 
 /*  traverseReduce(
   (prev, currentTaskMaker) => currentTaskMaker(prev),
@@ -33,13 +35,11 @@ const composeGraphqlRequestsTaskMaker = component => graphqlTasks[0](component);
 );*/
 
 // Create the GraphQL Container.
-const ContainerWithData = child => {
-  const taskMaker = composeGraphqlRequestsTaskMaker(child);
-  return function(props) {
-    return taskMaker(props).matchWith({
-      Just: ({value}) => value
-    })
+const ContainerWithData = child => asyncComponent({
+  resolve: () => {
+    return taskToPromise(composeGraphqlRequestsTaskMaker(child, {id: 0}));
   }
-};
+});
 
-export default ContainerWithData(Sample)
+const asyncContainer = ContainerWithData(Sample);
+export default asyncContainer

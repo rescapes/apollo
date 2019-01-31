@@ -63,6 +63,7 @@
     "ramda": "^0.25.0",
     "ramda-lens": "^0.1.2",
     "react-apollo": "^2.4.0",
+    "react-async-component": "^2.0.0",
     "request": "^2.88.0",
     "rescape-geospatial-sankey": "^0.7.14",
     "rescape-helpers": "^1.1.66",

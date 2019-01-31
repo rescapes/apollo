@@ -12,7 +12,7 @@
 export {loginTask, authClientOrLoginTask, refreshTokenTask, verifyTokenTask} from './auth/login';
 export {
   default as createApolloClient,
-  authApolloClientQueryRequestTask,
+  authApolloClientQueryClientFunction,
   authApolloClientMutationRequestTask,
   authApolloClient,
   authApolloClientRequestTask,

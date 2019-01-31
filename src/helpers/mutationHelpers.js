@@ -21,13 +21,14 @@
 
 import * as R from 'ramda';
 import {formatOutputParams, formatInputParams} from './requestHelpers';
-import {authApolloClientMutationRequestTask} from '../client/apolloClient';
+import {authApolloClientMutationRequestTask, authApolloComponentMutationRequestClass} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
   reqPathThrowing,
-  capitalize
+  capitalize,
+  mapObjToValues
 } from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
@@ -39,9 +40,11 @@ import {print} from 'graphql';
  * graphql, then translated here to a graphql string
  * @param {Object} outputParams
  */
-export const makeMutation = R.curry((mutationName, inputParams, outputParams) => {
-  return `mutation ${mutationName}Mutation { 
-${mutationName}(${formatInputParams(inputParams)}) {
+export const makeMutation = R.curry((mutationName, variables, outputParams) => {
+  const variableString = R.join(', ', mapObjToValues((type, name) => `$${name}: ${type}!`));
+  const variableMappingString = R.join(', ', mapObjToValues((type, name) => `${name}: $${name}`));
+  return `mutation ${mutationName}Mutation(${variableString}) { 
+${mutationName}(${variableMappingString})) {
   ${formatOutputParams(outputParams)}
   }
 }`;
@@ -76,11 +79,15 @@ ${mutationName}(${formatInputParams(inputParams)}) {
  *  in an obj at obj.data.name or an errors at obj.errors. This matches what Apollo Components expect. If you need
  *  a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeMutationTask = R.curry((apolloConfig, {name, outputParams, inputParams}, inputParamsOrComponent) => {
-  const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(inputParams)}${capitalize(name)}`;
+export const makeMutationTask = R.curry((apolloConfig, {name, outputParams, templateProps}, component) => {
+  // Create|Update[Model Name]InputType]
+  const variableName = `${name}Data`;
+  const variableType = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(templateProps)}${capitalize(name)}InputType`;
+  // create|update[Model Name]
+  const createOrUpdateName = `${R.ifElse(R.prop('id'), R.always('update'), R.always('create'))(templateProps)}${capitalize(name)}`;
   const mutation = gql`${makeMutation(
     createOrUpdateName,
-    {[`${name}Data`]: inputParams},
+    {[variableName]: variableType},
     {[name]: outputParams}
   )}`;
   if (R.any(R.isNil, R.values(inputParams))) {
@@ -102,11 +109,12 @@ export const makeMutationTask = R.curry((apolloConfig, {name, outputParams, inpu
     R.cond([
       [R.has('apolloClient'),
         apolloConfig => authApolloClientMutationRequestTask(
-        apolloConfig,
-        {
-          mutation
-        }
-      )],
+          apolloConfig,
+          {
+            mutation,
+            variableName
+          }
+        )],
       [apolloConfig => authApolloComponentMutationRequestClass(
 
       )
