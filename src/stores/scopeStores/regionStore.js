@@ -73,7 +73,7 @@ export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams,
     return makeQueryTask(
       apolloConfig,
       {name: 'regions', readInputTypeMapper, outputParams, templateProps},
-      component,
+      component
     );
   }),
   [
@@ -111,9 +111,12 @@ export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams,
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams}, inputParams) => makeMutationTask(
+export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationTask(
   apolloConfig,
-  {name: 'region'},
-  outputParams,
+  {
+    name: 'region',
+    outputParams,
+    crud
+  },
   inputParams
 ));

@@ -40,8 +40,12 @@ describe('queryHelpers', () => {
         region => ({apolloClient, region}),
         makeMutationTask(
           {apolloClient},
-          {name: 'region'},
-          ['key'],
+          {
+            name: 'region',
+            outputParams: ['key'],
+            crud: 'create'
+          }
+        )(
           {
             key: `test${moment().format('HH-mm-SS')}`,
             name: `Test${moment().format('HH-mm-SS')}`
@@ -82,8 +86,11 @@ describe('queryHelpers', () => {
         regionResponse => ({apolloClient, region: reqStrPathThrowing('data.region', regionResponse)}),
         makeMutationTask(
           {apolloClient},
-          {name: 'region'},
-          ['key'],
+          {
+            name: 'region',
+            outpuParams: ['key'],
+            crud: 'create'
+          })(
           {
             key: `test${moment().format('HH-mm-SS')}`,
             name: `Test${moment().format('HH-mm-SS')}`

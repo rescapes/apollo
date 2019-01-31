@@ -80,7 +80,7 @@ describe('userStore', () => {
       mapToNamedPathAndInputs('userState', 'data.userState',
         ({apolloClient, user, region, project}) => makeUserStateMutationTask(
           apolloClient,
-          userStateMutateOutputParams,
+          {outputParams: userStateMutateOutputParams, crud: 'create'},
           createInputParams({user, region, project})
         )
       ),

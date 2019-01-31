@@ -65,8 +65,12 @@ describe('apolloClient', () => {
       mapToNamedPathAndInputs('region', 'data.region',
         ({apolloClient}) => makeMutationTask(
           {apolloClient},
-          {name: 'region'},
-          ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+          {
+            name: 'region',
+            outputParmas: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+            crud: 'create'
+          }
+        )(
           {
             key: 'earth',
             name: 'Earth'
@@ -146,8 +150,11 @@ describe('apolloClient', () => {
     // Create a Region
     await taskToPromise(makeMutationTask(
       {apolloClient},
-      {name: 'region'},
-      regionOutputParams,
+      {
+        name: 'region',
+        outputParams: regionOutputParams,
+        crud: 'create'
+      })(
       {
         key: 'earth',
         name: 'Earth'

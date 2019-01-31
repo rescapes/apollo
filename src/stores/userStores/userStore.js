@@ -147,14 +147,15 @@ export const makeUserStateQueryTask = v(R.curry((apolloConfig, outputParams, use
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeUserStateMutationTask = v(R.curry((apolloConfig, outputParams, inputParams) => makeMutationTask(
+export const makeUserStateMutationTask = v(R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationTask(
   apolloConfig,
   {name: 'userState'},
-  outputParams,
+  {outputParams, crud})(
   inputParams
-)),
-[
-  ['apolloConfig', PropTypes.shape().isRequired],
-  ['outputParams', PropTypes.array.isRequired],
-  ['inputParams', PropTypes.shape().isRequired]
-], 'makeUserStateMutationTask');
+  )
+  ),
+  [
+    ['apolloConfig', PropTypes.shape().isRequired],
+    ['outputParams', PropTypes.array.isRequired],
+    ['inputParams', PropTypes.shape().isRequired]
+  ], 'makeUserStateMutationTask');

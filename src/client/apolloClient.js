@@ -17,15 +17,21 @@ import {createHttpLink} from 'apollo-link-http';
 import {onError} from 'apollo-link-error';
 import * as R from 'ramda';
 import createStateLink from './clientState';
-import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
 import {task, of} from 'folktale/concurrency/task';
-import {Query as query} from "react-apollo";
+import {Query as query, Mutation as mutation} from "react-apollo";
 import {eMap} from 'rescape-helpers-component';
-import {Just} from 'folktale/maybe'
+import {Just} from 'folktale/maybe';
 import {formatInputParams} from '../helpers/requestHelpers';
 import {print} from 'graphql';
+import {debug} from '../helpers/logHelpers';
+import {
+  promiseToTask,
+  replaceValuesWithCountAtDepthAndStringify,
+  reqStrPathThrowing,
+  reqPathThrowing,
+} from 'rescape-ramda';
 
-const [Query] = eMap([query]);
+const [Query, Mutation] = eMap([query, mutation]);
 
 /**
  * Creates an ApolloClient.
@@ -159,8 +165,24 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
 export const authApolloClientMutationRequestTask = R.curry((apolloConfig, options) => {
   return props => {
     const variable = print(formatInputParams(props));
-    return promiseToTask(reqStrPathThrowing('apolloClient', apolloConfig).mutate({variables: {[options.variableName]: variable}, ...options}));
-  }
+    return R.composeK(
+      mutationResponse => {
+        debug(`makeMutationTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
+        // Put the result in data[name] to match the style of queries
+        return {
+          data: {
+            [name]: reqPathThrowing(['data', createOrUpdateName, name], mutationResponse)
+          }
+        };
+      },
+      promiseToTask(
+        reqStrPathThrowing('apolloClient', apolloConfig).mutate({
+          variables: {[options.variableName]: variable},
+          ...options
+        })
+      )
+    )(props);
+  };
 });
 
 /***
@@ -197,8 +219,8 @@ export const authApolloClientQueryClientFunction = R.curry((apolloClient, query)
  * @param {Object} options.options.errorPolicy optional error policy
  * @param {Object} options.prop optional mapping of props returned by the query.
  */
-export const authApolloComponentMutationRequestClass = R.curry((query, options, apolloComponent) => {
-  return of(Query(query, options)(apolloComponent));
+export const authApolloComponentMutationRequestClass = R.curry((mutation, options, apolloComponent) => {
+  return of(Mutation(mutation, options)(apolloComponent));
 });
 
 /**

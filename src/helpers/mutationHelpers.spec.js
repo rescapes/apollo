@@ -31,8 +31,12 @@ describe('mutationHelpers', () => {
     const task = R.composeK(
       ({apolloClient}) => makeMutationTask(
         {apolloClient},
-        {name: 'region'},
-        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+        {
+          name: 'region',
+          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+          crud: 'create'
+        }
+      )(
         {
           key: `test${moment().format('HH-mm-SS')}`,
           name: `Test${moment().format('HH-mm-SS')}`

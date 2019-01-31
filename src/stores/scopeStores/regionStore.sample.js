@@ -17,11 +17,12 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
  * @params apolloClient
  * @return {Object} {apolloClient,  value: {data: region: {...}}}
  */
-export const createSampleRegionTask = mapToNamedPathAndInputs(
+export const createSampleRegionTask = props => mapToNamedPathAndInputs(
   'region', 'data.region',
   ({apolloClient}) => makeRegionMutationTask(
     {apolloClient},
-    {regionOutputParams},
+    {outputParams: regionOutputParams, crud: 'create'}
+  )(
     {
       key: 'pincherCreek',
       name: 'Pincher Creek',
@@ -36,5 +37,5 @@ export const createSampleRegionTask = mapToNamedPathAndInputs(
         }]
       }
     }
-  )
+  )(props)
 );

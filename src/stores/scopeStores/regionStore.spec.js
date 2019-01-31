@@ -34,7 +34,7 @@ describe('regionStore', () => {
       ({apolloClient, region}) => makeRegionsQueryTaskMaker(
         {apolloClient},
         {outputParams: regionOutputParams},
-        {key: ''}
+        {templateProps: {key: ''}}
       )({key: reqStrPathThrowing('key', region)}),
       createSampleRegionTask,
       () => testAuthTask
