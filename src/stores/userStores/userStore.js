@@ -14,7 +14,7 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeQueryTask} from '../../helpers/queryHelpers';
+import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 import {mapKeysAndValues, capitalize} from 'rescape-ramda';
 import {regionOutputParams} from '../scopeStores/regionStore';
@@ -103,7 +103,7 @@ export const userStateMutateOutputParams = userStateOutputPararmsOnlyIds;
  * or errors in Result.Error({errors: [...]})
  */
 export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams) => {
-    return makeQueryTask(
+    return makeQueryContainer(
       apolloConfig,
       {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator
@@ -126,7 +126,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams) =
  * @returns {Task} A Task containing the Regions in an object with obj.data.userStates or errors in obj.errors
  */
 export const makeUserStateQueryTask = v(R.curry((apolloConfig, outputParams, userStateArguments) => {
-    return makeQueryTask(
+    return makeQueryContainer(
       apolloConfig,
       {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper},
       // If we have to query for users separately use the limited output userStateOutputParamsCreator

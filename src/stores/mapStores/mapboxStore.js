@@ -13,13 +13,13 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeClientQueryTask, makeQueryTask} from '../../helpers/queryHelpers';
+import {makeClientQueryTask, makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 import {of, waitAll} from 'folktale/concurrency/task';
 import Result from 'folktale/result';
 import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath} from 'rescape-ramda';
 import {makeRegionsQueryTaskMaker} from '../scopeStores/regionStore';
-import {makeUserStateMutationTask, makeUserStateQueryTask} from '../userStores/userStore';
+import {makeUserStateQueryTask} from '../userStores/userStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType

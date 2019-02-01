@@ -21,7 +21,7 @@
 
 import * as R from 'ramda';
 import {formatOutputParams, formatInputParams} from './requestHelpers';
-import {authApolloClientMutationRequestContainer, authApolloComponentMutationRequest} from '../client/apolloClient';
+import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {
   capitalize,
@@ -85,25 +85,26 @@ export const makeMutationRequestContainer = R.curry(
      variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
    },
    component,
-   props
-  ) => {
+   props) => {
     // Create|Update[Model Name]InputType]
-    const variableName = R.defaultTo(`${name}Data`, variableNameOverride);
-    const variableType = R.defaultTo(`${crud}${capitalize(name)}InputType`, variableTypeOverride);
-    // In most cases, our outputParams are {[name]: outputParams} to match the name of the
-    // object class being mutated. If we don't specify name an instead use the overrides, we don't need name here
-    const outputParamsOfName = R.if(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
+    const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
+    const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
+    // In most cases, our outputParams are {[name]: outputParams} and props are {[variableNames]: props} to match the
+    // name of the object class being mutated. If we don't specify name an instead use the overrides,
+    // we don't need name here
+    const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
+    const namedProps = R.ifElse(R.isNil, R.always(props), ()=> ({[variableName]: props}))(name);
 
     // create|update[Model Name]
-    const createOrUpdateName = R.defaultTo(`${crud}${capitalize(name)}`, mutationNameOverride);
+    const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
 
     const mutation = gql`${makeMutation(
-    createOrUpdateName,
-    {[variableName]: variableType},
-    {outerParams: outputParamsOfName}
-  )}`;
+      createOrUpdateName,
+      {[variableName]: variableType},
+      namedOutputParams
+    )}`;
 
-    console.debug(`Mutation: ${print(mutation)}`);
+    console.debug(`Mutation: ${print(mutation)} Arguments: ${JSON.stringify(namedProps)}`);
 
     return R.cond([
       [apolloConfig => R.has('apolloClient', apolloConfig),
@@ -114,15 +115,15 @@ export const makeMutationRequestContainer = R.curry(
             name,
             variableName
           },
-          props
+          namedProps
         )
       ],
       [() => R.not(R.isNil(component)),
-        () => authApolloComponentMutationRequest(
+        () => authApolloComponentMutationContainer(
           mutation,
           apolloConfig,
           component,
-          props
+          namedProps
         )
       ]
     ])(apolloConfig);

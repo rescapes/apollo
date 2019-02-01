@@ -13,7 +13,7 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeQueryTask} from '../../helpers/queryHelpers';
+import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 
 // Every complex input type needs a type specified in graphql. Our type names are
@@ -63,14 +63,14 @@ export const regionOutputParams = [
 
 /**
  * Queries regions
- * @params {Object} apolloConfig The Apollo config. See makeQueryTask for options
+ * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Object} outputParams OutputParams for the query such as regionOutputParams
  * @params {Object} component Optional component for ApolloComponent queries. Leave null for client queries
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
 export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams, templateProps}, component) => {
-    return makeQueryTask(
+    return makeQueryContainer(
       apolloConfig,
       {name: 'regions', readInputTypeMapper, outputParams, templateProps},
       component

@@ -12,10 +12,8 @@
 import * as R from 'ramda';
 import {
   noAuthApolloClient,
-  authApolloClientRequestTask,
   authApolloClientTask,
   noAuthApolloClientMutationRequestTask,
-  authApolloClientMutationRequestContainer
 } from '../client/apolloClient';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
@@ -72,12 +70,6 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
   )(variables);
 });
 
-const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
-    verifyToken(token: $token) {
-        payload
-    }
-}`;
-
 /**
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
@@ -86,20 +78,15 @@ const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
  * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
  * token verification
  */
-export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
+export const verifyTokenRequestContainer = R.curry((apolloConfig, component, props) => makeMutationRequestContainer(
   apolloConfig,
   {
     outputParams: ['payload'],
     variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
   },
+  component,
   props
 ));
-
-const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
-    refreshToken(token: $token) {
-        payload
-    }
-}`;
 
 /**
  * Refresh an apolloClient auth token.
@@ -109,12 +96,13 @@ const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
  *
  */
-export const refreshTokenContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
+export const refreshTokenContainer = R.curry((apolloConfig, component, props) => makeMutationRequestContainer(
   apolloConfig,
   {
     outputParams: ['payload'],
     variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
   },
+  component,
   props
 ));
 

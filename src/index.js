@@ -12,7 +12,7 @@
 export {loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer} from './auth/login';
 export {
   default as createApolloClient,
-  authApolloClientQueryClientFunction,
+  authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
   authApolloClient,
   authApolloClientRequestTask,
@@ -24,7 +24,7 @@ export {
   noAuthApolloClientRequestTask
 } from './client/apolloClient';
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
-export {makeQuery, makeQueryTask} from './helpers/queryHelpers';
+export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer} from './helpers/mutationHelpers';
 export {formatOutputParams, resolveGraphQLType, formatInputParams, mapQueryTaskToNamedResultAndInputs} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';

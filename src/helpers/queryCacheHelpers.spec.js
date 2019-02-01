@@ -12,15 +12,16 @@
 import {makeClientQueryTask, makeQuery, makeQueryForComponentTask, makeQueryContainer} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
-import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, mapToNamedResponseAndInputs} from 'rescape-ramda';
 import {expectKeysAtStrPath, sampleStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
 import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
+import {makeQueryWithClientDirectiveContainer} from './queryCacheHelpers';
 
-describe('queryHelpers', () => {
+describe('queryCacheHelpers', () => {
 
   test('makeQuery', () => {
     expect(makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot();
@@ -36,8 +37,7 @@ describe('queryHelpers', () => {
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
         {key: region.key}
       ),
-      ({apolloClient}) => R.map(
-        region => ({apolloClient, region}),
+      ({apolloClient}) => mapToNamedResponseAndInputs('region',
         makeMutationRequestContainer(
           {apolloClient},
           {
@@ -66,7 +66,7 @@ describe('queryHelpers', () => {
   test('makeQueryWithClientDirectiveContainer', done => {
     const task = R.composeK(
       // Query the client to confirm it's in the cache
-      ({apolloClient, region}) => makeClientQueryTask(
+      ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
         apolloClient,
         {name: 'regions', readInputTypeMapper: {}},
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],

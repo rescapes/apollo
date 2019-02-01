@@ -13,7 +13,7 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeQueryTask} from '../../helpers/queryHelpers';
+import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 
 // Every complex input type needs a type specified in graphql. Our type names are
@@ -62,7 +62,7 @@ export const projectOutputParams = [
  * @returns {Task} A Task containing the Projects in an object with obj.data.projects or errors in obj.errors
  */
 export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, projectArguments) => {
-    return makeQueryTask(
+    return makeQueryContainer(
       {apolloClient},
       {name: 'projects', readInputTypeMapper},
       // If we have to query for projects separately use the limited output userStateOutputParamsCreator
