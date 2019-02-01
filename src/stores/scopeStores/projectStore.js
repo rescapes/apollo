@@ -11,7 +11,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeMutationTask} from '../../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
@@ -98,7 +98,7 @@ export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, proj
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeProjectMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
+export const makeProjectMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationRequestContainer(
   {apolloClient},
   {name: 'project'},
   outputParams,

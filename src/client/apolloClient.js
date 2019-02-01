@@ -28,7 +28,7 @@ import {
   promiseToTask,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
-  reqPathThrowing,
+  reqPathThrowing
 } from 'rescape-ramda';
 
 const [Query, Mutation] = eMap([query, mutation]);
@@ -162,27 +162,26 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  * @param apolloClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientMutationRequestTask = R.curry((apolloConfig, options) => {
-  return props => {
-    const variable = print(formatInputParams(props));
+export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, options, props) => {
     return R.composeK(
       mutationResponse => {
-        debug(`makeMutationTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
+        const variableName = options.variableName;
+        const name = options.name;
+        debug(`makeMutationTask for ${variableName} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
         // Put the result in data[name] to match the style of queries
-        return {
+        return of({
           data: {
-            [name]: reqPathThrowing(['data', createOrUpdateName, name], mutationResponse)
+            [name]: reqPathThrowing(['data', variableName, name], mutationResponse)
           }
-        };
+        });
       },
-      promiseToTask(
+      props => promiseToTask(
         reqStrPathThrowing('apolloClient', apolloConfig).mutate({
-          variables: {[options.variableName]: variable},
-          ...options
+          variables: {[options.variableName]: formatInputParams(props)},
+          ...R.pick(['mutation'], options)
         })
       )
     )(props);
-  };
 });
 
 /***
@@ -219,8 +218,18 @@ export const authApolloClientQueryClientFunction = R.curry((apolloClient, query)
  * @param {Object} options.options.errorPolicy optional error policy
  * @param {Object} options.prop optional mapping of props returned by the query.
  */
-export const authApolloComponentMutationRequestClass = R.curry((mutation, options, apolloComponent) => {
-  return of(Mutation(mutation, options)(apolloComponent));
+export const authApolloComponentMutationRequest = R.curry((mutation, options, apolloComponent, props) => {
+  return R.compose(
+    // Wrap in a Maybe.Just so we can use kestral composition (R.composeK) on the results
+    // TODO in the future we'll use Mutation with the async option and convert its promise to a Task
+    // The async option will make the render method (here the child component) handle promises, working
+    // with React Suspense and whatever else
+    Just,
+    // props of query are the query itself and the options that include variable and settings
+    child => Mutation({mutation, ...R.propOr({}, 'options', options)}, child),
+    // The child of Mutation is the passed in component, which might be another Query|Mutation or a straight React component
+    props => apolloComponent(props)
+  )(props);
 });
 
 /**
@@ -236,15 +245,22 @@ export const authApolloComponentMutationRequestClass = R.curry((mutation, option
  * @param {Just<Function>} Returns a unary function expecting props that returns a Maybe.Just containing the
  * component. The component is wrapped so it's compatible with monad composition
  */
-export const authApolloQueryRequestComponent = R.curry((query, options, apolloComponent) => {
+export const authApolloQueryRequestComponent = R.curry((query, options, apolloComponent, props) => {
+  // If a variables is a function pass the props in
   const updatedOptions = props => R.over(
     R.lensPath(['options', 'variables']),
     R.when(R.is(Function), R.applyTo(props)),
     options);
-  return props => Just(Query(
-    {query, ...R.propOr({}, 'options', updatedOptions(props))},
+  return R.compose(
+    // TODO in the future we'll use Query with the async option and convert its promise to a Task
+    // The async option will make the render method (here the child component) handle promises, working
+    // with React Suspense and whatever else
+    Just,
+    // props of query are the query itself and the options that include variable and settings
+    child => Query({query, ...R.propOr({}, 'options', updatedOptions(props))}, child),
+    // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
     props => apolloComponent(props)
-  ));
+  )(props);
 });
 
 

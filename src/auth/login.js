@@ -15,7 +15,7 @@ import {
   authApolloClientRequestTask,
   authApolloClientTask,
   noAuthApolloClientMutationRequestTask,
-  authApolloClientMutationRequestTask
+  authApolloClientMutationRequestContainer
 } from '../client/apolloClient';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
@@ -24,11 +24,12 @@ import gql from 'graphql-tag';
 import {ApolloClient} from 'apollo-client';
 import {PropTypes} from 'prop-types';
 import {v} from 'rescape-validate';
+import {makeMutationRequestContainer} from '../';
 
 const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
-  tokenAuth(username: $username, password: $password) {
-    token
-  }
+    tokenAuth(username: $username, password: $password) {
+        token
+    }
 }`;
 
 /**
@@ -72,9 +73,9 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
 });
 
 const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
-  verifyToken(token: $token) {
-    payload
-  }
+    verifyToken(token: $token) {
+        payload
+    }
 }`;
 
 /**
@@ -82,17 +83,22 @@ const verifyTokenMutation = gql`mutation VerifyToken($token: String!) {
  * @param {Object} apolloClient
  * @param {Object} variables
  * @param {String} variables.token The token to verify
- * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
+ * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
+ * token verification
  */
-export const verifyTokenTask = R.curry((apolloConfig, variables) => authApolloClientMutationRequestTask(
+export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
   apolloConfig,
-  {mutation: verifyTokenMutation, variables}
+  {
+    outputParams: ['payload'],
+    variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
+  },
+  props
 ));
 
 const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
-  refreshToken(token: $token) {
-    payload
-  }
+    refreshToken(token: $token) {
+        payload
+    }
 }`;
 
 /**
@@ -103,9 +109,13 @@ const refreshTokenMutation = gql`mutation RefreshToken($token: String!) {
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
  *
  */
-export const refreshTokenTask = R.curry((apolloConfig, variables) => authApolloClientMutationRequestTask(
+export const refreshTokenContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
   apolloConfig,
-  {mutation: refreshTokenMutation, variables}
+  {
+    outputParams: ['payload'],
+    variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
+  },
+  props
 ));
 
 /**

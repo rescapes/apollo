@@ -85,6 +85,8 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
  * Creates graphql inputparams from the given object
  * @param {[String|List|Object]} inputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased
+ * @param {boolean} omitOuterBraces omit braces on the first level of recursion. Only needed for embedded input args,
+ * not for variable args
  * @param {Number} indentLevel recursively increases
  * Example
  * {
@@ -103,7 +105,7 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
  *]
  * @returns {String} The input params in graphql format
  */
-export const formatInputParams = (inputParam, indentLevel = 0) => {
+export const formatInputParams = (inputParam, omitOuterBraces = false, indentLevel = 0) => {
   const indent = R.join('', R.repeat('\t', indentLevel));
   const v = R.cond([
     [R.is(Array),
@@ -111,7 +113,7 @@ export const formatInputParams = (inputParam, indentLevel = 0) => {
         `${indent}[`,
         R.join(',\n', R.map(item => {
             return [
-              `${indent}${formatInputParams(item, indentLevel + 1)}`
+              `${indent}${formatInputParams(item, omitOuterBraces, indentLevel + 1)}`
             ];
           }, list
         )),
@@ -121,16 +123,16 @@ export const formatInputParams = (inputParam, indentLevel = 0) => {
     [R.is(Object),
       obj => [
         // Omit bracets at outer level, since outer level is mutationName(inputVar1: {}, inputVar2, {}, etc)
-        R.ifElse(R.equals(0), R.always(''), R.always(`${indent}{`))(indentLevel),
+        R.ifElse(R.both(R.equals(0), R.always(omitOuterBraces)), R.always(''), R.always(`${indent}{`))(indentLevel),
         R.join(',\n', mapObjToValues(
           (value, key) => {
             return [
-              `${indent}${key}: ${indent}${formatInputParams(value, indentLevel + 1)}`
+              `${indent}${key}: ${indent}${formatInputParams(value, omitOuterBraces, indentLevel + 1)}`
             ];
           },
           obj
         )),
-        R.ifElse(R.equals(0), R.always(''), R.always(`${indent}}`))(indentLevel)
+        R.ifElse(R.both(R.equals(0), R.always(omitOuterBraces)), R.always(''), R.always(`${indent}}`))(indentLevel)
       ]
     ],
     [R.is(String),

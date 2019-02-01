@@ -1,4 +1,4 @@
-import {makeRegionMutationTask, regionOutputParams} from './regionStore';
+import {makeRegionMutationRequest, regionOutputParams} from './regionStore';
 import {mapToNamedPathAndInputs} from 'rescape-ramda';
 
 /**
@@ -17,25 +17,29 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
  * @params apolloClient
  * @return {Object} {apolloClient,  value: {data: region: {...}}}
  */
-export const createSampleRegionTask = props => mapToNamedPathAndInputs(
-  'region', 'data.region',
-  ({apolloClient}) => makeRegionMutationTask(
-    {apolloClient},
-    {outputParams: regionOutputParams, crud: 'create'}
-  )(
-    {
-      key: 'pincherCreek',
-      name: 'Pincher Creek',
-      geojson: {
-        'type': 'FeatureCollection',
-        'features': [{
-          "type": "Feature",
-          "geometry": {
-            "type": "Polygon",
-            "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
-          }
-        }]
+export const createSampleRegionTask = ({apolloClient}) => {
+  return mapToNamedPathAndInputs(
+    'region', 'data.region',
+    // Create the prop function and pass it sample props to return a Task
+    makeRegionMutationRequest(
+      {apolloClient},
+      {outputParams: regionOutputParams, crud: 'create'},
+      null
+    )(
+      {
+        key: 'pincherCreek',
+        name: 'Pincher Creek',
+        geojson: {
+          'type': 'FeatureCollection',
+          'features': [{
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
+            }
+          }]
+        }
       }
-    }
-  )(props)
-);
+    )
+  );
+}

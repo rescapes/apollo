@@ -17,7 +17,7 @@ import {
   makeCurrentUserQueryTask, makeUserStateMutationTask, makeUserStateQueryTask, userOutputParams,
   userStateMutateOutputParams, userStateOutputParamsFull
 } from './userStore';
-import {makeRegionMutationTask, regionOutputParams} from '../scopeStores/regionStore';
+import {makeRegionMutationRequest, regionOutputParams} from '../scopeStores/regionStore';
 import {makeProjectMutationTask, projectOutputParams} from '../scopeStores/projectStore';
 
 describe('userStore', () => {
@@ -93,10 +93,15 @@ describe('userStore', () => {
       ),
       // Create a region
       mapToNamedPathAndInputs('region', 'data.region',
-        ({apolloClient, user, regionKey}) => makeRegionMutationTask({apolloClient}, regionOutputParams, {
-          key: regionKey,
-          name: capitalize(regionKey)
-        })
+        ({apolloClient, user, regionKey}) => makeRegionMutationRequest(
+          {apolloClient},
+          regionOutputParams,
+          null)(
+          {
+            key: regionKey,
+            name: capitalize(regionKey)
+          }
+        )
       )
     );
 

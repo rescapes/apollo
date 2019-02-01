@@ -11,14 +11,14 @@
 import {defaultRunConfig, reqStrPathThrowing, mapToResponseAndInputs} from 'rescape-ramda';
 import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeRegionMutationTask, makeRegionsQueryTaskMaker, regionOutputParams} from './regionStore';
+import {makeRegionMutationRequest, makeRegionsQueryTaskMaker, regionOutputParams} from './regionStore';
 import {createSampleRegionTask} from './regionStore.sample';
 
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
 describe('regionStore', () => {
-  test('makeRegionMutationTask', done => {
+  test('makeRegionMutationRequest', done => {
     R.composeK(
-      createSampleRegionTask,
+      ({apolloClient}) => createSampleRegionTask({apolloClient}),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

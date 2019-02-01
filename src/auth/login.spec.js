@@ -13,7 +13,7 @@ import * as R from 'ramda';
 import {testAuthTask, testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
-import {loginTask, refreshTokenTask, verifyTokenTask, authClientOrLoginTask, loginToAuthClientTask} from './login';
+import {loginTask, refreshTokenContainer, verifyTokenRequestContainer, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
@@ -27,11 +27,11 @@ describe('login', () => {
     R.composeK(
       mapToNamedPathAndInputs(
         'refreshToken', 'data.refreshToken.payload',
-        ({apolloClient, token}) => refreshTokenTask({apolloClient}, {token})
+        ({apolloClient, token}) => refreshTokenContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs(
         'verifyToken', 'data.verifyToken.payload',
-        ({apolloClient, token}) => verifyTokenTask({apolloClient}, {token})
+        ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, {token})
       ),
       ({token}) => authApolloClientTask(
         uri,

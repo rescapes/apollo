@@ -9,10 +9,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import gql from 'graphql-tag';
-import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from 'rescape-ramda';
 import {testAuthTask} from '../helpers/testHelpers';
 import {getUnsubscribe} from './apolloClient';
-import {makeMutationTask} from '../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 import * as R from 'ramda';
 import {regionOutputParams} from '../stores/scopeStores/regionStore';
@@ -39,6 +39,10 @@ describe('apolloClient', () => {
 
   test('Use ApolloClient with sample data and test query caching', async () => {
 
+    const props = {
+      key: 'earth',
+      name: 'Earth'
+    };
     // Make sample region. This will update if the key: 'earth' already exists, since key is a unique prop on Region
     // and there is not automatic incrementor on region
     const response = await taskToPromise(R.composeK(
@@ -63,167 +67,166 @@ describe('apolloClient', () => {
         )
       ),
       mapToNamedPathAndInputs('region', 'data.region',
-        ({apolloClient}) => makeMutationTask(
+        ({props, apolloClient}) => makeMutationRequestContainer(
           {apolloClient},
           {
             name: 'region',
-            outputParmas: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
             crud: 'create'
           }
-        )(
-          {
-            key: 'earth',
-            name: 'Earth'
-          }
-        )
+        )(props)
       ),
-      () => testAuthTask
-    )());
-    expect(reqStrPathThrowing('region', response)).toBeTruthy();
-  });
-
-  test('test linkState initial state', async () => {
-
-    const {apolloClient} = await taskToPromise(testAuthTask);
-    const queryDefaults = gql`
-        query {
-            networkStatus @client {
-                isConnected
-            }
-            settings @client {
-                mapbox {
-                    viewport
-                }
-            }
-        }
-    `;
-    const queryDefaultsResponse = await apolloClient.query({
-        query: queryDefaults
-      }
-    );
-
-    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryDefaultsResponse)).toEqual(false);
-    expect(reqStrPathThrowing('data.settings.mapbox.viewport', queryDefaultsResponse)).toBeTruthy();
-  });
-
-  test('test linkState mutation', async () => {
-
-    const {apolloClient} = await taskToPromise(testAuthTask);
-    // Mutate the network status
-    const mutateNetworkStatus = gql`
-        mutation updateNetworkStatus($isConnected: Boolean) {
-            updateNetworkStatus(isConnected: $isConnected) @client
-        }
-    `;
-
-    const mutateAddTodo = gql`
-        mutation addTodo($text: String) {
-            addTodo(text: $text) @client
-        }
-    `;
-
-    const mutateToggleTodo = gql`
-        mutation toggleTodo($id: String) {
-            toggleTodo(id: $id) @client
-        }
-    `;
-
-    const queryRegions = gql`
-        query($key: String) {
-            networkStatus @client {
-                isConnected
-            }
-            todos @client {
-                id
-                text
-                completed
-            }
-            regions(key: $key) {
-                id
-                key
-                name
-            }
-        }
-    `;
-
-
-    // Create a Region
-    await taskToPromise(makeMutationTask(
-      {apolloClient},
-      {
-        name: 'region',
-        outputParams: regionOutputParams,
-        crud: 'create'
-      })(
-      {
-        key: 'earth',
-        name: 'Earth'
-      }
-    ));
-    const queryInitialResponse = await apolloClient.query({
-        query: queryRegions,
-        variables: {key: "earth"}
-      }
-    );
-    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryInitialResponse)).toEqual(false);
-    expect(reqStrPathThrowing('data.regions.0.key', queryInitialResponse)).toEqual('earth');
-
-    // Update the network status
-    await apolloClient.mutate(
-      {
-        mutation: mutateNetworkStatus,
-        variables: {isConnected: true}
-      }
-    );
-
-    // Add a todo
-    await apolloClient.mutate(
-      {
-        mutation: mutateAddTodo,
-        variables: {text: 'Help Me Rhonda'}
-      }
-    );
-    await apolloClient.mutate(
-      {
-        mutation: mutateAddTodo,
-        variables: {text: 'Sloop John B'}
-      }
-    );
-
-    await apolloClient.mutate(
-      {
-        mutation: mutateToggleTodo,
-        variables: {id: '1'}
-      }
-    );
-
-    // Query the cache
-    const queryResponse = await apolloClient.query({
-        query: queryRegions,
-        variables: {key: "earth"}
-      }
-    );
-
-    expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponse)).toEqual(true);
-    const todos = reqStrPathThrowing('data.todos', queryResponse);
-    expect(R.length(todos)).toEqual(2);
-    expect(R.find(todo => R.propEq('id', 2, todo), todos).text).toEqual('Sloop John B');
-    expect(reqStrPathThrowing('data.regions.0.key', queryResponse)).toEqual('earth');
-
-    // Make sure store can be reset
-    // TODO this seems to be a bug. The defaults aren't being propery restored
-    /*
-    await apolloClient.restoreStore();
-
-    // Query the cache
-    const queryResponseAfterUnscubscribe = await apolloClient.readQuery({
-        query: queryRegions,
-        variables: {key: "earth"}
-      }
-    );
-    expect(reqStrPathThrowing('networkStatus.isConnected', queryResponseAfterUnscubscribe)).toEqual(false);
-    // But the cache remains
-    expect(reqStrPathThrowing('regions.0.key', queryResponseAfterUnscubscribe)).toEqual('earth');
-    */
-  });
+      mapToNamedResponseAndInputs('apolloClient',
+        () => testAuthTask
+      )
+    )({props})
+  );
+  expect(reqStrPathThrowing('region', response)).toBeTruthy();
 });
+
+test('test linkState initial state', async () => {
+
+  const {apolloClient} = await taskToPromise(testAuthTask);
+  const queryDefaults = gql`
+      query {
+          networkStatus @client {
+              isConnected
+          }
+          settings @client {
+              mapbox {
+                  viewport
+              }
+          }
+      }
+  `;
+  const queryDefaultsResponse = await apolloClient.query({
+      query: queryDefaults
+    }
+  );
+
+  expect(reqStrPathThrowing('data.networkStatus.isConnected', queryDefaultsResponse)).toEqual(false);
+  expect(reqStrPathThrowing('data.settings.mapbox.viewport', queryDefaultsResponse)).toBeTruthy();
+});
+
+test('test linkState mutation', async () => {
+
+  const {apolloClient} = await taskToPromise(testAuthTask);
+  // Mutate the network status
+  const mutateNetworkStatus = gql`
+      mutation updateNetworkStatus($isConnected: Boolean) {
+          updateNetworkStatus(isConnected: $isConnected) @client
+      }
+  `;
+
+  const mutateAddTodo = gql`
+      mutation addTodo($text: String) {
+          addTodo(text: $text) @client
+      }
+  `;
+
+  const mutateToggleTodo = gql`
+      mutation toggleTodo($id: String) {
+          toggleTodo(id: $id) @client
+      }
+  `;
+
+  const queryRegions = gql`
+      query($key: String) {
+          networkStatus @client {
+              isConnected
+          }
+          todos @client {
+              id
+              text
+              completed
+          }
+          regions(key: $key) {
+              id
+              key
+              name
+          }
+      }
+  `;
+
+
+  // Create a Region
+  await taskToPromise(makeMutationRequestContainer(
+    {apolloClient},
+    {
+      name: 'region',
+      outputParams: regionOutputParams,
+      crud: 'create'
+    })(
+    {
+      key: 'earth',
+      name: 'Earth'
+    }
+  ));
+  const queryInitialResponse = await apolloClient.query({
+      query: queryRegions,
+      variables: {key: "earth"}
+    }
+  );
+  expect(reqStrPathThrowing('data.networkStatus.isConnected', queryInitialResponse)).toEqual(false);
+  expect(reqStrPathThrowing('data.regions.0.key', queryInitialResponse)).toEqual('earth');
+
+  // Update the network status
+  await apolloClient.mutate(
+    {
+      mutation: mutateNetworkStatus,
+      variables: {isConnected: true}
+    }
+  );
+
+  // Add a todo
+  await apolloClient.mutate(
+    {
+      mutation: mutateAddTodo,
+      variables: {text: 'Help Me Rhonda'}
+    }
+  );
+  await apolloClient.mutate(
+    {
+      mutation: mutateAddTodo,
+      variables: {text: 'Sloop John B'}
+    }
+  );
+
+  await apolloClient.mutate(
+    {
+      mutation: mutateToggleTodo,
+      variables: {id: '1'}
+    }
+  );
+
+  // Query the cache
+  const queryResponse = await apolloClient.query({
+      query: queryRegions,
+      variables: {key: "earth"}
+    }
+  );
+
+  expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponse)).toEqual(true);
+  const todos = reqStrPathThrowing('data.todos', queryResponse);
+  expect(R.length(todos)).toEqual(2);
+  expect(R.find(todo => R.propEq('id', 2, todo), todos).text).toEqual('Sloop John B');
+  expect(reqStrPathThrowing('data.regions.0.key', queryResponse)).toEqual('earth');
+
+  // Make sure store can be reset
+  // TODO this seems to be a bug. The defaults aren't being propery restored
+  /*
+  await apolloClient.restoreStore();
+
+  // Query the cache
+  const queryResponseAfterUnscubscribe = await apolloClient.readQuery({
+      query: queryRegions,
+      variables: {key: "earth"}
+    }
+  );
+  expect(reqStrPathThrowing('networkStatus.isConnected', queryResponseAfterUnscubscribe)).toEqual(false);
+  // But the cache remains
+  expect(reqStrPathThrowing('regions.0.key', queryResponseAfterUnscubscribe)).toEqual('earth');
+  */
+});
+})
+;

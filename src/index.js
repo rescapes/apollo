@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {loginTask, authClientOrLoginTask, refreshTokenTask, verifyTokenTask} from './auth/login';
+export {loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer} from './auth/login';
 export {
   default as createApolloClient,
   authApolloClientQueryClientFunction,
-  authApolloClientMutationRequestTask,
+  authApolloClientMutationRequestContainer,
   authApolloClient,
   authApolloClientRequestTask,
   authApolloClientTask,
@@ -25,7 +25,7 @@ export {
 } from './client/apolloClient';
 export {categorizeStreetviewUrl} from './helpers/categorizeHelpers';
 export {makeQuery, makeQueryTask} from './helpers/queryHelpers';
-export {makeMutation, makeMutationTask} from './helpers/mutationHelpers';
+export {makeMutation, makeMutationRequestContainer} from './helpers/mutationHelpers';
 export {formatOutputParams, resolveGraphQLType, formatInputParams, mapQueryTaskToNamedResultAndInputs} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
 export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';

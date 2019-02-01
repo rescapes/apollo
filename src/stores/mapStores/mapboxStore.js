@@ -11,7 +11,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeMutationTask} from '../../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeClientQueryTask, makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
@@ -240,7 +240,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationTask(
+export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationRequestContainer(
   {apolloClient},
   {name: 'region'},
   outputParams,

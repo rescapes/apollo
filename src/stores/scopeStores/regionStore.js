@@ -11,7 +11,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeMutationTask} from '../../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
@@ -109,14 +109,14 @@ export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams,
  *  @param {Object} inputParams Object matching the shape of a region. E.g.
  *  {id: 1, city: "Stavanger", data: {foo: 2}}
  *  Creates need all required fields and updates need at minimum the id
- *  @param {Task} An apollo mutation task
+ *  @param {Function} Unary function expecting props and returning a Task or Container
  */
-export const makeRegionMutationTask = R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationTask(
+export const makeRegionMutationRequest = R.curry((apolloConfig, {outputParams, crud}, component) => makeMutationRequestContainer(
   apolloConfig,
   {
     name: 'region',
     outputParams,
     crud
   },
-  inputParams
+  component
 ));

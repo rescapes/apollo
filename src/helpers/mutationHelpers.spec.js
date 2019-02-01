@@ -11,7 +11,7 @@
 
 import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams} from './sampleData';
-import {makeMutation, makeMutationTask} from './mutationHelpers';
+import {makeMutation, makeMutationRequestContainer} from './mutationHelpers';
 import {sampleStateLinkResolversAndDefaults, testConfig} from './testHelpers';
 import {authClientOrLoginTask} from '../auth/login';
 import {parseApiUrl} from 'rescape-helpers';
@@ -25,11 +25,11 @@ describe('mutationHelpers', () => {
     expect(result).toMatchSnapshot();
   });
 
-  test('makeMutationTask', done => {
+  test('makeMutationRequestContainer', done => {
     const {settings: {api}} = testConfig;
     const uri = parseApiUrl(api);
     const task = R.composeK(
-      ({apolloClient}) => makeMutationTask(
+      ({apolloClient}) => makeMutationRequestContainer(
         {apolloClient},
         {
           name: 'region',

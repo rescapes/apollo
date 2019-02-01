@@ -16,7 +16,7 @@ import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
 import {expectKeysAtStrPath, sampleStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
-import {makeMutationTask} from './mutationHelpers';
+import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
 import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
 
@@ -38,7 +38,7 @@ describe('queryHelpers', () => {
       ),
       ({apolloClient}) => R.map(
         region => ({apolloClient, region}),
-        makeMutationTask(
+        makeMutationRequestContainer(
           {apolloClient},
           {
             name: 'region',
@@ -84,7 +84,7 @@ describe('queryHelpers', () => {
       ),
       ({apolloClient}) => R.map(
         regionResponse => ({apolloClient, region: reqStrPathThrowing('data.region', regionResponse)}),
-        makeMutationTask(
+        makeMutationRequestContainer(
           {apolloClient},
           {
             name: 'region',

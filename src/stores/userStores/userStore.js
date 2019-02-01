@@ -12,7 +12,7 @@
 
 import {graphql} from 'graphql';
 import * as R from 'ramda';
-import {makeMutationTask} from '../../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryTask} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
@@ -147,7 +147,7 @@ export const makeUserStateQueryTask = v(R.curry((apolloConfig, outputParams, use
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeUserStateMutationTask = v(R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationTask(
+export const makeUserStateMutationTask = v(R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationRequestContainer(
   apolloConfig,
   {name: 'userState'},
   {outputParams, crud})(
