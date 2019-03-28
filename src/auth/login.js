@@ -17,12 +17,11 @@ import {
 } from '../client/apolloClient';
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
-import {reqStrPathThrowing} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {ApolloClient} from 'apollo-client';
 import {PropTypes} from 'prop-types';
 import {v} from 'rescape-validate';
-import {makeMutationRequestContainer} from '../';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
     tokenAuth(username: $username, password: $password) {

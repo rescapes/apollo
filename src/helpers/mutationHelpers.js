@@ -20,9 +20,8 @@
  */
 
 import * as R from 'ramda';
-import {formatOutputParams, formatInputParams} from './requestHelpers';
+import {formatOutputParams} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
-import {debug} from './logHelpers';
 import {
   capitalize,
   mapObjToValues

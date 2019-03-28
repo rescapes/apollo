@@ -14,13 +14,11 @@ import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {
   authApolloQueryContainer,
-  authApolloClientQueryContainer
 } from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 
 /**
  * Makes a graphql query based on the queryParams

@@ -10,14 +10,13 @@
  */
 
 import gql from 'graphql-tag';
-import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
-import {makeUserScopeObjsQueryTask, queryScopeObjsOfUserStateTask} from './scopeHelpers';
+import {makeUserScopeObjsQueryTask} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
 
 // Variables of complex input type needs a type specified in graphql. Our type names are

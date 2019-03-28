@@ -13,6 +13,7 @@ const config = {
     'src/helpers/categorizeHelpers.js',
     'src/helpers/fetchHttpOrFile.js',
     'src/helpers/queryHelpers.js',
+    'src/helpers/mutationHelpers.js',
     'src/selectors/geojsonSelectors.js',
     'src/selectors/mapboxSelectors.js',
     'src/selectors/regionSelectors.js',
@@ -20,7 +21,7 @@ const config = {
     'src/selectors/storeSelectors.js',
     'src/selectors/styleSelectors.js',
     'src/selectors/userSelectors.js',
-    'src/schema/selectorResolvers.js'
+    'src/schema/selectorResolvers.js',
   ],
   plugins: [
     // Automatically exclude dependencies and peerDependencies from cjs and es builds, (and excludes

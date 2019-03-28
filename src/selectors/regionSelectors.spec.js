@@ -10,13 +10,14 @@
  */
 
 import * as R from 'ramda';
-import {STATUS} from 'rescape-helpers'
+import {STATUS} from 'rescape-helpers';
 import {
   activeUserSelectedRegionsSelector, activeUserRegionsSelector,
-  regionsSelector,  regionIdsSelector
+  regionsSelector, regionIdsSelector
 } from './regionSelectors';
 import {mergeDeep, onlyOneValueThrowing} from 'rescape-ramda';
-const  {IS_ACTIVE, IS_SELECTED} = STATUS
+
+const {IS_ACTIVE, IS_SELECTED} = STATUS;
 
 describe('regionSelectors', () => {
 
@@ -25,9 +26,9 @@ describe('regionSelectors', () => {
       regions: {
         foo: {id: 'foo'},
         boo: {id: 'boo'}
-      },
+      }
     };
-    const expected = state.regions
+    const expected = state.regions;
     expect(regionsSelector(state)).toEqual(expected);
   });
 
@@ -46,7 +47,7 @@ describe('regionSelectors', () => {
       }
     };
     // only the selected region of the active user should be selected
-    const expected = R.values(mergeDeep(state.users.blinky.regions, state.regions))
+    const expected = R.values(mergeDeep(state.users.blinky.regions, state.regions));
     expect(activeUserRegionsSelector(state)).toEqual(expected);
   });
 
@@ -62,7 +63,7 @@ describe('regionSelectors', () => {
           [IS_ACTIVE]: true,
           regions: {foo: {id: 'foo'}, boo: {id: 'boo', [IS_SELECTED]: true}}
         },
-        pinky: {
+        pinky: {}
       }
     };
     // only the selected region of the active user should be selected
@@ -78,7 +79,8 @@ describe('regionSelectors', () => {
       regions: {
         'oakland': {id: 'oakland', name: 'Oakland'}
       }
-    }
-    expect(onlyOneValueThrowing(regionIdsSelector(state))).toEqual('oakland')
-  })
-});
+    };
+    expect(onlyOneValueThrowing(regionIdsSelector(state))).toEqual('oakland');
+  });
+})
+;
