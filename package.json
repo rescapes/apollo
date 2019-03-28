@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -109,7 +109,7 @@
     "promise": "8.0.1",
     "redux-devtools-extension": "^2.13.5",
     "redux-mock-store": "^1.5.3",
-    "rescape-helpers-component": "^1.5.33",
+    "rescape-helpers-component": "^1.5.35",
     "rescape-helpers-test": "^0.0.13",
     "rescape-sample-data": "^1.2.47",
     "rimraf": "^2.6.2",
