@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.36",
+  "version": "0.0.37",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -69,7 +69,7 @@
     "react-emotion": "^10.0.0",
     "request": "^2.88.0",
     "rescape-geospatial-sankey": "^0.7.17",
-    "rescape-helpers": "^1.1.78",
+    "rescape-helpers": "^1.1.79",
     "rescape-ramda": "^1.5.24",
     "rescape-validate": "^1.2.15",
     "source-map-support": "^0.5.10"
