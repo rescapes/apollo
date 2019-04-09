@@ -13,12 +13,14 @@ import {mapObjToValues, reqPathThrowing, capitalize, compact} from 'rescape-ramd
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {
-  authApolloQueryContainer,
+  authApolloQueryContainer
 } from '../client/apolloClient';
 import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
+import {v} from 'rescape-validate'
+import PropTypes from 'prop-types'
 
 /**
  * Makes a graphql query based on the queryParams
@@ -39,11 +41,14 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
   // These are the first line parameter definitions of the query, which list the name and type
   const params = R.join(
     ', ',
-    mapObjToValues((value, key) => {
-      // Map the key to the inputParamTypeMapper value for that key if given
-      // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
-      return `$${key}: ${resolve(key, value)}!`;
-    }, queryArguments)
+    mapObjToValues(
+      (value, key) => {
+        // Map the key to the inputParamTypeMapper value for that key if given
+        // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
+        return `$${key}: ${resolve(key, value)}!`;
+      },
+      queryArguments
+    )
   );
 
   const parenWrapIfNotEmpty = str => R.unless(R.isEmpty, str => `(${str})`, str);
@@ -83,7 +88,7 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  * @param {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @param {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param [String|Object] outputParams output parameters for the query in this style json format:
+ * @param {[String|Object]} outputParams output parameters for the query in this style json format:
  *  [
  *    'id',
  *    {
@@ -100,6 +105,10 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  ]
  *
  *  In other words, start every type as a list and embed object types using {objectTypeKey: [...]}
+ *  @param {Object} propsStructure This is only required for Apollo container since we don't need to specify actual
+ *  props ahead of time with the container. It should be the expected prop names and
+ *  example value types (e.g. 0 for Number) TODO we could use types instead of numbers, if we can figure out a type
+ *  to identify primitives
  *  @param {Object} component. Optional Apollo component for Apollo component queries. Leave null for client queries
  *  @param {Object} props. The props for the query or an Apollo container that will supply the props
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
@@ -107,12 +116,12 @@ ${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClient
  *  of different could be merged together into the data field. This also matches what Apollo components expect.
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
  */
-export const makeQueryContainer = R.curry(
+export const makeQueryContainer = v(R.curry(
   (apolloConfig,
-   {name, readInputTypeMapper, outputParams, templateProps},
+   {name, readInputTypeMapper, outputParams, propsStructure},
    component,
    props) => {
-    const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, templateProps)}`;
+    const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, propsStructure)}`;
     console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
     return R.map(
       queryResponse => {
@@ -126,4 +135,23 @@ export const makeQueryContainer = R.curry(
         props
       )
     )(props);
-  });
+  }),
+  [
+    ['apolloConfig', PropTypes.shape().isRequired],
+    ['queryOptions', PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      readInputTypeMapper: PropTypes.shape().isRequired,
+      outputParams: PropTypes.arrayOf(PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.shape()
+        ])
+      ).isRequired,
+      propsStructure: PropTypes.shape()
+    })],
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape().isRequired]
+  ]
+);
+
+// From rescape-helpers-component
+export const eMap = types => map(component => React.createFactory(component), types);

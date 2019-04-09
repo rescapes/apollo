@@ -18,8 +18,8 @@ import PropTypes from 'prop-types';
 import {of, waitAll} from 'folktale/concurrency/task';
 import Result from 'folktale/result';
 import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath} from 'rescape-ramda';
-import {makeRegionsQueryTaskMaker} from '../scopeStores/regionStore';
-import {makeUserStateQueryTask} from '../userStores/userStore';
+import {makeRegionsQueryContainer} from '../scopeStores/regionStore';
+import {makeUserStateQueryContainer} from '../userStores/userStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -152,7 +152,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
                   reqStrPathThrowing('data.userGlobal.mapbox', value),
                   reqStrPathThrowing('data.userRegion.mapbox', value)
                 ]),
-                makeUserStateQueryTask(
+                makeUserStateQueryContainer(
                   apolloConfig,
                   userStateMapboxOutputParamsCreator(outputParams),
                   componentOrProps
@@ -167,7 +167,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
           resultToTaskNeedingResult(
             componentOrProps => R.map(
               value => reqStrPathThrowing('data.projects.mapbox', value),
-              makeRegionsQueryTaskMaker(
+              makeRegionsQueryContainer(
                 apolloConfig,
                 {name: 'regions', readInputTypeMapper},
                 regionMapboxOutputParamsCreator(outputParams),
@@ -181,7 +181,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
           resultToTaskNeedingResult(
             args => R.map(
               value => reqStrPathThrowing('data.regions.mapbox', value),
-              makeRegionsQueryTaskMaker(
+              makeRegionsQueryContainer(
                 apolloConfig,
                 {name: 'regions', readInputTypeMapper},
                 regionMapboxOutputParamsCreator(outputParams),

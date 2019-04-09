@@ -42,8 +42,7 @@ describe('queryHelpers', () => {
           {apolloClient},
           {
             name: 'region',
-            outputParams: ['key'],
-            crud: 'create'
+            outputParams: ['key']
           }
         )(
           {
@@ -88,8 +87,7 @@ describe('queryHelpers', () => {
           {apolloClient},
           {
             name: 'region',
-            outpuParams: ['key'],
-            crud: 'create'
+            outpuParams: ['key']
           })(
           {
             key: `test${moment().format('HH-mm-SS')}`,

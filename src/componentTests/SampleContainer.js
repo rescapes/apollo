@@ -1,13 +1,12 @@
 import {mergeDeep, taskToPromise, traverseReduce} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import {makeRegionsQueryTaskMaker, regionOutputParams} from '../stores/scopeStores/regionStore';
+import {makeRegionsQueryContainer, regionOutputParams} from '../stores/scopeStores/regionStore';
 import {of} from 'folktale/concurrency/task';
 import Sample from './SampleComponent';
 import {asyncComponent} from 'react-async-component';
-import {eMap} from 'rescape-helpers-component';
 
 export const graphqlTasks = [
-  makeRegionsQueryTaskMaker(
+  makeRegionsQueryContainer(
     {
       options: {
         variables: (props) => ({
@@ -26,7 +25,7 @@ export const graphqlTasks = [
   )
 ];
 
-const composeGraphqlRequestsTaskMaker = (component, templateProps) => graphqlTasks[0](component, templateProps);
+const composeGraphqlRequestsTaskMaker = (component, propsStructure) => graphqlTasks[0](component, propsStructure);
 
 /*  traverseReduce(
   (prev, currentTaskMaker) => currentTaskMaker(prev),

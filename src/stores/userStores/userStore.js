@@ -17,7 +17,7 @@ import {v} from 'rescape-validate';
 import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 import {mapKeysAndValues, capitalize} from 'rescape-ramda';
-import {regionOutputParams} from '../scopeStores/regionStore';
+import {readInputTypeMapper, regionOutputParams} from '../scopeStores/regionStore';
 import {projectOutputParams} from '../scopeStores/projectStore';
 
 // Every complex input type needs a type specified in graphql. Our type names are
@@ -125,37 +125,61 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams) =
  * @params {Object} userStateArguments Arguments for the UserState query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.userStates or errors in obj.errors
  */
-export const makeUserStateQueryTask = v(R.curry((apolloConfig, outputParams, userStateArguments) => {
+export const makeUserStateQueryContainer = v(R.curry((apolloConfig, {outputParams, propsStructure}, component, props) => {
     return makeQueryContainer(
       apolloConfig,
-      {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper},
-      // If we have to query for users separately use the limited output userStateOutputParamsCreator
-      outputParams,
-      userStateArguments
+      {name: 'userStates', readInputTypeMapper: userStateReadInputTypeMapper, outputParams, propsStructure},
+      component,
+      props
     );
   }),
   [
-    ['apolloConfig', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.array.isRequired],
-    ['userStateArguments', PropTypes.shape().isRequired]
-  ], 'makeUserStateQueryTask');
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
+    ['queryStructure', PropTypes.shape({
+      outputParams: PropTypes.array.isRequired,
+      propsStructure: PropTypes.shape()
+    })],
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape().isRequired]
+  ], 'makeUserStateQueryContainer');
 
 /**
- * Mutate the user state of the given user
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} outputParams OutputParams for the query such as userStateMutateOutputParams
- * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
- * or errors in Result.Error({errors: [...]})
+ * Makes a UserState mutation container
+ * @param {Object} apolloClient An authorized Apollo Client
+ * @param [String|Object] outputParams output parameters for the query in this style json format:
+ *  ['id',
+ *   {
+ *        data: [
+ *         'foo',
+ *         {
+ *            properties: [
+ *             'type',
+ *            ]
+ *         },
+ *         'bar',
+ *       ]
+ *    }
+ *  ]
+ *  @param {Function} component The Apollo component if doing a component mutation. Otherwise null
+ *  @param {Object} props Object matching the shape of a userState for the create or update
+ *  @returns {Task|Just} A container. For ApolloClient mutations we get a Task back. For Apollo components
+ *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
  */
-export const makeUserStateMutationTask = v(R.curry((apolloConfig, {outputParams, crud}, inputParams) => makeMutationRequestContainer(
-  apolloConfig,
-  {name: 'userState'},
-  {outputParams, crud})(
-  inputParams
-  )
-  ),
-  [
-    ['apolloConfig', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.array.isRequired],
-    ['inputParams', PropTypes.shape().isRequired]
-  ], 'makeUserStateMutationTask');
+export const makeUserStateMutationContainer = v(R.curry(
+  (apolloConfig, {outputParams}, component, props) => makeMutationRequestContainer(
+    apolloConfig,
+    {
+      name: 'userState',
+      outputParams
+    },
+    component,
+    props
+  )), [
+  ['apolloConfig', PropTypes.shape().isRequired],
+  ['mutationStructure', PropTypes.shape({
+    outputParams: PropTypes.array.isRequired
+  })
+  ],
+  ['component', PropTypes.func],
+  ['props', PropTypes.shape().isRequired]
+], makeUserStateMutationContainer);

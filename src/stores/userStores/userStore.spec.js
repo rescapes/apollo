@@ -14,7 +14,7 @@ import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testC
 import * as R from 'ramda';
 import {of} from 'folktale/concurrency/task';
 import {
-  makeCurrentUserQueryTask, makeUserStateMutationTask, makeUserStateQueryTask, userOutputParams,
+  makeCurrentUserQueryTask, makeUserStateMutationContainer, makeUserStateQueryContainer, userOutputParams,
   userStateMutateOutputParams, userStateOutputParamsFull
 } from './userStore';
 import {makeRegionMutationRequest, regionOutputParams} from '../scopeStores/regionStore';
@@ -35,10 +35,10 @@ describe('userStore', () => {
     }));
   });
 
-  test('makeUserStateQueryTask', done => {
+  test('makeUserStateQueryContainer', done => {
     const someUserStateKeys = ['user.id', 'data.userRegions.0.region.id'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserStateQueryTask({apolloClient}, userStateOutputParamsFull, {user: {id: parseInt(userId)}}),
+      ({apolloClient, userId}) => makeUserStateQueryContainer({apolloClient}, userStateOutputParamsFull, {user: {id: parseInt(userId)}}),
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
         ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)
       ),
@@ -52,7 +52,7 @@ describe('userStore', () => {
     }));
   });
 
-  test('makeUserStateMutationTask', done => {
+  test('makeUserStateMutationContainer', done => {
     const someUserStateKeys = ['id', 'data.userRegions.0.region.id', 'data.userProjects.0.project.id'];
     const createInputParams = ({user, region, project}) =>
       ({
@@ -78,9 +78,9 @@ describe('userStore', () => {
     const mutateUserStateWithProjectAndRegion = R.composeK(
       // Set the user state of the given user to the region and project
       mapToNamedPathAndInputs('userState', 'data.userState',
-        ({apolloClient, user, region, project}) => makeUserStateMutationTask(
+        ({apolloClient, user, region, project}) => makeUserStateMutationContainer(
           apolloClient,
-          {outputParams: userStateMutateOutputParams, crud: 'create'},
+          {outputParams: userStateMutateOutputParams},
           createInputParams({user, region, project})
         )
       ),
@@ -95,8 +95,8 @@ describe('userStore', () => {
       mapToNamedPathAndInputs('region', 'data.region',
         ({apolloClient, user, regionKey}) => makeRegionMutationRequest(
           {apolloClient},
-          regionOutputParams,
-          null)(
+          {outputParams: regionOutputParams},
+          null,
           {
             key: regionKey,
             name: capitalize(regionKey)

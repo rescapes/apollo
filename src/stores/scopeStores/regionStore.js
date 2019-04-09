@@ -69,25 +69,24 @@ export const regionOutputParams = [
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams, templateProps}, component) => {
+export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams, propsStructure}, component, props) => {
     return makeQueryContainer(
       apolloConfig,
-      {name: 'regions', readInputTypeMapper, outputParams, templateProps},
-      component
+      {name: 'regions', readInputTypeMapper, outputParams, propsStructure},
+      component,
+      props
     );
   }),
   [
-    ['apolloConfig', PropTypes.shape({
-      apolloClient: PropTypes.shape()
-    }).isRequired],
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['queryStructure', PropTypes.shape({
       outputParams: PropTypes.array.isRequired,
-      templateProps: PropTypes.shape()
+      propsStructure: PropTypes.shape()
     })
     ],
     ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
-  ], 'makeRegionsQueryTaskMaker');
+  ], 'makeRegionsQueryContainer');
 
 /**
  * Makes a Region mutation
@@ -106,17 +105,26 @@ export const makeRegionsQueryTaskMaker = v(R.curry((apolloConfig, {outputParams,
  *       ]
  *    }
  *  ]
- *  @param {Object} inputParams Object matching the shape of a region. E.g.
- *  {id: 1, city: "Stavanger", data: {foo: 2}}
- *  Creates need all required fields and updates need at minimum the id
- *  @param {Function} Unary function expecting props and returning a Task or Container
+ *  @param {Function} component The Apollo component if doing a component mutation. Otherwise null
+ *  @param {Object} props Object matching the shape of a region. E.g. {id: 1, city: "Stavanger", data: {foo: 2}}
+ *  @returns {Task|Just} A container. For ApolloClient mutations we get a Task back. For Apollo components
+ *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
  */
-export const makeRegionMutationRequest = R.curry((apolloConfig, {outputParams, crud}, component) => makeMutationRequestContainer(
-  apolloConfig,
-  {
-    name: 'region',
-    outputParams,
-    crud
-  },
-  component
-));
+export const makeRegionMutationRequest = v(R.curry(
+  (apolloConfig, {outputParams}, component, props) => makeMutationRequestContainer(
+    apolloConfig,
+    {
+      name: 'region',
+      outputParams
+    },
+    component,
+    props
+  )), [
+  ['apolloConfig', PropTypes.shape().isRequired],
+  ['mutationStructure', PropTypes.shape({
+    outputParams: PropTypes.array.isRequired
+  })
+  ],
+  ['component', PropTypes.func],
+  ['props', PropTypes.shape().isRequired]
+], makeRegionMutationRequest);

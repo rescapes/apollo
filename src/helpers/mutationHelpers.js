@@ -79,12 +79,14 @@ ${mutationName}(${variableMappingString}) {
 export const makeMutationRequestContainer = R.curry(
   (apolloConfig,
    {
-     name, outputParams, crud = null,
+     name, outputParams,
      // These are only used for simple mutations where there is no complex input type
      variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
    },
    component,
    props) => {
+    // Determine crud type from the presence of the id in the props
+    const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
     // Create|Update[Model Name]InputType]
     const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
     const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
@@ -106,6 +108,7 @@ export const makeMutationRequestContainer = R.curry(
     console.debug(`Mutation: ${print(mutation)} Arguments: ${JSON.stringify(namedProps)}`);
 
     return R.cond([
+      // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => authApolloClientMutationRequestContainer(
           apolloConfig,
@@ -117,6 +120,7 @@ export const makeMutationRequestContainer = R.curry(
           namedProps
         )
       ],
+      // If we have an Apollo Component
       [() => R.not(R.isNil(component)),
         () => authApolloComponentMutationContainer(
           mutation,

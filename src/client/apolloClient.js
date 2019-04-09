@@ -212,6 +212,8 @@ export const authApolloClientQueryContainer = R.curry((apolloClient, query, prop
  * @param {Object} options.options.variables optional.
  * @param {Object} options.options.errorPolicy optional error policy
  * @param {Object} options.prop optional mapping of props returned by the query.
+ * @param {Just} Returns a Maybe.Just containing the component.
+ * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
 export const authApolloComponentMutationContainer = R.curry((mutation, options, apolloComponent, props) => {
   return R.compose(
@@ -235,12 +237,13 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} options
  * @param {Object} options.options optional react-apollo options
- * @param {Object|Function} options.variables optional. If a function props are passed in
+ * @param {Object|Function} options.variables optional. If a function props are passed to it
  * @param {Object} options.errorPolicy optional error policy
- * @param {Just<Function>} Returns a unary function expecting props that returns a Maybe.Just containing the
- * component. The component is wrapped so it's compatible with monad composition
+ * @param {Object} props The props For the component or a subcomponent if this component is wrapping another
+ * @param {Just} Returns a Maybe.Just containing the component.
+ * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloQueryComponentContainer = R.curry((query, options, apolloComponent, props) => {
+export const authApolloComponentQueryContainer = R.curry((query, options, apolloComponent, props) => {
   // If a variables is a function pass the props in
   const updatedOptions = props => R.over(
     R.lensPath(['options', 'variables']),
@@ -287,7 +290,7 @@ export const authApolloQueryContainer = R.curry((config, query, component, props
     [() => R.not(R.isNil(component)),
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
-      apolloConfig => authApolloQueryComponentContainer(
+      apolloConfig => authApolloComponentQueryContainer(
         query,
         apolloConfig,
         component,

@@ -33,8 +33,7 @@ describe('mutationHelpers', () => {
         {apolloClient},
         {
           name: 'region',
-          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
-          crud: 'create'
+          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
         }
       )(
         {

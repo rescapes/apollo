@@ -52,8 +52,8 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs.
  */
-export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, templateProps}, component, props) => {
-  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, templateProps)}`;
+export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, propsStructure}, component, props) => {
+  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, propsStructure)}`;
   console.debug(`Client Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
   return R.map(
     queryResponse => {

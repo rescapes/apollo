@@ -93,8 +93,7 @@ describe('apolloClient', () => {
       {apolloClient},
       {
         name: 'region',
-        outputParams: regionOutputParams,
-        crud: 'create'
+        outputParams: regionOutputParams
       })(
       {
         key: 'earth',

@@ -46,8 +46,8 @@ describe('mapboxStore', () => {
       // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
         ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)),
-      createSampleProjectTask,
-      createSampleRegionTask,
+      ({apolloClient}) => createSampleProjectTask({apolloClient}),
+      ({apolloClient}) => createSampleRegionTask({apolloClient}).map(t => t),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

@@ -8,10 +8,10 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {defaultRunConfig, reqStrPathThrowing, mapToResponseAndInputs} from 'rescape-ramda';
-import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
+import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask} from '../../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeRegionMutationRequest, makeRegionsQueryTaskMaker, regionOutputParams} from './regionStore';
+import {makeRegionMutationRequest, makeRegionsQueryContainer, regionOutputParams} from './regionStore';
 import {createSampleRegionTask} from './regionStore.sample';
 
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
@@ -29,15 +29,18 @@ describe('regionStore', () => {
     }));
   });
 
-  test('makeRegionsQueryTaskMaker', done => {
+  test('makeRegionsQueryContainer', done => {
     R.composeK(
-      ({apolloClient, region}) => makeRegionsQueryTaskMaker(
+      ({apolloClient, region}) => makeRegionsQueryContainer(
         {apolloClient},
-        {outputParams: regionOutputParams},
-        {templateProps: {key: ''}}
-      )({key: reqStrPathThrowing('key', region)}),
-      createSampleRegionTask,
-      () => testAuthTask
+        {outputParams: regionOutputParams, propsStructure: {key: ''}},
+        null,
+        {key: reqStrPathThrowing('key', region)}
+      ),
+      ({apolloClient}) => createSampleRegionTask({apolloClient}),
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {

@@ -38,10 +38,12 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = v(R.curry((apolloConfig, variables) => noAuthApolloClientMutationRequestTask(
-  apolloConfig,
-  {mutation: loginMutation, variables}
-)), [
+export const loginTask = v(R.curry((apolloConfig, variables) => {
+  return noAuthApolloClientMutationRequestTask(
+    apolloConfig,
+    {mutation: loginMutation, variables}
+  )
+}), [
   ['noAuthClient', PropTypes.shape().isRequired],
   ['variables', PropTypes.shape({
     username: PropTypes.string.isRequired,
