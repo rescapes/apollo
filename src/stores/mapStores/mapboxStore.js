@@ -13,7 +13,7 @@ import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
-import {makeClientQueryTask, makeQueryContainer} from '../../helpers/queryHelpers';
+import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 import {of, waitAll} from 'folktale/concurrency/task';
 import Result from 'folktale/result';
@@ -195,7 +195,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
           resultToTaskNeedingResult(
             () => R.map(
               value => reqStrPathThrowing('data.settings.mapbox', value),
-              makeClientQueryTask(
+              makeQueryContainer(
                 apolloConfig,
                 {name: 'settings', readInputTypeMapper},
                 outputParams,

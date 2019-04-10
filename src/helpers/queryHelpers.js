@@ -141,8 +141,10 @@ export const makeQueryContainer = v(R.curry(
     ['queryOptions', PropTypes.shape({
       name: PropTypes.string.isRequired,
       readInputTypeMapper: PropTypes.shape().isRequired,
-      outputParams: PropTypes.arrayOf(PropTypes.oneOfType([
+      outputParams: PropTypes.arrayOf(
+        PropTypes.oneOfType([
           PropTypes.string,
+          PropTypes.array,
           PropTypes.shape()
         ])
       ).isRequired,
@@ -150,8 +152,5 @@ export const makeQueryContainer = v(R.curry(
     })],
     ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
-  ]
+  ], 'makeQueryContainer'
 );
-
-// From rescape-helpers-component
-export const eMap = types => map(component => React.createFactory(component), types);

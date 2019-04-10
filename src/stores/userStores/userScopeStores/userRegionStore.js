@@ -15,22 +15,27 @@ import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {makeRegionsQueryContainer, regionOutputParams} from '../../scopeStores/regionStore';
 import {of} from 'folktale/concurrency/task';
-import {makeUserScopeObjsQueryTask} from './scopeHelpers';
+import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
+import {reqStrPathThrowing} from 'rescape-ramda';
 
 /**
  * Queries regions that are in the scope of the user and the values of that region
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
+ * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
+ * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
+ * @param {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
- * @params {Object} regionArguments arguments for the Regions query. This can be {} or null to not filter.
- * Regions will be limited to those returned by the UserState query. These should not specify ids since
- * the UserState query selects the ids
+ * @param {Function} [component] Optional component when doing and Apollo Component query
+ * @param {Object} props The props used for the query. userState and project objects are required
+ * @param {Object} props.userState Props for the UserStates query. {user: {id: }} is required to limit
+ * the query to one user
+ * @param {Object} props.region Props for the Regions query. This can be {} or null to not filter.
  * @returns {Object} The resulting Regions in a Task in {data: usersRegions: [...]}}
  */
-export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArguments, regionArguments) => {
-    return makeUserScopeObjsQueryTask(
-      apolloClient,
+export const makeUserRegionsQueryContainer = v(R.curry(
+  (apolloClient, component, props) => {
+    return makeUserScopeObjsQueryContainer(
+      {apolloClient},
       {
         scopeQueryTask: makeRegionsQueryContainer,
         scopeName: 'region',
@@ -38,21 +43,25 @@ export const makeUserRegionsQueryTask = v(R.curry((apolloClient, userStateArgume
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({region: scopeOutputParams}),
         scopeOutputParams: regionOutputParams
       },
-      {userStateArguments, scopeArguments: regionArguments}
+      component,
+      {userState: reqStrPathThrowing('userState', props), scope: {region: reqStrPathThrowing('region', props)}}
     );
   }),
   [
     ['apolloClient', PropTypes.shape().isRequired],
-    ['userStateArguments', PropTypes.shape({
-      user: PropTypes.shape({
-        id: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.number
-        ])
-      })
-    }).isRequired],
-    ['regionArguments', PropTypes.shape().isRequired]
-  ], 'makeUserRegionsQueryTask');
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape({
+      userState: PropTypes.shape({
+        user: PropTypes.shape({
+          id: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number
+          ])
+        }).isRequired
+      }).isRequired,
+      region: PropTypes.shape().isRequired
+    })]
+  ], 'makeUserRegionsQueryContainer');
 
 
 /*

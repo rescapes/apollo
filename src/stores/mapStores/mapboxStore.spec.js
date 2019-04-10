@@ -7,8 +7,8 @@ import {v} from 'rescape-validate';
 import {waitAll} from 'folktale/concurrency/task';
 import {reqStrPathThrowing, defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {mapboxOutputParamsFragment} from './mapboxStore';
-import {makeUserRegionsQueryTask} from '../userStores/userScopeStores/userRegionStore';
-import {makeUserProjectsQueryTask} from '../userStores/userScopeStores/userProjectStore';
+import {makeUserRegionsQueryContainer} from '../userStores/userScopeStores/userRegionStore';
+import {makeUserProjectsQueryContainer} from '../userStores/userScopeStores/userProjectStore';
 import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
 import {createSampleProjectTask} from '../scopeStores/projectStore.sample';
 
@@ -37,11 +37,11 @@ describe('mapboxStore', () => {
       ),
       // Get the first project in the userState to use as a pretend scope
       mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
-        ({apolloClient, userId}) => makeUserProjectsQueryTask({apolloClient}, {user: {id: userId}}, {})
+        ({apolloClient, userId}) => makeUserProjectsQueryContainer({apolloClient}, null, {user: {id: userId}}, {})
       ),
       // Get the first region in the userState to use as a pretend scope
       mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
-        ({apolloClient, userId}) => makeUserRegionsQueryTask({apolloClient}, {user: {id: userId}}, {})
+        ({apolloClient, userId}) => makeUserRegionsQueryContainer({apolloClient}, null, {user: {id: userId}}, {})
       ),
       // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',

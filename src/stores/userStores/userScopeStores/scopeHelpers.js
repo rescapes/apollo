@@ -21,27 +21,32 @@ import PropTypes from 'prop-types';
 /**
  * Queries scope objects (Region, Project, etc) that are in the scope of the given user. If scopeArguments are
  * specified the returned scope objects are queried by the scopeArguments to possibly reduce those matching
- * @params {Object} apolloClient The Apollo Client
- * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryContainer
- * @params {String} scopeName The name of the scope, such as 'region' or 'project'
- * @params {Function} userStateOutputParamsCreator Unary function expecting scopeOutputParams
+ * @param {Object} apolloClient The Apollo Client
+ * @param {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryContainer
+ * @param {String} scopeName The name of the scope, such as 'region' or 'project'
+ * @param {Function} userStateOutputParamsCreator Unary function expecting scopeOutputParams
  * and returning output parameters for each the scope class query. If don't have to query scope seperately
  * then scopeOutputParams is passed to this. Otherwise we just was ['id'] since that's all the initial query needs
- * @params {[Object]} scopeOutputParams Output parameters for each the scope class query
- * @params {Object} userStateArgumentsCreator arguments for the UserStates query. {user: {id: }} is required to limit
+ * @param {[Object]} scopeOutputParams Output parameters for each the scope class query
+ * @param {Object} userStateArgumentsCreator arguments for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
- * @params {Object} scopeArguments arguments for the Regions query. This can be {} or null to not filter.
- * Regions will be limited to those returned by the UserState query. These should not specify ids since
+ * @param {Function} component The optional compnent for Apollo Compenent queries
+ * @param {Object} props Props to query with. userState is required and a scope property that can contain none
+ * or more of region, project, etc. keys with their query values
+ * @param {Object} props.userState props for the UserState
+ * @param {Object} props.scope props for the region, project, etc. query. This can be {} or null to not filter.
+ * Scope will be limited to those scope values returned by the UserState query. These should not specify ids since
  * the UserState query selects the ids
- * @returns {Object} The resulting Scope objects in a Task in the form {data: usersScopeName: [...]}}
+ * @returns {Task|Just} The resulting Scope objects in a Task or Just.Maybe in the form {data: usersScopeName: [...]}}
  * where ScopeName is the capitalized and pluralized version of scopeName (e.g. region is Regions)
  */
-export const makeUserScopeObjsQueryTask = v(R.curry(
-  (apolloClient,
+export const makeUserScopeObjsQueryContainer = v(R.curry(
+  ({apolloClient},
    {scopeQueryTask, scopeName, readInputTypeMapper, userStateOutputParamsCreator, scopeOutputParams},
-   {userStateArguments, scopeArguments}) => {
-    // Function to tell whether scopeArguments are defined
-    const hasScopeParams = () => R.compose(R.length, R.keys)(R.defaultTo({}, scopeArguments));
+   component,
+   {userState, scope}) => {
+    // Function to tell whether scope props are defined
+    const hasScopeParams = () => R.compose(R.length, R.keys)(R.defaultTo({}, scope));
     const userScopeNames = `user${capitalize(scopeName)}s`;
 
     // Since we only store the id of the scope obj in the userState, if there are other queryParams
@@ -57,10 +62,11 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
             R.ifElse(
               hasScopeParams,
               userScopeObjs => queryScopeObjsOfUserStateTask(
-                apolloClient,
+                {apolloClient},
                 {scopeQueryTask, scopeName, scopeOutputParams},
-                scopeArguments,
-                userScopeObjs
+                component,
+                // The props
+                {scope, userState: userScopeObjs}
               ),
               of
             )(userScopeObjs)
@@ -72,14 +78,20 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
       // Dig into the results and return a Result.Ok with the userScopeNames or a Result.Error if not found,
       // where scope names is 'Regions', 'Projects', etc
       // Result.Error prevents the next query from running
-      () =>
-        mapQueryTaskToNamedResultAndInputs(
+      () => mapQueryTaskToNamedResultAndInputs(
           makeQueryContainer(
             {apolloClient},
-            {name: 'userStates', readInputTypeMapper},
-            // If we have to query for scope objs separately then just query for their ids here
-            userStateOutputParamsCreator(R.when(hasScopeParams, R.always(['id']))(scopeOutputParams)),
-            R.merge(userStateArguments, {})
+            {
+              name: 'userStates',
+              readInputTypeMapper,
+              outputParams: userStateOutputParamsCreator(
+                // If we have to query for scope objs separately then just query for their ids here
+                R.when(hasScopeParams, R.always(['id']))(scopeOutputParams)
+              )
+            },
+            component,
+            // The props
+            userState
           ),
           // We only ever get 1 userState since we are querying by user
           `userStates.0.data.${userScopeNames}`,
@@ -96,8 +108,9 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
       userStateOutputParamsCreator: PropTypes.func.isRequired,
       scopeOutputParams: PropTypes.array.isRequired
     }).isRequired],
-    ['queryArguments', PropTypes.shape({
-      userStateArguments: PropTypes.shape({
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape({
+      userState: PropTypes.shape({
         user: PropTypes.shape({
           id: PropTypes.oneOfType([
             PropTypes.string,
@@ -105,23 +118,25 @@ export const makeUserScopeObjsQueryTask = v(R.curry(
           ])
         })
       }).isRequired,
-      scopeArguments: PropTypes.shape().isRequired
+      scope: PropTypes.shape().isRequired
     })]
-  ], 'makeUserScopeObjsQueryTask');
+  ], 'makeUserScopeObjsQueryContainer');
 
 /**
  * Given resolved objects from the user state about the scope and further arguments to filter those scope objects,
  * query for the scope objects
- * @params {Object} apolloClient The Apollo Client
- * @params {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryContainer
- * @params {String} scopeName The name of the scope, such as 'region' or 'project'
- * @params {[Object]} scopeOutputParams Output parameters for each the scope class query
- * @params {[Object]} scopeArguments Arguments for the scope class query
- * @params {[Object]} userProjects The UserProject objects. We extract the project ids from these and combine them
- * with the projectArguments
+ * @param {Object} apolloClient The Apollo Client
+ * @param {Function} scopeQueryTask Task querying the scope class, such as makeRegionsQueryContainer
+ * @param {String} scopeName The name of the scope, such as 'region' or 'project'
+ * @param {[Object]} scopeOutputParams Output parameters for each the scope class query
+ * @param {[Object]} scopeArguments Arguments for the scope class query
+ * @param {Function} component The optional Apollo Component for compent queries
+ * @param {Object} props The props for the queries. userState and scope are required
+ * @param {Object} props.userState The userState props for the queries
+ * @param {Object} props.scope The scope props for the queries, such as region, project, etc
  * @return {[Object]} Task that returns the scope objs that match the scopeArguments
  */
-export const queryScopeObjsOfUserStateTask = v(R.curry((apolloClient, {scopeQueryTask, scopeName, scopeOutputParams}, scopeArguments, userScopeObjs) => {
+export const queryScopeObjsOfUserStateTask = v(R.curry((apolloClient, {scopeQueryTask, scopeName, scopeOutputParams}, component, {scope, userState}) => {
     const scopeNamePlural = `${scopeName}s`;
     return R.map(
       // Match any returned scope objs with the corresponding userProjects
@@ -144,10 +159,19 @@ export const queryScopeObjsOfUserStateTask = v(R.curry((apolloClient, {scopeQuer
       },
       // Find scope objs matching the ids and the given scope arguments
       scopeQueryTask(
-        apolloClient,
-        scopeOutputParams,
-        // Map each userProject to its scope obj id
-        R.merge(scopeArguments, {idIn: R.map(R.compose(s => parseInt(s), reqPathThrowing([scopeName, 'id'])), userScopeObjs)})
+        {apolloClient},
+        {outputParms: scopeOutputParams},
+        component,
+        R.merge(scope, {
+          // Map each scope object to its id
+          idIn: R.map(
+            R.compose(
+              s => parseInt(s),
+              reqPathThrowing([scopeName, 'id'])
+            ),
+            reqStrPathThrowing('user', userState)
+          )
+        })
       )
     );
   }), [

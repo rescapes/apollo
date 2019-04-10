@@ -11,18 +11,20 @@
 import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
 import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask} from '../../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeProjectMutationTask, makeProjectsQueryTask, projectOutputParams} from './projectStore';
+import {
+  makeProjectMutationContainer, makeProjectsQueryContainer, projectOutputParams
+} from './projectStore';
 
 const someProjectKeys = ['id', 'key', 'geojson'];
 describe('projectStore', () => {
   test('makeProjectMutationTask', done => {
     R.composeK(
-      ({apolloClient}) => makeProjectMutationTask({apolloClient}, projectOutputParams, {key: 'shrangrila', name: 'Shrangrila'}),
+      ({apolloClient}) => makeProjectMutationContainer({apolloClient}, {outputParams: projectOutputParams}, null, {key: 'shrangrila', name: 'Shrangrila'}),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expectKeysAtStrPath(someProjectKeys, 'data.project', response);
+          expectKeysAtStrPath(someProjectKeys, 'data.createProject.project', response);
           done();
         }
     }));
@@ -30,7 +32,7 @@ describe('projectStore', () => {
 
   test('makeProjectsQueryTask', done => {
     R.composeK(
-      ({apolloClient}) => makeProjectsQueryTask({apolloClient}, projectOutputParams, {key: 'shrangrila'}),
+      ({apolloClient}) => makeProjectsQueryContainer({apolloClient}, {outputParams: projectOutputParams}, null, {key: 'shrangrila'}),
       () => testAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:

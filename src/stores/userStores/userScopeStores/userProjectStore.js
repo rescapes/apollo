@@ -16,8 +16,9 @@ import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
-import {makeUserScopeObjsQueryTask} from './scopeHelpers';
+import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
+import {reqStrPathThrowing} from 'rescape-ramda';
 
 // Variables of complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -30,17 +31,21 @@ const readInputTypeMapper = {
 
 /**
  * Queries projects that are in the scope of the user and the values of that project
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
+ * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
+ * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
+ * @param {Function} [component] Optional component when doing and Apollo Component query
+ * @param {Object} props The props used for the query. userState and project objects are required
+ * @param {Object} props.userState Props for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
- * @params {Object} projectArguments arguments for the Projects query. This can be {} or null to not filter.
+ * @param {Object} props.project Props for the Projects query. This can be {} or null to not filter.
  * Projects will be limited to those returned by the UserState query. These should not specify ids since
  * the UserState query selects the ids
  * @returns {Object} The resulting Projects in a Task in {data: usersProjects: [...]}}
  */
-export const makeUserProjectsQueryTask = v(R.curry((apolloClient, userStateArguments, projectArguments) => {
-    return makeUserScopeObjsQueryTask(
-      apolloClient,
+export const makeUserProjectsQueryContainer = v(R.curry(
+  (apolloClient, component, props) => {
+    return makeUserScopeObjsQueryContainer(
+      {apolloClient},
       {
         scopeQueryTask: makeProjectsQueryTask,
         scopeName: 'project',
@@ -48,21 +53,25 @@ export const makeUserProjectsQueryTask = v(R.curry((apolloClient, userStateArgum
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({project: scopeOutputParams}),
         scopeOutputParams: projectOutputParams
       },
-      {userStateArguments, scopeArguments: projectArguments}
+      component,
+      {userState: reqStrPathThrowing('userState', props), scope: {project: reqStrPathThrowing('project', props)}}
     );
   }),
   [
     ['apolloClient', PropTypes.shape().isRequired],
-    ['userStateArguments', PropTypes.shape({
-      user: PropTypes.shape({
-        id: PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.number
-        ])
-      })
-    }).isRequired],
-    ['projectArguments', PropTypes.shape().isRequired]
-  ], 'makeUserProjectsQueryTask');
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape({
+      userState: PropTypes.shape({
+        user: PropTypes.shape({
+          id: PropTypes.oneOfType([
+            PropTypes.string,
+            PropTypes.number
+          ])
+        }).isRequired
+      }).isRequired,
+      project: PropTypes.shape().isRequired
+    })]
+  ], 'makeUserProjectsQueryContainer');
 
 export const makeUserProjectMutation = R.curry((outputParams, inputParams) => {
   const mutation = makeMutation('updateProject', {}, {locationData: inputParams}, {location: outputParams});

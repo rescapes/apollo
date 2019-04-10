@@ -1,4 +1,4 @@
-import {makeRegionMutationRequest, regionOutputParams} from './regionStore';
+import {makeRegionMutationContainer, regionOutputParams} from './regionStore';
 import {mapToNamedPathAndInputs} from 'rescape-ramda';
 
 /**
@@ -21,7 +21,7 @@ export const createSampleRegionTask = ({apolloClient}) => {
   return mapToNamedPathAndInputs(
     'region', 'data.createRegion.region',
     // Create the prop function and pass it sample props to return a Task
-    ({apolloClient}) => makeRegionMutationRequest(
+    ({apolloClient}) => makeRegionMutationContainer(
       {apolloClient},
       {outputParams: regionOutputParams},
       // Component is always null for sample data tasks

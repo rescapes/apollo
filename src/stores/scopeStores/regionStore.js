@@ -90,7 +90,8 @@ export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams,
 
 /**
  * Makes a Region mutation
- * @param {Object} apolloClient An authorized Apollo Client
+ * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
+ * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -110,7 +111,7 @@ export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams,
  *  @returns {Task|Just} A container. For ApolloClient mutations we get a Task back. For Apollo components
  *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
  */
-export const makeRegionMutationRequest = v(R.curry(
+export const makeRegionMutationContainer = v(R.curry(
   (apolloConfig, {outputParams}, component, props) => makeMutationRequestContainer(
     apolloConfig,
     {
@@ -127,4 +128,4 @@ export const makeRegionMutationRequest = v(R.curry(
   ],
   ['component', PropTypes.func],
   ['props', PropTypes.shape().isRequired]
-], makeRegionMutationRequest);
+], 'makeRegionMutationContainer');

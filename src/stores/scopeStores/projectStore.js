@@ -56,29 +56,37 @@ export const projectOutputParams = [
 
 /**
  * Queries projects
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} ouptputParams OutputParams for the query such as projectOutputParams
- * @params {Object} projectArguments Arguments for the Projects query. This can be {} or null to not filter.
- * @returns {Task} A Task containing the Projects in an object with obj.data.projects or errors in obj.errors
+ * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
+ * @param {Object} apolloClient An authorized Apollo Client
+ * @params {Object} outputParams OutputParams for the query such as projectOutputParams
+ * @params {Object} component Optional component for ApolloComponent queries. Leave null for client queries
+ * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
+ * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
-export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, projectArguments) => {
+export const makeProjectsQueryContainer = v(R.curry((apolloConfig, {outputParams, propsStructure}, component, props) => {
     return makeQueryContainer(
-      {apolloClient},
-      {name: 'projects', readInputTypeMapper},
-      // If we have to query for projects separately use the limited output userStateOutputParamsCreator
-      outputParams,
-      projectArguments
+      apolloConfig,
+      {name: 'projects', readInputTypeMapper, outputParams, propsStructure},
+      component,
+      props
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.array.isRequired],
-    ['projectArguments', PropTypes.shape().isRequired]
-  ], 'makeProjectsQueryTask');
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
+    ['queryStructure', PropTypes.shape({
+      outputParams: PropTypes.array.isRequired,
+      propsStructure: PropTypes.shape()
+    })
+    ],
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape().isRequired]
+  ], 'makeRegionsQueryContainer');
+
 
 /**
- * Makes a Project mutation
- * @param {Object} apoloClient An authorized Apollo Client
+ * Makes a project mutation
+ * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
+ * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -93,14 +101,26 @@ export const makeProjectsQueryTask = v(R.curry((apolloClient, outputParams, proj
  *       ]
  *    }
  *  ]
- *  @param {Object} inputParams Object matching the shape of a project. E.g.
- *  {id: 1, city: "Stavanger", data: {foo: 2}}
- *  Creates need all required fields and updates need at minimum the id
- *  @param {Task} An apollo mutation task
+ *  @param {Function} component The Apollo component if doing a component mutation. Otherwise null
+ *  @param {Object} props Object matching the shape of a region. E.g. {id: 1, city: "Stavanger", data: {foo: 2}}
+ *  @returns {Task|Just} A container. For ApolloClient mutations we get a Task back. For Apollo components
+ *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
  */
-export const makeProjectMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationRequestContainer(
-  {apolloClient},
-  {name: 'project'},
-  outputParams,
-  inputParams
-));
+export const makeProjectMutationContainer = v(R.curry(
+  (apolloConfig, {outputParams}, component, props) => makeMutationRequestContainer(
+    apolloConfig,
+    {
+      name: 'project',
+      outputParams
+    },
+    component,
+    props
+  )), [
+  ['apolloConfig', PropTypes.shape().isRequired],
+  ['mutationStructure', PropTypes.shape({
+    outputParams: PropTypes.array.isRequired
+  })
+  ],
+  ['component', PropTypes.func],
+  ['props', PropTypes.shape().isRequired]
+], 'makeProjectMutationContainer');

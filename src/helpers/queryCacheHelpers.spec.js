@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeClientQueryTask, makeQuery, makeQueryForComponentTask, makeQueryContainer} from './queryHelpers';
+import {makeQueryContainer, makeQuery, makeQueryForComponentTask, makeQueryContainer} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedResponseAndInputs} from 'rescape-ramda';
@@ -66,7 +66,7 @@ describe('queryCacheHelpers', () => {
     const task = R.composeK(
       // Query the client to confirm it's in the cache
       ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
-        apolloClient,
+        {apolloClient},
         {name: 'regions', readInputTypeMapper: {}},
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
         {key: region.key}
@@ -106,15 +106,15 @@ describe('queryCacheHelpers', () => {
     }));
   }, 1000);
 
-  test('makeClientQueryTaskForSettings', done => {
+  test('makeQueryContainerForSettings', done => {
     const someMapboxKeys = ['viewport'];
     const task = R.composeK(
       // Query the client to confirm it's in the cache
-      ({apolloClient}) => makeClientQueryTask(
-        apolloClient,
+      ({apolloClient}) => makeQueryContainer(
+        {apolloClient},
         {name: 'settings', readInputTypeMapper: {}},
+        null,
         mapboxOutputParamsFragment,
-        {}
       ),
       () => testAuthTask
     )();

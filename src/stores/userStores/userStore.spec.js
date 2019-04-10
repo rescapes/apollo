@@ -17,15 +17,17 @@ import {
   makeCurrentUserQueryTask, makeUserStateMutationContainer, makeUserStateQueryContainer, userOutputParams,
   userStateMutateOutputParams, userStateOutputParamsFull
 } from './userStore';
-import {makeRegionMutationRequest, regionOutputParams} from '../scopeStores/regionStore';
-import {makeProjectMutationTask, projectOutputParams} from '../scopeStores/projectStore';
+import {makeRegionMutationContainer, regionOutputParams} from '../scopeStores/regionStore';
+import {makeProjectMutationContainer, projectOutputParams} from '../scopeStores/projectStore';
 
 describe('userStore', () => {
   test('makeUserQueryTask', done => {
     const someUserKeys = ['id', 'email', 'username'];
     R.composeK(
-      ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams),
-      () => testAuthTask
+      ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null),
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
@@ -38,11 +40,18 @@ describe('userStore', () => {
   test('makeUserStateQueryContainer', done => {
     const someUserStateKeys = ['user.id', 'data.userRegions.0.region.id'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserStateQueryContainer({apolloClient}, userStateOutputParamsFull, {user: {id: parseInt(userId)}}),
-      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+      ({apolloClient, userId}) => makeUserStateQueryContainer(
+        {apolloClient},
+        {outputParams: userStateOutputParamsFull},
+        null,
+        {user: {id: parseInt(userId)}}
       ),
-      () => testAuthTask
+      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
+        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
+      ),
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
@@ -75,25 +84,31 @@ describe('userStore', () => {
         }
       });
 
-    const mutateUserStateWithProjectAndRegion = R.composeK(
+    const mutateUserStateWithProjectAndRegion = ({apolloClient, user, regionKey, projectKey}) => R.composeK(
       // Set the user state of the given user to the region and project
-      mapToNamedPathAndInputs('userState', 'data.userState',
+      mapToNamedPathAndInputs('userState', 'data.createUserState.userState',
         ({apolloClient, user, region, project}) => makeUserStateMutationContainer(
-          apolloClient,
+          {apolloClient},
           {outputParams: userStateMutateOutputParams},
+          null,
           createInputParams({user, region, project})
         )
       ),
       // Create a project
-      mapToNamedPathAndInputs('project', 'data.project',
-        ({apolloClient, user, region, projectKey}) => makeProjectMutationTask({apolloClient}, projectOutputParams, {
-          key: projectKey,
-          name: capitalize(projectKey)
-        })
+      mapToNamedPathAndInputs('project', 'data.createProject.project',
+        ({apolloClient, user, region, projectKey}) => makeProjectMutationContainer(
+          {apolloClient},
+          {outputParams: projectOutputParams},
+          null,
+          {
+            key: projectKey,
+            name: capitalize(projectKey)
+          }
+        )
       ),
       // Create a region
-      mapToNamedPathAndInputs('region', 'data.region',
-        ({apolloClient, user, regionKey}) => makeRegionMutationRequest(
+      mapToNamedPathAndInputs('region', 'data.createRegion.region',
+        ({apolloClient, user, regionKey}) => makeRegionMutationContainer(
           {apolloClient},
           {outputParams: regionOutputParams},
           null,
@@ -103,7 +118,7 @@ describe('userStore', () => {
           }
         )
       )
-    );
+    )({apolloClient, user, regionKey, projectKey});
 
     R.composeK(
       // Set it again. This will wipe out the previous region and project ids
@@ -126,9 +141,11 @@ describe('userStore', () => {
         projectKey: 'shrangrila'
       }),
       mapToNamedPathAndInputs('user', 'data.currentUser',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
       ),
-      () => testAuthTask
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )().run().listen(defaultRunConfig({
       onResolved:
         ({userState}) => {

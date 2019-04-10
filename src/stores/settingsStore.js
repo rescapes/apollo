@@ -1,5 +1,5 @@
 import {readInputTypeMapper} from './mapStores/mapboxStore';
-import {makeClientQueryTask} from '../helpers/queryHelpers';
+import {makeQueryContainer} from '../helpers/queryHelpers';
 
 /**
  * Created by Andy Likuski on 2018.12.31
