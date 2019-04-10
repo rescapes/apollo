@@ -90,7 +90,7 @@ export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams,
 
 /**
  * Makes a Region mutation
- * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
+ * @param {Object} apolloConfig Configuration of the Apollo Client when using one inst
  * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
  * @param [String|Object] outputParams output parameters for the query in this style json format:
  *  ['id',

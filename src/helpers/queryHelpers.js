@@ -121,20 +121,20 @@ export const makeQueryContainer = v(R.curry(
    {name, readInputTypeMapper, outputParams, propsStructure},
    component,
    props) => {
-    const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, propsStructure)}`;
+    const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
     console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
     return R.map(
       queryResponse => {
         debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
         return queryResponse;
       },
-      props => authApolloQueryContainer(
+      authApolloQueryContainer(
         apolloConfig,
         query,
         component,
         props
       )
-    )(props);
+    )
   }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],

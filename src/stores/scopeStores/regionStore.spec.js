@@ -33,7 +33,7 @@ describe('regionStore', () => {
     R.composeK(
       ({apolloClient, region}) => makeRegionsQueryContainer(
         {apolloClient},
-        {outputParams: regionOutputParams, propsStructure: {key: ''}},
+        {outputParams: regionOutputParams},
         null,
         {key: reqStrPathThrowing('key', region)}
       ),
