@@ -14,7 +14,7 @@ import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testC
 import * as R from 'ramda';
 import {of} from 'folktale/concurrency/task';
 import {
-  makeCurrentUserQueryTask, makeUserStateMutationContainer, makeUserStateQueryContainer, userOutputParams,
+  makeCurrentUserQueryContainer, makeUserStateMutationContainer, makeUserStateQueryContainer, userOutputParams,
   userStateMutateOutputParams, userStateOutputParamsFull
 } from './userStore';
 import {makeRegionMutationContainer, regionOutputParams} from '../scopeStores/regionStore';
@@ -24,7 +24,7 @@ describe('userStore', () => {
   test('makeUserQueryTask', done => {
     const someUserKeys = ['id', 'email', 'username'];
     R.composeK(
-      ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null),
+      ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
       )
@@ -47,7 +47,7 @@ describe('userStore', () => {
         {user: {id: parseInt(userId)}}
       ),
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
@@ -141,7 +141,7 @@ describe('userStore', () => {
         projectKey: 'shrangrila'
       }),
       mapToNamedPathAndInputs('user', 'data.currentUser',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask

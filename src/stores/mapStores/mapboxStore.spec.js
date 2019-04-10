@@ -1,5 +1,5 @@
 import {expectKeysAtStrPath, testAuthTask} from '../../helpers/testHelpers';
-import {makeCurrentUserQueryTask, userOutputParams} from '../userStores/userStore';
+import {makeCurrentUserQueryContainer, userOutputParams} from '../userStores/userStore';
 import {makeMapboxesQueryTask} from '../mapStores/mapboxStore';
 import {graphql} from 'graphql';
 import * as R from 'ramda';
@@ -45,7 +45,7 @@ describe('mapboxStore', () => {
       ),
       // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams)),
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams)),
       ({apolloClient}) => createSampleProjectTask({apolloClient}),
       ({apolloClient}) => createSampleRegionTask({apolloClient}).map(t => t),
       () => testAuthTask

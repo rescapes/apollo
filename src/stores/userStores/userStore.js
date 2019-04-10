@@ -102,7 +102,7 @@ export const userStateMutateOutputParams = userStateOutputPararmsOnlyIds;
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams, component) => {
+export const makeCurrentUserQueryContainer = v(R.curry((apolloConfig, outputParams, component) => {
     return makeQueryContainer(
       apolloConfig,
       {
@@ -118,7 +118,7 @@ export const makeCurrentUserQueryTask = v(R.curry((apolloConfig, outputParams, c
     ['apolloConfig', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.array.isRequired],
     ['component', PropTypes.func]
-  ], 'makeCurrentUserQueryTask');
+  ], 'makeCurrentUserQueryContainer');
 
 
 /**

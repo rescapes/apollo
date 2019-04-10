@@ -14,7 +14,7 @@ import * as R from 'ramda';
 import {makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
+import {makeProjectsQueryContainer, makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
 import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
@@ -47,14 +47,14 @@ export const makeUserProjectsQueryContainer = v(R.curry(
     return makeUserScopeObjsQueryContainer(
       apolloConfig,
       {
-        scopeQueryTask: makeProjectsQueryTask,
+        scopeQueryTask: makeProjectsQueryContainer,
         scopeName: 'project',
         readInputTypeMapper: userStateReadInputTypeMapper,
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({project: scopeOutputParams}),
         scopeOutputParams: projectOutputParams
       },
       component,
-      {userState: reqStrPathThrowing('userState', props), scope: {project: reqStrPathThrowing('project', props)}}
+      {userState: reqStrPathThrowing('userState', props), scope: reqStrPathThrowing('project', props)}
     );
   }),
   [

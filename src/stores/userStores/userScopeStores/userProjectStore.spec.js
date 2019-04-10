@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeUserProjectsQueryContainer} from './userProjectStore';
+import {makeUserProjectsQueryContainer, userStateOutputParamsCreator} from './userProjectStore';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeCurrentUserQueryTask, userOutputParams} from '../userStore';
+import {makeCurrentUserQueryContainer, userOutputParams} from '../userStore';
 
 describe('userProjectStore', () => {
   test('makeUserProjectsQueryContainer', done => {
@@ -23,12 +23,13 @@ describe('userProjectStore', () => {
         {apolloClient},
         null,
         {
-          userState: {user: {id: parseInt(userId)}},
+          userState: {user: {id: userId}},
+          // The sample user is already limited to certain projects. We don't need to limit further
           project: {}
         }
       ),
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
@@ -47,13 +48,13 @@ describe('userProjectStore', () => {
     R.composeK(
       // Filter for projects where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Projects so we can filter by Project
-      ({apolloClient, userId}) => makeUserProjectsQueryContainer({apolloClient}, {
-        userState: {id: parseInt(userId)},
+      ({apolloClient, userId}) => makeUserProjectsQueryContainer({apolloClient}, null, {
+        userState: {user: {id: parseInt(userId)}},
         project: {geojson: {type: 'FeatureCollection'}}
       }),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+        makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
@@ -70,12 +71,18 @@ describe('userProjectStore', () => {
   test('makeActiveUserProjectQuery', done => {
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserProjectsQueryContainer({apolloClient}, {user: {id: parseInt(userId)}}, {}),
+      ({apolloClient, userId}) => makeUserProjectsQueryContainer(
+        {apolloClient},
+        null,
+        {userState: {user: {id: parseInt(userId)}}, project: {}}
+      ),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+        makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
-      () => testAuthTask
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {

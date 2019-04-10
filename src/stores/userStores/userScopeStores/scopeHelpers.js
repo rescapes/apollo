@@ -61,12 +61,12 @@ export const makeUserScopeObjsQueryContainer = v(R.curry(
             userScopeObjs => ({data: {[userScopeNames]: userScopeObjs}}),
             R.ifElse(
               hasScopeParams,
-              userScopeObj => queryScopeObjsOfUserStateContainer(
+              userScopeObjs => queryScopeObjsOfUserStateContainer(
                 apolloConfig,
                 {scopeQueryTask, scopeName, scopeOutputParams},
                 component,
                 // The props
-                {scope, userState: R.merge(userScopeObj)}
+                {scope, userScopeObjs}
               ),
               of
             )(userScopeObjs)
@@ -132,17 +132,18 @@ export const makeUserScopeObjsQueryContainer = v(R.curry(
  * @param {[Object]} scopeArguments Arguments for the scope class query
  * @param {Function} component The optional Apollo Component for compent queries
  * @param {Object} props The props for the queries. userState and scope are required
- * @param {Object} props.userState The userState props for the queries
+ * @param {Object} props.userScopeObjs The userScopeObjs in the form {scopeName: {id: x}}
+ * where scopeName is 'region', 'project', etc
  * @param {Object} props.scope The scope props for the queries, such as region, project, etc
  * @return {Task|Maybe} Task or Maybe.Just that returns the scope objs that match the scopeArguments
  */
 export const queryScopeObjsOfUserStateContainer = v(R.curry(
-  (apolloConfig, {scopeQueryTask, scopeName, scopeOutputParams}, component, {scope, userState}) => {
+  (apolloConfig, {scopeQueryTask, scopeName, scopeOutputParams}, component, {scope, userScopeObjs}) => {
     const scopeNamePlural = `${scopeName}s`;
     return R.map(
-      // Match any returned scope objs with the corresponding userProjects
-      projectsResponse => {
-        const matchingScopeObjs = reqPathThrowing(['data', scopeNamePlural], projectsResponse);
+      // Match any returned scope objs with the corresponding userScopeObjs
+      scopeObjsResponse => {
+        const matchingScopeObjs = reqPathThrowing(['data', scopeNamePlural], scopeObjsResponse);
         const matchingScopeObjsById = R.indexBy(R.prop('id'), matchingScopeObjs);
         return R.compose(
           compact,
@@ -161,7 +162,7 @@ export const queryScopeObjsOfUserStateContainer = v(R.curry(
       // Find scope objs matching the ids and the given scope arguments
       scopeQueryTask(
         apolloConfig,
-        {outputParms: scopeOutputParams},
+        {outputParams: scopeOutputParams},
         component,
         R.merge(scope, {
           // Map each scope object to its id
@@ -170,7 +171,7 @@ export const queryScopeObjsOfUserStateContainer = v(R.curry(
               s => parseInt(s),
               reqPathThrowing([scopeName, 'id'])
             ),
-            reqStrPathThrowing('user', userState)
+            userScopeObjs
           )
         })
       )
@@ -186,7 +187,7 @@ export const queryScopeObjsOfUserStateContainer = v(R.curry(
     ['component', PropTypes.func],
     ['props', PropTypes.shape({
       scope: PropTypes.shape().isRequired,
-      userState: PropTypes.array.isRequired
+      userScopeObjs: PropTypes.array.isRequired
     })]
   ], 'queryScopeObjsOfUserStateContainer'
 );

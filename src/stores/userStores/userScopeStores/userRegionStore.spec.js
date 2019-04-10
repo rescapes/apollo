@@ -13,7 +13,7 @@ import {makeUserRegionsQueryContainer, userStateOutputParamsCreator} from './use
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeCurrentUserQueryTask, userOutputParams} from '../userStore';
+import {makeCurrentUserQueryContainer, userOutputParams} from '../userStore';
 
 describe('userRegionStore', () => {
   test('makeUserRegionsQueryContainer', done => {
@@ -29,7 +29,7 @@ describe('userRegionStore', () => {
         }
       ),
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
-        ({apolloClient}) => makeCurrentUserQueryTask({apolloClient}, userOutputParams, null)
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
@@ -49,12 +49,12 @@ describe('userRegionStore', () => {
       // Filter for regions where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Regions so we can filter by Region
       ({apolloClient, userId}) => makeUserRegionsQueryContainer({apolloClient}, null, {
-        userState: {id: parseInt(userId)},
+        userState: {user: {id: parseInt(userId)}},
         region: {geojson: {type: 'FeatureCollection'}}
       }),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+        makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
@@ -71,10 +71,14 @@ describe('userRegionStore', () => {
   test('makeActiveUserRegionQuery', done => {
     const someRegionKeys = ['id', 'key', 'name', 'data'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserRegionsQueryContainer({apolloClient}, {user: {id: parseInt(userId)}}, {}),
+      ({apolloClient, userId}) => makeUserRegionsQueryContainer(
+        {apolloClient},
+        null,
+        {userState: {user: {id: parseInt(userId)}}, region: {}}
+      ),
       ({apolloClient}) => R.map(
         response => ({apolloClient, userId: reqStrPathThrowing('data.currentUser.id', response)}),
-        makeCurrentUserQueryTask({apolloClient}, userOutputParams)
+        makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => testAuthTask
