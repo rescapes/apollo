@@ -209,7 +209,7 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
     )(componentOrProps);
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['outputParams', PropTypes.array.isRequired],
     ['componentOrProps', PropTypes.oneOf([PropTypes.func, PropTypes.shape({
       users: PropTypes.shape().isRequired,
@@ -240,8 +240,8 @@ export const makeMapboxesQueryTask = v(R.curry((apolloConfig, outputParams, comp
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Task} An apollo mutation task
  */
-export const makeRegionMutationTask = R.curry((apolloClient, outputParams, inputParams) => makeMutationRequestContainer(
-  {apolloClient},
+export const makeRegionMutationTask = R.curry((apolloConfig, outputParams, inputParams) => makeMutationRequestContainer(
+  apolloConfig,
   {name: 'region'},
   outputParams,
   inputParams

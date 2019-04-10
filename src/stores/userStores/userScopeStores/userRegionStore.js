@@ -33,9 +33,9 @@ import {reqStrPathThrowing} from 'rescape-ramda';
  * @returns {Object} The resulting Regions in a Task in {data: usersRegions: [...]}}
  */
 export const makeUserRegionsQueryContainer = v(R.curry(
-  (apolloClient, component, props) => {
+  (apolloConfig, component, props) => {
     return makeUserScopeObjsQueryContainer(
-      {apolloClient},
+      apolloConfig,
       {
         scopeQueryTask: makeRegionsQueryContainer,
         scopeName: 'region',
@@ -48,7 +48,7 @@ export const makeUserRegionsQueryContainer = v(R.curry(
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['component', PropTypes.func],
     ['props', PropTypes.shape({
       userState: PropTypes.shape({

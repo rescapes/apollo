@@ -43,9 +43,9 @@ const readInputTypeMapper = {
  * @returns {Object} The resulting Projects in a Task in {data: usersProjects: [...]}}
  */
 export const makeUserProjectsQueryContainer = v(R.curry(
-  (apolloClient, component, props) => {
+  (apolloConfig, component, props) => {
     return makeUserScopeObjsQueryContainer(
-      {apolloClient},
+      apolloConfig,
       {
         scopeQueryTask: makeProjectsQueryTask,
         scopeName: 'project',
@@ -58,7 +58,7 @@ export const makeUserProjectsQueryContainer = v(R.curry(
     );
   }),
   [
-    ['apolloClient', PropTypes.shape().isRequired],
+    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['component', PropTypes.func],
     ['props', PropTypes.shape({
       userState: PropTypes.shape({
