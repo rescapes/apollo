@@ -28,6 +28,8 @@ import {
 } from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
+import {v} from 'rescape-validate'
+import PropTypes from 'prop-types'
 
 /**
  * Makes the location query based on the queryParams
@@ -76,7 +78,7 @@ ${mutationName}(${variableMappingString}) {
  *  If mutation task containing an object with the result of the outputParams query
  *  in an obj at obj.data.name or an errors at obj.errors.
  */
-export const makeMutationRequestContainer = R.curry(
+export const makeMutationRequestContainer = v(R.curry(
   (apolloConfig,
    {
      name, outputParams,
@@ -94,7 +96,7 @@ export const makeMutationRequestContainer = R.curry(
     // name of the object class being mutated. If we don't specify name an instead use the overrides,
     // we don't need name here
     const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
-    const namedProps = R.ifElse(R.isNil, R.always(props), ()=> ({[variableName]: props}))(name);
+    const namedProps = R.ifElse(R.isNil, R.always(props), () => ({[variableName]: props}))(name);
 
     // create|update[Model Name]
     const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
@@ -130,4 +132,25 @@ export const makeMutationRequestContainer = R.curry(
         )
       ]
     ])(apolloConfig);
-  });
+  }),
+  [
+    ['apolloConfig', PropTypes.shape().isRequired],
+    ['mutationOptions', PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      outputParams: PropTypes.arrayOf(
+        PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.array,
+          PropTypes.shape()
+        ])
+      ).isRequired,
+      // These are only used for simple mutations where there is no complex input type
+      variableNameOverride: PropTypes.string,
+      variableTypeOverride: PropTypes.string,
+      mutationNameOverride: PropTypes.string,
+    })],
+    ['component', PropTypes.func],
+    ['props', PropTypes.shape().isRequired]
+  ],
+  'makeMutationRequestContainer'
+);

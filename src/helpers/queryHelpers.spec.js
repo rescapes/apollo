@@ -32,7 +32,7 @@ describe('queryHelpers', () => {
     const task = R.composeK(
       ({apolloClient, region}) => makeQueryContainer(
         {apolloClient},
-        {name: 'region', readInputTypeMapper: {}},
+        {name: 'regions', readInputTypeMapper: {}},
         ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
         {key: region.key}
       ),
@@ -56,7 +56,7 @@ describe('queryHelpers', () => {
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(R.keys(reqStrPathThrowing('data.region', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          expect(R.keys(reqStrPathThrowing('data.regions', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
           done();
         }
     }));
@@ -82,7 +82,7 @@ describe('queryHelpers', () => {
         )
       ),
       ({apolloClient}) => R.map(
-        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.region', regionResponse)}),
+        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.createRegion.region', regionResponse)}),
         makeMutationRequestContainer(
           {apolloClient},
           {

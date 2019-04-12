@@ -18,7 +18,7 @@ import {
 import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import gql from 'graphql-tag';
-import {ApolloClient} from 'apollo-client';
+import {ApolloClient} from 'apollo-boost';
 import {PropTypes} from 'prop-types';
 import {v} from 'rescape-validate';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';

@@ -46,7 +46,7 @@ describe('mutationHelpers', () => {
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(R.keys(reqStrPathThrowing('data.region', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          expect(R.keys(reqStrPathThrowing('data.createRegion.region', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
           done();
         }
     }));

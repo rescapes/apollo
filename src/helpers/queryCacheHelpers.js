@@ -60,6 +60,8 @@ export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {nam
       debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
+    // With the client directive on the query we can use the normal authApolloQueryContainer that's used
+    // for non-client directive queries
     authApolloQueryContainer(
       apolloConfig,
       query,

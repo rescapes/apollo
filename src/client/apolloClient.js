@@ -8,12 +8,13 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {InMemoryCache} from 'apollo-cache-inmemory';
+import {InMemoryCache} from 'apollo-boost'
 import {setContext} from 'apollo-link-context';
-import {ApolloClient} from 'apollo-client';
+import {ApolloClient} from 'apollo-boost'
 import {ApolloLink} from 'apollo-link';
-import {createHttpLink} from 'apollo-link-http';
-import {onError} from 'apollo-link-error';
+// TODO apollo-link-http' and 'apollo-link-error' are part of apollo-boost. How do we import this stuff
+import {createHttpLink} from 'apollo-link-http'
+import {onError} from 'apollo-link-error'
 import * as R from 'ramda';
 import createStateLink from './clientState';
 import {task, of} from 'folktale/concurrency/task';
@@ -116,7 +117,9 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
       stateLink,
       httpLink]),
     // Use InMemoryCache
-    cache: new InMemoryCache()
+    cache: new InMemoryCache(),
+    // Needed to make the @client direct go to the cache
+    resolvers: {}
   });
   apolloClient.onResetStore(stateLink.writeDefaults);
 

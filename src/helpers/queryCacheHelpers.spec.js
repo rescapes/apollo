@@ -19,7 +19,7 @@ import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
 import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
-import {makeQueryWithClientDirectiveContainer} from './queryCacheHelpers';
+import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from './queryCacheHelpers';
 
 describe('queryCacheHelpers', () => {
 
@@ -71,29 +71,49 @@ describe('queryCacheHelpers', () => {
       // Query the client to confirm it's in the cache
       ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
         {apolloClient},
-        {name: 'regions', readInputTypeMapper: {}},
-        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+        {
+          name: 'regions',
+          readInputTypeMapper: {},
+          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+        },
         null,
         {key: region.key}
       ),
-      // Query to get it in the cache
-      ({apolloClient, region}) => R.map(
-        () => ({apolloClient, region}),
-        makeQueryContainer(
+      // Direct cache read as a sanity check
+      mapToNamedPathAndInputs(
+        'regionFromCache', 'regions.0,',
+        ({apolloClient, region}) => makeQueryFromCacheContainer(
           {apolloClient},
-          {name: 'regions', readInputTypeMapper: {}},
-          ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+          {
+            name: 'regions',
+            readInputTypeMapper: {},
+            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+          },
+          null,
+          {key: region.key}
+        )
+      ),
+      // Query to get it in the cache
+      mapToNamedPathAndInputs(
+        'regionAgain', 'data.regions.0,',
+        ({apolloClient, region}) => makeQueryContainer(
+          {apolloClient},
+          {
+            name: 'regions',
+            readInputTypeMapper: {},
+            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+          },
           null,
           {key: region.key}
         )
       ),
       ({apolloClient}) => R.map(
-        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.region', regionResponse)}),
+        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.createRegion.region', regionResponse)}),
         makeMutationRequestContainer(
           {apolloClient},
           {
             name: 'region',
-            outpuParams: ['key']
+            outputParams: ['key']
           },
           null,
           {
@@ -107,7 +127,11 @@ describe('queryCacheHelpers', () => {
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(R.keys(reqStrPathThrowing('data.regions.0', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+          expect(
+            R.keys(reqStrPathThrowing('data.regions.0', response))
+          ).toEqual(
+            ['id', 'key', 'name', 'geojson', '__typename']
+          );
           done();
         }
     }));
