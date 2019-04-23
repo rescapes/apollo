@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQueryContainer, makeQuery, makeQueryForComponentTask, makeQueryContainer} from './queryHelpers';
+import {makeQueryContainer, makeQuery, makeQueryForComponentTask} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
-import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
-import {expectKeysAtStrPath, sampleStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
+import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -30,98 +30,40 @@ describe('queryHelpers', () => {
     const {settings: {api}} = testConfig;
     const uri = parseApiUrl(api);
     const task = R.composeK(
-      ({apolloClient, region}) => makeQueryContainer(
-        {apolloClient},
-        {name: 'regions', readInputTypeMapper: {}},
-        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
-        {key: region.key}
+      mapToNamedPathAndInputs('region', 'data.regions.0',
+        ({apolloClient, createdRegion}) => makeQueryContainer(
+          {apolloClient},
+          {
+            name: 'regions',
+            readInputTypeMapper: {},
+            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+          },
+          null,
+          {key: createdRegion.key}
+        )
       ),
-      ({apolloClient}) => R.map(
-        region => ({apolloClient, region}),
-        makeMutationRequestContainer(
+      mapToNamedPathAndInputs('createdRegion', 'data.createRegion.region',
+        ({apolloClient}) => makeMutationRequestContainer(
           {apolloClient},
           {
             name: 'region',
             outputParams: ['key']
-          }
-        )(
+          },
+          null,
           {
             key: `test${moment().format('HH-mm-SS')}`,
             name: `Test${moment().format('HH-mm-SS')}`
           }
         )
       ),
-      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => testAuthTask
+      )
     )();
     task.run().listen(defaultRunConfig({
       onResolved:
-        response => {
-          expect(R.keys(reqStrPathThrowing('data.regions', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
-        }
-    }));
-  }, 1000);
-
-  test('makeQueryWithClientDirectiveContainer', done => {
-    const task = R.composeK(
-      // Query the client to confirm it's in the cache
-      ({apolloClient, region}) => makeQueryContainer(
-        {apolloClient},
-        {name: 'regions', readInputTypeMapper: {}},
-        ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
-        {key: region.key}
-      ),
-      // Query to get it in the cache
-      ({apolloClient, region}) => R.map(
-        () => ({apolloClient, region}),
-        makeQueryContainer(
-          {apolloClient},
-          {name: 'regions', readInputTypeMapper: {}},
-          ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
-          {key: region.key}
-        )
-      ),
-      ({apolloClient}) => R.map(
-        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.createRegion.region', regionResponse)}),
-        makeMutationRequestContainer(
-          {apolloClient},
-          {
-            name: 'region',
-            outpuParams: ['key']
-          })(
-          {
-            key: `test${moment().format('HH-mm-SS')}`,
-            name: `Test${moment().format('HH-mm-SS')}`
-          }
-        )
-      ),
-      () => testAuthTask
-    )();
-    task.run().listen(defaultRunConfig({
-      onResolved:
-        response => {
-          expect(R.keys(reqStrPathThrowing('data.regions.0', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
-        }
-    }));
-  }, 1000);
-
-  test('makeQueryContainerForSettings', done => {
-    const someMapboxKeys = ['viewport'];
-    const task = R.composeK(
-      // Query the client to confirm it's in the cache
-      ({apolloClient}) => makeQueryContainer(
-        {apolloClient},
-        {name: 'settings', readInputTypeMapper: {}},
-        mapboxOutputParamsFragment,
-        {}
-      ),
-      () => testAuthTask
-    )();
-    task.run().listen(defaultRunConfig({
-      onResolved:
-        response => {
-          expectKeysAtStrPath(someMapboxKeys, 'data.settings.mapbox', response);
+        ({region}) => {
+          expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
           done();
         }
     }));

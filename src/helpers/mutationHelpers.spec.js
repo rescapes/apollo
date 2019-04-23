@@ -12,7 +12,7 @@
 import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams} from './sampleData';
 import {makeMutation, makeMutationRequestContainer} from './mutationHelpers';
-import {sampleStateLinkResolversAndDefaults, testConfig} from './testHelpers';
+import {testStateLinkResolversAndDefaults, testConfig} from './testHelpers';
 import {authClientOrLoginTask} from '../auth/login';
 import {parseApiUrl} from 'rescape-helpers';
 import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
@@ -41,7 +41,7 @@ describe('mutationHelpers', () => {
           name: `Test${moment().format('HH-mm-SS')}`
         }
       ),
-      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+      () => authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
     )();
     task.run().listen(defaultRunConfig({
       onResolved:

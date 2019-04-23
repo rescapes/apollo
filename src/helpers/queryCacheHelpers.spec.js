@@ -13,64 +13,23 @@ import {makeQueryContainer, makeQuery} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, sampleStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
+import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
-import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
 import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from './queryCacheHelpers';
+import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
+import {settingsOutputParams} from '../stores/settingsStore';
 
 describe('queryCacheHelpers', () => {
 
-  test('makeQuery', () => {
-    expect(makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot();
-  });
-
-  test('makeQueryContainer', done => {
-    const {settings: {api}} = testConfig;
-    const uri = parseApiUrl(api);
+  test('testCachedQuery', done => {
     const task = R.composeK(
+      // Query normally to confirm it's in the cache
+      // We use fetchPolicy: 'cache-only' to force this. I assume this works but can't verify
       ({apolloClient, region}) => makeQueryContainer(
-        {apolloClient},
-        {
-          name: 'regions',
-          readInputTypeMapper: {},
-          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
-        },
-        null,
-        {key: region.key}
-      ),
-      mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({apolloClient}) => makeMutationRequestContainer(
-          {apolloClient},
-          {
-            name: 'region',
-            outputParams: ['key']
-          },
-          null,
-          {
-            key: `test${moment().format('HH-mm-SS')}`,
-            name: `Test${moment().format('HH-mm-SS')}`
-          }
-        )
-      ),
-      () => authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
-    )();
-    task.run().listen(defaultRunConfig({
-      onResolved:
-        response => {
-          expect(R.keys(reqStrPathThrowing('data.regions.0', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
-        }
-    }));
-  }, 1000);
-
-  test('makeQueryWithClientDirectiveContainer', done => {
-    const task = R.composeK(
-      // Query the client to confirm it's in the cache
-      ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
-        {apolloClient},
+        {apolloClient, fetchPolicy: 'cache-only'},
         {
           name: 'regions',
           readInputTypeMapper: {},
@@ -137,24 +96,5 @@ describe('queryCacheHelpers', () => {
     }));
   }, 1000);
 
-  test('makeQueryContainerForSettings', done => {
-    const someMapboxKeys = ['viewport'];
-    const task = R.composeK(
-      // Query the client to confirm it's in the cache
-      ({apolloClient}) => makeQueryContainer(
-        {apolloClient},
-        {name: 'settings', readInputTypeMapper: {}},
-        null,
-        mapboxOutputParamsFragment
-      ),
-      () => testAuthTask
-    )();
-    task.run().listen(defaultRunConfig({
-      onResolved:
-        response => {
-          expectKeysAtStrPath(someMapboxKeys, 'data.settings.mapbox', response);
-          done();
-        }
-    }));
-  }, 1000);
+
 });

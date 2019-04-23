@@ -9,116 +9,27 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
-import {sampleConfig, createSchema, getCurrentConfig} from 'rescape-sample-data';
+import {createSchema, getCurrentConfig} from 'rescape-sample-data';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
-import {reqStrPathThrowing, overDeep, keyStringToLensPath} from 'rescape-ramda';
-import privateTestConfig from './privateTestConfig';
+import {reqStrPathThrowing, keyStringToLensPath} from 'rescape-ramda';
+import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import gql from 'graphql-tag';
-
-let nextTodoId = 1;
-/**
- * StateLink resolvers for testing.
- */
-const sampleStateLinkResolvers = {
-  Mutation: {
-    // Example of a simple cache property networkStatus
-    updateNetworkStatus: (_, {isConnected}, {cache}) => {
-      const data = {
-        networkStatus: {
-          __typename: 'NetworkStatus',
-          isConnected
-        }
-      };
-      cache.writeData({data});
-      return null;
-    },
-    // Example of adding a TODO
-    addTodo: (_, {text}, {cache}) => {
-      const query = gql`
-          query GetTodos {
-              todos @client {
-                  id
-                  text
-                  completed
-              }
-          }
-      `;
-
-      const previous = cache.readQuery({query});
-      const newTodo = {id: nextTodoId++, text, completed: false, __typename: 'TodoItem'};
-      const data = {
-        todos: previous.todos.concat([newTodo])
-      };
-
-      // you can also do cache.writeData({ data }) here if you prefer
-      cache.writeQuery({query, data});
-      return newTodo;
-    },
-    // Example of list of cache items where we toggle one
-    toggleTodo: (_, variables, {cache}) => {
-      const id = `TodoItem:${variables.id}`;
-      const fragment = gql`
-          fragment completeTodo on TodoItem {
-              completed
-          }
-      `;
-      const todo = cache.readFragment({fragment, id});
-      const data = {...todo, completed: !todo.completed};
-
-      // you can also do cache.writeData({ data, id }) here if you prefer
-      cache.writeFragment({fragment, id, data});
-      return null;
-    }
-  },
-  Query: {
-    // State Link resolvers. Only needed to do fancy stuff
-    //networkStatus: (obj, args, context, info) =>
-  }
-};
-
+import {createStateLinkDefaults, defaultStateLinkResolvers} from '../client/stateLink';
 
 /**
- * Default values for StateLink resolvers
+ * The config for test
  */
-const testCreateStateLinkDefaults = config => overDeep(
-  (key, obj) => R.merge(obj, {__typename: key}),
-  R.merge(
-    config,
-    {
-      networkStatus: {
-        __typename: 'NetworkStatus',
-        isConnected: false
-      },
-      todos: [
-
-      ]
-    }
-    /*
-    // Same as passing defaults above
-  cache.writeData({
-    data: {
-      networkStatus: {
-        __typename: 'NetworkStatus',
-       isConnected: true,
-      },
-    },
-  });
-     */
-  )
-);
-
-export const testConfig = getCurrentConfig(privateTestConfig);
+export const testConfig = getCurrentConfig({settings: privateTestSettings});
 
 // Apollo Link State defaults are based on the config.
 // TODO I've limited the keys here to keep out regions and users. If all tests are based on a server
 // we should remove users and regions from our testConfig
-const testStateLinkDefaults = testCreateStateLinkDefaults(R.pick(['settings', 'browser'], testConfig));
+const testStateLinkDefaults = createStateLinkDefaults(R.pick(['settings', 'browser'], testConfig));
 
-export const sampleStateLinkResolversAndDefaults = {
-  resolvers: sampleStateLinkResolvers, defaults: testStateLinkDefaults
+export const testStateLinkResolversAndDefaults = {
+  resolvers: defaultStateLinkResolvers, defaults: testStateLinkDefaults
 };
 
 /**
@@ -136,7 +47,7 @@ export const createTestSelectorResolvedSchema = () => {
  */
 export const testAuthTask = loginToAuthClientTask(
   reqStrPathThrowing('settings.api.uri', testConfig),
-  sampleStateLinkResolversAndDefaults,
+  testStateLinkResolversAndDefaults,
   reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
 

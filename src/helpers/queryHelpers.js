@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqPathThrowing, capitalize, compact} from 'rescape-ramda';
+import {mapObjToValues, reqPathThrowing, capitalize, compact, omitDeep} from 'rescape-ramda';
 import * as R from 'ramda';
 import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
 import {
@@ -19,8 +19,8 @@ import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {v} from 'rescape-validate'
-import PropTypes from 'prop-types'
+import {v} from 'rescape-validate';
+import PropTypes from 'prop-types';
 
 /**
  * Makes a graphql query based on the queryParams
@@ -35,8 +35,29 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
   return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 });
 
+export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
+  return _makeQuery({isFragment: true}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+});
+
+/***
+ *
+ * @param queryConfig
+ * @param {String} queryConfig.client Adds a client directive
+ * @param {Boolean} queryConfig.isFragment If true creates a fragment
+ * @param queryName
+ * @param inputParamTypeMapper
+ * @param outputParams
+ * @param queryArguments
+ * @param {String} [queryArguments.__typename] Only required for fragment queries
+ * I think fragments never need args so only queryArguments.__typename should be specified for fragment queries
+ * @return {string} The query string, not gql
+ * @private
+ */
 export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, queryArguments) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
+
+  // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
+  const cleanedQueryArguments = omitDeep(['__typename'], queryArguments);
 
   // These are the first line parameter definitions of the query, which list the name and type
   const params = R.join(
@@ -47,7 +68,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
         // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
         return `$${key}: ${resolve(key, value)}!`;
       },
-      queryArguments
+      cleanedQueryArguments
     )
   );
 
@@ -58,19 +79,38 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
     ', ',
     mapObjToValues((value, key) => {
       return `${key}: $${key}`;
-    }, queryArguments)
+    }, cleanedQueryArguments)
   );
 
   // Only use parens if there are actually variables/arguments
-  const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(queryArguments));
+  const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(cleanedQueryArguments));
 
   const clientTokenIfClientQuery = R.ifElse(R.prop('client'), R.always('@client'), R.always(null))(queryConfig);
 
+  // Either we have a query queryName or fragment queryName on queryArguments.__typename
+  // I think fragments never need args so only queryArguments.__typename should be specified for fragment queryies
+  const queryOrFragment = R.ifElse(
+    R.prop('isFragment'),
+    R.always(`fragment ${queryName} on ${R.prop('__typename', queryArguments)}`),
+    R.always(`query ${queryName}`)
+  )(queryConfig);
+
+  // Unless we are creating a fragment, wrap the outputParams in the name of the type we are querying
+  const unlessFragment = content => R.ifElse(
+    R.prop('isFragment'),
+    R.always(null),
+    R.always(content)
+    )(queryConfig);
+
+  const output = R.join('', compact([
+    unlessFragment( R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery])) ),
+    formatOutputParams(outputParams),
+    unlessFragment( '}' )
+  ]));
+
   // We use the queryName as the label of the query and the name that matches the schema
-  return `query ${queryName} ${parenWrapIfNotEmpty(variableString)} { 
-${R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery]))} {
-  ${formatOutputParams(outputParams)}
-  }
+  return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
+  ${output}
 }`;
 };
 
@@ -134,7 +174,7 @@ export const makeQueryContainer = v(R.curry(
         component,
         props
       )
-    )
+    );
   }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],

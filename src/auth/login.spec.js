@@ -16,7 +16,7 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import {refreshTokenContainer, verifyTokenRequestContainer, authClientOrLoginTask, loginToAuthClientTask} from './login';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
-import {sampleStateLinkResolversAndDefaults} from '../helpers/testHelpers';
+import {testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -35,7 +35,7 @@ describe('login', () => {
       ),
       ({token}) => authApolloClientTask(
         uri,
-        sampleStateLinkResolversAndDefaults,
+        testStateLinkResolversAndDefaults,
         {tokenAuth: {token}}
       ),
       () => testAuthTask
@@ -55,12 +55,12 @@ describe('login', () => {
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
-    const task = authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig));
+    const task = authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig));
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, apolloClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(uri, sampleStateLinkResolversAndDefaults, apolloClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, apolloClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
                 expect(apolloClient).toEqual(apolloClient2);
@@ -75,7 +75,7 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
 
-    loginToAuthClientTask(uri, sampleStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
+    loginToAuthClientTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {

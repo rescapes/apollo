@@ -8,22 +8,20 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {InMemoryCache} from 'apollo-boost'
+import {InMemoryCache} from 'apollo-cache-inmemory';
 import {setContext} from 'apollo-link-context';
-import {ApolloClient} from 'apollo-boost'
+import {ApolloClient} from 'apollo-client';
+import {onError} from 'apollo-link-error';
 import {ApolloLink} from 'apollo-link';
-// TODO apollo-link-http' and 'apollo-link-error' are part of apollo-boost. How do we import this stuff
-import {createHttpLink} from 'apollo-link-http'
-import {onError} from 'apollo-link-error'
+import {createHttpLink} from 'apollo-link-http';
 import * as R from 'ramda';
-import createStateLink from './clientState';
 import {task, of} from 'folktale/concurrency/task';
+import {Just} from 'folktale/maybe';
 import {Query as query, Mutation as mutation} from "react-apollo";
 import {eMap} from 'rescape-helpers-component';
-import {Just} from 'folktale/maybe';
 import {
   promiseToTask,
-  reqStrPathThrowing,
+  reqStrPathThrowing
 } from 'rescape-ramda';
 
 const [Query, Mutation] = eMap([query, mutation]);
@@ -98,12 +96,14 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
   // The InMemoryCache is passed to the StateLink and the ApolloClient
   const cache = new InMemoryCache();
 
-  // Create the state link for local caching
-  const stateLink = createStateLink(
-    cache,
-    stateLinkResolversAndDefaults
-  );
-
+  // Assign our local sate resolver and local state defaults
+  const {resolvers, defaults} = R.ifElse(
+    R.has('resolvers'),
+    // Specified as obj
+    R.identity,
+    // Just resolvers and no defaults were specified
+    resolvers => ({resolvers, defaults: {}})
+  )(stateLinkResolversAndDefaults);
 
 // Create the ApolloClient using the following ApolloClientOptions
   const apolloClient = new ApolloClient({
@@ -113,15 +113,13 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     link: ApolloLink.from([
       errorLink,
       authLink,
-      // stateLink must be before httpLink and after errorLink
-      stateLink,
       httpLink]),
     // Use InMemoryCache
-    cache: new InMemoryCache(),
+    cache,
     // Needed to make the @client direct go to the cache
-    resolvers: {}
+    resolvers
   });
-  apolloClient.onResetStore(stateLink.writeDefaults);
+  cache.writeData({data: defaults});
 
   // Return apolloClient
   return {apolloClient};
@@ -129,24 +127,29 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
 
 /**
  * Wrap an Apollo Client query into a promiseToTask converter and call a query
- * @param client An Apollo Client that doesn't need authentication
+ * @param apolloConfig An Apollo Client that doesn't need authentication
+ * @param apolloConfig.apolloCient An Apollo Client that doesn't need authentication
  * @param args
  * @return {*}
  */
-export const noAuthApolloClientQueryRequestTask = (client, args) => {
-  return promiseToTask(client.query(args));
+export const noAuthApolloClientQueryRequestTask = (apolloConfig, args) => {
+  const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  return promiseToTask(apolloClient.query(args));
 };
 
 /**
  * Wrap an Apollo Client query into a promiseToTask converter and call a mutation
- * @param {Object} apolloConfig An Apollo Client that doesn't need authentication
+ * @param {Object} apolloConfig An Apollo Client that doesn't need authentication and mutation options
  * @param {Object} apolloConfig.apolloClient An Apollo Client that doesn't need authentication
  * @param options
+ * @param options.mutation: The Apollo mutation
+ * @param options.variables: The mutation variables
  * @return {*}
  */
 export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => {
+  const mutationOptions = R.omit(['apolloClient'], apolloConfig);
   return task(resolver => {
-    return reqStrPathThrowing('apolloClient', apolloConfig).mutate(options).then(
+    return reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options)).then(
       resolved => resolver.resolve(resolved)
     ).catch(
       error => resolver.reject(error)
@@ -160,6 +163,8 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  * @return {Task} A Task that makes the request when run
  */
 export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, options, props) => {
+  const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  const mutationOptions = R.omit(['apolloClient'], apolloConfig);
   /*
   TODO map result to match a component result
   mutationResponse => {
@@ -175,16 +180,21 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
   },
   */
   return promiseToTask(
-    reqStrPathThrowing('apolloClient', apolloConfig).mutate({
-      variables: props,
-      ...R.pick(['mutation'], options)
-    })
+    apolloClient.mutate(
+      R.merge(
+        mutationOptions, {
+          variables: props,
+          ...R.pick(['mutation'], options)
+        }
+      )
+    )
   );
 });
 
 /***
  * Authenticated Apollo Client query request
- * @param apolloClient The authenticated Apollo Client
+ * @param apolloConfig The apolloConfig contains the client and options for query like fetch policy
+ * @param apolloConfig.apolloClient The authenticated Apollo Client
  * @param {Object} query Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
  * query: gql`
@@ -199,8 +209,18 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
  * @return {Task} A Task that makes the request when run an returns the query results or an error
  * Results are returned in {data: ...} and errors in {errors:...}
  */
-export const authApolloClientQueryContainer = R.curry((apolloClient, query, props) => {
-  return promiseToTask(apolloClient.query({query, variables: props}));
+export const authApolloClientQueryContainer = R.curry((apolloConfig, query, props) => {
+  const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  const queryOptions = R.omit(['apolloClient'], apolloConfig);
+
+  return promiseToTask(
+    apolloClient.query(
+      R.merge(
+        queryOptions,
+        {query, variables: props}
+      )
+    )
+  );
 });
 
 /**
@@ -284,7 +304,7 @@ export const authApolloQueryContainer = R.curry((config, query, component, props
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => authApolloClientQueryContainer(
-        R.prop('apolloClient', apolloConfig),
+        apolloConfig,
         query,
         props
       )
@@ -343,12 +363,14 @@ export const authApolloClient = (url, stateLinkResolverAndDefaults, authToken) =
 
 /**
  * Wrap a loginClient into a promiseToTask converter
- * @param client An Apollo Client that doesn't need authentication
+ * @param apolloConfig An Apollo Client that doesn't need authentication
+ * @param apolloConfig.client An Apollo Client that doesn't need authentication
  * @param args
  * @return {*}
  */
-export const noAuthApolloClientRequestTask = (client, ...args) => {
-  return promiseToTask(client.request(...args));
+export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
+  const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  return promiseToTask(apolloClient.request(...args));
 };
 
 /**

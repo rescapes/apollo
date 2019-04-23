@@ -28,8 +28,8 @@ import {
 } from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {v} from 'rescape-validate'
-import PropTypes from 'prop-types'
+import {v} from 'rescape-validate';
+import PropTypes from 'prop-types';
 
 /**
  * Makes the location query based on the queryParams
@@ -87,23 +87,19 @@ export const makeMutationRequestContainer = v(R.curry(
    },
    component,
    props) => {
-    // Determine crud type from the presence of the id in the props
-    const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
-    // Create|Update[Model Name]InputType]
-    const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
-    const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
-    // In most cases, our outputParams are {[name]: outputParams} and props are {[variableNames]: props} to match the
-    // name of the object class being mutated. If we don't specify name an instead use the overrides,
-    // we don't need name here
-    const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
-    const namedProps = R.ifElse(R.isNil, R.always(props), () => ({[variableName]: props}))(name);
+
+    // Get the variable definition, arguments and outputParams
+    const {variables, variableName, namedProps, namedOutputParams, crud} = mutationParts(
+      {name, outputParams, variableTypeOverride, variableNameOverride},
+      props
+    );
 
     // create|update[Model Name]
     const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
 
     const mutation = gql`${makeMutation(
       createOrUpdateName,
-      {[variableName]: variableType},
+      variables,
       namedOutputParams
     )}`;
 
@@ -147,10 +143,35 @@ export const makeMutationRequestContainer = v(R.curry(
       // These are only used for simple mutations where there is no complex input type
       variableNameOverride: PropTypes.string,
       variableTypeOverride: PropTypes.string,
-      mutationNameOverride: PropTypes.string,
+      mutationNameOverride: PropTypes.string
     })],
     ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationRequestContainer'
 );
+
+
+/**
+ * Creates the parts needed for the mutation
+ * @param name
+ * @param outputParams
+ * @param variableTypeOverride
+ * @param variableNameOverride
+ * @param props
+ * @return {{variables: {}, variableName: *, namedOutputParams: *, namedProps: *, crud: *}}
+ */
+export const mutationParts = ({name, outputParams, variableTypeOverride, variableNameOverride}, props) => {
+  // Determine crud type from the presence of the id in the props
+  const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
+  // Create|Update[Model Name]InputType]
+  const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
+  const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
+  const variables = {[variableName]: variableType};
+  // In most cases, our outputParams are {[name]: outputParams} and props are {[variableNames]: props} to match the
+  // name of the object class being mutated. If we don't specify name an instead use the overrides,
+  // we don't need name here
+  const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
+  const namedProps = R.ifElse(R.isNil, R.always(props), () => ({[variableName]: props}))(name);
+  return {variables, variableName, namedOutputParams, namedProps, crud};
+};

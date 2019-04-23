@@ -40,9 +40,12 @@
     "publish-minor": "yarn --new-version version minor && yarn publish"
   },
   "dependencies": {
-    "apollo-boost": "^0.3.1",
+    "apollo-cache-inmemory": "^1.5.1",
+    "apollo-client": "^2.5.1",
     "apollo-link": "^1.2.2",
     "apollo-link-context": "^1.0.8",
+    "apollo-link-error": "^1.1.10",
+    "apollo-link-http": "^1.5.14",
     "apollo-link-ws": "^1.0.8",
     "apollo-utilities": "^1.0.19",
     "debug": "^4.1.1",
@@ -67,7 +70,7 @@
     "rescape-geospatial-sankey": "^0.7.17",
     "rescape-helpers": "^1.1.79",
     "rescape-helpers-component": "^1.5.35",
-    "rescape-ramda": "^1.5.25",
+    "rescape-ramda": "^1.5.27",
     "rescape-validate": "^1.2.15",
     "source-map-support": "^0.5.10"
   },
