@@ -45,7 +45,22 @@ export const createTestSelectorResolvedSchema = () => {
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const testAuthTask = loginToAuthClientTask(
+export const localTestAuthTask = loginToAuthClientTask(
+  reqStrPathThrowing('settings.api.uri', testConfig),
+  testStateLinkResolversAndDefaults,
+  reqStrPathThrowing('settings.testAuthorization', testConfig)
+);
+
+/**
+ * Task to return and authorized client for tests
+ * @param {Object} testConfig The configuration to set up the test
+ * @param {Object} testConfig.settings.api.uri. Uril of the API
+ * @param {Object} testConfig.settings.testAuthorization Special test section in the settings with
+ * a username and password
+ * Returns an object {apolloClient:An authorized client}
+ *
+ */
+export const testAuthTask = testConfig => loginToAuthClientTask(
   reqStrPathThrowing('settings.api.uri', testConfig),
   testStateLinkResolversAndDefaults,
   reqStrPathThrowing('settings.testAuthorization', testConfig)

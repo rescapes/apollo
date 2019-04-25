@@ -15,7 +15,6 @@ import {
   authApolloClientTask,
   noAuthApolloClientMutationRequestTask,
 } from '../client/apolloClient';
-import {GraphQLClient} from 'graphql-request';
 import {of} from 'folktale/concurrency/task';
 import gql from 'graphql-tag';
 import {ApolloClient} from 'apollo-client';

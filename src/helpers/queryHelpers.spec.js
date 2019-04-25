@@ -11,14 +11,12 @@
 
 import {makeQueryContainer, makeQuery, makeQueryForComponentTask} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
-import {authClientOrLoginTask} from '../auth/login';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
+import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, localTestAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
-import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
 
 describe('queryHelpers', () => {
 
@@ -28,7 +26,6 @@ describe('queryHelpers', () => {
 
   test('makeQueryContainer', done => {
     const {settings: {api}} = testConfig;
-    const uri = parseApiUrl(api);
     const task = R.composeK(
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, createdRegion}) => makeQueryContainer(
@@ -57,7 +54,7 @@ describe('queryHelpers', () => {
         )
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )();
     task.run().listen(defaultRunConfig({

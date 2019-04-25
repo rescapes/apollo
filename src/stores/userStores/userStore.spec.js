@@ -10,7 +10,7 @@
  */
 
 import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../helpers/testHelpers';
+import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask, testConfig} from '../../helpers/testHelpers';
 import * as R from 'ramda';
 import {of} from 'folktale/concurrency/task';
 import {
@@ -26,7 +26,7 @@ describe('userStore', () => {
     R.composeK(
       ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:
@@ -50,7 +50,7 @@ describe('userStore', () => {
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:
@@ -144,7 +144,7 @@ describe('userStore', () => {
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:

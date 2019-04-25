@@ -9,9 +9,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqPathThrowing, capitalize, compact, omitDeep} from 'rescape-ramda';
+import {mapObjToValues, compact, omitDeep} from 'rescape-ramda';
 import * as R from 'ramda';
-import {resolveGraphQLType, formatOutputParams, responseForComponent} from './requestHelpers';
+import {resolveGraphQLType, formatOutputParams} from './requestHelpers';
 import {
   authApolloQueryContainer
 } from '../client/apolloClient';
@@ -103,7 +103,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
     )(queryConfig);
 
   const output = R.join('', compact([
-    unlessFragment( R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery])) ),
+    unlessFragment( R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{'])) ),
     formatOutputParams(outputParams),
     unlessFragment( '}' )
   ]));

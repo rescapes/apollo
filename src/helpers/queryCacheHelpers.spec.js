@@ -13,7 +13,7 @@ import {makeQueryContainer, makeQuery} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {authClientOrLoginTask} from '../auth/login';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, testAuthTask, testConfig} from './testHelpers';
+import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, localTestAuthTask, testConfig} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -81,7 +81,7 @@ describe('queryCacheHelpers', () => {
           }
         )
       ),
-      () => testAuthTask
+      () => localTestAuthTask
     )();
     task.run().listen(defaultRunConfig({
       onResolved:

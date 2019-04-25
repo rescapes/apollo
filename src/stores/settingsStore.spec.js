@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, testAuthTask} from '../helpers/testHelpers';
+import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask} from '../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeSettingsMutationContainer, makeSettingssQueryContainer, settingsOutputParams} from './settingsStore';
 import {createSampleSettingsTask} from './settingsStore.sample';
@@ -23,7 +23,7 @@ describe('settingsStore', () => {
         'cacheOnlySettings',
         ({apolloClient}) => createSampleSettingsTask({apolloClient})
       ),
-      () => testAuthTask
+      () => localTestAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
         ({settings}) => {
@@ -44,7 +44,7 @@ describe('settingsStore', () => {
       ),
       ({apolloClient}) => createSampleSettingsTask({apolloClient}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:

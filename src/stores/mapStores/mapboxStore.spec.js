@@ -1,4 +1,4 @@
-import {expectKeysAtStrPath, testAuthTask} from '../../helpers/testHelpers';
+import {expectKeysAtStrPath, localTestAuthTask} from '../../helpers/testHelpers';
 import {makeCurrentUserQueryContainer, userOutputParams} from '../userStores/userStore';
 import {makeMapboxesQueryTask} from '../mapStores/mapboxStore';
 import {graphql} from 'graphql';
@@ -50,7 +50,7 @@ describe('mapboxStore', () => {
       ({apolloClient}) => createSampleProjectTask({apolloClient}),
       ({apolloClient}) => createSampleRegionTask({apolloClient}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:

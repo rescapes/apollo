@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {testAuthTask, testConfig} from '../helpers/testHelpers';
+import {localTestAuthTask, testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {refreshTokenContainer, verifyTokenRequestContainer, authClientOrLoginTask, loginToAuthClientTask} from './login';
@@ -38,7 +38,7 @@ describe('login', () => {
         testStateLinkResolversAndDefaults,
         {tokenAuth: {token}}
       ),
-      () => testAuthTask
+      () => localTestAuthTask
     )().run().listen(defaultRunConfig(
       {
         onResolved:

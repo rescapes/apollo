@@ -10,7 +10,7 @@
  */
 import gql from 'graphql-tag';
 import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from 'rescape-ramda';
-import {testAuthTask} from '../helpers/testHelpers';
+import {localTestAuthTask} from '../helpers/testHelpers';
 import {getUnsubscribe} from './apolloClient';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
@@ -26,7 +26,7 @@ import {makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelper
 describe('apolloClient', () => {
 
   test('Confirm Apollo Client queries work', async () => {
-    const {apolloClient} = await taskToPromise(testAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask);
     const response = await apolloClient.query({
       query: gql`query regionsQuery {
           regions {
@@ -75,7 +75,7 @@ describe('apolloClient', () => {
         )(props)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
       )({props})
     );

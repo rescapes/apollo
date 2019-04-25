@@ -1,8 +1,9 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 import replace from 'rollup-plugin-replace';
-import uglify from 'rollup-plugin-uglify';
+//import uglify from 'rollup-plugin-uglify';
 import autoExternal from 'rollup-plugin-auto-external';
+import commonjs from 'rollup-plugin-commonjs';
 
 const env = process.env.NODE_ENV;
 const config = {
@@ -26,11 +27,10 @@ const config = {
   plugins: [
     // Automatically exclude dependencies and peerDependencies from cjs and es builds, (and excludes
     // peerDependencies from all builds)
-    autoExternal()
-  ],
-  experimentalCodeSplitting: true
+    autoExternal(),
+    commonjs()
+  ]
 };
-
 if (env === 'es' || env === 'cjs') {
   config.output = {
     dir: env,
@@ -39,13 +39,21 @@ if (env === 'es' || env === 'cjs') {
     sourcemap: 'inline'
   };
   // folktale needs to be explicitly external because rollup can't
-  // match folktale to folktale/concurrency/task
+  // match folktale to folktale/concurrency/task, same with turf
   // enzyme and enzyme-wait are dev-dependencies that are used by componentTestHelpers, so mark external here
-  config.external = ['symbol-observable', 'folktale/concurrency/task', 'enzyme', 'enzyme-wait']
+  config.external = [
+    'symbol-observable',
+    'folktale/concurrency/task',
+    'folktale/result',
+    'enzyme',
+    'enzyme-wait',
+    '@turf/helpers',
+    '@turf/center',
+    'fs'
+  ];
   config.plugins.push(
     babel({
-      exclude: ['node_modules/**'],
-      plugins: ['external-helpers']
+      exclude: ['node_modules/**']
     })
   );
 }
@@ -59,11 +67,9 @@ if (env === 'development' || env === 'production') {
   };
   config.plugins.push(
     nodeResolve({
-      jsnext: true
     }),
     babel({
-      exclude: 'node_modules/**',
-      plugins: ['external-helpers']
+      exclude: 'node_modules/**'
     }),
     replace({
       'process.env.NODE_ENV': JSON.stringify(env)
@@ -73,6 +79,7 @@ if (env === 'development' || env === 'production') {
 
 if (env === 'production') {
   config.plugins.push(
+    /*
     uglify({
       compress: {
         pure_getters: true,
@@ -81,6 +88,7 @@ if (env === 'production') {
         warnings: false
       }
     })
+  */
   );
 }
 

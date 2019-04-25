@@ -11,7 +11,7 @@
 
 import {makeUserProjectsQueryContainer, userStateOutputParamsCreator} from './userProjectStore';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, stateLinkResolvers, testAuthTask, testConfig} from '../../../helpers/testHelpers';
+import {expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryContainer, userOutputParams} from '../userStore';
 
@@ -32,7 +32,7 @@ describe('userProjectStore', () => {
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:
@@ -57,7 +57,7 @@ describe('userProjectStore', () => {
         makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:
@@ -81,7 +81,7 @@ describe('userProjectStore', () => {
         makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask
       )
     )().run().listen(defaultRunConfig({
       onResolved:

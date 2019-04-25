@@ -10,7 +10,7 @@
  */
 import gql from 'graphql-tag';
 import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from 'rescape-ramda';
-import {testAuthTask} from '../helpers/testHelpers';
+import {localTestAuthTask} from '../helpers/testHelpers';
 import {getUnsubscribe} from './apolloClient';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
@@ -25,7 +25,7 @@ describe('apolloClient', () => {
 
   test('test linkState initial state', async () => {
 
-    const {apolloClient} = await taskToPromise(testAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask);
     const queryDefaults = gql`
         query {
             networkStatus @client {
@@ -49,7 +49,7 @@ describe('apolloClient', () => {
 
   test('test linkState mutation', async () => {
 
-    const {apolloClient} = await taskToPromise(testAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask);
     // Mutate the network status
     const mutateNetworkStatus = gql`
         mutation updateNetworkStatus($isConnected: Boolean) {
