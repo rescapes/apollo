@@ -109,7 +109,7 @@ export const sample_resources = R.map(
 
 // data would default to Object, so we need to map it to the right type
 export const sampleInputParamTypeMapper = {
-  'data': 'ResourceRelatedReadInputType'
+  'resourceData': 'ResourceRelatedReadInputType'
 };
 // Default output params for query. Just add more to these as needed.
 // Later we'll let the user specify
@@ -161,7 +161,7 @@ export const sampleResourceOutputParams = [
   }
 ];
 
-export const sampleResourceInputParams = {
+export const sampleResourceProps = {
   resourceData: {
     name: "Candy",
     data: {
@@ -241,4 +241,4 @@ export const sampleResourceInputParams = {
     }
   }
 };
-export const sampleReesourceMutationOutputParams = {resource: sampleResourceOutputParams};
+export const sampleResourceMutationOutputParams = {resource: sampleResourceOutputParams};

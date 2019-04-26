@@ -1,9 +1,10 @@
 import nodeResolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 import replace from 'rollup-plugin-replace';
-//import uglify from 'rollup-plugin-uglify';
-import autoExternal from 'rollup-plugin-auto-external';
+import {terser} from 'rollup-plugin-terser';
 import commonjs from 'rollup-plugin-commonjs';
+import pkg from './package.json';
+import * as R from 'ramda';
 
 const env = process.env.NODE_ENV;
 const config = {
@@ -22,74 +23,85 @@ const config = {
     'src/selectors/storeSelectors.js',
     'src/selectors/styleSelectors.js',
     'src/selectors/userSelectors.js',
-    'src/schema/selectorResolvers.js',
+    'src/schema/selectorResolvers.js'
   ],
-  plugins: [
-    // Automatically exclude dependencies and peerDependencies from cjs and es builds, (and excludes
-    // peerDependencies from all builds)
-    autoExternal(),
-    commonjs()
-  ]
+  plugins: []
 };
-if (env === 'es' || env === 'cjs') {
-  config.output = {
-    dir: env,
-    format: env,
-    indent: false,
-    sourcemap: 'inline'
-  };
-  // folktale needs to be explicitly external because rollup can't
-  // match folktale to folktale/concurrency/task, same with turf
-  // enzyme and enzyme-wait are dev-dependencies that are used by componentTestHelpers, so mark external here
-  config.external = [
-    'symbol-observable',
-    'folktale/concurrency/task',
-    'folktale/result',
-    'enzyme',
-    'enzyme-wait',
-    '@turf/helpers',
-    '@turf/center',
-    'fs'
-  ];
-  config.plugins.push(
-    babel({
-      exclude: ['node_modules/**']
-    })
-  );
-}
+const externals = ['symbol-observable', 'folktale/concurrency/task', 'folktale/result/index'];
 
-if (env === 'development' || env === 'production') {
-  config.output = {
-    dir: 'umd',
-    format: 'umd',
-    name: 'Umd',
-    indent: false
-  };
-  config.plugins.push(
-    nodeResolve({
-    }),
-    babel({
-      exclude: 'node_modules/**'
-    }),
-    replace({
-      'process.env.NODE_ENV': JSON.stringify(env)
-    })
-  );
-}
+const configs = R.map(c => {
+  const x = R.merge(config, c);
+  console.warn(x);
+  return x;
+}, [
+  // CommonJS
+  {
+    output: {
+      dir: 'lib',
+      format: 'cjs',
+      indent: true,
+      sourcemap: true
+    },
+    external: [
+      ...externals,
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ],
+    plugins: R.concat(config.plugins, [
+      commonjs({
+        'node_modules/folktale/result/index.js': ['Result', 'Error', 'Ok'],
+        'node_modules/folktale/concurrency/task/index.js': ['task', 'rejected', 'of']
+      }),
+      babel()
+    ])
+  },
+  // ES
+  {
+    output: {
+      dir: 'esm',
+      format: 'esm',
+      indent: true,
+      sourcemap: true
+    },
+    external: [
+      ...externals,
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ],
+    plugins: R.concat(config.plugins, [
+      nodeResolve({}), babel()
+    ])
+  },
 
-if (env === 'production') {
-  config.plugins.push(
-    /*
-    uglify({
-      compress: {
-        pure_getters: true,
-        unsafe: true,
-        unsafe_comps: true,
-        warnings: false
-      }
-    })
-  */
-  );
-}
-
-export default config;
+  // ES for Browsers
+  {
+    output: {
+      dir: 'esm',
+      chunkFileNames: "[name]-[hash].mjs",
+      entryFileNames: "[name].mjs",
+      format: 'esm',
+      indent: true,
+      sourcemap: true
+    },
+    external: [
+      ...externals,
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ],
+    plugins: R.concat(config.plugins, [
+      nodeResolve({}),
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production')
+      }),
+      terser({
+        compress: {
+          pure_getters: true,
+          unsafe: true,
+          unsafe_comps: true,
+          warnings: false
+        }
+      })
+    ])
+  }
+]);
+export default configs;

@@ -23,7 +23,7 @@ import {
   promiseToTask,
   reqStrPathThrowing
 } from 'rescape-ramda';
-
+import fetch from 'node-fetch';
 const [Query, Mutation] = eMap([query, mutation]);
 
 /**
@@ -62,6 +62,7 @@ const [Query, Mutation] = eMap([query, mutation]);
  */
 const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}) => {
   const httpLink = createHttpLink({
+    fetch,
     uri
   });
 

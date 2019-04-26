@@ -34,13 +34,13 @@ import PropTypes from 'prop-types';
 /**
  * Makes the location query based on the queryParams
  * @param {String} queryName
- * @param {Object} inputParams input object for the mutation. These are in javascript in a the same format as
+ * @param {Object} variablesAndTypes: Keyed by the variable name and valued by the variable type
  * graphql, then translated here to a graphql string
  * @param {Object} outputParams
  */
-export const makeMutation = R.curry((mutationName, variables, outputParams) => {
-  const variableString = R.join(', ', mapObjToValues((type, name) => `$${name}: ${type}!`, variables));
-  const variableMappingString = R.join(', ', mapObjToValues((type, name) => `${name}: $${name}`, variables));
+export const makeMutation = R.curry((mutationName, variablesAndTypes, outputParams) => {
+  const variableString = R.join(', ', mapObjToValues((type, name) => `$${name}: ${type}!`, variablesAndTypes));
+  const variableMappingString = R.join(', ', mapObjToValues((type, name) => `${name}: $${name}`, variablesAndTypes));
   return `mutation ${mutationName}Mutation(${variableString}) { 
 ${mutationName}(${variableMappingString}) {
   ${formatOutputParams(outputParams)}
@@ -89,7 +89,7 @@ export const makeMutationRequestContainer = v(R.curry(
    props) => {
 
     // Get the variable definition, arguments and outputParams
-    const {variables, variableName, namedProps, namedOutputParams, crud} = mutationParts(
+    const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
       {name, outputParams, variableTypeOverride, variableNameOverride},
       props
     );
@@ -99,7 +99,7 @@ export const makeMutationRequestContainer = v(R.curry(
 
     const mutation = gql`${makeMutation(
       createOrUpdateName,
-      variables,
+      variablesAndTypes ,
       namedOutputParams
     )}`;
 
@@ -154,24 +154,27 @@ export const makeMutationRequestContainer = v(R.curry(
 
 /**
  * Creates the parts needed for the mutation
- * @param name
- * @param outputParams
- * @param variableTypeOverride
- * @param variableNameOverride
- * @param props
- * @return {{variables: {}, variableName: *, namedOutputParams: *, namedProps: *, crud: *}}
+ * @param {String} name The name of the object type, e.g. region
+ * @param {[Object|String]} outputParams Output params for the mutation
+ * @param {String} variableTypeOverride Used to override the variable type, normally it's (Update|Create){Name}InputType
+ * @param {String} variableNameOverride Override the variableName, normally {name}Data
+ * @param {Object} props Just used to determin if an update or create is needed by reading props.id. Passing just {id: true}
+ * will force and update
+ * @return {{variablesAndTypes: {}, variableName: *, namedOutputParams: *, namedProps: *, crud: *}}
  */
 export const mutationParts = ({name, outputParams, variableTypeOverride, variableNameOverride}, props) => {
   // Determine crud type from the presence of the id in the props
   const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
   // Create|Update[Model Name]InputType]
   const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
+  // The default variable type is the name of the type given + InputType
+  // We only expect mutations to have one input prop, the entire object being created or updated
   const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
-  const variables = {[variableName]: variableType};
+  const variablesAndTypes = {[variableName]: variableType};
   // In most cases, our outputParams are {[name]: outputParams} and props are {[variableNames]: props} to match the
   // name of the object class being mutated. If we don't specify name an instead use the overrides,
   // we don't need name here
   const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
   const namedProps = R.ifElse(R.isNil, R.always(props), () => ({[variableName]: props}))(name);
-  return {variables, variableName, namedOutputParams, namedProps, crud};
+  return {variablesAndTypes, variableName, namedOutputParams, namedProps, crud};
 };

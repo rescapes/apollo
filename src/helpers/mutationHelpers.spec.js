@@ -9,20 +9,37 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {resolveGraphQLType, formatOutputParams} from './queryHelpers';
-import {sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams} from './sampleData';
-import {makeMutation, makeMutationRequestContainer} from './mutationHelpers';
+import {formatOutputParams} from './queryHelpers';
+import {sampleResourceProps, sampleResourceMutationOutputParams} from './sampleData';
+import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
 import {testStateLinkResolversAndDefaults, testConfig} from './testHelpers';
 import {authClientOrLoginTask} from '../auth/login';
 import {parseApiUrl} from 'rescape-helpers';
-import {defaultRunConfig, reqStrPathThrowing} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, capitalize } from 'rescape-ramda';
 import * as R from 'ramda';
 import moment from 'moment';
+import {print} from 'graphql';
+import gql from 'graphql-tag';
 
 describe('mutationHelpers', () => {
   test('makeMutation', () => {
-    const result = makeMutation('createSampleResource', sampleInputParamTypeMapper, sampleResourceInputParams, sampleReesourceMutationOutputParams);
-    expect(result).toMatchSnapshot();
+    const {variablesAndTypes, namedOutputParams, crud} = mutationParts(
+      {
+        name: 'sampleResource',
+        outputParams: sampleResourceMutationOutputParams,
+      }, sampleResourceProps
+    );
+
+    // create|update[Model Name]
+    const createOrUpdateName = `${crud}${capitalize(name)}`;
+
+    const mutation = gql`${makeMutation(
+      createOrUpdateName,
+      variablesAndTypes ,
+      namedOutputParams
+    )}`;
+
+    expect(print(mutation)).toMatchSnapshot();
   });
 
   test('makeMutationRequestContainer', done => {
