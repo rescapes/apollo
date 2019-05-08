@@ -1,9 +1,9 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.48",
+  "version": "0.0.49",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
-  "module": "es/index.js",
+  "module": "esm/index.mjs",
   "jsnext:main": "es/index.js",
   "repository": {
     "type": "git",
