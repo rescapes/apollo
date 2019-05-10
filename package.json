@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -63,10 +63,10 @@
     "react-emotion": "^10.0.0",
     "request": "^2.88.0",
     "rescape-geospatial-sankey": "^0.7.17",
-    "rescape-helpers": "^1.1.82",
+    "rescape-helpers": "^1.1.83",
     "rescape-helpers-component": "^1.5.35",
-    "rescape-ramda": "^1.5.37",
-    "rescape-validate": "^1.2.19",
+    "rescape-ramda": "^1.5.38",
+    "rescape-validate": "^1.2.20",
     "unfetch": "^4.1.0"
   },
   "devDependencies": {
@@ -102,8 +102,8 @@
     "promise": "8.0.3",
     "redux-devtools-extension": "^2.13.8",
     "redux-mock-store": "^1.5.3",
-    "rescape-helpers-test": "^0.0.17",
-    "rescape-sample-data": "^1.2.52",
+    "rescape-helpers-test": "^0.0.18",
+    "rescape-sample-data": "^1.2.53",
     "rimraf": "^2.6.3",
     "rollup": "^1.11.3",
     "rollup-plugin-babel": "^4.3.2",
