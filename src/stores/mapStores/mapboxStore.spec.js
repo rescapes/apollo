@@ -29,6 +29,7 @@ describe('mapboxStore', () => {
       ({apolloClient, userId, regionId, projectId}) => makeMapboxesQueryTask(
         {apolloClient},
         mapboxOutputParamsFragment,
+        null,
         {
           user: {id: parseInt(userId)},
           region: {id: parseInt(regionId)},

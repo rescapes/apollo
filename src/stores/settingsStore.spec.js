@@ -11,7 +11,7 @@
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask} from '../helpers/testHelpers';
 import * as R from 'ramda';
-import {makeSettingsMutationContainer, makeSettingssQueryContainer, settingsOutputParams} from './settingsStore';
+import {makeSettingsMutationContainer, makeSettingsQueryContainer, settingsOutputParams} from './settingsStore';
 import {createSampleSettingsTask} from './settingsStore.sample';
 
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.mapbox'];
@@ -33,14 +33,15 @@ describe('settingsStore', () => {
     }));
   });
 
-  test('makeSettingssQueryContainer', done => {
+  test('makeSettingsQueryContainer', done => {
     R.composeK(
-      ({apolloClient}) => makeSettingssQueryContainer(
-        {apolloClient},
-        {outputParams: settingsOutputParams},
-        null,
-        // No arguments needed to query settings
-        {}
+      mapToNamedPathAndInputs('settings', 'data.settings.0',
+        ({apolloClient, cacheOnlySettings}) => makeSettingsQueryContainer(
+          {apolloClient},
+          {outputParams: settingsOutputParams(true)},
+          null,
+          {id: parseInt(cacheOnlySettings.id)}
+        )
       ),
       ({apolloClient}) => createSampleSettingsTask({apolloClient}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
@@ -48,12 +49,10 @@ describe('settingsStore', () => {
       )
     )().run().listen(defaultRunConfig({
       onResolved:
-        response => {
-          expectKeysAtStrPath(someSettingsKeys, 'data.settingss.0', response);
+        ({settings}) => {
+          expectKeys(someSettingsKeys, settings);
           done();
         }
     }));
   });
-
-
 });

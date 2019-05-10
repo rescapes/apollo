@@ -223,3 +223,10 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
     )
   )
 )(queryTask);
+
+/**
+ * Converts string ids to int. This is needed because Apollo returns strings but expects ints
+ * @param {Object} obj The object with a string id
+ * @returns {Object} obj The object with an int id
+ */
+export const objIdToInt = obj => R.over(R.lensProp('id'), parseInt, obj);

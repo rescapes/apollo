@@ -72,7 +72,7 @@ export const settingsOutputParams = (omitCacheOnlyFields = false) => [
 // The prop paths are marked with a client directive when querying (see settingsOutputParams)
 // so we never try to load them from the database.
 const cacheOnlyProps = ['data.testAuthorization', 'data.mapbox.mapboxApiAccessToken'];
-// These values come back from makeSettingssQueryContainer and makeSettingsMutationContainer.
+// These values come back from makeSettingsQueryContainer and makeSettingsMutationContainer.
 // Include these in makeSettingsClientMutationContainer so we know where to write to cache
 const cacheIdProps = ['id', '__typename', 'data.__typename'];
 
@@ -84,11 +84,10 @@ const cacheIdProps = ['id', '__typename', 'data.__typename'];
  * @params {Object} props Arguments for the Settingss query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Settingss in an object with obj.data.settingss or errors in obj.errors
  */
-export const makeSettingssQueryContainer = v(R.curry((apolloConfig, {outputParams, propsStructure}, component, props) => {
+export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams, propsStructure}, component, props) => {
     return makeQueryContainer(
       apolloConfig,
-      // Intentionally spelled with a second s
-      {name: 'settingss', readInputTypeMapper, outputParams, propsStructure},
+      {name: 'settings', readInputTypeMapper, outputParams, propsStructure},
       component,
       props
     );
@@ -102,7 +101,7 @@ export const makeSettingssQueryContainer = v(R.curry((apolloConfig, {outputParam
     ],
     ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
-  ], 'makeSettingssQueryContainer');
+  ], 'makeSettingsQueryContainer');
 
 /**
  * Makes a Settings mutation

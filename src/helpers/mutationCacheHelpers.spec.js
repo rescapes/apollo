@@ -10,61 +10,30 @@
  */
 
 import {formatOutputParams} from './queryHelpers';
-import {sampleResourceProps, sampleResourceMutationOutputParams} from './sampleData';
-import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
-import {testConfig, localTestAuthTask} from './testHelpers';
-import {parseApiUrl} from 'rescape-helpers';
-import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs } from 'rescape-ramda';
+import {localTestAuthTask, expectKeys} from './testHelpers';
+import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import * as R from 'ramda';
-import moment from 'moment';
-import {print} from 'graphql';
-import gql from 'graphql-tag';
+import {makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
+import {createSampleSettingsTask} from '../stores/settingsStore.sample';
 
-describe('mutationHelpers', () => {
-  test('makeMutation', () => {
-    const {variablesAndTypes, namedOutputParams, crud} = mutationParts(
-      {
-        name: 'sampleResource',
-        outputParams: sampleResourceMutationOutputParams,
-      }, sampleResourceProps
-    );
+const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.mapbox'];
 
-    // create|update[Model Name]
-    const createOrUpdateName = `${crud}${capitalize(name)}`;
-
-    const mutation = gql`${makeMutation(
-      createOrUpdateName,
-      variablesAndTypes ,
-      namedOutputParams
-    )}`;
-
-    expect(print(mutation)).toMatchSnapshot();
-  });
-
-  test('makeMutationRequestContainer', done => {
-    const task = R.composeK(
-      ({apolloClient}) => makeMutationRequestContainer(
-        {apolloClient},
-        {
-          name: 'region',
-          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
-        },
-        null,
-        {
-          key: `test${moment().format('HH-mm-SS')}`,
-          name: `Test${moment().format('HH-mm-SS')}`
-        }
-      ),
-      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+describe('mutationCacheHelpers', () => {
+    test('makeMutationWithClientDirectiveContainer', done => {
+      R.composeK(
+        mapToNamedPathAndInputs(
+          'settings',
+          'cacheOnlySettings',
+          ({apolloClient}) => createSampleSettingsTask({apolloClient})
+        ),
         () => localTestAuthTask
-      )
-    )();
-    task.run().listen(defaultRunConfig({
-      onResolved:
-        response => {
-          expect(R.keys(reqStrPathThrowing('data.createRegion.region', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
-        }
-    }));
-  }, 1000);
-});
+      )().run().listen(defaultRunConfig({
+        onResolved:
+          ({settings}) => {
+            expectKeys(someSettingsKeys, settings);
+            done();
+          }
+      }));
+    });
+  }
+);

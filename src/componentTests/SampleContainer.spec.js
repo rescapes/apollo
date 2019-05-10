@@ -3,7 +3,6 @@ import {c} from './SampleComponent';
 import SampleContainer, {graphqlTasks} from './SampleContainer';
 import {chainedParentPropsTask} from './SampleContainer.sample';
 import {apolloContainerTests} from 'rescape-helpers-test';
-import {of} from 'folktale/concurrency/task';
 import {testConfig} from '../helpers/testHelpers';
 import {remoteSchemaTask} from '../schema/remoteSchema';
 import {eMap} from 'rescape-helpers-component'

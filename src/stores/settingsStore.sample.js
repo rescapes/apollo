@@ -21,11 +21,11 @@ import moment from 'moment';
 /**
  * Creates a sample settings
  * @params apolloClient
- * @return {Object} {apolloClient,  value: {data: settings: {...}}}
+ * @return {Object} Returns the cacheOnlySettings, which are the settings stored in the cache that combine
+ * what was written to the server with what is only stored in the cache. settings contains what was only
+ * stored on the server
  */
 export const createSampleSettingsTask = ({apolloClient}) => {
-
-
   return R.composeK(
     mapToNamedResponseAndInputs('cacheOnlySettings',
       ({props, settings, apolloClient}) => makeSettingsClientMutationContainer(

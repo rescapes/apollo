@@ -12,8 +12,7 @@
 import {makeQueryContainer, makeQuery, makeQueryForComponentTask} from './queryHelpers';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, localTestAuthTask, testConfig} from './testHelpers';
-import {parseApiUrl} from 'rescape-helpers';
+import {localTestAuthTask, testConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';

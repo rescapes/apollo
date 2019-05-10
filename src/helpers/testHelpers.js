@@ -8,8 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {createSelectorResolvedSchema} from '../schema/selectorResolvers';
-import {createSchema, getCurrentConfig} from 'rescape-sample-data';
+import {getCurrentConfig} from 'rescape-sample-data';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
 import {reqStrPathThrowing, keyStringToLensPath} from 'rescape-ramda';
@@ -30,15 +29,6 @@ const testStateLinkDefaults = createStateLinkDefaults(R.pick(['settings', 'brows
 
 export const testStateLinkResolversAndDefaults = {
   resolvers: defaultStateLinkResolvers, defaults: testStateLinkDefaults
-};
-
-/**
- * Schema using selectors for resolvers. TODO these will be changed to use apollo-link-state
- * @return {*}
- */
-export const createTestSelectorResolvedSchema = () => {
-  const schema = createSchema();
-  return createSelectorResolvedSchema(schema, testConfig);
 };
 
 /**

@@ -12,10 +12,9 @@
 import {formatOutputParams} from './queryHelpers';
 import {sampleResourceProps, sampleResourceMutationOutputParams} from './sampleData';
 import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
-import {testStateLinkResolversAndDefaults, testConfig} from './testHelpers';
-import {authClientOrLoginTask} from '../auth/login';
+import {testConfig, localTestAuthTask} from './testHelpers';
 import {parseApiUrl} from 'rescape-helpers';
-import {defaultRunConfig, reqStrPathThrowing, capitalize } from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs } from 'rescape-ramda';
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';
@@ -43,22 +42,22 @@ describe('mutationHelpers', () => {
   });
 
   test('makeMutationRequestContainer', done => {
-    const {settings: {api}} = testConfig;
-    const uri = parseApiUrl(api);
     const task = R.composeK(
       ({apolloClient}) => makeMutationRequestContainer(
         {apolloClient},
         {
           name: 'region',
           outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
-        }
-      )(
+        },
+        null,
         {
           key: `test${moment().format('HH-mm-SS')}`,
           name: `Test${moment().format('HH-mm-SS')}`
         }
       ),
-      () => authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig))
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => localTestAuthTask
+      )
     )();
     task.run().listen(defaultRunConfig({
       onResolved:

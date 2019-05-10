@@ -6,7 +6,6 @@ import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
 import * as R from 'ramda';
 
-const env = process.env.NODE_ENV;
 const config = {
   input: [
     'src/index.js',
@@ -27,11 +26,11 @@ const config = {
   ],
   plugins: []
 };
-const externals = ['symbol-observable', 'folktale/concurrency/task', 'folktale/result/index'];
+const externals = ['symbol-observable', 'folktale/concurrency/task', 'folktale/result', 'folktale/maybe', 'reselect', 'numeral', 'parse-decimal-number'];
 
 const configs = R.map(c => {
   const x = R.merge(config, c);
-  console.warn(x);
+  //console.warn(x);
   return x;
 }, [
   // CommonJS
@@ -49,6 +48,7 @@ const configs = R.map(c => {
     ],
     plugins: R.concat(config.plugins, [
       commonjs({
+        'node_modules/folktale/maybe/index.js': ['Just'],
         'node_modules/folktale/result/index.js': ['Result', 'Error', 'Ok'],
         'node_modules/folktale/concurrency/task/index.js': ['task', 'rejected', 'of']
       }),
