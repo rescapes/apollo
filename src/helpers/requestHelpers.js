@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqStrPath} from 'rescape-ramda';
+import {mapObjToValues, reqStrPath, pickDeepPaths} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
 
@@ -230,3 +230,71 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
  * @returns {Object} obj The object with an int id
  */
 export const objIdToInt = obj => R.over(R.lensProp('id'), parseInt, obj);
+
+
+/**
+ * Converts our graphql structure to a regular object so we can filter keys
+ * @param {[Object|String]} graphqlListStructure: Structure that is compatible with grapqhl. See the regionStore.js's regionOutputParams
+ * for an example
+ * @returns {Object} An object representation of graphqlListStructure that can be processed with normal object functions.
+ * Use convertToGraphqlStructure to return this to its original form
+ */
+export const convertFromGraphqlStructure = graphqlListStructure => R.compose(
+  R.fromPairs,
+  // Flatten the pairs
+  pairs => R.chain(R.identity, pairs),
+  R.map(item =>
+    R.cond([
+      // attributes to {attribute: true}. Make it a single pair array item
+      [R.is(String), item => [[item, true]]],
+      // if object, recurse on object values, which are always arrays
+      // return the object as pairs so its key/values are merged with the simple [attribute, true] key/values
+      [R.is(Object), item => R.compose(
+        R.toPairs,
+        R.map(objValue => convertFromGraphqlStructure(objValue))
+      )(item)],
+      // reject all else
+      [R.T, badThing => {
+        throw Error(`Only expected a string or object but got ${badThing}`);
+      }]
+    ])(item)
+  )
+)(graphqlListStructure);
+
+/**
+ * Converts an object created with convertFromGraphqlStructure back to our grapqhl structure
+ * @param {Object} obj Result of converting using convertFromGraphqlStructure
+ * @returns {[Object|String]} The graphqlListStructure. See the regionStore.js's regionOutputParams for an example
+ */
+export const convertToGraphqlStructure = obj => R.compose(
+  R.identity,
+  // Convert the key/values to a single attribute or an object
+  mapObjToValues(
+    (item, key) => R.cond([
+      // Simple attributes. Discard item, it's just true
+      [R.is(Boolean), R.always(key)],
+      // Item is an Object. Convert key: item to {key: [recurse(item)]}
+      [R.is(Object), item => ({[key]: convertToGraphqlStructure(item)})],
+      // reject all else
+      [R.T, badThing => {
+        throw Error(`Only expected a boolean or object but got ${badThing}`);
+      }]
+    ])(item)
+  )
+)(obj);
+
+/***
+ * Picks attributes out of a graphqlListStructure
+ * @param {[String]} paths Dot-separated paths that point at the desired attributes. If the path ends
+ * at a non-node it will capture everything at the path.
+ * @param {[Object|String]} graphqlListStructure
+ * @returns {[Object|String]} The pruned graphqlListStructure
+ */
+export const pickGraphqlPaths = (paths, graphqlListStructure) => {
+  const input = convertFromGraphqlStructure(graphqlListStructure);
+  const modified = pickDeepPaths(
+    paths,
+    input
+  );
+  return convertToGraphqlStructure(modified);
+};

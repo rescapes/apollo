@@ -13,21 +13,21 @@ import {
   resolveGraphQLType,
   formatOutputParams,
   formatInputParams,
-  mapQueryTaskToNamedResultAndInputs
+  mapQueryTaskToNamedResultAndInputs, convertFromGraphqlStructure, convertToGraphqlStructure, pickGraphqlPaths
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
-import {reqStrPathThrowing, reqStrPath, taskToPromise} from 'rescape-ramda';
+import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
 
 describe('requestHelpers', () => {
 
-  test('formatOutputParameters', () => {
-    const outputParams = [
-      'id',
-      'name',
-      {
-        'data': {
+  const outputParams = [
+    'id',
+    'name',
+    {
+      'data': [
+        {
           'settings': [
             'defaultLocation',
             {
@@ -38,9 +38,28 @@ describe('requestHelpers', () => {
             }
           ]
         }
-      }
-    ];
+      ]
+    }
+  ];
+
+  test('formatOutputParameters', () => {
     const output = formatOutputParams(outputParams);
+    expect(output).toMatchSnapshot();
+  });
+
+  test('convertFromGraphqlStructure', () => {
+    const output = convertFromGraphqlStructure(outputParams);
+    expect(output).toMatchSnapshot();
+  });
+
+  test('convertToGraphqlStructure', () => {
+    const input = convertFromGraphqlStructure(outputParams);
+    const output = convertToGraphqlStructure(input);
+    expect(output).toMatchSnapshot();
+  });
+
+  test('pickPaths', () => {
+    const output = pickGraphqlPaths(['id', 'name', 'data.settings.stages.key'], outputParams);
     expect(output).toMatchSnapshot();
   });
 
