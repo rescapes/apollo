@@ -15,7 +15,7 @@ import {onError} from 'apollo-link-error';
 import {ApolloLink} from 'apollo-link';
 import {createHttpLink} from 'apollo-link-http';
 import * as R from 'ramda';
-import {task, of} from 'folktale/concurrency/task';
+import {task, of, fromPromised} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {Query as query, Mutation as mutation} from "react-apollo";
 import {eMap} from 'rescape-helpers-component';
@@ -24,6 +24,7 @@ import {
   reqStrPathThrowing
 } from 'rescape-ramda';
 import fetch from 'node-fetch';
+
 const [Query, Mutation] = eMap([query, mutation]);
 
 /**
@@ -149,13 +150,9 @@ export const noAuthApolloClientQueryRequestTask = (apolloConfig, args) => {
  */
 export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => {
   const mutationOptions = R.omit(['apolloClient'], apolloConfig);
-  return task(resolver => {
-    return reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options)).then(
-      resolved => resolver.resolve(resolved)
-    ).catch(
-      error => resolver.reject(error)
-    );
-  });
+  return fromPromised(
+    () => reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options))
+  )();
 };
 
 /***

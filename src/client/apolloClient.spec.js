@@ -18,7 +18,7 @@ import * as R from 'ramda';
 import {regionOutputParams} from '../stores/scopeStores/regionStore';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import {readInputTypeMapper} from '../stores/scopeStores/regionStore';
-import {makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';
+import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';
 
 /**
  * Requires a running graphql server at uri
@@ -47,9 +47,19 @@ describe('apolloClient', () => {
     // Make sample region. This will update if the key: 'earth' already exists, since key is a unique prop on Region
     // and there is not automatic incrementor on region
     const response = await taskToPromise(R.composeK(
-      // Query so we can cache what we created
+      // Force the result to come from the cache
+      // TODO this isn't finding the region even though we cached it below
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
+          {apolloClient},
+          {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
+          null
+        )({key: region.key})
+      ),
+      // Query with direct cache call
+      // TODO reference to above. This does work
+      mapToNamedPathAndInputs('region', 'data.regions.0',
+        ({apolloClient, region}) => makeQueryFromCacheContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
           null
