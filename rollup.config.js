@@ -12,7 +12,6 @@ const config = {
     'src/auth/login.js',
     'src/client/apolloClient.js',
     'src/helpers/categorizeHelpers.js',
-    'src/helpers/fetchHttpOrFile.js',
     'src/helpers/queryHelpers.js',
     'src/helpers/mutationHelpers.js',
     'src/selectors/geojsonSelectors.js',
