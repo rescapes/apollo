@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.62",
+  "version": "0.0.63",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -65,6 +65,7 @@
     "rescape-geospatial-sankey": "^0.7.17",
     "rescape-helpers": "^1.1.84",
     "rescape-helpers-component": "^1.5.35",
+    "rescape-log": "^0.1.0",
     "rescape-ramda": "^1.5.42",
     "rescape-validate": "^1.2.21",
     "unfetch": "^4.1.0"
@@ -96,6 +97,7 @@
     "jest": "24.8.0",
     "jest-cli": "^24.8.0",
     "jsdoc-babel": "^0.5.0",
+    "jsdom": "^15.1.1",
     "localstorage-polyfill": "^1.0.1",
     "longjohn": "^0.2.12",
     "moment": "^2.24.0",
