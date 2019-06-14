@@ -13,7 +13,11 @@ import {
   resolveGraphQLType,
   formatOutputParams,
   formatInputParams,
-  mapQueryTaskToNamedResultAndInputs, convertFromGraphqlStructure, convertToGraphqlStructure, pickGraphqlPaths
+  mapQueryTaskToNamedResultAndInputs,
+  convertFromGraphqlStructure,
+  convertToGraphqlStructure,
+  pickGraphqlPaths,
+  pickGraphqlPathsOver
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
@@ -60,6 +64,11 @@ describe('requestHelpers', () => {
 
   test('pickPaths', () => {
     const output = pickGraphqlPaths(['id', 'name', 'data.settings.stages.key'], outputParams);
+    expect(output).toMatchSnapshot();
+  });
+
+  test('pickGraphqlPathsOver', () => {
+    const output = pickGraphqlPathsOver(R.lensProp('data'), ['settings.stages.key'], outputParams);
     expect(output).toMatchSnapshot();
   });
 

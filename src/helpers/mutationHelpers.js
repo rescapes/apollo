@@ -30,6 +30,9 @@ import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Makes the location query based on the queryParams
@@ -103,7 +106,7 @@ export const makeMutationRequestContainer = v(R.curry(
       namedOutputParams
     )}`;
 
-    console.debug(`Mutation: ${print(mutation)} Arguments: ${JSON.stringify(namedProps)}`);
+    log.debug(`Mutation: ${print(mutation)} Arguments: ${JSON.stringify(namedProps)}`);
 
     return R.cond([
       // If we have an ApolloClient

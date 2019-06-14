@@ -10,8 +10,7 @@
  */
 import gql from 'graphql-tag';
 import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from 'rescape-ramda';
-import {localTestAuthTask} from '../helpers/testHelpers';
-import {getUnsubscribe} from './apolloClient';
+import {localTestAuthTask, testConfig, testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 import * as R from 'ramda';

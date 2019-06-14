@@ -15,12 +15,14 @@ import {resolveGraphQLType, formatOutputParams} from './requestHelpers';
 import {
   authApolloQueryContainer
 } from '../client/apolloClient';
-import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Makes a graphql query based on the queryParams
@@ -162,10 +164,10 @@ export const makeQueryContainer = v(R.curry(
    component,
    props) => {
     const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
-    console.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
+    log.debug(`Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
     return R.map(
       queryResponse => {
-        debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+        log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
         return queryResponse;
       },
       authApolloQueryContainer(

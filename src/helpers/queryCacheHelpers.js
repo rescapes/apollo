@@ -10,20 +10,17 @@
  */
 
 import * as R from 'ramda';
-import {responseForComponent} from './requestHelpers';
 import {
-  authApolloComponentMutationContainer,
   authApolloQueryContainer
 } from '../client/apolloClient';
-import {debug} from './logHelpers';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 import {_makeQuery, makeQuery} from './queryHelpers';
-import {v} from 'rescape-validate'
-import PropTypes from 'prop-types'
-import {makeMutation} from './mutationHelpers';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Makes a graphql client query based on the queryParams
@@ -58,10 +55,10 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
  */
 export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams, propsStructure}, component, props) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, propsStructure)}`;
-  console.debug(`Client Directive Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
+  log.debug(`Client Directive Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
   return R.map(
     queryResponse => {
-      debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
     // With the client directive on the query we can use the normal authApolloQueryContainer that's used
@@ -84,10 +81,10 @@ export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {nam
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, component, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
-  console.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
+  log.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
   return R.map(
     queryResponse => {
-      debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
       return queryResponse;
     },
     authApolloClientOrComponentQueryCacheContainer(

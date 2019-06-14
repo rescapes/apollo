@@ -10,18 +10,17 @@
  */
 
 import * as R from 'ramda';
-import {responseForComponent} from './requestHelpers';
-import {
-  authApolloComponentMutationContainer,
-} from '../client/apolloClient';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {v} from 'rescape-validate'
-import {reqStrPathThrowing, mergeDeep} from 'rescape-ramda'
-import PropTypes from 'prop-types'
+import {v} from 'rescape-validate';
+import {reqStrPathThrowing, mergeDeep} from 'rescape-ramda';
+import PropTypes from 'prop-types';
 import {makeFragementQuery, makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Like makeMutationContainer but creates a query with a client directive so values come back from the link state and not
@@ -54,7 +53,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
     const fragment = gql`${makeFragmentQuery(name, {}, outputParams, R.pick(['__typename'], props))}`;
     // The id to get use to get the right fragment
     const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
-    console.debug(`Query Fragment for writeFragment: ${print(fragment)} id: ${id}`);
+    log.debug(`Query Fragment for writeFragment: ${print(fragment)} id: ${id}`);
 
     /*
     const fragment = gql`

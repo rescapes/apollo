@@ -298,3 +298,27 @@ export const pickGraphqlPaths = (paths, graphqlListStructure) => {
   );
   return convertToGraphqlStructure(modified);
 };
+
+/**
+ * Like pickGraphqlPaths put starts at the level of lensPath so only values at a certain key are considered for
+ * picking. All other values not matching the lens are left alone and returned
+ * @param {Function} lens The lens to the part of the data structure that you want to pick values out of
+ * @param {[String]} paths Dot-separated paths that point at the desired attributes. If the path ends
+ * at a non-node it will capture everything at the path.
+ * @param {[Object|String]} graphqlListStructure
+ * @returns {[Object|String]} The pruned graphqlListStructure
+ */
+export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => R.compose(
+  convertToGraphqlStructure,
+  R.over(
+    lens,
+    data => {
+      const minimumData = pickDeepPaths(paths, data);
+      if (R.compose(R.equals(0), R.length, R.keys)(minimumData)) {
+        throw new Error(`dataPaths: ${JSON.stringify(paths)} didn't match anything`)
+      }
+      return minimumData
+    }
+  ),
+  convertFromGraphqlStructure
+)(graphqlListStructure);

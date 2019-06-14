@@ -19,11 +19,15 @@ import {task, of, fromPromised} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {Query as query, Mutation as mutation} from "react-apollo";
 import {eMap} from 'rescape-helpers-component';
+import {print} from 'graphql';
 import {
   promiseToTask,
   reqStrPathThrowing
 } from 'rescape-ramda';
 import fetch from 'node-fetch';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 const [Query, Mutation] = eMap([query, mutation]);
 
@@ -84,15 +88,16 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     };
   });
 
+
   // Error handling link so errors don't get swallowed, which Apollo seems to like doing
-  const errorLink = onError(({graphQLErrors, networkError}) => {
+  const errorLink = onError(({graphQLErrors, networkError, operation}) => {
     if (graphQLErrors)
       graphQLErrors.map(error => {
-        console.error(
-          `[GraphQL error]: Message: ${R.propOr('undefined', 'message', error)}, Location: ${R.propOr('undefined', 'locations', error)}, Path: ${R.propOr('undefined', 'path', error)}`
+        log.error(
+          `[GraphQL error]: Message: ${R.propOr('undefined', 'message', error)}, Location: ${R.propOr('undefined', 'locations', error)}, Path: ${R.propOr('undefined', 'path', error)} Operation: ${dumpOperation(operation)}, Stack: ${R.propOr('undefined', 'stack', error)}`
         );
       });
-    if (networkError) console.error(`[Network error]: ${networkError}`);
+    if (networkError) log.error(`[Network error]: ${networkError}. Operation: ${dumpOperation(operation)} Stack: ${R.propOr('undefined', 'stack', networkError)}`);
   });
 
   // The InMemoryCache is passed to the StateLink and the ApolloClient
@@ -125,6 +130,18 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
 
   // Return apolloClient
   return {apolloClient};
+};
+
+/**
+ * Dumps an operation object from the server when an error occurs
+ * @param operation
+ * @returns {string}
+ */
+const dumpOperation = operation => {
+  if (!operation) {
+    return ''
+  }
+  return(`Query: ${print(operation.query)} Arguments: ${JSON.stringify(operation.variables)}`);
 };
 
 /**
@@ -168,7 +185,7 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
   mutationResponse => {
     const variableName = options.variableName;
     const name = options.name;
-    debug(`makeMutationTask for ${variableName} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
+    log.debug(`makeMutationTask for ${variableName} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
     // Put the result in data[name] to match the style of queries
     return of({
       data: {

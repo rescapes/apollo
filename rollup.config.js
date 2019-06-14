@@ -11,7 +11,6 @@ const config = {
     'src/index.js',
     'src/auth/login.js',
     'src/client/apolloClient.js',
-    'src/helpers/categorizeHelpers.js',
     'src/helpers/queryHelpers.js',
     'src/helpers/mutationHelpers.js',
     'src/selectors/geojsonSelectors.js',
@@ -29,7 +28,6 @@ const externals = ['symbol-observable', 'folktale/concurrency/task', 'folktale/r
 
 const configs = R.map(c => {
   const x = R.merge(config, c);
-  //console.warn(x);
   return x;
 }, [
   // CommonJS

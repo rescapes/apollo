@@ -75,7 +75,7 @@ export const makeUserProjectsQueryContainer = v(R.curry(
 
 export const makeUserProjectMutation = R.curry((outputParams, inputParams) => {
   const mutation = makeMutation('updateProject', {}, {locationData: inputParams}, {location: outputParams});
-  debug(mutation);
+  log.debug(mutation);
   return gql`${mutation}`;
 });
 

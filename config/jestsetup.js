@@ -15,7 +15,7 @@ import {JSDOM} from 'jsdom';
 import enzyme from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 // Makes localStorage available in node to Apollo
-import 'localstorage-polyfill'
+// import 'localstorage-polyfill'
 
 enzyme.configure({adapter: new Adapter()});
 
@@ -27,12 +27,21 @@ if (process.env.NODE_ENV !== 'production') {
   require('longjohn');
 }
 
-global.jsdom = new JSDOM('<!doctype html><html><body></body></html>');
+const TARGET_ORIGIN = "http://localhost/"
+global.jsdom = new JSDOM('<!doctype html><html><body></body></html>', {
+  // This nonsense is needed to prevent problems with local storage
+  url: TARGET_ORIGIN,
+  referrer: TARGET_ORIGIN,
+  contentType: "text/html",
+  userAgent: "node.js",
+  includeNodeLocations: true
+});
 const {window} = jsdom;
 global.window = window;
 global.document = window.document;
 global.navigator = {
-  userAgent: 'node.js'
+  userAgent: 'node.js',
+  origin: 'http://localhost'
 };
 
 // jsdom, window, document, navigator setup
