@@ -15,7 +15,8 @@ import {JSDOM} from 'jsdom';
 import enzyme from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 // Makes localStorage available in node to Apollo
-// import 'localstorage-polyfill'
+import 'localstorage-polyfill'
+import 'regenerator-runtime'
 
 enzyme.configure({adapter: new Adapter()});
 

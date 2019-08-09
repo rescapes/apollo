@@ -61,6 +61,7 @@
     "react-async-component": "^2.0.0",
     "react-dom": "^16.8.6",
     "react-emotion": "^10.0.0",
+    "regenerator-runtime": "^0.13.3",
     "request": "^2.88.0",
     "rescape-geospatial-sankey": "^0.7.17",
     "rescape-helpers": "^1.1.93",
