@@ -57,9 +57,10 @@ ${mutationName}(${variableMappingString}) {
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
- * @param {Object} apolloConfig.apolloComponent Optional Apollo component
- * @param {String} name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
- * @param [String|Object] outputParams output parameters for the query in this style json format:
+ * @param {Object} apolloConfig.opts For apollo component
+ * @param {Object} mutationOptions
+ * @param {String} mutationOptions.name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
+ * @param [String|Object] mutationOptions.outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
  *        data: [
@@ -73,13 +74,14 @@ ${mutationName}(${variableMappingString}) {
  *       ]
  *    }
  *  ]
- *  @param {Object} inputParams Object matching the shape of a region. E.g.
- *  {id: 1, city: "Stavanger", data: {foo: 2}}
+ *  // These are only used for simple mutations where there is no complex input type
+ *  @param {String} mutationOptions.variableNameOverride
+ *  @param {String} mutationOptions.variableTypeOverride
+ *  @param {String} mutationNameOverride
  *  Creates need all required fields and updates need at minimum the id
- *  @param {Function} Unary function expecting props and returning
- *  a Mutation Component or a mutation task.
- *  If mutation task containing an object with the result of the outputParams query
- *  in an obj at obj.data.name or an errors at obj.errors.
+ *  @param {Object} component Apollo component if not doing an Apollo Client mutation
+ *  @param {Object} props The props for the mutation
+ *  @return {Task|Object} A task for Apollo Client mutations or a component for Apollo component mutations
  */
 export const makeMutationRequestContainer = v(R.curry(
   (apolloConfig,
@@ -123,11 +125,15 @@ export const makeMutationRequestContainer = v(R.curry(
       ],
       // If we have an Apollo Component
       [() => R.not(R.isNil(component)),
-        () => authApolloComponentMutationContainer(
-          mutation,
-          apolloConfig,
-          component,
-          namedProps
+        // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
+        // Above we're using an Apollo client so we have a task and leave to the caller to run
+        () => R.chain(value => value,
+          authApolloComponentMutationContainer(
+            mutation,
+            apolloConfig,
+            component,
+            namedProps
+          )
         )
       ]
     ])(apolloConfig);

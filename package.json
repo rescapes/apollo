@@ -106,7 +106,7 @@
     "redux-devtools-extension": "^2.13.8",
     "redux-mock-store": "^1.5.3",
     "rescape-helpers-test": "^0.0.22",
-    "rescape-sample-data": "^1.2.58",
+    "rescape-sample-data": "^1.2.60",
     "rimraf": "^2.6.3",
     "rollup": "^1.19.4",
     "rollup-plugin-babel": "^4.3.3",

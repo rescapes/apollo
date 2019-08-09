@@ -22,9 +22,10 @@ import gql from 'graphql-tag';
 
 describe('mutationHelpers', () => {
   test('makeMutation', () => {
+    const name = 'sampleResource';
     const {variablesAndTypes, namedOutputParams, crud} = mutationParts(
       {
-        name: 'sampleResource',
+        name,
         outputParams: sampleResourceMutationOutputParams,
       }, sampleResourceProps
     );

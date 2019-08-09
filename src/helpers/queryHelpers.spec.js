@@ -10,6 +10,8 @@
  */
 
 import {makeQueryContainer, makeQuery, makeQueryForComponentTask} from './queryHelpers';
+import gql from 'graphql-tag';
+import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {localTestAuthTask, testConfig} from './testHelpers';
@@ -20,7 +22,11 @@ import moment from 'moment';
 describe('queryHelpers', () => {
 
   test('makeQuery', () => {
-    expect(makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams)).toMatchSnapshot();
+    expect(
+      print(
+        gql`${makeQuery('sampleResourceQuery', sampleInputParamTypeMapper, sampleResourceOutputParams, {id: 0})}`
+      )
+    ).toMatchSnapshot();
   });
 
   test('makeQueryContainer', done => {

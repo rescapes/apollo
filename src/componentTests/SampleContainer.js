@@ -5,34 +5,32 @@ import {of} from 'folktale/concurrency/task';
 import Sample from './SampleComponent';
 import {asyncComponent} from 'react-async-component';
 
-export const graphqlTasks = [
-  makeRegionsQueryContainer(
-    {
-      options: {
-        variables: (props) => ({
-          id: props.region.id
-        }),
-        // Pass through error so we can handle it in the component
-        errorPolicy: 'all'
+export const graphqlRequests = {
+  query: {
+    // Creates a function expecting a component to wrap and props
+    queryRegions: makeRegionsQueryContainer(
+      {
+        options: {
+          variables: (props) => ({
+            id: props.region.id
+          }),
+          // Pass through error so we can handle it in the component
+          errorPolicy: 'all'
+        }
+      },
+      {
+        outputParams: regionOutputParams,
+        propsStructure: {
+          id: 0
+        }
       }
-    },
-    {
-      outputParams: regionOutputParams,
-      propsStructure: {
-        id: 0
-      }
-    }
-  )
-];
+    )
+  }
+};
 
-const composeGraphqlRequestsTaskMaker = (component, propsStructure) => graphqlTasks[0](component, propsStructure);
+export default (component, propsStructure) => graphqlTasks[0](component, propsStructure);
 
-/*  traverseReduce(
-  (prev, currentTaskMaker) => currentTaskMaker(prev),
-  of(component),
-  graphqlTasks
-);*/
-
+/*
 // Create the GraphQL Container.
 const ContainerWithData = child => asyncComponent({
   resolve: () => {
@@ -41,4 +39,5 @@ const ContainerWithData = child => asyncComponent({
 });
 
 const asyncContainer = ContainerWithData(Sample);
-export default asyncContainer
+*/
+

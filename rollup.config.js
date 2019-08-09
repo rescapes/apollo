@@ -24,7 +24,17 @@ const config = {
   ],
   plugins: []
 };
-const externals = ['symbol-observable', 'folktale/concurrency/task', 'folktale/result', 'folktale/maybe', 'reselect', 'numeral', 'parse-decimal-number'];
+const externals = [
+  'symbol-observable',
+  'folktale/concurrency/task',
+  'folktale/result',
+  'folktale/maybe',
+  'reselect',
+  'numeral',
+  'parse-decimal-number',
+  'moment',
+  'graphql-geojson'
+];
 
 const configs = R.map(c => {
   const x = R.merge(config, c);
