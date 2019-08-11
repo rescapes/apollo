@@ -35,7 +35,7 @@ describe('apolloClient', () => {
       }`
     });
     expect(reqStrPathThrowing('data.regions', response)).toBeTruthy();
-  }, 10000);
+  }, 100000);
 
   test('Use ApolloClient with sample data and test query caching', async () => {
 
@@ -46,15 +46,14 @@ describe('apolloClient', () => {
     // Make sample region. This will update if the key: 'earth' already exists, since key is a unique prop on Region
     // and there is not automatic incrementor on region
     const response = await taskToPromise(R.composeK(
-      // Allow the result to be found in the cache by using the @cache directive
-      // Here we must query by id because the item isn't cached by key
-      // TODO this isn't hitting the cache. It's going to the server
+      // Allow the result to be found in the cache by using the @client directive
       mapToNamedPathAndInputs('region', 'data.regions.0',
-        ({apolloClient, region}) => makeQueryContainer(
+        ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
-          null
-        )({id: parseInt(region.id)})
+          null,
+          {key: region.key}
+        )
       ),
       // Query with direct cache call. This works because the query with the same name was just made and it
       // will match that query by name

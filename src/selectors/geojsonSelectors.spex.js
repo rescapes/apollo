@@ -15,6 +15,7 @@ import {STATUS} from 'rescape-helpers';
 
 const {IS_SELECTED, IS_ACTIVE} = STATUS;
 
+/*
 describe('geojsonSelectors', () => {
   const locations = {
     features: [
@@ -73,3 +74,4 @@ describe('geojsonSelectors', () => {
     expect(makeGeojsonSelector()(state, {region})).toEqual(expected);
   });
 });
+ */

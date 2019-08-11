@@ -16,29 +16,27 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
  * Creates a sample project
  * @params apolloClient
  * @params {Number} userId
- * @return {Object} {apolloClient,  value: {data: project: {...}}}
+ * @return {Object} {data: project: {...}}
  */
 export const createSampleProjectTask = ({apolloClient}, userId) => {
-  return mapToNamedPathAndInputs('project', 'data.createProject.project',
-    ({apolloClient}) => makeProjectMutationContainer(
-      {apolloClient},
-      {outputParams: projectOutputParams},
-      null,
-      {
-        key: 'downtownPincher',
-        name: 'Downtown Pincher Creek',
-        userId: userId,
-        geojson: {
-          'type': 'FeatureCollection',
-          'features': [{
-            "type": "Feature",
-            "geometry": {
-              "type": "Polygon",
-              "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
-            }
-          }]
-        },
-        locations: []
-      })
-  )({apolloClient});
+  return makeProjectMutationContainer(
+    {apolloClient},
+    {outputParams: projectOutputParams},
+    null,
+    {
+      key: 'downtownPincher',
+      name: 'Downtown Pincher Creek',
+      user: {id: userId},
+      geojson: {
+        'type': 'FeatureCollection',
+        'features': [{
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
+          }
+        }]
+      },
+      locations: []
+    });
 };

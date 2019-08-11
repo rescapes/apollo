@@ -20,6 +20,7 @@ import {
 
 const {IS_ACTIVE, IS_SELECTED} = STATUS;
 
+/*
 describe('userSelectors', () => {
   const users = {
     blinky: {
@@ -115,3 +116,4 @@ describe('userSelectors', () => {
     expect(userResolvedRegionsSelector(state, {user})).toEqual(R.values(state.regions));
   });
 });
+ */

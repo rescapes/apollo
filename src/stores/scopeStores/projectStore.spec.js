@@ -13,23 +13,27 @@ import {expectKeysAtStrPath, localTestAuthTask} from '../../helpers/testHelpers'
 import * as R from 'ramda';
 import {makeProjectMutationContainer, makeProjectsQueryContainer, projectOutputParams} from './projectStore';
 import {createSampleProjectTask} from './projectStore.sample';
+import {makeCurrentUserQueryContainer, userOutputParams} from '../userStores/userStore';
 
 const someProjectKeys = ['id', 'key', 'geojson'];
 describe('projectStore', () => {
+  const errors = [];
   test('makeProjectMutationContainer', done => {
     R.composeK(
-      ({apolloClient}) => createSampleProjectTask({apolloClient}),
+      mapToNamedPathAndInputs('project', 'data.createProject.project',
+        ({apolloClient}) => createSampleProjectTask({apolloClient})
+      ),
       () => localTestAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
           expectKeysAtStrPath(someProjectKeys, 'project', response);
-          done();
         }
-    }));
+    }, errors, done));
   });
 
   test('makeProjectsQueryContainer', done => {
+    const errors = [];
     R.composeK(
       ({apolloClient, project}) => makeProjectsQueryContainer(
         {apolloClient},
@@ -37,7 +41,12 @@ describe('projectStore', () => {
         null,
         {key: reqStrPathThrowing('key', project)}
       ),
-      ({apolloClient}) => createSampleProjectTask({apolloClient}),
+      mapToNamedPathAndInputs('project', 'data.createProject.project',
+        ({apolloClient, user}) => createSampleProjectTask({apolloClient}, user.id)
+      ),
+      mapToNamedPathAndInputs('user', 'data.currentUser',
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
+      ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )
@@ -45,8 +54,7 @@ describe('projectStore', () => {
       onResolved:
         response => {
           expectKeysAtStrPath(someProjectKeys, 'data.projects.0', response);
-          done();
         }
-    }));
+    }, errors, done));
   });
 });

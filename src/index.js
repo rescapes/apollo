@@ -58,6 +58,5 @@ export {
   userSelector,
   usersSelector
 } from './selectors/userSelectors';
-export {createSelectorResolvedSchema} from './schema/selectorResolvers';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 export {testAuthTask, testStateLinkResolversAndDefaults} from './helpers/testHelpers'

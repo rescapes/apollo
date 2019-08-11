@@ -14,7 +14,7 @@ import * as R from 'ramda';
 import Result from 'folktale/result';
 
 /**
- * Creates graphql outputparms from the given object
+ * Creates graphql outputparms from the given object. TODO formatting doesn't matter. Use print(gql) instead for foramtting
  * @param {[String|List|Object]} outputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased
  * @param {Number} indentLevel recursively increases

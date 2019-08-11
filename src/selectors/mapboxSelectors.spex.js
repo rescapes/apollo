@@ -14,6 +14,7 @@ import {reqPathThrowing} from 'rescape-ramda';
 
 import * as R from 'ramda';
 
+/*
 describe('mapboxSelectors', () => {
   const oakland = {
     id: 'oakland',
@@ -62,3 +63,4 @@ describe('mapboxSelectors', () => {
     );
   });
 });
+ */

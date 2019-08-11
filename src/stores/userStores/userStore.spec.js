@@ -102,7 +102,8 @@ describe('userStore', () => {
           null,
           {
             key: projectKey,
-            name: capitalize(projectKey)
+            name: capitalize(projectKey),
+            user: {id: user.id}
           }
         )
       ),

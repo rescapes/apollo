@@ -19,6 +19,7 @@ import {mergeDeep, onlyOneValueThrowing} from 'rescape-ramda';
 
 const {IS_ACTIVE, IS_SELECTED} = STATUS;
 
+/*
 describe('regionSelectors', () => {
 
   test('regionsSelector', () => {
@@ -84,3 +85,4 @@ describe('regionSelectors', () => {
   });
 })
 ;
+ */

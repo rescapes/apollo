@@ -18,6 +18,7 @@ import {
 
 const {IS_SELECTED, IS_ACTIVE} = STATUS;
 
+/*
 describe('storeSelectors', () => {
   const users = {
     blinky: {
@@ -90,3 +91,4 @@ describe('storeSelectors', () => {
     );
   });
 });
+ */

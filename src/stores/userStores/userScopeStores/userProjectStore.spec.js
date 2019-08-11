@@ -17,6 +17,7 @@ import {makeCurrentUserQueryContainer, userOutputParams} from '../userStore';
 
 describe('userProjectStore', () => {
   test('makeUserProjectsQueryContainer', done => {
+    const errors = [];
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
       ({apolloClient, userId}) => makeUserProjectsQueryContainer(
@@ -40,8 +41,8 @@ describe('userProjectStore', () => {
           expectKeysAtStrPath(someProjectKeys, 'data.userProjects.0.project', response);
           done();
         }
-    }));
-  });
+    }, errors, done));
+  }, 10000);
 
   test('makeUserProjectQueryTaskWithProjectFilter', done => {
     const someProjectKeys = ['id', 'key', 'name'];

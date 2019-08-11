@@ -40,7 +40,7 @@ describe('queryCacheHelpers', () => {
       ),
       // Direct cache read as a sanity check
       mapToNamedPathAndInputs(
-        'regionFromCache', 'regions.0,',
+        'regionFromCache', 'data.regions.0,',
         ({apolloClient, region}) => makeQueryFromCacheContainer(
           {apolloClient},
           {

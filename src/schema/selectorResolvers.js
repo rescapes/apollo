@@ -130,7 +130,9 @@ export const makeSelectorResolvers = () => ({
  * the structure the schema
  * @returns {Object} The given GraphQLSchema with resolvers added
  */
+/*
 export const createSelectorResolvedSchema = (schema, data) => {
   addResolveFunctionsToSchema({schema, resolvers: makeSelectorResolvers()});
   return schema;
 };
+ */

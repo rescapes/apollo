@@ -17,19 +17,22 @@ import {createSampleRegionTask} from './regionStore.sample';
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
 describe('regionStore', () => {
   test('makeRegionMutationContainer', done => {
+    const errors = [];
     R.composeK(
-      ({apolloClient}) => createSampleRegionTask({apolloClient}),
+      mapToNamedPathAndInputs('region', 'data.createRegion.region',
+        ({apolloClient}) => createSampleRegionTask({apolloClient})
+      ),
       () => localTestAuthTask
     )().run().listen(defaultRunConfig({
       onResolved:
         response => {
           expectKeysAtStrPath(someRegionKeys, 'region', response);
-          done();
         }
-    }));
+    }, errors, done));
   });
 
   test('makeRegionsQueryContainer', done => {
+    const errors = [];
     R.composeK(
       ({apolloClient, region}) => makeRegionsQueryContainer(
         {apolloClient},
@@ -37,7 +40,9 @@ describe('regionStore', () => {
         null,
         {key: reqStrPathThrowing('key', region)}
       ),
-      ({apolloClient}) => createSampleRegionTask({apolloClient}),
+      mapToNamedPathAndInputs('region', 'data.createRegion.region',
+        ({apolloClient}) => createSampleRegionTask({apolloClient})
+      ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )
@@ -45,8 +50,7 @@ describe('regionStore', () => {
       onResolved:
         response => {
           expectKeysAtStrPath(someRegionKeys, 'data.regions.0', response);
-          done();
         }
-    }));
+    }, errors, done));
   });
 });

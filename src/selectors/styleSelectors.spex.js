@@ -17,6 +17,7 @@ import {
 import {makeMergeDefaultStyleWithProps} from './styleSelectors';
 import * as R from 'ramda';
 
+/*
 describe('styleSelectors', () => {
   test('makeMergeDefaultStyleWithProps', () => {
     const state = {
@@ -113,4 +114,4 @@ describe('styleSelectors', () => {
     })
   })
 });
-
+*/

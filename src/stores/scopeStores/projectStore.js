@@ -27,7 +27,6 @@ export const readInputTypeMapper = {
 
 export const projectOutputParams = [
   'id',
-  'deleted',
   'key',
   'name',
   'createdAt',

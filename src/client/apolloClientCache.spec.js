@@ -47,10 +47,10 @@ describe('apolloClient', () => {
 
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryDefaultsResponse)).toEqual(false);
     expect(reqStrPathThrowing('data.settings.mapbox.viewport', queryDefaultsResponse)).toBeTruthy();
-  });
+  }, 10000);
 
   test('test linkState mutation', async done => {
-    expect.assertions(9);
+    expect.assertions(8);
     const {apolloClient, restoreStoreToDefaults} = await taskToPromise(localTestAuthTask);
     // Mutate the network status
     const mutateNetworkStatus = gql`
