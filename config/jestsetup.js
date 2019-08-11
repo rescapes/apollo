@@ -17,6 +17,11 @@ import Adapter from 'enzyme-adapter-react-16';
 // Makes localStorage available in node to Apollo
 import 'localstorage-polyfill'
 import 'regenerator-runtime'
+import {rescapeDefaultTransports} from 'rescape-log'
+
+// Set the loggers to debug level
+rescapeDefaultTransports.fileCombined.level = 'debug';
+rescapeDefaultTransports.console.level = 'debug';
 
 enzyme.configure({adapter: new Adapter()});
 

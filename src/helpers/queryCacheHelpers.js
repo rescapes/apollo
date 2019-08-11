@@ -19,6 +19,7 @@ import {print} from 'graphql';
 import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 import {_makeQuery, makeQuery} from './queryHelpers';
 import {loggers} from 'rescape-log';
+import {Just} from 'folktale/maybe';
 
 const log = loggers.get('rescapeDefault');
 
@@ -58,8 +59,10 @@ export const makeQueryWithClientDirectiveContainer = R.curry((apolloConfig, {nam
   log.debug(`Client Directive Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
   return R.map(
     queryResponse => {
-      log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      return queryResponse;
+      log.debug(`makeQueryWithClientDirectiveContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      // If we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
+      // If we're using an Apollo client we have a task and leave to the caller to run
+      return R.when(Just.hasInstance, R.prop('value'))(queryResponse);
     },
     // With the client directive on the query we can use the normal authApolloQueryContainer that's used
     // for non-client directive queries
@@ -84,8 +87,10 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
   log.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
   return R.map(
     queryResponse => {
-      log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      return queryResponse;
+      log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+      // If we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
+      // If we're using an Apollo client we have a task and leave to the caller to run
+      return R.when(Just.hasInstance, R.prop('value'))(queryResponse);
     },
     authApolloClientOrComponentQueryCacheContainer(
       apolloConfig,

@@ -8,7 +8,8 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {InMemoryCache} from 'apollo-cache-inmemory';
+import { InMemoryCache, defaultDataIdFromObject } from 'apollo-cache-inmemory';
+
 import {setContext} from 'apollo-link-context';
 import {ApolloClient} from 'apollo-client';
 import {onError} from 'apollo-link-error';
@@ -101,7 +102,14 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
   });
 
   // The InMemoryCache is passed to the StateLink and the ApolloClient
-  const cache = new InMemoryCache();
+  const cache = new InMemoryCache({
+    dataIdFromObject: object => {
+      switch (object.__typename) {
+        // Default behavior. Useful for debugging to se how the object's id is determined
+        default: return defaultDataIdFromObject(object);
+      }
+    }
+  });
 
   // Assign our local sate resolver and local state defaults
   const {resolvers, defaults} = R.ifElse(
@@ -128,8 +136,17 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
   });
   cache.writeData({data: defaults});
 
-  // Return apolloClient
-  return {apolloClient};
+  // Resetst the store to the defaults
+  const restoreStoreToDefaults = () => {
+    // doesn't actually reset the store. It refetches all active queries
+    //apolloClient.resetStore();
+    apolloClient.cache.reset();
+    apolloClient.cache.writeData({data: defaults});
+    return apolloClient;
+  }
+
+  // Return apolloClient and a funciton to restore the defaults
+  return {apolloClient, restoreStoreToDefaults};
 };
 
 /**
@@ -370,7 +387,8 @@ export const noAuthApolloClient = (url, stateLinkResolvers) => createApolloClien
  * @param {Object} stateLinkResolverAndDefaults: Resolvers for the stateLink, meaning local caching
  * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param authToken
- * @return {{apolloClient: ApolloClient}}
+ * @return {{apolloClient: ApolloClient, restoreStoreToDefaults}} restoreStoreToDefaults can be called to
+ * reset the default values of the cache for logout
  */
 export const authApolloClient = (url, stateLinkResolverAndDefaults, authToken) => createApolloClient(url, stateLinkResolverAndDefaults, {
   authorization: `JWT ${authToken}`

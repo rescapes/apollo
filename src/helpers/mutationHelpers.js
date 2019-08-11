@@ -60,6 +60,7 @@ ${mutationName}(${variableMappingString}) {
  * @param {Object} apolloConfig.opts For apollo component
  * @param {Object} mutationOptions
  * @param {String} mutationOptions.name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
+ * Required unless variableNameOverride is specified
  * @param [String|Object] mutationOptions.outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
@@ -141,7 +142,8 @@ export const makeMutationRequestContainer = v(R.curry(
   [
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
-      name: PropTypes.string.isRequired,
+      // Required unless variableNameOverride is specified
+      name: PropTypes.string,
       outputParams: PropTypes.arrayOf(
         PropTypes.oneOfType([
           PropTypes.string,

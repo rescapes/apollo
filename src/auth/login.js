@@ -65,6 +65,7 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
   const login = loginTask({apolloClient});
   return R.composeK(
     // loginResult.data contains {tokenAuth: token}
+    // TODO can we modify noAuthApolloClient by writing the auth data to the cache instead??
     loginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult)),
     args => login(args)
   )(variables);

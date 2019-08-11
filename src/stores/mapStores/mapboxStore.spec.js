@@ -44,12 +44,13 @@ describe('mapboxStore', () => {
       mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
         ({apolloClient, userId}) => makeUserRegionsQueryContainer({apolloClient}, null, {user: {id: userId}}, {})
       ),
+
+      ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, parseInt(userId)),
+      ({apolloClient}) => createSampleRegionTask({apolloClient}),
       // Get the current user
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams)
       ),
-      ({apolloClient}) => createSampleProjectTask({apolloClient}),
-      ({apolloClient}) => createSampleRegionTask({apolloClient}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )

@@ -76,7 +76,9 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       // If we have an Apollo Component
       [() => R.not(R.isNil(component)),
         () => Just(data)
-      ]
+      ],
+      // This should never happen
+      [() => { throw new Error("Neither apolloClient or component defined")}]
     ])(apolloConfig);
   }),
   [

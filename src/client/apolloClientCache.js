@@ -28,14 +28,34 @@ import {Just} from 'folktale/maybe';
           }
     }`,
  variables: {key: "earth"}
+ * @returns {Task} A task with the query results in {data}. The results are put in data to match the format of
+ * non-cached queries
  */
 export const authApolloClientQueryCacheContainer = R.curry((apolloClient, options, props) => {
   // readQuery isn't a promise, just a direct call I guess
-  return of(apolloClient.readQuery({variables: props, ...options}));
+  return of({data: apolloClient.readQuery({variables: props, ...options})});
 });
 
+/**
+ * Only for testing. Reads values loaded from the server that we know are now in the cache
+ * The given component is wrapped in an ApolloContainer and the props passed to that unary container function
+ * @param apolloClient The authenticated Apollo Client
+ * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
+ * The main arguments for options are QueryOptions with query and variables. Example
+ * query: gql`
+ query regions($key: String!) {
+          regions(key: $key) {
+              id
+              key
+              name
+          }
+    }`,
+ variables: {key: "earth"}
+ * @returns {Maybe.Just} A Maybe.Just with the query results in {data}. The results are put in data to match the format of
+ * non-cached queries.
+ */
 export const authApolloComponentQueryCacheContainer = R.curry((query, options, component, props) => {
-  return of(graphql(query, options)(component));
+  return Just(graphql(query, options)(component)(props));
 });
 
 /**
@@ -51,7 +71,7 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
         props
       )
     ],
-    [R.has('apolloComponent'),
+    [() => R.not(R.isNil(component)),
       // Extract the apolloConfig.apolloComponent--the React container, the options for the Apollo component query,
       // the props function for the Apollo component
       apolloConfig => authApolloComponentQueryCacheContainer(
