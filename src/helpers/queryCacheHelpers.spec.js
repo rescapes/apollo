@@ -9,18 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQueryContainer, makeQuery} from './queryHelpers';
-import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
-import {authClientOrLoginTask} from '../auth/login';
+import {makeQueryContainer} from './queryHelpers';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeysAtStrPath, testStateLinkResolversAndDefaults, localTestAuthTask, testConfig} from './testHelpers';
-import {parseApiUrl} from 'rescape-helpers';
+import {localTestAuthTask} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
-import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from './queryCacheHelpers';
-import {mapboxOutputParamsFragment} from '../stores/mapStores/mapboxStore';
-import {settingsOutputParams} from '../stores/settingsStore';
+import {makeQueryFromCacheContainer} from './queryCacheHelpers';
 
 describe('queryCacheHelpers', () => {
 

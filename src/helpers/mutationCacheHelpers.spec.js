@@ -20,6 +20,8 @@ const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.mapbox
 
 describe('mutationCacheHelpers', () => {
     test('makeMutationWithClientDirectiveContainer', done => {
+      expect.assertions(1);
+      const errors = [];
       R.composeK(
         mapToNamedPathAndInputs(
           'settings',
@@ -31,9 +33,8 @@ describe('mutationCacheHelpers', () => {
         onResolved:
           ({settings}) => {
             expectKeys(someSettingsKeys, settings);
-            done();
           }
-      }));
+      }, errors, done));
     });
   }
 );

@@ -10,7 +10,13 @@
  */
 
 import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {expectKeys, expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask, testConfig} from '../../helpers/testHelpers';
+import {
+  expectKeys,
+  expectKeysAtStrPath,
+  stateLinkResolvers,
+  localTestAuthTask,
+  testConfig
+} from '../../helpers/testHelpers';
 import * as R from 'ramda';
 import {of} from 'folktale/concurrency/task';
 import {
@@ -19,6 +25,8 @@ import {
 } from './userStore';
 import {makeRegionMutationContainer, regionOutputParams} from '../scopeStores/regionStore';
 import {makeProjectMutationContainer, projectOutputParams} from '../scopeStores/projectStore';
+import {createSampleProjectTask} from '../scopeStores/projectStore.sample';
+import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
 
 describe('userStore', () => {
   test('makeUserQueryTask', done => {
@@ -38,6 +46,7 @@ describe('userStore', () => {
   });
 
   test('makeUserStateQueryContainer', done => {
+    const errors = [];
     const someUserStateKeys = ['user.id', 'data.userRegions.0.region.id'];
     R.composeK(
       ({apolloClient, userId}) => makeUserStateQueryContainer(
@@ -52,74 +61,17 @@ describe('userStore', () => {
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )
-    )().run().listen(defaultRunConfig({
-      onResolved:
-        response => {
+    )().run().listen(
+      defaultRunConfig({
+        onResolved: response => {
           expectKeysAtStrPath(someUserStateKeys, 'data.userStates.0', response);
-          done();
         }
-    }));
+      }, errors, done)
+    );
   });
 
   test('makeUserStateMutationContainer', done => {
     const someUserStateKeys = ['id', 'data.userRegions.0.region.id', 'data.userProjects.0.project.id'];
-    const createInputParams = ({user, region, project}) =>
-      ({
-        user: {id: parseInt(reqStrPathThrowing('id', user))},
-        data: {
-          userRegions: [
-            {
-              region: {
-                id: parseInt(reqStrPathThrowing('id', region))
-              }
-            }
-          ],
-          userProjects: [
-            {
-              project: {
-                id: parseInt(reqStrPathThrowing('id', project))
-              }
-            }
-          ]
-        }
-      });
-
-    const mutateUserStateWithProjectAndRegion = ({apolloClient, user, regionKey, projectKey}) => R.composeK(
-      // Set the user state of the given user to the region and project
-      mapToNamedPathAndInputs('userState', 'data.createUserState.userState',
-        ({apolloClient, user, region, project}) => makeUserStateMutationContainer(
-          {apolloClient},
-          {outputParams: userStateMutateOutputParams},
-          null,
-          createInputParams({user, region, project})
-        )
-      ),
-      // Create a project
-      mapToNamedPathAndInputs('project', 'data.createProject.project',
-        ({apolloClient, user, region, projectKey}) => makeProjectMutationContainer(
-          {apolloClient},
-          {outputParams: projectOutputParams},
-          null,
-          {
-            key: projectKey,
-            name: capitalize(projectKey),
-            user: {id: user.id}
-          }
-        )
-      ),
-      // Create a region
-      mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({apolloClient, user, regionKey}) => makeRegionMutationContainer(
-          {apolloClient},
-          {outputParams: regionOutputParams},
-          null,
-          {
-            key: regionKey,
-            name: capitalize(regionKey)
-          }
-        )
-      )
-    )({apolloClient, user, regionKey, projectKey});
 
     R.composeK(
       // Set it again. This will wipe out the previous region and project ids
@@ -155,4 +107,86 @@ describe('userStore', () => {
         }
     }));
   });
+});
+
+
+/***
+ * Helper to create scope objects and set the user state to them
+ * @param apolloClient
+ * @param user
+ * @param regionKey
+ * @param projectKey
+ */
+const mutateUserStateWithProjectAndRegion = ({apolloClient, user, regionKey, projectKey}) => R.composeK(
+  // Set the user state of the given user to the region and project
+  mapToNamedPathAndInputs('userState', 'data.createUserState.userState',
+    ({apolloClient, user, region, project}) => makeUserStateMutationContainer(
+      {apolloClient},
+      {outputParams: userStateMutateOutputParams},
+      null,
+      createInputParams({user, region, project})
+    )
+  ),
+  // Create a sample project
+  mapToNamedPathAndInputs('project', 'data.createProject.project',
+    ({apolloClient}) => createSampleProjectTask({apolloClient}, {
+        key: projectKey,
+        name: capitalize(projectKey),
+        user: {id: user.id}
+      }
+    )
+  ),
+
+  // Create a sample region
+  mapToNamedPathAndInputs('region', 'data.createRegion.region',
+    ({apolloClient}) => createSampleRegionTask({apolloClient}, {
+      key: regionKey,
+      name: capitalize(regionKey)
+    })
+  )
+)({apolloClient, user, regionKey, projectKey});
+
+/**
+ * Helper to create input params for the user state
+ * @param user
+ * @param region
+ * @param project
+ * @returns {{data: {userProjects: {project: {mapbox: {viewport: {latitude: (*|number), zoom: *, longitude: (*|number)}}, id: number}}[], userRegions: {region: {mapbox: {viewport: {latitude: (*|number), zoom: *, longitude: (*|number)}}, id: number}}[]}, user: {id: number}}}
+ */
+const createInputParams = ({user, region, project}) => ({
+  user: {id: parseInt(reqStrPathThrowing('id', user))},
+  data: {
+    userRegions: [
+      {
+        region: {
+          id: parseInt(reqStrPathThrowing('id', region))
+        },
+        mapbox: {
+          viewport: {
+            // Use the defaults from the region
+            latitude: region.data.mapbox.viewport.latitude,
+            longitude: region.data.mapbox.viewport.longitude,
+            // Zoom in one from he region's zoom
+            zoom: region.data.mapbox.viewport.zoom + 1
+          }
+        }
+      }
+    ],
+    userProjects: [
+      {
+        project: {
+          id: parseInt(reqStrPathThrowing('id', project))
+        },
+        mapbox: {
+          viewport: {
+            // Use the defaults from the project
+            latitude: project.data.mapbox.viewport.latitude,
+            longitude: project.data.mapbox.viewport.longitude,
+            // Zoom in one from he project's zoom
+            zoom: project.data.mapbox.viewport.zoom + 1
+          }
+        }
+      }
+    ]
+  }
 });

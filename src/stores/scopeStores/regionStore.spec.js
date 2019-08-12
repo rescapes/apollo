@@ -17,6 +17,7 @@ import {createSampleRegionTask} from './regionStore.sample';
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
 describe('regionStore', () => {
   test('makeRegionMutationContainer', done => {
+    expect.assertions(1);
     const errors = [];
     R.composeK(
       mapToNamedPathAndInputs('region', 'data.createRegion.region',

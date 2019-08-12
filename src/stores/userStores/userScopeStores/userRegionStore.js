@@ -12,16 +12,26 @@
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {makeRegionsQueryContainer, regionOutputParams} from '../../scopeStores/regionStore';
+import {
+  makeRegionsQueryContainer,
+  regionOutputParams as defaultRegionOutputParams
+} from '../../scopeStores/regionStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
-import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
+import {
+  userRegionsOutputParamsFragmentOnlyIds,
+  userStateOutputParamsCreator,
+  userStateReadInputTypeMapper
+} from '../userStore';
 import {reqStrPathThrowing} from 'rescape-ramda';
 
 /**
  * Queries regions that are in the scope of the user and the values of that region
  * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
  * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
+ * @param {Object} outputParamSets Optional outputParam sets to override the defaults
+ * @param {Object} [outputParamSets.regionOutputParams] Optional region output params.
+ * Defaults to regionStore.regionOutputParams
  * @param {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
  * @param {Function} [component] Optional component when doing and Apollo Component query
@@ -31,16 +41,18 @@ import {reqStrPathThrowing} from 'rescape-ramda';
  * @param {Object} props.region Props for the Regions query. This can be {} or null to not filter.
  * @returns {Object} The resulting Regions in a Task in {data: usersRegions: [...]}}
  */
-export const makeUserRegionsQueryContainer = v(R.curry(
-  (apolloConfig, component, props) => {
+export const userRegionsQueryContainer = v(R.curry(
+  (apolloConfig, {regionOutputParams}, component, props) => {
     return makeUserScopeObjsQueryContainer(
       apolloConfig,
       {
         scopeQueryTask: makeRegionsQueryContainer,
         scopeName: 'region',
         readInputTypeMapper: userStateReadInputTypeMapper,
-        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({region: scopeOutputParams}),
-        scopeOutputParams: regionOutputParams
+        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator(
+          userRegionsOutputParamsFragmentOnlyIds
+        ),
+        scopeOutputParams: regionOutputParams || defaultRegionOutputParams
       },
       component,
       {userState: reqStrPathThrowing('userState', props), scope: reqStrPathThrowing('region', props)}
@@ -48,6 +60,9 @@ export const makeUserRegionsQueryContainer = v(R.curry(
   }),
   [
     ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
+    ['outputParamSets', PropTypes.shape({
+      regionOutputParams: PropTypes.shape()
+    })],
     ['component', PropTypes.func],
     ['props', PropTypes.shape({
       userState: PropTypes.shape({
@@ -60,95 +75,4 @@ export const makeUserRegionsQueryContainer = v(R.curry(
       }).isRequired,
       region: PropTypes.shape().isRequired
     })]
-  ], 'makeUserRegionsQueryContainer');
-
-
-/*
-  LinkState Defaults
-*/
-
-const defaults = {};
-
-/*
-  LinkState queries and mutations
-*/
-
-/*
-Example queries and mutations
-const userRegionLocalQuery = gql`
-  query GetTodo {
-    currentTodos @client
-  }
-`;
-
-const clearTodoQuery = gql`
-  mutation clearTodo {
-    clearTodo @client
-  }
-`;
-
-const addTodoQuery = gql`
-  mutation addTodo($item: String) {
-    addTodo(item: $item) @client
-  }
-`;
-*/
-
-/*
-  Cache Mutation Resolvers
-*/
-
-const mutations = {
-  // These are examples of mutating the cache
-  /*  addTodo: (_obj, {item}, {cache}) => {
-      const query = todoQuery;
-      // Read the todo's from the cache
-      const {currentTodos} = cache.readQuery({query});
-
-      // Add the item to the current todos
-      const updatedTodos = currentTodos.concat(item);
-
-      // Update the cached todos
-      cache.writeQuery({query, data: {currentTodos: updatedTodos}});
-
-      return null;
-    },
-
-    clearTodo: (_obj, _args, {cache}) => {
-      cache.writeQuery({query: todoQuery, data: todoDefaults});
-      return null;
-    }*/
-};
-
-/*
-  Store
-*/
-
-/**
- * The Store object used to construct
- * Apollo Link State's Client State
- */
-export const userRegionStore = {
-  defaults,
-  mutations
-};
-
-/*
-  Helpers
-*/
-
-const todoQueryHandler = {
-  props: ({ownProps, data: {currentTodos = []}}) => ({
-    ...ownProps,
-    currentTodos
-  })
-};
-
-/*
-const withTodo = R.compose(
-  graphql(todoQuery, todoQueryHandler),
-  graphql(addTodoQuery, {name: 'addTodoMutation'}),
-  graphql(clearTodoQuery, {name: 'clearTodoMutation'})
-);
-*/
-
+  ], 'userRegionsQueryContainer');

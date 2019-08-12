@@ -14,7 +14,7 @@ import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import PropTypes from 'prop-types';
-import {mapboxOutputParamsFragment} from './mapStores/mapboxStore';
+import {mapboxOutputParamsFragment} from './mapStores/mapboxOutputParams';
 import {makeMutationWithClientDirectiveContainer} from '../helpers/mutationCacheHelpers';
 import settings from '../helpers/privateTestSettings';
 import {pickDeepPaths, omitDeepPaths} from 'rescape-ramda'
@@ -57,7 +57,7 @@ export const settingsOutputParams = (omitCacheOnlyFields = false) => [
         mapbox: R.concat(
           R.view(
             R.lensPath([0, 'mapbox']),
-            mapboxOutputParamsFragment
+            [mapboxOutputParamsFragment]
           ),
           // Only stored in the cache
           omitCacheOnlyFields ? [] : [

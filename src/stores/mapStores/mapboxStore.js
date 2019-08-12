@@ -9,7 +9,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
@@ -22,6 +21,58 @@ import {makeRegionsQueryContainer} from '../scopeStores/regionStore';
 import {makeUserStateQueryContainer} from '../userStores/userStore';
 import {makeProjectsQueryContainer} from '../scopeStores/projectStore';
 
+
+/**
+ * @fileoverview
+ *
+ * This store resolves the state of mapbox for any use case. If a user is provided it will consult the user's
+ * states to get the appropriate mapbox state, but it's possible the user hasn't set values for a certain scope if
+ * they never visited that scope or reset scope explicitly.
+ *
+ * The state of Mapbox is determined in increasing priority by:
+ * Global. If nothing else is supplied, the global mapbox state is used, which is likely just  a view of the globe :)
+ *  Queries:
+ *      viewport, style
+ *
+ * Region that is specified without a user state. Then the region's mapbox state is used, such as a country or city view.
+ * If the user goes to this region for the first time or after resetting they won't have a user state for it.
+ *  Queries:
+ *      geojson (bounds override Global viewport)
+ *
+ * Project that is specified without a user state. Then the project's mapbox state is used, such as a neighborhood view.
+ * If the user goes to this project for the first time or after resetting they won't have a user state for it.
+ *  Queries:
+ *      locations (geojson and properties, combined geojson overrides Region viewport)
+ *
+ * User Global. The global user state. If the user has a global user state setting for mapbox this will be used.
+ * This would make sense if the user account sets a home city for instance
+ *  Queries:
+ *      style (overrides global)
+ *  Mutations:
+ *      style
+ *
+ * User Region. The region user state. If the user has a region user state setting for mapbox this will be used.
+ * This would make sense if the user goes to a region settings page, although the viewport
+ * would probably just default to the region's mapbox state. But they might set map styles.
+ * The user could also filter locations at the region scope if we show all possible locations for a region the map.
+ *  Queries:
+ *      style (overrides user global and region)
+ *      location selections (overrides region locations)
+ *  Mutations:
+ *      style
+ *
+ * User Project. The project user state. If the user has a project user state setting for mapbox this will be used.
+ * This would make sense if the user goes to a project settings page, although the viewport
+ * would probably just default to the project's mapbox state. But they might set map styles.
+ * The user could also filter locations at the project scope
+ *  Queries:
+ *      viewport (overrides user region and project viewport)
+ *      location selections (overrides project locations)
+ *  Mutations
+ *      viewport
+ *      location selections
+ */
+
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
 // Following this location.data is represented as follows:
@@ -31,105 +82,79 @@ export const readInputTypeMapper = {
   'geojson': 'FeatureCollectionDataTypeofRegionTypeRelatedReadInputType'
 };
 
+
 /**
- * Mapbox state of Global, UserGlobal, UserProjects
- * @type {*[]}
+ * Creates state output params
+ * @param [Object] mapboxOutputParamsFragment The mapboxFragment of the params
+ * @return {*[]}
  */
-export const mapboxOutputParamsFragment = [
+export const userStateMapboxOutputParamsCreator = mapboxOutputParamsFragment => [
   {
-    mapbox: [{
-      viewport: [
-        'latitude',
-        'longitude',
-        'zoom'
+    data: [{
+      // The Global mapbox state for the user
+      userGlobal: [
+        mapboxOutputParamsFragment
+      ],
+      // The mapbox state for the user regions
+      userRegions: [
+        mapboxOutputParamsFragment
+      ],
+      // The mapbox state for the project regions
+      userProjects: [
+        mapboxOutputParamsFragment
       ]
     }]
   }
 ];
 
-
-/**
- * Creates state output params
- * @param [Object] mapboxFragment The mapboxFragment of the params
- * @return {*[]}
- */
-export const userStateMapboxOutputParamsCreator = mapboxFragment => [
+export const projectMapboxOutputParamsCreator = mapboxOutputParamsFragment => [
   {
-    data: [{
-      userGlobal: mapboxFragment,
-      userProjects: mapboxFragment
-    }]
-  }
-];
-
-export const projectMapboxOutputParamsCreator = mapboxFragment => [
-  {
-    projects: [{
-      userStates: [{
-        data: [{
-          userGlobal: mapboxFragment,
-          userRegions: mapboxFragment
-        }]
+    userStates: [{
+      data: [{
+        userGlobal: [
+          mapboxOutputParamsFragment
+        ],
+        userRegions: [
+          mapboxOutputParamsFragment
+        ]
       }]
     }]
   }
 ];
 
-export const regionMapboxOutputParamsCreator = mapboxFragment => [
+export const regionMapboxOutputParamsCreator = mapboxOutputParamsFragment => [
   {
-    regions: [{
-      userStates: [{
-        data: [{
-          userGlobal: mapboxFragment,
-          userProjects: mapboxFragment
-        }]
+    userStates: [{
+      data: [{
+        userGlobal: [
+          mapboxOutputParamsFragment
+        ],
+        userProjects: [
+          mapboxOutputParamsFragment
+        ]
       }]
     }]
   }
 ];
 
 
-export const scopeObjMapboxOutputParamsCreator = (scopeName, mapboxFragment) => [
+export const scopeObjMapboxOutputParamsCreator = (scopeName, mapboxOutputParamsFragment) => [
   {
     [`${scopeName}s`]: [{
       data: [{
-        mapbox: mapboxFragment,
-        userGlobal: mapboxFragment,
-        userProjects: mapboxFragment
+        userGlobal: [
+          mapboxOutputParamsFragment
+        ],
+        userRegions: [
+          mapboxOutputParamsFragment
+        ],
+        userProjects: [
+          mapboxOutputParamsFragment
+        ]
       }]
     }]
   }
 ];
-
-/**
- * @file
- * The state of Mapbox is determined in increasing priority by:
- * Global
- *  Queries:
- *      viewport, style
- *
- * Region that is specified
- *  Queries:
- *      geojson (bounds override Global viewport)
- *
- * Project that is specified
- *  Queries:
- *      locations (geojson and properties, combined geojson overrides Region viewport)
- *
- * User Global
- *  Queries:
- *      style (overrides global)
- *  Mutations:
- *      style
- *
- * User Project for specified Project
- *  Queries:
- *      viewport (user input overrides Project viewport)
- *      location selections
- *  Mutations
- *      viewport
- *      location selections
- */
 
 /**
  * Given user and scope ids in the arguments (e.g. Region, Project, etc) resolves the mapbox state.

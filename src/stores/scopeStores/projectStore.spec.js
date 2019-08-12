@@ -19,9 +19,14 @@ const someProjectKeys = ['id', 'key', 'geojson'];
 describe('projectStore', () => {
   const errors = [];
   test('makeProjectMutationContainer', done => {
+    expect.assertions(1)
     R.composeK(
       mapToNamedPathAndInputs('project', 'data.createProject.project',
-        ({apolloClient}) => createSampleProjectTask({apolloClient})
+        ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, {user: {id: userId}})
+      ),
+      // Get the current user
+      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
+        ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       () => localTestAuthTask
     )().run().listen(defaultRunConfig({
@@ -33,6 +38,7 @@ describe('projectStore', () => {
   });
 
   test('makeProjectsQueryContainer', done => {
+    expect.assertions(1)
     const errors = [];
     R.composeK(
       ({apolloClient, project}) => makeProjectsQueryContainer(
@@ -42,7 +48,7 @@ describe('projectStore', () => {
         {key: reqStrPathThrowing('key', project)}
       ),
       mapToNamedPathAndInputs('project', 'data.createProject.project',
-        ({apolloClient, user}) => createSampleProjectTask({apolloClient}, user.id)
+        ({apolloClient, user}) => createSampleProjectTask({apolloClient}, {user: {id: user.id}})
       ),
       mapToNamedPathAndInputs('user', 'data.currentUser',
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
@@ -56,5 +62,5 @@ describe('projectStore', () => {
           expectKeysAtStrPath(someProjectKeys, 'data.projects.0', response);
         }
     }, errors, done));
-  });
+  }, 50000);
 });

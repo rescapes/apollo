@@ -47,7 +47,7 @@ describe('apolloClient', () => {
 
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryDefaultsResponse)).toEqual(false);
     expect(reqStrPathThrowing('data.settings.mapbox.viewport', queryDefaultsResponse)).toBeTruthy();
-  }, 10000);
+  }, 100000);
 
   test('test linkState mutation', async done => {
     expect.assertions(8);

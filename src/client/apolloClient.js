@@ -158,7 +158,7 @@ const dumpOperation = operation => {
   if (!operation) {
     return ''
   }
-  return(`Query: ${print(operation.query)} Arguments: ${JSON.stringify(operation.variables)}`);
+  return(`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables)}\n`);
 };
 
 /**

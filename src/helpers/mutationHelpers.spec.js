@@ -67,5 +67,5 @@ describe('mutationHelpers', () => {
           done();
         }
     }));
-  }, 1000);
+  }, 10000);
 });

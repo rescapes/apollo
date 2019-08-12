@@ -1,5 +1,5 @@
 import {makeRegionMutationContainer, regionOutputParams} from './regionStore';
-import {mapToNamedPathAndInputs} from 'rescape-ramda';
+import {mergeDeep} from 'rescape-ramda';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -15,28 +15,46 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
 /**
  * Creates a sample region
  * @params apolloClient
+ * @params {Object} props Optional overrides to defaults
  * @return {Object} {data: region: {...}}}
  */
-export const createSampleRegionTask = ({apolloClient}) => {
+export const createSampleRegionTask = ({apolloClient}, props = {}) => {
   // Create the prop function and pass it sample props to return a Task
   return makeRegionMutationContainer(
     {apolloClient},
     {outputParams: regionOutputParams},
     // Component is always null for sample data tasks
     null,
-    {
-      key: 'pincherCreek',
-      name: 'Pincher Creek',
-      geojson: {
-        'type': 'FeatureCollection',
-        'features': [{
-          "type": "Feature",
-          "geometry": {
-            "type": "Polygon",
-            "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
+    mergeDeep({
+        key: 'pincherCreek',
+        name: 'Pincher Creek',
+        geojson: {
+          'type': 'FeatureCollection',
+          'features': [{
+            "type": "Feature",
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[[49.54147, -114.17439], [49.42996, -114.17439], [49.42996, -113.72635], [49.54147, -113.72635], [49.54147, -114.174390]]]
+            }
+          }]
+        },
+        data: {
+          locations: {
+            params: {
+              city: 'Pincher Creek',
+              state: 'Alberta',
+              country: 'Canada'
+            }
+          },
+          mapbox: {
+            viewport: {
+              latitude: 49.54147,
+              longitude: -114.17439,
+              zoom: 7
+            }
           }
-        }]
-      }
-    }
+        }
+      },
+      props)
   );
 };

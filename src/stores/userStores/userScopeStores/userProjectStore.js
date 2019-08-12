@@ -14,10 +14,19 @@ import * as R from 'ramda';
 import {makeMutation} from '../../../helpers/mutationHelpers';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {makeProjectsQueryContainer, makeProjectsQueryTask, projectOutputParams} from '../../scopeStores/projectStore';
+import {
+  makeProjectsQueryContainer,
+  makeProjectsQueryTask,
+  projectOutputParams as defaultProjectOutputParams
+} from '../../scopeStores/projectStore';
 import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
-import {userStateOutputParamsCreator, userStateReadInputTypeMapper} from '../userStore';
+import {
+  userProjectsOutputParamsFragmentOnlyIds,
+  userRegionsOutputParamsFragmentOnlyIds,
+  userStateOutputParamsCreator,
+  userStateReadInputTypeMapper
+} from '../userStore';
 import {reqStrPathThrowing} from 'rescape-ramda';
 
 // Variables of complex input type needs a type specified in graphql. Our type names are
@@ -33,6 +42,9 @@ const readInputTypeMapper = {
  * Queries projects that are in the scope of the user and the values of that project
  * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo Component
  * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
+ * @param {Object} outputParamSets Optional outputParam sets to override the defaults
+ * @param {Object} [outputParamSets.projectOutputParams] Optional project output params.
+ * Defaults to projectStore.projectOutputParams
  * @param {Function} [component] Optional component when doing and Apollo Component query
  * @param {Object} props The props used for the query. userState and project objects are required
  * @param {Object} props.userState Props for the UserStates query. {user: {id: }} is required to limit
@@ -42,16 +54,17 @@ const readInputTypeMapper = {
  * the UserState query selects the ids
  * @returns {Object} The resulting Projects in a Task in {data: usersProjects: [...]}}
  */
-export const makeUserProjectsQueryContainer = v(R.curry(
-  (apolloConfig, component, props) => {
+export const userProjectsQueryContainer = v(R.curry((apolloConfig, {projectOutputParams}, component, props) => {
     return makeUserScopeObjsQueryContainer(
       apolloConfig,
       {
         scopeQueryTask: makeProjectsQueryContainer,
         scopeName: 'project',
         readInputTypeMapper: userStateReadInputTypeMapper,
-        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator({project: scopeOutputParams}),
-        scopeOutputParams: projectOutputParams
+        userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator(
+          userProjectsOutputParamsFragmentOnlyIds
+        ),
+        scopeOutputParams: projectOutputParams || defaultProjectOutputParams
       },
       component,
       {userState: reqStrPathThrowing('userState', props), scope: reqStrPathThrowing('project', props)}
@@ -59,6 +72,9 @@ export const makeUserProjectsQueryContainer = v(R.curry(
   }),
   [
     ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
+    ['outputParamSets', PropTypes.shape({
+      projectOutputParams: PropTypes.shape()
+    })],
     ['component', PropTypes.func],
     ['props', PropTypes.shape({
       userState: PropTypes.shape({
@@ -71,100 +87,4 @@ export const makeUserProjectsQueryContainer = v(R.curry(
       }).isRequired,
       project: PropTypes.shape().isRequired
     })]
-  ], 'makeUserProjectsQueryContainer');
-
-export const makeUserProjectMutation = R.curry((outputParams, inputParams) => {
-  const mutation = makeMutation('updateProject', {}, {locationData: inputParams}, {location: outputParams});
-  log.debug(mutation);
-  return gql`${mutation}`;
-});
-
-/*
-  LinkState Defaults
-*/
-
-const defaults = {};
-
-/*
-  LinkState queries and mutations
-*/
-
-/*
-Example queries and mutations
-const userProjectLocalQuery = gql`
-  query GetTodo {
-    currentTodos @client
-  }
-`;
-
-const clearTodoQuery = gql`
-  mutation clearTodo {
-    clearTodo @client
-  }
-`;
-
-const addTodoQuery = gql`
-  mutation addTodo($item: String) {
-    addTodo(item: $item) @client
-  }
-`;
-*/
-
-/*
-  Cache Mutation Resolvers
-*/
-
-const mutations = {
-  // These are examples of mutating the cache
-  /*  addTodo: (_obj, {item}, {cache}) => {
-      const query = todoQuery;
-      // Read the todo's from the cache
-      const {currentTodos} = cache.readQuery({query});
-
-      // Add the item to the current todos
-      const updatedTodos = currentTodos.concat(item);
-
-      // Update the cached todos
-      cache.writeQuery({query, data: {currentTodos: updatedTodos}});
-
-      return null;
-    },
-
-    clearTodo: (_obj, _args, {cache}) => {
-      cache.writeQuery({query: todoQuery, data: todoDefaults});
-      return null;
-    }*/
-};
-
-/*
-  Store
-*/
-
-/**
- * The Store object used to construct
- * Apollo Link State's Client State
- */
-export const userProjectStore = {
-  defaults,
-  mutations
-};
-
-/*
-  Helpers
-*/
-
-const todoQueryHandler = {
-  props: ({ownProps, data: {currentTodos = []}}) => ({
-    ...ownProps,
-    currentTodos
-  })
-};
-
-/*
-const withTodo = R.compose(
-  graphql(todoQuery, todoQueryHandler),
-  graphql(addTodoQuery, {name: 'addTodoMutation'}),
-  graphql(clearTodoQuery, {name: 'clearTodoMutation'})
-);
-*/
-
+  ], 'userProjectsQueryContainer');

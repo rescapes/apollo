@@ -109,7 +109,7 @@ export const makeMutationRequestContainer = v(R.curry(
       namedOutputParams
     )}`;
 
-    log.debug(`Mutation: ${print(mutation)} Arguments: ${JSON.stringify(namedProps)}`);
+    log.debug(`Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
 
     return R.cond([
       // If we have an ApolloClient

@@ -9,19 +9,20 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeUserProjectsQueryContainer, userStateOutputParamsCreator} from './userProjectStore';
+import {userProjectsQueryContainer, userStateOutputParamsCreator} from './userProjectStore';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask, testConfig} from '../../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeCurrentUserQueryContainer, userOutputParams} from '../userStore';
 
 describe('userProjectStore', () => {
-  test('makeUserProjectsQueryContainer', done => {
+  test('userProjectsQueryContainer', done => {
     const errors = [];
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserProjectsQueryContainer(
+      ({apolloClient, userId}) => userProjectsQueryContainer(
         {apolloClient},
+        {},
         null,
         {
           userState: {user: {id: userId}},
@@ -45,11 +46,13 @@ describe('userProjectStore', () => {
   }, 10000);
 
   test('makeUserProjectQueryTaskWithProjectFilter', done => {
+    expect.assertions(1);
+    const errors = [];
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
       // Filter for projects where the geojson.type is 'FeatureCollection'
       // This forces a separate query on Projects so we can filter by Project
-      ({apolloClient, userId}) => makeUserProjectsQueryContainer({apolloClient}, null, {
+      ({apolloClient, userId}) => userProjectsQueryContainer({apolloClient}, {}, null, {
         userState: {user: {id: parseInt(userId)}},
         project: {geojson: {type: 'FeatureCollection'}}
       }),
@@ -64,16 +67,16 @@ describe('userProjectStore', () => {
       onResolved:
         response => {
           expectKeysAtStrPath(someProjectKeys, 'data.userProjects.0.project', response);
-          done();
         }
-    }));
+    }, errors, done));
   });
 
   test('makeActiveUserProjectQuery', done => {
     const someProjectKeys = ['id', 'key', 'name'];
     R.composeK(
-      ({apolloClient, userId}) => makeUserProjectsQueryContainer(
+      ({apolloClient, userId}) => userProjectsQueryContainer(
         {apolloClient},
+        {},
         null,
         {userState: {user: {id: parseInt(userId)}}, project: {}}
       ),

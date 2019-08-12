@@ -61,7 +61,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
-  log.debug(`Client Directive Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
   return R.map(
     queryResponse => {
       log.debug(`makeQueryWithClientDirectiveContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
@@ -89,7 +89,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, component, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Cache Query: ${print(query)} Arguments: ${JSON.stringify(props)}`);
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
   return R.map(
     queryResponse => {
       log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);

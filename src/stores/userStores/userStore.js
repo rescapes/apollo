@@ -10,7 +10,6 @@
  */
 
 
-import {graphql} from 'graphql';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
@@ -19,6 +18,7 @@ import PropTypes from 'prop-types';
 import {mapKeysAndValues, capitalize} from 'rescape-ramda';
 import {readInputTypeMapper, regionOutputParams} from '../scopeStores/regionStore';
 import {projectOutputParams} from '../scopeStores/projectStore';
+import {mapboxOutputParamsFragment} from '../mapStores/mapboxOutputParams';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -44,18 +44,6 @@ export const userOutputParams = [
   'dateJoined'
 ];
 
-/**
- * Creates a userState scope output params fragment
- * @param {Object} userScopeFragmentOutputParams Object keyed by 'regions', 'projects', etc with
- * the ouput params those should return within userState.data.[userRegions|userProject|...]
- * @return {*} The complete UserState output params
- */
-const userStateScopeOutputParamsFragmentCreator = userScopeFragmentOutputParams => {
-  return mapKeysAndValues(
-    (v, k) => [`user${capitalize(k)}s`, {[k]: v}],
-    userScopeFragmentOutputParams
-  );
-};
 
 /**
  * Creates userState output params
@@ -69,7 +57,7 @@ export const userStateOutputParamsCreator = userScopeFragmentOutputParams => [
   [{
     user: ['id'],
     data: [
-      userStateScopeOutputParamsFragmentCreator(userScopeFragmentOutputParams)
+      userScopeFragmentOutputParams
     ]
   }]
 ];
@@ -78,22 +66,50 @@ export const userStateOutputParamsCreator = userScopeFragmentOutputParams => [
  * User state output params with full scope output params. This should only be used for querying when values of the scope
  * instances are needed beyond the ids
  */
-export const userStateOutputParamsFull = userStateOutputParamsCreator({
-  region: regionOutputParams,
-  project: projectOutputParams
-});
+export const userStateOutputParamsFull = {
+  userRegions: {
+    region: regionOutputParams,
+    ...mapboxOutputParamsFragment
+  },
+  userProjects: {
+    project: projectOutputParams,
+    ...mapboxOutputParamsFragment
+  }
+};
+
+/***
+ * userRegions output params fragment when we only want the region ids
+ * @type {{userRegions: (*[]&{region: string[]})}}
+ */
+export const userRegionsOutputParamsFragmentOnlyIds = {
+  userRegions: {
+    region: ['id'],
+    ...mapboxOutputParamsFragment
+  }
+}
+
+/***
+ * userProjects output params fragment when we only want the project ids
+ * @type {{userProjects: (*[]&{project: string[]})}}
+ */
+export const userProjectsOutputParamsFragmentOnlyIds = {
+  userProjects: {
+    project: ['id'],
+    ...mapboxOutputParamsFragment
+  }
+}
 
 /**
  * User state output params with id-only scope output params. Should be used for mutations and common cases when
  * only the scope ids of the user state are needed (because scope instances are already loaded, for instance)
  */
-export const userStateOutputPararmsOnlyIds = userStateOutputParamsCreator({
-  region: ['id'],
-  project: ['id']
+export const userStateOutputParamsOnlyIds = userStateOutputParamsCreator({
+  ...userRegionsOutputParamsFragmentOnlyIds,
+  ...userProjectsOutputParamsFragmentOnlyIds
 });
 
 
-export const userStateMutateOutputParams = userStateOutputPararmsOnlyIds;
+export const userStateMutateOutputParams = userStateOutputParamsOnlyIds;
 
 /**
  * Queries users

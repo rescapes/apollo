@@ -3,9 +3,9 @@ import {makeCurrentUserQueryContainer, userOutputParams} from '../userStores/use
 import {makeMapboxesQueryResultTask} from '../mapStores/mapboxStore';
 import * as R from 'ramda';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {mapboxOutputParamsFragment} from './mapboxStore';
-import {makeUserRegionsQueryContainer} from '../userStores/userScopeStores/userRegionStore';
-import {makeUserProjectsQueryContainer} from '../userStores/userScopeStores/userProjectStore';
+import {mapboxOutputParamsFragment} from './mapboxOutputParams';
+import {userRegionsQueryContainer} from '../userStores/userScopeStores/userRegionStore';
+import {userProjectsQueryContainer} from '../userStores/userScopeStores/userProjectStore';
 import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
 import {createSampleProjectTask} from '../scopeStores/projectStore.sample';
 
@@ -25,9 +25,10 @@ describe('mapboxStore', () => {
     const errors = [];
     expect.assertions(1);
     R.composeK(
+      // Now that we have a user, region, and project, we query
       ({apolloClient, userId, regionId, projectId}) => makeMapboxesQueryResultTask(
         {apolloClient},
-        mapboxOutputParamsFragment,
+        [mapboxOutputParamsFragment],
         null,
         {
           user: {id: parseInt(userId)},
@@ -35,10 +36,12 @@ describe('mapboxStore', () => {
           project: {id: parseInt(projectId)}
         }
       ),
+
       // Get the first project in the userState to use as a pretend scope
       mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
-        ({apolloClient, userId}) => makeUserProjectsQueryContainer(
+        ({apolloClient, userId}) => userProjectsQueryContainer(
           {apolloClient},
+          {},
           null,
           {
             userState: {user: {id: userId}},
@@ -47,10 +50,12 @@ describe('mapboxStore', () => {
           }
         )
       ),
+
       // Get the first region in the userState to use as a pretend scope
       mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
-        ({apolloClient, userId}) => makeUserRegionsQueryContainer(
+        ({apolloClient, userId}) => userRegionsQueryContainer(
           {apolloClient},
+          {},
           null,
           {
             userState: {user: {id: userId}},
@@ -60,10 +65,12 @@ describe('mapboxStore', () => {
         )
       ),
 
+      // Create a sample project
       mapToNamedPathAndInputs('project', 'data.createProject.project',
-        ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, parseInt(userId))
+        ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, {user: {id: parseInt(userId)}})
       ),
 
+      // Create a sample region
       mapToNamedPathAndInputs('region', 'data.createRegion.region',
         ({apolloClient}) => createSampleRegionTask({apolloClient})
       ),
@@ -71,6 +78,7 @@ describe('mapboxStore', () => {
       mapToNamedPathAndInputs('userId', 'data.currentUser.id',
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
+      // Authenticate
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )
