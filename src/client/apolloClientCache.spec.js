@@ -162,9 +162,8 @@ describe('apolloClient', () => {
     );
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponseAfterUnscubscribe)).toEqual(false);
     done();
-  });
-})
-;
+  }, 100000);
+});
 
 const cycleRegion = async apolloClient => {
 

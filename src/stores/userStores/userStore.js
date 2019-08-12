@@ -79,33 +79,31 @@ export const userStateOutputParamsFull = {
 
 /***
  * userRegions output params fragment when we only want the region ids
- * @type {{userRegions: (*[]&{region: string[]})}}
  */
-export const userRegionsOutputParamsFragmentOnlyIds = {
+export const userRegionsOutputParamsFragmentDefaultOnlyIds = (regionOutputParams = ['id']) => ({
   userRegions: {
-    region: ['id'],
+    region: regionOutputParams,
     ...mapboxOutputParamsFragment
   }
-}
+});
 
 /***
  * userProjects output params fragment when we only want the project ids
- * @type {{userProjects: (*[]&{project: string[]})}}
  */
-export const userProjectsOutputParamsFragmentOnlyIds = {
+export const userProjectsOutputParamsFragmentDefaultOnlyIds = (projectOutputParams = ['id']) => ({
   userProjects: {
-    project: ['id'],
+    project: projectOutputParams,
     ...mapboxOutputParamsFragment
   }
-}
+});
 
 /**
  * User state output params with id-only scope output params. Should be used for mutations and common cases when
  * only the scope ids of the user state are needed (because scope instances are already loaded, for instance)
  */
 export const userStateOutputParamsOnlyIds = userStateOutputParamsCreator({
-  ...userRegionsOutputParamsFragmentOnlyIds,
-  ...userProjectsOutputParamsFragmentOnlyIds
+  ...userRegionsOutputParamsFragmentDefaultOnlyIds(),
+  ...userProjectsOutputParamsFragmentDefaultOnlyIds()
 });
 
 

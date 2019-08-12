@@ -1,4 +1,4 @@
-import {expectKeysAtStrPath, localTestAuthTask} from '../../helpers/testHelpers';
+import {expectKeysAtStrPath, localTestAuthTask, mutateUserStateWithProjectAndRegion} from '../../helpers/testHelpers';
 import {makeCurrentUserQueryContainer, userOutputParams} from '../userStores/userStore';
 import {makeMapboxesQueryResultTask} from '../mapStores/mapboxStore';
 import * as R from 'ramda';
@@ -26,56 +26,26 @@ describe('mapboxStore', () => {
     expect.assertions(1);
     R.composeK(
       // Now that we have a user, region, and project, we query
-      ({apolloClient, userId, regionId, projectId}) => makeMapboxesQueryResultTask(
+      ({apolloClient, user, region, project, userState}) => makeMapboxesQueryResultTask(
         {apolloClient},
         [mapboxOutputParamsFragment],
         null,
         {
-          user: {id: parseInt(userId)},
-          region: {id: parseInt(regionId)},
-          project: {id: parseInt(projectId)}
+          user: {id: parseInt(user.id)},
+          region: {id: parseInt(region.id)},
+          project: {id: parseInt(project.id)}
         }
       ),
 
-      // Get the first project in the userState to use as a pretend scope
-      mapToNamedPathAndInputs('projectId', 'data.userProjects.0.project.id',
-        ({apolloClient, userId}) => userProjectsQueryContainer(
-          {apolloClient},
-          {},
-          null,
-          {
-            userState: {user: {id: userId}},
-            // The sample user is already limited to certain projects. We don't need to limit further
-            project: {}
-          }
-        )
-      ),
-
-      // Get the first region in the userState to use as a pretend scope
-      mapToNamedPathAndInputs('regionId', 'data.userRegions.0.region.id',
-        ({apolloClient, userId}) => userRegionsQueryContainer(
-          {apolloClient},
-          {},
-          null,
-          {
-            userState: {user: {id: userId}},
-            // The sample user is already limited to certain regions. We don't need to limit further
-            region: {}
-          }
-        )
-      ),
-
-      // Create a sample project
-      mapToNamedPathAndInputs('project', 'data.createProject.project',
-        ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, {user: {id: parseInt(userId)}})
-      ),
-
-      // Create a sample region
-      mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({apolloClient}) => createSampleRegionTask({apolloClient})
-      ),
+      // Set the UserState
+      ({apolloClient, user}) => mutateUserStateWithProjectAndRegion({
+        apolloClient,
+        user,
+        regionKey: 'antarctica',
+        projectKey: 'refrost'
+      }),
       // Get the current user
-      mapToNamedPathAndInputs('userId', 'data.currentUser.id',
+      mapToNamedPathAndInputs('user', 'data.currentUser',
         ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, null)
       ),
       // Authenticate

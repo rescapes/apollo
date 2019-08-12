@@ -89,7 +89,7 @@ describe('queryCacheHelpers', () => {
           done();
         }
     }));
-  }, 1000);
+  }, 100000);
 
 
 });

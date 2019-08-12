@@ -16,10 +16,9 @@ import {
   makeRegionsQueryContainer,
   regionOutputParams as defaultRegionOutputParams
 } from '../../scopeStores/regionStore';
-import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
 import {
-  userRegionsOutputParamsFragmentOnlyIds,
+  userRegionsOutputParamsFragmentDefaultOnlyIds,
   userStateOutputParamsCreator,
   userStateReadInputTypeMapper
 } from '../userStore';
@@ -35,14 +34,14 @@ import {reqStrPathThrowing} from 'rescape-ramda';
  * @param {Object} userStateArguments arguments for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
  * @param {Function} [component] Optional component when doing and Apollo Component query
- * @param {Object} props The props used for the query. userState and project objects are required
- * @param {Object} props.userState Props for the UserStates query. {user: {id: }} is required to limit
+ * @param {Object} propSets The props used for the query. userState and project objects are required
+ * @param {Object} propSets.userState Props for the UserStates query. {user: {id: }} is required to limit
  * the query to one user
- * @param {Object} props.region Props for the Regions query. This can be {} or null to not filter.
+ * @param {Object} propSets.region Props for the Regions query. This can be {} or null to not filter.
  * @returns {Object} The resulting Regions in a Task in {data: usersRegions: [...]}}
  */
 export const userRegionsQueryContainer = v(R.curry(
-  (apolloConfig, {regionOutputParams}, component, props) => {
+  (apolloConfig, {regionOutputParams}, component, propSets) => {
     return makeUserScopeObjsQueryContainer(
       apolloConfig,
       {
@@ -50,12 +49,12 @@ export const userRegionsQueryContainer = v(R.curry(
         scopeName: 'region',
         readInputTypeMapper: userStateReadInputTypeMapper,
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator(
-          userRegionsOutputParamsFragmentOnlyIds
+          userRegionsOutputParamsFragmentDefaultOnlyIds(scopeOutputParams)
         ),
         scopeOutputParams: regionOutputParams || defaultRegionOutputParams
       },
       component,
-      {userState: reqStrPathThrowing('userState', props), scope: reqStrPathThrowing('region', props)}
+      {userState: reqStrPathThrowing('userState', propSets), scope: reqStrPathThrowing('region', propSets)}
     );
   }),
   [
@@ -64,7 +63,7 @@ export const userRegionsQueryContainer = v(R.curry(
       regionOutputParams: PropTypes.shape()
     })],
     ['component', PropTypes.func],
-    ['props', PropTypes.shape({
+    ['propSets', PropTypes.shape({
       userState: PropTypes.shape({
         user: PropTypes.shape({
           id: PropTypes.oneOfType([

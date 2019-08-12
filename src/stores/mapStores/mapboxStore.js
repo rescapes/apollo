@@ -16,7 +16,7 @@ import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
 import {of, waitAll} from 'folktale/concurrency/task';
 import Result from 'folktale/result';
-import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath} from 'rescape-ramda';
+import {reqStrPathThrowing, resultToTaskNeedingResult, reqStrPath, strPathOr} from 'rescape-ramda';
 import {makeRegionsQueryContainer} from '../scopeStores/regionStore';
 import {makeUserStateQueryContainer} from '../userStores/userStore';
 import {makeProjectsQueryContainer} from '../scopeStores/projectStore';
@@ -107,33 +107,29 @@ export const userStateMapboxOutputParamsCreator = mapboxOutputParamsFragment => 
   }
 ];
 
+/**
+ * Gets project.data.mapbox data
+ * @param mapboxOutputParamsFragment
+ * @returns {{data: *[]}[]}
+ */
 export const projectMapboxOutputParamsCreator = mapboxOutputParamsFragment => [
   {
-    userStates: [{
-      data: [{
-        userGlobal: [
-          mapboxOutputParamsFragment
-        ],
-        userRegions: [
-          mapboxOutputParamsFragment
-        ]
-      }]
-    }]
+    data: [
+      mapboxOutputParamsFragment
+    ]
   }
 ];
 
+/**
+ * Gets region.data.mapbox.data
+ * @param mapboxOutputParamsFragment
+ * @returns {{data: *[]}[]}
+ */
 export const regionMapboxOutputParamsCreator = mapboxOutputParamsFragment => [
   {
-    userStates: [{
-      data: [{
-        userGlobal: [
-          mapboxOutputParamsFragment
-        ],
-        userProjects: [
-          mapboxOutputParamsFragment
-        ]
-      }]
-    }]
+    data: [
+      mapboxOutputParamsFragment
+    ]
   }
 ];
 
@@ -178,58 +174,59 @@ export const makeMapboxesQueryResultTask = v(R.curry((apolloConfig, outputParams
       // Each Result.Ok is mapped to a Task. Result.Errors are mapped to a Task.of
       // [Result] -> [Task Object]
       ({propSets, component}) => R.map(
+        // TODO. What is wanted here?
         values => R.complement(R.has)('error', values),
         waitAll([
           // The given Region's Mapbox state
           resultToTaskNeedingResult(
-            props => {
+            userAsId => {
               return R.map(
                 value => R.mergeAll([
-                  reqStrPathThrowing('data.userGlobal.mapbox', value),
-                  reqStrPathThrowing('data.userRegion.mapbox', value)
+                  strPathOr({}, 'data.userGlobal.mapbox', value),
+                  strPathOr({}, 'data.userRegion.mapbox', value)
                 ]),
                 // Query for the user state by id
                 makeUserStateQueryContainer(
                   apolloConfig,
                   {outputParams: userStateMapboxOutputParamsCreator(outputParams)},
                   component,
-                  props
+                  {user: userAsId}
                 )
               );
             },
-            // user arg is required
+            // user arg is required. This gives a Result.Error if it doesn't exist
             reqStrPath('user', propSets)
           ),
 
-          // The optional given Project's Mapbox state
+          // Get the mapbox settings for the given project
           resultToTaskNeedingResult(
-            args => R.map(
-              value => reqStrPathThrowing('data.projects.mapbox', value),
+            projectAsId => R.map(
+              value => reqStrPathThrowing('data.projects.0.data.mapbox', value),
               makeProjectsQueryContainer(
                 apolloConfig,
-                {name: 'regions', readInputTypeMapper, outputParams: projectMapboxOutputParamsCreator(outputParams)},
+                {name: 'projects', readInputTypeMapper, outputParams: projectMapboxOutputParamsCreator(outputParams)},
                 component,
-                args
+                projectAsId
               )
             ),
             reqStrPath('project', propSets)
           ),
 
-          // The optional given Region's Mapbox state
+          // Get the mapbox settings for the given region
           resultToTaskNeedingResult(
-            args => R.map(
-              value => reqStrPathThrowing('data.regions.mapbox', value),
+            regionAsId => R.map(
+              value => reqStrPathThrowing('data.regions.0.data.mapbox', value),
               makeRegionsQueryContainer(
                 apolloConfig,
                 {name: 'regions', readInputTypeMapper, outputParams: regionMapboxOutputParamsCreator(outputParams)},
                 component,
-                args
+                regionAsId
               )
             ),
             reqStrPath('region', propSets)
           ),
 
-          // Tht Global Mapbox state
+          // Get the global Mapbox state from the settings object
           resultToTaskNeedingResult(
             () => R.map(
               value => reqStrPathThrowing('data.settings.mapbox', value),

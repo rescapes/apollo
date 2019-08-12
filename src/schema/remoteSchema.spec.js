@@ -15,26 +15,28 @@ import {testConfig} from '../helpers/testHelpers';
 
 describe('schema', () => {
   test('remoteSchemaTask', done => {
+    expect.assertions(1);
+    const errors = [];
     remoteSchemaTask(testConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO add test resolvers and query
           expect(schema).toBeTruthy();
-          done();
         }
-      })
+      }, errors, done)
     );
   }, 200000);
 
   test('remoteLinkedSchemaTask', done => {
+    expect.assertions(1);
+    const errors = [];
     remoteLinkedSchemaTask(testConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO test queries
           expect(schema).toBeTruthy();
-          done();
         }
-      })
+      }, errors, done)
     );
   }, 200000);
 });

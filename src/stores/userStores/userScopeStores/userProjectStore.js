@@ -16,14 +16,11 @@ import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {
   makeProjectsQueryContainer,
-  makeProjectsQueryTask,
   projectOutputParams as defaultProjectOutputParams
 } from '../../scopeStores/projectStore';
-import {of} from 'folktale/concurrency/task';
 import {makeUserScopeObjsQueryContainer} from './scopeHelpers';
 import {
-  userProjectsOutputParamsFragmentOnlyIds,
-  userRegionsOutputParamsFragmentOnlyIds,
+  userProjectsOutputParamsFragmentDefaultOnlyIds, userRegionsOutputParamsFragmentDefaultOnlyIds,
   userStateOutputParamsCreator,
   userStateReadInputTypeMapper
 } from '../userStore';
@@ -46,15 +43,15 @@ const readInputTypeMapper = {
  * @param {Object} [outputParamSets.projectOutputParams] Optional project output params.
  * Defaults to projectStore.projectOutputParams
  * @param {Function} [component] Optional component when doing and Apollo Component query
- * @param {Object} props The props used for the query. userState and project objects are required
- * @param {Object} props.userState Props for the UserStates query. {user: {id: }} is required to limit
+ * @param {Object} propSets The props used for the query. userState and project objects are required
+ * @param {Object} propSets.userState Props for the UserStates queries {user: {id: }} is required to limit
  * the query to one user
- * @param {Object} props.project Props for the Projects query. This can be {} or null to not filter.
+ * @param {Object} propSets.project Props for the Projects query. This can be {} or null to not filter.
  * Projects will be limited to those returned by the UserState query. These should not specify ids since
  * the UserState query selects the ids
  * @returns {Object} The resulting Projects in a Task in {data: usersProjects: [...]}}
  */
-export const userProjectsQueryContainer = v(R.curry((apolloConfig, {projectOutputParams}, component, props) => {
+export const userProjectsQueryContainer = v(R.curry((apolloConfig, {projectOutputParams}, component, propSets) => {
     return makeUserScopeObjsQueryContainer(
       apolloConfig,
       {
@@ -62,12 +59,12 @@ export const userProjectsQueryContainer = v(R.curry((apolloConfig, {projectOutpu
         scopeName: 'project',
         readInputTypeMapper: userStateReadInputTypeMapper,
         userStateOutputParamsCreator: scopeOutputParams => userStateOutputParamsCreator(
-          userProjectsOutputParamsFragmentOnlyIds
+          userProjectsOutputParamsFragmentDefaultOnlyIds(scopeOutputParams)
         ),
         scopeOutputParams: projectOutputParams || defaultProjectOutputParams
       },
       component,
-      {userState: reqStrPathThrowing('userState', props), scope: reqStrPathThrowing('project', props)}
+      {userState: reqStrPathThrowing('userState', propSets), scope: reqStrPathThrowing('project', propSets)}
     );
   }),
   [
@@ -76,7 +73,7 @@ export const userProjectsQueryContainer = v(R.curry((apolloConfig, {projectOutpu
       projectOutputParams: PropTypes.shape()
     })],
     ['component', PropTypes.func],
-    ['props', PropTypes.shape({
+    ['propSets', PropTypes.shape({
       userState: PropTypes.shape({
         user: PropTypes.shape({
           id: PropTypes.oneOfType([
