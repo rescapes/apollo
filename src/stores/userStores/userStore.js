@@ -66,7 +66,7 @@ export const userStateOutputParamsCreator = userScopeFragmentOutputParams => [
  * User state output params with full scope output params. This should only be used for querying when values of the scope
  * instances are needed beyond the ids
  */
-export const userStateOutputParamsFull = {
+export const userStateOutputParamsFull = [{
   userRegions: {
     region: regionOutputParams,
     ...mapboxOutputParamsFragment
@@ -75,7 +75,7 @@ export const userStateOutputParamsFull = {
     project: projectOutputParams,
     ...mapboxOutputParamsFragment
   }
-};
+}];
 
 /***
  * userRegions output params fragment when we only want the region ids

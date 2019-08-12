@@ -69,5 +69,5 @@ describe('queryHelpers', () => {
           done();
         }
     }));
-  }, 1000);
+  }, 100000);
 });
