@@ -33,42 +33,6 @@ if (process.env.NODE_ENV !== 'production') {
   require('longjohn');
 }
 
-const TARGET_ORIGIN = "http://localhost/"
-global.jsdom = new JSDOM('<!doctype html><html><body></body></html>', {
-  // This nonsense is needed to prevent problems with local storage
-  url: TARGET_ORIGIN,
-  referrer: TARGET_ORIGIN,
-  contentType: "text/html",
-  userAgent: "node.js",
-  includeNodeLocations: true
-});
-const {window} = jsdom;
-global.window = window;
-global.document = window.document;
-global.navigator = {
-  userAgent: 'node.js',
-  origin: 'http://localhost'
-};
-
-// jsdom, window, document, navigator setup
-// http://airbnb.io/enzyme/docs/guides/jsdom.html
-function copyProps(src, target) {
-  const props = Object.getOwnPropertyNames(src)
-    .filter(prop => typeof target[prop] === 'undefined')
-    .reduce((result, prop) => R.merge(
-      result,
-      {
-        [prop]: Object.getOwnPropertyDescriptor(src, prop)
-      }),
-      {});
-  Object.defineProperties(target, props);
-}
-
-copyProps(window, global);
-window.URL = window.URL || {};
-window.URL.createObjectURL = () => {
-};
-
 Error.stackTraceLimit = Infinity;
 
 // https://github.com/facebook/jest/issues/3251

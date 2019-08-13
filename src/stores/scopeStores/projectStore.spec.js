@@ -19,7 +19,7 @@ const someProjectKeys = ['id', 'key', 'geojson'];
 describe('projectStore', () => {
   const errors = [];
   test('makeProjectMutationContainer', done => {
-    expect.assertions(1)
+    expect.assertions(1);
     R.composeK(
       mapToNamedPathAndInputs('project', 'data.createProject.project',
         ({apolloClient, userId}) => createSampleProjectTask({apolloClient}, {user: {id: userId}})
@@ -38,7 +38,7 @@ describe('projectStore', () => {
   });
 
   test('makeProjectsQueryContainer', done => {
-    expect.assertions(1)
+    expect.assertions(1);
     const errors = [];
     R.composeK(
       ({apolloClient, project}) => makeProjectsQueryContainer(
