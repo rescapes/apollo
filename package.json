@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.75",
+  "version": "0.0.76",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -24,7 +24,7 @@
     "test:watch": "yarn test -- --watch",
     "test:cov": "yarn test -- --coverage",
     "build": "rollup -c",
-    "prepare": "yarn run clean && yarn run lint && yarn run build",
+    "prepare": "yarn run install-peers && cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
     "docs:build": "yarn run docs:prepare && gitbook build -g reactjs/redux && cp logo/apple-touch-icon.png _book/gitbook/images/apple-touch-icon-precomposed-152.png && cp logo/favicon.ico _book/gitbook/images",
@@ -32,8 +32,8 @@
     "docs:publish": "yarn run docs:clean && yarn run docs:build && cp CNAME _book && cd _book && git init && git commit --allow-empty -m 'update book' && git checkout -b gh-pages && touch .nojekyll && git add . && git commit -am 'update book' && git push git@github.com:reactjs/redux gh-pages --force",
     "build-publish-patch": "yarn run build && yarn run publish-patch",
     "build-publish-minor": "yarn run build && yarn run publish-minor",
-    "publish-patch": "yarn --new-version version patch && yarn publish",
-    "publish-minor": "yarn --new-version version minor && yarn publish"
+    "publish-patch": "yarn --new-version version patch && yarn publish -non-interactive ",
+    "publish-minor": "yarn --new-version version minor && yarn publish -non-interactive "
   },
   "dependencies": {
     "apollo-cache-inmemory": "^1.6.3",
@@ -47,7 +47,7 @@
     "debug": "^4.1.1",
     "fetch": "^1.1.0",
     "folktale": "^2.3.2",
-    "graphql": "^14.4.2",
+    "graphql": ">=14.0.2",
     "graphql-tag": "^2.10.1",
     "graphql-tools": "^4.0.5",
     "http-https": "^1.0.0",
@@ -63,12 +63,6 @@
     "react-emotion": "^10.0.0",
     "regenerator-runtime": "^0.13.3",
     "request": "^2.88.0",
-    "rescape-geospatial-sankey": "^0.7.17",
-    "rescape-helpers": "^1.1.99",
-    "rescape-helpers-component": "^1.5.38",
-    "rescape-log": "^0.1.11",
-    "rescape-ramda": "^1.5.78",
-    "rescape-validate": "^1.2.23",
     "unfetch": "^4.1.0"
   },
   "devDependencies": {
@@ -95,6 +89,7 @@
     "eslint-plugin-react": "^7.14.3",
     "file-loader": "4.2.0",
     "fs-extra": "8.1.0",
+    "install-peers-cli": "^2.1.1",
     "jest": "24.9.0",
     "jest-cli": "^24.9.0",
     "jsdoc-babel": "^0.5.0",
@@ -119,7 +114,13 @@
     "rollup-plugin-terser": "^5.1.1"
   },
   "peerDependencies": {
-    "graphql": "^14.0.2"
+    "graphql": ">=14.0.2",
+    "rescape-geospatial-sankey": ">=0.7.17",
+    "rescape-helpers": ">=1.1.99",
+    "rescape-helpers-component": ">=1.5.38",
+    "rescape-log": ">=0.1.11",
+    "rescape-ramda": ">=1.5.78",
+    "rescape-validate": ">=1.2.23"
   },
   "jest": {
     "modulePaths": [],
