@@ -23,7 +23,7 @@
     "test": "cross-env jest",
     "test:watch": "yarn test -- --watch",
     "test:cov": "yarn test -- --coverage",
-    "build": "rollup -c",
+    "build": "yarn run clean && rollup -c",
     "prepare": "yarn run install-peers && cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
