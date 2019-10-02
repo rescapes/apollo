@@ -44,20 +44,20 @@ export const mapboxSelector = v((state, {scope}) => {
   return createSelector(
     [
       mapboxSettingsSelector,
-      () => viewportSelector(state, {mapbox})
+      ({}) => viewportSelector(state, {mapbox})
     ],
     (mapboxSettings, viewport) => {
       return R.merge(
         // state.settings.mapbox is lowest priority, it might be overriden with region.mapbox.settings
         R.defaultTo({}, mapboxSettings),
-        // Set the viewport with the results of the viewportSelector, which merges viewport settings and resolves an immutable
+        // Set the viewport with the results of the viewportSelector, which merges viewport settings
         R.set(
           R.lensProp('viewport'),
           viewport,
           mapbox)
       );
     }
-  )(state, {region});
+  )(state, {});
 }, [
   ['state', PropTypes.shape().isRequired],
   ['props', PropTypes.shape({
