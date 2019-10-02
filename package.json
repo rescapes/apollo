@@ -18,12 +18,12 @@
     "src"
   ],
   "scripts": {
-    "clean": "rimraf lib dist esm coverage",
+    "clean": "rimraf lib esm coverage",
     "lint": "eslint src",
     "test": "cross-env jest",
     "test:watch": "yarn test -- --watch",
     "test:cov": "yarn test -- --coverage",
-    "build": "yarn run clean && rollup -c",
+    "build": "rollup -c",
     "prepare": "yarn run install-peers && cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
