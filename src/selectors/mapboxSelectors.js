@@ -34,11 +34,13 @@ import PropTypes from 'prop-types';
 /**
  * Creates a Mapbox object by combining state.settings.mapbox with region.mapbox
  * @param {Object} state Redux state
- * @param {Object} region Region containing mapbox
+ * @param {Object} props
+ * @param {Object} props.scope Any scope like a region, project, etc
+ * @param {Object} props.scope.mapbox Required mapbox config
  * @return {Mapbox} A complete Mapbox object
  */
 export const mapboxSelector = v((state, {scope}) => {
-  const mapbox = reqStrPathThrowing('region.mapbox', scope);
+  const mapbox = reqStrPathThrowing('mapbox', scope);
   return createSelector(
     [
       mapboxSettingsSelector,
@@ -59,8 +61,7 @@ export const mapboxSelector = v((state, {scope}) => {
 }, [
   ['state', PropTypes.shape().isRequired],
   ['props', PropTypes.shape({
-    scope: PropTypes.shape().isRequired,
-    region: PropTypes.shape().isRequired
+    scope: PropTypes.shape().isRequired
   }).isRequired]
 ], 'mapboxSelector');
 
