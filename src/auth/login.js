@@ -57,7 +57,7 @@ export const loginTask = v(R.curry((apolloConfig, variables) => {
  * @param {Object} values
  * @param {String} values.username The username
  * @param {String} values.password The password
- * @return {{apolloClient: ApolloClient}}
+ * @return {{apolloClient: ApolloClient, token}}
  */
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
   // Use unauthenticated ApolloClient for login
@@ -74,8 +74,9 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
 /**
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
- * @param {Object} variables
- * @param {String} variables.token The token to verify
+ * @param {Object} component Apollo component for component queries
+ * @param {Object} props
+ * @param {String} props.token The token to verify
  * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
  * token verification
  */

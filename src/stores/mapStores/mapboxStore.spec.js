@@ -59,5 +59,5 @@ describe('mapboxStore', () => {
           done();
         }
     }, errors, done));
-  });
+  }, 20000);
 });

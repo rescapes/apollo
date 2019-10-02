@@ -67,14 +67,17 @@ export const userStateOutputParamsCreator = userScopeFragmentOutputParams => [
  * instances are needed beyond the ids
  */
 export const userStateOutputParamsFull = [{
-  userRegions: {
-    region: regionOutputParams,
-    ...mapboxOutputParamsFragment
-  },
-  userProjects: {
-    project: projectOutputParams,
-    ...mapboxOutputParamsFragment
-  }
+  user: ['id'],
+  data: [{
+    userRegions: {
+      region: regionOutputParams,
+      ...mapboxOutputParamsFragment
+    },
+    userProjects: {
+      project: projectOutputParams,
+      ...mapboxOutputParamsFragment
+    }
+  }]
 }];
 
 /***

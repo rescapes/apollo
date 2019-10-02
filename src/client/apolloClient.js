@@ -18,19 +18,18 @@ import {createHttpLink} from 'apollo-link-http';
 import * as R from 'ramda';
 import {task, of, fromPromised} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
-import {Query as query, Mutation as mutation} from "react-apollo";
-import {eMap} from 'rescape-helpers-component';
+import {Query, Mutation} from "react-apollo";
+import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
 import {
   promiseToTask,
-  reqStrPathThrowing
+  reqStrPathThrowing,
+  strPathOr
 } from 'rescape-ramda';
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
 
 const log = loggers.get('rescapeDefault');
-
-const [Query, Mutation] = eMap([query, mutation]);
 
 /**
  * Creates an ApolloClient.
@@ -95,7 +94,14 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     if (graphQLErrors)
       graphQLErrors.map(error => {
         log.error(
-          `[GraphQL error]: Message: ${R.propOr('undefined', 'message', error)}, Location: ${R.propOr('undefined', 'locations', error)}, Path: ${R.propOr('undefined', 'path', error)} Operation: ${dumpOperation(operation)}, Stack: ${R.propOr('undefined', 'stack', error)}`
+          `[GraphQL error]: Exception: ${
+            strPathOr('undefined', 'params.exception', error)
+          } Message: ${
+            R.propOr('undefined', 'message', error)
+          }, Trace: ${
+            JSON.stringify(strPathOr('undefined', 'params.trace', error), null, 2)}
+            Operation: ${dumpOperation(operation)
+          }}`
         );
       });
     if (networkError) log.error(`[Network error]: ${networkError}. Operation: ${dumpOperation(operation)} Stack: ${R.propOr('undefined', 'stack', networkError)}`);
@@ -158,7 +164,7 @@ const dumpOperation = operation => {
   if (!operation) {
     return ''
   }
-  return(`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables)}\n`);
+  return(`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables, null, 2)}\n`);
 };
 
 /**
@@ -278,7 +284,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
     // with React Suspense and whatever else
     Just,
     // props of query are the query itself and the options that include variable and settings
-    child => Mutation({mutation, ...R.propOr({}, 'options', options)}, child),
+    child => e(Mutation, {mutation, ...R.propOr({}, 'options', options)}, child),
     // The child of Mutation is the passed in component, which might be another Query|Mutation or a straight React component
     props => apolloComponent(props)
   )(props);
@@ -310,7 +316,7 @@ export const authApolloComponentQueryContainer = R.curry((query, options, apollo
     // with React Suspense and whatever else
     Just,
     // props of query are the query itself and the options that include variable and settings
-    child => Query({query, ...R.propOr({}, 'options', updatedOptions(props))}, child),
+    child => e(Query, {query, ...R.propOr({}, 'options', updatedOptions(props))}, child),
     // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
     props => apolloComponent(props)
   )(props);

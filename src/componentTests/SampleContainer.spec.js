@@ -5,10 +5,10 @@ import {chainedParentPropsTask} from './SampleContainer.sample';
 import {apolloContainerTests} from 'rescape-helpers-test';
 import {testConfig} from '../helpers/testHelpers';
 import {remoteSchemaTask} from '../schema/remoteSchema';
-import {eMap} from 'rescape-helpers-component'
+import {e} from 'rescape-helpers-component'
 
 // Test this container
-const [Container] = eMap([SampleContainer]);
+const Container = e(SampleContainer);
 // Find this React component
 const componentName = 'Sample';
 // Find this class in the data renderer

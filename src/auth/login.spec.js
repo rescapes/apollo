@@ -12,8 +12,13 @@
 import * as R from 'ramda';
 import {localTestAuthTask, testConfig} from '../helpers/testHelpers';
 import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
-import {reqStrPathThrowing} from 'rescape-ramda';
-import {refreshTokenContainer, verifyTokenRequestContainer, authClientOrLoginTask, loginToAuthClientTask} from './login';
+import {reqStrPathThrowing, mapToNamedResponseAndInputs} from 'rescape-ramda';
+import {
+  refreshTokenContainer,
+  verifyTokenRequestContainer,
+  authClientOrLoginTask,
+  loginToAuthClientTask
+} from './login';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
@@ -23,7 +28,7 @@ const uri = parseApiUrl(api);
 
 describe('login', () => {
   test('testLoginCredentials', done => {
-
+    const errors = [];
     R.composeK(
       mapToNamedPathAndInputs(
         'refreshToken', 'data.refreshToken.payload',
@@ -33,13 +38,17 @@ describe('login', () => {
         'verifyToken', 'data.verifyToken.payload',
         ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, null, {token})
       ),
-      ({token}) => authApolloClientTask(
-        uri,
-        testStateLinkResolversAndDefaults,
-        {tokenAuth: {token}}
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        ({token}) => authApolloClientTask(
+          uri,
+          testStateLinkResolversAndDefaults,
+          {tokenAuth: {token}}
+        )
       ),
-      () => localTestAuthTask
-    )().run().listen(defaultRunConfig(
+      mapToNamedPathAndInputs('token', 'token',
+        () => localTestAuthTask
+      )
+    )({}).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
@@ -47,9 +56,8 @@ describe('login', () => {
             expect(response.token).not.toBeNull();
             expect(response.verifyToken).not.toBeNull();
             expect(response.refreshToken).not.toBeNull();
-            done();
           }
-      })
+      }, errors, done)
     );
   });
 

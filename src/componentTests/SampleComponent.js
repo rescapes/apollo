@@ -1,12 +1,10 @@
 import React, {Component} from 'react';
 import {
-  nameLookup, eMap, propsFor, renderChoicepoint, composeViews,
+  nameLookup, e, propsFor, renderChoicepoint, composeViews,
   renderLoadingDefault, renderErrorDefault
 } from 'rescape-helpers-component';
 import {strPath} from 'rescape-ramda';
 import PropTypes from 'prop-types';
-
-const [Div] = eMap(['div']);
 
 export const c = nameLookup({
   sample: true,
@@ -24,7 +22,7 @@ export const c = nameLookup({
 class Sample extends Component {
   render() {
     const props = Sample.views(this.props);
-    return Div(propsFor(props.views, c.sample),
+    return e('div', propsFor(props.views, c.sample),
       Sample.choicepoint(props)
     );
   }
@@ -68,8 +66,8 @@ Sample.renderData = ({views}) => {
   const props = propsFor(views);
 
   return [
-    Div(props(c.sampleMapboxOuter),
-      Div(props(c.sampleHeader)),
+    e('div', props(c.sampleMapboxOuter),
+      e('div', props(c.sampleHeader)),
     )
   ];
 };

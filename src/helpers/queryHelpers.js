@@ -165,7 +165,7 @@ export const makeQueryContainer = v(R.curry(
    component,
    props) => {
     const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
-    log.debug(`Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
+    log.debug(`Query:\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
     return R.map(
       queryResponse => {
         log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);

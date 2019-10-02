@@ -24,7 +24,8 @@ import {formatOutputParams} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
   capitalize,
-  mapObjToValues
+  mapObjToValues,
+  omitDeepBy
 } from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
@@ -94,10 +95,13 @@ export const makeMutationRequestContainer = v(R.curry(
    component,
    props) => {
 
+    // Filter out anything that begins with a _
+    const filteredProps = omitDeepBy(R.startsWith('_'), props);
+
     // Get the variable definition, arguments and outputParams
     const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
       {name, outputParams, variableTypeOverride, variableNameOverride},
-      props
+      filteredProps
     );
 
     // create|update[Model Name]
