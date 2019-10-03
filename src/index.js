@@ -59,4 +59,4 @@ export {
   usersSelector
 } from './selectors/userSelectors';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
-export {testAuthTask, testStateLinkResolversAndDefaults} from './helpers/testHelpers'
+export {testAuthTask, testStateLinkResolversAndDefaults, testConfig} from './helpers/testHelpers'

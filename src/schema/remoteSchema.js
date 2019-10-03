@@ -34,14 +34,25 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
 // const link = new HttpLink({ uri: 'http://api.githunt.com/graphql', fetch });
 
 
+/**
+ * Gets resolves to a remote schema based on the config
+ * @param {Object} config
+ * @param {Object} config.settings
+ * @param {Object} config.settings.api.uri The full uri to the api on a server. E.g. http://foo.bar:8008/graphql
+ * @param {Object} config.settings.testAuthorization For testing. Normally the user would enter these
+ * @param {String} config.settings.testAuthorization.username the username to log in with
+ * @param {String} config.settings.testAuthorization.password the password
+ * @returns {Task<Object>} Resolves with an object containing the schema, the authenticated ApolloLink, and
+ *
+ */
 export const remoteSchemaTask = config => {
   return R.composeK(
     // Create a link that concats HTTP to Authentication
     // Our authenticated link hard-codes the token. I don't know how to use the context
-    ({uri, token}) => {
+    ({uri, apolloClient, token}) => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
-        schema => ({schema, link}),
+        schema => ({schema, link, apolloClient}),
         promiseToTask(introspectSchema(link))
       );
     },
@@ -49,7 +60,7 @@ export const remoteSchemaTask = config => {
     config => {
       const uri = reqStrPathThrowing('settings.api.uri', config);
       return R.map(
-        ({token}) => ({uri, token}),
+        ({apolloClient, token}) => ({uri, apolloClient, token}),
         authClientOrLoginTask(
           uri,
           // StateLinkResolvers are empty for now
