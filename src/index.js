@@ -9,7 +9,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-export {loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask} from './auth/login';
+export {
+  loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
+}from './auth/login';
 export {
   default as createApolloClient,
   authApolloClientQueryContainer,
@@ -25,7 +27,17 @@ export {
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer} from './helpers/mutationHelpers';
-export {formatOutputParams, resolveGraphQLType, formatInputParams, mapQueryTaskToNamedResultAndInputs, objIdToInt, convertFromGraphqlStructure, convertToGraphqlStructure, pickGraphqlPaths, pickGraphqlPathsOver} from './helpers/requestHelpers';
+export {
+  formatOutputParams,
+  resolveGraphQLType,
+  formatInputParams,
+  mapQueryTaskToNamedResultAndInputs,
+  objIdToInt,
+  convertFromGraphqlStructure,
+  convertToGraphqlStructure,
+  pickGraphqlPaths,
+  pickGraphqlPathsOver
+} from './helpers/requestHelpers';
 export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
 export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';
 export {
@@ -59,4 +71,43 @@ export {
   usersSelector
 } from './selectors/userSelectors';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
-export {testAuthTask, testStateLinkResolversAndDefaults, testConfig} from './helpers/testHelpers'
+export {testAuthTask, testStateLinkResolversAndDefaults, testConfig} from './helpers/testHelpers';
+export {
+  makeMapboxesQueryResultTask,
+  makeRegionMutationTask,
+  projectMapboxOutputParamsCreator,
+  regionMapboxOutputParamsCreator,
+  scopeObjMapboxOutputParamsCreator,
+  userStateMapboxOutputParamsCreator
+} from './stores/mapStores/mapboxStore';
+export {
+  projectOutputParams,
+  makeProjectMutationContainer,
+  makeProjectsQueryContainer
+} from './stores/scopeStores/projectStore';
+export {
+  regionOutputParams,
+  readInputTypeMapper,
+  makeRegionMutationContainer,
+  makeRegionsQueryContainer
+} from './stores/scopeStores/regionStore';
+
+export {
+  makeCurrentUserQueryContainer,
+  makeUserStateMutationContainer,
+  makeUserStateQueryContainer,
+  userStateMutateOutputParams,
+  userStateOutputParamsCreator,
+  userProjectsOutputParamsFragmentDefaultOnlyIds,
+  userOutputParams,
+  userRegionsOutputParamsFragmentDefaultOnlyIds,
+  userStateOutputParamsFull,
+  userStateOutputParamsOnlyIds
+} from './stores/userStores/userStore';
+
+export {
+  userRegionsQueryContainer
+} from './stores/userStores/userScopeStores/userRegionStore';
+export {
+  userProjectsQueryContainer
+} from './stores/userStores/userScopeStores/userProjectStore';
