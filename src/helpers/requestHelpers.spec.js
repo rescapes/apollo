@@ -51,16 +51,6 @@ describe('requestHelpers', () => {
     expect(output).toMatchSnapshot();
   });
 
-  test('convertFromGraphqlStructure', () => {
-    const output = convertFromGraphqlStructure(outputParams);
-    expect(output).toMatchSnapshot();
-  });
-
-  test('convertToGraphqlStructure', () => {
-    const input = convertFromGraphqlStructure(outputParams);
-    const output = convertToGraphqlStructure(input);
-    expect(output).toMatchSnapshot();
-  });
 
   test('pickPaths', () => {
     const output = pickGraphqlPaths(['id', 'name', 'data.settings.stages.key'], outputParams);

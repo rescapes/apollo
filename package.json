@@ -56,7 +56,6 @@
     "prop-types": "^15.7.2",
     "ramda": "^0.26.1",
     "ramda-lens": "^0.1.2",
-    "react": "^16.9.0",
     "react-apollo": "^3.0.1",
     "react-async-component": "^2.0.0",
     "react-dom": "^16.9.0",
@@ -114,6 +113,7 @@
   },
   "peerDependencies": {
     "graphql": ">=14.0.2",
+    "react": ">=16.10.1",
     "rescape-geospatial-sankey": ">=0.7.17",
     "rescape-helpers": ">=1.1.99",
     "rescape-helpers-component": ">=1.5.38",
