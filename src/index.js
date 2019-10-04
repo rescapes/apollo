@@ -33,8 +33,6 @@ export {
   formatInputParams,
   mapQueryTaskToNamedResultAndInputs,
   objIdToInt,
-  convertFromGraphqlStructure,
-  convertToGraphqlStructure,
   pickGraphqlPaths,
   pickGraphqlPathsOver
 } from './helpers/requestHelpers';
