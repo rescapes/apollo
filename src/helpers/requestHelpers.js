@@ -12,6 +12,7 @@
 import {mapObjToValues, reqStrPath, pickDeepPaths} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
+import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
 
 /**
  * Creates graphql outputparms from the given object. TODO formatting doesn't matter. Use print(gql) instead for foramtting
@@ -232,7 +233,6 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
 export const objIdToInt = obj => R.over(R.lensProp('id'), parseInt, obj);
 
 
-
 /***
  * Picks attributes out of a graphqlListStructure
  * @param {[String]} paths Dot-separated paths that point at the desired attributes. If the path ends
@@ -265,9 +265,9 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => R.com
     data => {
       const minimumData = pickDeepPaths(paths, data);
       if (R.compose(R.equals(0), R.length, R.keys)(minimumData)) {
-        throw new Error(`dataPaths: ${JSON.stringify(paths)} didn't match anything`)
+        throw new Error(`dataPaths: ${JSON.stringify(paths)} didn't match anything`);
       }
-      return minimumData
+      return minimumData;
     }
   ),
   convertFromGraphqlStructure
