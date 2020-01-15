@@ -16,7 +16,7 @@
 import {settingsSelector} from './settingsSelectors';
 import {activeUsersSelector} from './userSelectors';
 import {createSelector, createStructuredSelector} from 'reselect';
-import {onlyOneValueThrowing, reqPathThrowing} from 'rescape-ramda';
+import {onlyOneValueThrowing, reqPathThrowing, strPathOr} from 'rescape-ramda';
 import * as R from 'ramda';
 
 /**
@@ -66,5 +66,6 @@ export const makeActiveUserSelectedRegionAndSettingsSelector = () => createSelec
 export const makeActiveUserAndSettingsSelector = () =>
   createStructuredSelector({
     settings: settingsSelector,
-    user: R.compose(onlyOneValueThrowing, activeUsersSelector)
+    user: R.compose(onlyOneValueThrowing, activeUsersSelector),
+    userState: strPathOr(null, 'userState.activeUserState', state)
   });

@@ -13,12 +13,14 @@ import {mapObjToValues, reqStrPath, pickDeepPaths} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
 import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
+import {print} from 'graphql';
+import gql from 'graphql-tag';
 
 /**
- * Creates graphql outputparms from the given object. TODO formatting doesn't matter. Use print(gql) instead for foramtting
+ * TOOD Replace the input array format with objects since js objects are deterministic
+ * Creates graphql output params from the given object.
  * @param {[String|List|Object]} outputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased
- * @param {Number} indentLevel recursively increases
  * Example
  * [
  * 'foo',
@@ -35,21 +37,25 @@ import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-he
  *  ]
  *}
  *]
- * @returns {String} The output pararms in graphql format
+ * @returns {String} The output params in graphql format
  */
-export const formatOutputParams = (outputParam, indentLevel = 0) => {
-  const indent = R.join('', R.repeat('\t', indentLevel));
+export const formatOutputParams = (outputParam) => {
+  // TODO can we format here?
+  return _formatOutputParams(outputParam);
+};
+
+export const _formatOutputParams = (outputParam) => {
   const v = R.cond([
     // Value is a string or number, just return it on one line
     [R.either(R.is(String), R.is(Number)),
       value => [
-        `${indent}${value}`
+        `${value}`
       ]
     ],
     [R.is(Array),
       list => R.flatten([
         R.map(item => {
-            return `${indent}${formatOutputParams(item, indentLevel + 1)}`;
+            return `${_formatOutputParams(item)}`;
           }, list
         )
       ])
@@ -58,9 +64,9 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
       obj => R.flatten(mapObjToValues(
         (value, key) => {
           return [
-            `${indent}${key} {`,
-            `${indent}${formatOutputParams(value, indentLevel + 1)}`,
-            `${indent}}`
+            `${key} {`,
+            `${_formatOutputParams(value)}`,
+            `}`
           ];
         },
         obj
@@ -68,7 +74,7 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
     ],
     // Convert null to .... null
     [R.isNil, () => [
-      `${indent}null`
+      'null'
     ]],
     [R.T, () => {
       throw new Error(`Bad outputParam ${outputParam}`);
@@ -82,7 +88,6 @@ export const formatOutputParams = (outputParam, indentLevel = 0) => {
 };
 
 /**
- * // TODO remove indentLevel and use pretty printing
  * Creates graphql inputparams from the given object
  * @param {[String|List|Object]} inputParam List, Object, or Scalar containing strings or objects with keys pointing at strings or objects
  * for embedded values. Values should always be camelCased

@@ -17,7 +17,6 @@ import {mergeDeepAll, reqPathThrowing, reqStrPathThrowing} from 'rescape-ramda';
 import {createSelector} from 'reselect';
 import * as R from 'ramda';
 import {mapboxSettingsSelector} from './settingsSelectors';
-import {fromImmutable} from 'rescape-helpers';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 
@@ -81,13 +80,7 @@ export const viewportSelector = v((state, {mapbox}) => {
       // state.mapbox.settings gets lowest priority
       R.defaultTo({}, mapboxSettings.viewport),
       // Get mutable form from mapbox
-      fromImmutable(viewport)
-      // Temporarily merge the updated viewport from the state, since we are updating it via redux
-      // Should not be needed, refetch in the container should update regions.[id].mapbox.viewport
-      // to the reduced version
-      //fromImmutable(
-      //    reqPathThrowing(['regions', 'paris', 'mapbox', 'viewport'], state)
-      //)
+      viewport
     ])
   )(state, {mapbox});
 }, [

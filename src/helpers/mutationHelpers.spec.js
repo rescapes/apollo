@@ -10,11 +10,10 @@
  */
 
 import {formatOutputParams} from './queryHelpers';
-import {sampleResourceProps, sampleResourceMutationOutputParams} from './sampleData';
+import {sampleResourceMutationOutputParams, sampleResourceProps} from './sampleData';
 import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
-import {testConfig, localTestAuthTask} from './testHelpers';
-import {parseApiUrl} from 'rescape-helpers';
-import {defaultRunConfig, reqStrPathThrowing, capitalize, mapToNamedPathAndInputs } from 'rescape-ramda';
+import {localTestAuthTask} from './testHelpers';
+import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';

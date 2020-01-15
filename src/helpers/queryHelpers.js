@@ -44,8 +44,8 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
 
 /***
  *
- * @param queryConfig
- * @param {String} queryConfig.client Adds a client directive
+ * @param {Object} queryConfig
+ * @param {Boolean} queryConfig.client If true adds a client directive
  * @param {Boolean} queryConfig.isFragment If true creates a fragment
  * @param queryName
  * @param inputParamTypeMapper
