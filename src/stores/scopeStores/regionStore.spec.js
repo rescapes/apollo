@@ -12,7 +12,7 @@ import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'res
 import {expectKeysAtStrPath, stateLinkResolvers, localTestAuthTask} from '../../helpers/testHelpers';
 import * as R from 'ramda';
 import {makeRegionMutationContainer, makeRegionsQueryContainer, regionOutputParams} from './regionStore';
-import {createSampleRegionTask} from './regionStore.sample';
+import {createSampleRegionContainer} from './regionStore.sample';
 
 const someRegionKeys = ['id', 'key', 'geojson', 'data'];
 describe('regionStore', () => {
@@ -21,7 +21,7 @@ describe('regionStore', () => {
     const errors = [];
     R.composeK(
       mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({apolloClient}) => createSampleRegionTask({apolloClient})
+        ({apolloClient}) => createSampleRegionContainer({apolloClient})
       ),
       () => localTestAuthTask
     )().run().listen(defaultRunConfig({
@@ -42,7 +42,7 @@ describe('regionStore', () => {
         {key: reqStrPathThrowing('key', region)}
       ),
       mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({apolloClient}) => createSampleRegionTask({apolloClient})
+        ({apolloClient}) => createSampleRegionContainer({apolloClient})
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask

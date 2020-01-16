@@ -295,11 +295,12 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
  * are passed by the wrapped apolloComponent as props rather than as part of the options
- * @param {Object} apolloComponent The apolloComponent
+ * @param {gql} query The gql wrapped query string
  * @param {Object} options
  * @param {Object} options.options optional react-apollo options
  * @param {Object|Function} options.variables optional. If a function props are passed to it
  * @param {Object} options.errorPolicy optional error policy
+ * @param {Object} apolloComponent The apolloComponent
  * @param {Object} props The props For the component or a subcomponent if this component is wrapping another
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
@@ -316,7 +317,14 @@ export const authApolloComponentQueryContainer = R.curry((query, options, apollo
     // with React Suspense and whatever else
     Just,
     // props of query are the query itself and the options that include variable and settings
-    child => e(Query, {query, ...R.propOr({}, 'options', updatedOptions(props))}, child),
+    child => e(
+      Query,
+      R.merge(
+        {query},
+        R.propOr({}, 'options', updatedOptions(props))
+      ),
+      child
+    ),
     // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
     props => apolloComponent(props)
   )(props);

@@ -15,16 +15,17 @@ import {mergeDeep} from 'rescape-ramda';
 /**
  * Creates a sample region
  * @params apolloClient
+ * @params {Object} [component] Optional, for apollo component tests only
  * @params {Object} props Optional overrides to defaults
  * @return {Object} {data: region: {...}}}
  */
-export const createSampleRegionTask = ({apolloClient}, props = {}) => {
+export const createSampleRegionContainer = ({apolloClient}, component, props = {}) => {
   // Create the prop function and pass it sample props to return a Task
   return makeRegionMutationContainer(
     {apolloClient},
     {outputParams: regionOutputParams},
-    // Component is always null for sample data tasks
-    null,
+    // Null for Apollo client queries, or a component for Apollo component queries
+    component,
     mergeDeep({
         key: 'pincherCreek',
         name: 'Pincher Creek',

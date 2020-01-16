@@ -15,8 +15,7 @@ import {makeMutationRequestContainer} from '../../helpers/mutationHelpers';
 import {v} from 'rescape-validate';
 import {makeQueryContainer} from '../../helpers/queryHelpers';
 import PropTypes from 'prop-types';
-import {mapKeysAndValues, capitalize} from 'rescape-ramda';
-import {readInputTypeMapper, regionOutputParams} from '../scopeStores/regionStore';
+import {regionOutputParams} from '../scopeStores/regionStore';
 import {projectOutputParams} from '../scopeStores/projectStore';
 import {mapboxOutputParamsFragment} from '../mapStores/mapboxOutputParams';
 
@@ -31,7 +30,6 @@ export const userStateReadInputTypeMapper = {
   'user': 'UserTypeofUserStateTypeRelatedReadInputType'
 };
 
-
 export const userOutputParams = [
   'id',
   'lastLogin',
@@ -43,7 +41,6 @@ export const userOutputParams = [
   'isActive',
   'dateJoined'
 ];
-
 
 /**
  * Creates userState output params

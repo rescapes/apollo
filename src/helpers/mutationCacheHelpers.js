@@ -74,7 +74,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
         () => of(data)
       ],
       // If we have an Apollo Component
-      [() => R.not(R.isNil(component)),
+      [() => component,
         () => Just(data)
       ],
       // This should never happen

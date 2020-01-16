@@ -87,7 +87,7 @@ export {
   regionOutputParams,
   readInputTypeMapper,
   makeRegionMutationContainer,
-  makeRegionsQueryContainer
+  makeRegionsQueryContainer,
 } from './stores/scopeStores/regionStore';
 
 export {
@@ -109,3 +109,7 @@ export {
 export {
   userProjectsQueryContainer
 } from './stores/userStores/userScopeStores/userProjectStore';
+
+export {
+ createSampleRegionContainer
+} from './stores/scopeStores/regionStore.sample'

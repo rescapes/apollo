@@ -18,7 +18,7 @@ import {v} from 'rescape-validate';
 import {createStateLinkDefaults, defaultStateLinkResolvers} from '../client/stateLink';
 import {makeUserStateMutationContainer, userStateMutateOutputParams} from '../stores/userStores/userStore';
 import {createSampleProjectTask} from '../stores/scopeStores/projectStore.sample';
-import {createSampleRegionTask} from '../stores/scopeStores/regionStore.sample';
+import {createSampleRegionContainer} from '../stores/scopeStores/regionStore.sample';
 
 /**
  * The config for test
@@ -130,7 +130,7 @@ export const mutateUserStateWithProjectAndRegion = ({apolloClient, user, regionK
 
   // Create a sample region
   mapToNamedPathAndInputs('region', 'data.createRegion.region',
-    ({apolloClient}) => createSampleRegionTask({apolloClient}, {
+    ({apolloClient}) => createSampleRegionContainer({apolloClient}, {
       key: regionKey,
       name: capitalize(regionKey)
     })

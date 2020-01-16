@@ -103,12 +103,12 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
     R.prop('isFragment'),
     R.always(null),
     R.always(content)
-    )(queryConfig);
+  )(queryConfig);
 
   const output = R.join('', compact([
-    unlessFragment( R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{'])) ),
+    unlessFragment(R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
     formatOutputParams(outputParams),
-    unlessFragment( '}' )
+    unlessFragment('}')
   ]));
 
   // We use the queryName as the label of the query and the name that matches the schema
@@ -171,7 +171,10 @@ export const makeQueryContainer = v(R.curry(
         log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
         // If we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // If we're using an Apollo client we have a task and leave to the caller to run
-        return R.when(Just.hasInstance, R.prop('value'))(queryResponse);
+        return R.when(
+          Just.hasInstance,
+          R.prop('value')
+        )(queryResponse);
       },
       authApolloQueryContainer(
         apolloConfig,

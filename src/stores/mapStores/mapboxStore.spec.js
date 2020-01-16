@@ -6,7 +6,7 @@ import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {mapboxOutputParamsFragment} from './mapboxOutputParams';
 import {userRegionsQueryContainer} from '../userStores/userScopeStores/userRegionStore';
 import {userProjectsQueryContainer} from '../userStores/userScopeStores/userProjectStore';
-import {createSampleRegionTask} from '../scopeStores/regionStore.sample';
+import {createSampleRegionContainer} from '../scopeStores/regionStore.sample';
 import {createSampleProjectTask} from '../scopeStores/projectStore.sample';
 
 /**

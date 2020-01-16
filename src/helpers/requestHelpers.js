@@ -13,8 +13,6 @@ import {mapObjToValues, reqStrPath, pickDeepPaths} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
 import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
-import {print} from 'graphql';
-import gql from 'graphql-tag';
 
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic
