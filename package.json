@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.91",
+  "version": "0.0.92",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "esm/index.js",
