@@ -36,38 +36,6 @@ export {
   pickGraphqlPaths,
   pickGraphqlPathsOver
 } from './helpers/requestHelpers';
-export {makeFeaturesByTypeSelector, makeGeojsonSelector, makeMarkersByTypeSelector} from './selectors/geojsonSelectors';
-export {mapboxSelector, viewportSelector} from './selectors/mapboxSelectors';
-export {
-  activeUserRegionsSelector,
-  activeUserSelectedRegionsSelector,
-  regionIdsSelector,
-  regionSelector,
-  regionsSelector
-} from './selectors/regionSelectors';
-export {mapboxSettingsSelector, settingsSelector} from './selectors/settingsSelectors';
-export {
-  makeActiveUserAndSettingsSelector,
-  makeActiveUserRegionsAndSettingsSelector,
-  makeActiveUserSelectedRegionAndSettingsSelector
-} from './selectors/storeSelectors';
-export {
-  mergeAndApplyMatchingStyles,
-  applyMatchingStyles,
-  browserDimensionsSelector,
-  makeBrowserProportionalDimensionsSelector,
-  makeMergeDefaultStyleWithProps
-} from './selectors/styleSelectors';
-export {
-  activeUsersSelector,
-  activeUserSelectedRegionSelector,
-  activeUserValueSelector,
-  userRegionsSelector,
-  userResolvedRegionsSelector,
-  userSelectedRegionSelector,
-  userSelector,
-  usersSelector
-} from './selectors/userSelectors';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 
 export {
