@@ -12,15 +12,7 @@ const config = {
     'src/auth/login.js',
     'src/client/apolloClient.js',
     'src/helpers/queryHelpers.js',
-    'src/helpers/mutationHelpers.js',
-    'src/selectors/geojsonSelectors.js',
-    'src/selectors/mapboxSelectors.js',
-    'src/selectors/regionSelectors.js',
-    'src/selectors/settingsSelectors.js',
-    'src/selectors/storeSelectors.js',
-    'src/selectors/styleSelectors.js',
-    'src/selectors/userSelectors.js',
-    'src/selectors/selectorResolvers.js'
+    'src/helpers/mutationHelpers.js'
   ],
   plugins: []
 };
