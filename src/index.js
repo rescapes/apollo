@@ -11,7 +11,7 @@
 
 export {
   loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
-}from './auth/login';
+} from './auth/login';
 export {
   default as createApolloClient,
   authApolloClientQueryContainer,
@@ -26,7 +26,7 @@ export {
   noAuthApolloClientRequestTask
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
-export {makeMutation, makeMutationRequestContainer} from './helpers/mutationHelpers';
+export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
 export {
   formatOutputParams,
   resolveGraphQLType,
@@ -69,47 +69,12 @@ export {
   usersSelector
 } from './selectors/userSelectors';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
-export {testAuthTask, testStateLinkResolversAndDefaults, testConfig} from './helpers/testHelpers';
-export {
-  makeMapboxesQueryResultTask,
-  makeRegionMutationTask,
-  projectMapboxOutputParamsCreator,
-  regionMapboxOutputParamsCreator,
-  scopeObjMapboxOutputParamsCreator,
-  userStateMapboxOutputParamsCreator
-} from './stores/mapStores/mapboxStore';
-export {
-  projectOutputParams,
-  makeProjectMutationContainer,
-  makeProjectsQueryContainer
-} from './stores/scopeStores/projectStore';
-export {
-  regionOutputParams,
-  readInputTypeMapper,
-  makeRegionMutationContainer,
-  makeRegionsQueryContainer,
-} from './stores/scopeStores/regionStore';
 
 export {
-  makeCurrentUserQueryContainer,
-  makeUserStateMutationContainer,
-  makeUserStateQueryContainer,
-  userStateMutateOutputParams,
-  userStateOutputParamsCreator,
-  userProjectsOutputParamsFragmentDefaultOnlyIds,
-  userOutputParams,
-  userRegionsOutputParamsFragmentDefaultOnlyIds,
-  userStateOutputParamsFull,
-  userStateOutputParamsOnlyIds
-} from './stores/userStores/userStore';
-
-export {
-  userRegionsQueryContainer
-} from './stores/userStores/userScopeStores/userRegionStore';
-export {
-  userProjectsQueryContainer
-} from './stores/userStores/userScopeStores/userProjectStore';
-
-export {
- createSampleRegionContainer
-} from './stores/scopeStores/regionStore.sample'
+  sampleInputParamTypeMapper,
+  sampleResources,
+  sampleResourceMutationOutputParams,
+  sampleResourceOutputParams,
+  sampleResourceProps
+} from './helpers/sampleData';
+export {testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask} from './helpers/testHelpers';

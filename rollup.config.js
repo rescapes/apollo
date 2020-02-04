@@ -20,7 +20,7 @@ const config = {
     'src/selectors/storeSelectors.js',
     'src/selectors/styleSelectors.js',
     'src/selectors/userSelectors.js',
-    'src/schema/selectorResolvers.js'
+    'src/selectors/selectorResolvers.js'
   ],
   plugins: []
 };
@@ -76,7 +76,7 @@ const configs = R.map(c => {
       ...Object.keys(pkg.peerDependencies || {})
     ],
     plugins: R.concat(config.plugins, [
-      nodeResolve({}), babel()
+      nodeResolve({})
     ])
   },
 

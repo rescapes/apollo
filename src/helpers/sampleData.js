@@ -36,7 +36,7 @@ const sample_settings = {
   }
 };
 
-export const sample_resources = R.map(
+export const sampleResources = R.map(
   resource => mergeDeep(
     resource,
     {

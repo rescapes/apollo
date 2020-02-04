@@ -8,7 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import { InMemoryCache, defaultDataIdFromObject } from 'apollo-cache-inmemory';
+import {defaultDataIdFromObject, InMemoryCache} from 'apollo-cache-inmemory';
 
 import {setContext} from 'apollo-link-context';
 import {ApolloClient} from 'apollo-client';
@@ -16,16 +16,12 @@ import {onError} from 'apollo-link-error';
 import {ApolloLink} from 'apollo-link';
 import {createHttpLink} from 'apollo-link-http';
 import * as R from 'ramda';
-import {task, of, fromPromised} from 'folktale/concurrency/task';
+import {fromPromised, of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
-import {Query, Mutation} from "react-apollo";
+import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
-import {
-  promiseToTask,
-  reqStrPathThrowing,
-  strPathOr
-} from 'rescape-ramda';
+import {promiseToTask, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
 
@@ -112,7 +108,8 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     dataIdFromObject: object => {
       switch (object.__typename) {
         // Default behavior. Useful for debugging to se how the object's id is determined
-        default: return defaultDataIdFromObject(object);
+        default:
+          return defaultDataIdFromObject(object);
       }
     }
   });
@@ -149,7 +146,7 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
     apolloClient.cache.reset();
     apolloClient.cache.writeData({data: defaults});
     return apolloClient;
-  }
+  };
 
   // Return apolloClient and a funciton to restore the defaults
   return {apolloClient, restoreStoreToDefaults};
@@ -162,9 +159,9 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
  */
 const dumpOperation = operation => {
   if (!operation) {
-    return ''
+    return '';
   }
-  return(`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables, null, 2)}\n`);
+  return (`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables, null, 2)}\n`);
 };
 
 /**
@@ -251,14 +248,14 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
   const queryOptions = R.omit(['apolloClient'], apolloConfig);
 
-  return promiseToTask(
+  return fromPromised(() =>
     apolloClient.query(
       R.merge(
         queryOptions,
         {query, variables: props}
       )
     )
-  );
+  )();
 });
 
 /**
@@ -266,7 +263,7 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
  * are passed by the wrapped apolloComponent as props rather than as part of the options
- * @param {Object} apolloComponent The apolloComponent
+ * @param {Object} component The component being wrapped in the mutation
  * @param {Object} options
  * @param {Object} options.query required query to use
  * @param {Object} options.options optional react-apollo options
@@ -276,17 +273,26 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentMutationContainer = R.curry((mutation, options, apolloComponent, props) => {
+export const authApolloComponentMutationContainer = R.curry((mutation, options, component, props) => {
   return R.compose(
     // Wrap in a Maybe.Just so we can use kestral composition (R.composeK) on the results
     // TODO in the future we'll use Mutation with the async option and convert its promise to a Task
     // The async option will make the render method (here the child component) handle promises, working
     // with React Suspense and whatever else
     Just,
-    // props of query are the query itself and the options that include variable and settings
-    child => e(Mutation, {mutation, ...R.propOr({}, 'options', options)}, child),
     // The child of Mutation is the passed in component, which might be another Query|Mutation or a straight React component
-    props => apolloComponent(props)
+    // props of query are the query itself and the options that include variable and settings
+    props => {
+      return e(
+        Mutation,
+        R.mergeAll([
+          {mutation},
+          R.propOr({}, 'options', options),
+          props
+        ]),
+        component
+      );
+    }
   )(props);
 });
 
@@ -296,37 +302,41 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
  * are passed by the wrapped apolloComponent as props rather than as part of the options
  * @param {gql} query The gql wrapped query string
- * @param {Object} options
- * @param {Object} options.options optional react-apollo options
- * @param {Object|Function} options.variables optional. If a function props are passed to it
- * @param {Object} options.errorPolicy optional error policy
+ * @param {Object} args Apollo Query or Mutation options
+ * @param {Object} args.options optional react-apollo options
+ * @param {Object|Function} args.options.variables optional. If a function, props are passed to it
+ * @param {String} args.options.errorPolicy optional error policy
+ * @param {Function} [args.props] optional react-apollo options TODO is this allowed?
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} props The props For the component or a subcomponent if this component is wrapping another
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentQueryContainer = R.curry((query, options, apolloComponent, props) => {
-  // If a variables is a function pass the props in
+export const authApolloComponentQueryContainer = R.curry((query, args, component, props) => {
+  // If variables is a function pass the props in
   const updatedOptions = props => R.over(
     R.lensPath(['options', 'variables']),
     R.when(R.is(Function), R.applyTo(props)),
-    options);
+    args
+  );
   return R.compose(
     // TODO in the future we'll use Query with the async option and convert its promise to a Task
     // The async option will make the render method (here the child component) handle promises, working
     // with React Suspense and whatever else
     Just,
-    // props of query are the query itself and the options that include variable and settings
-    child => e(
-      Query,
-      R.merge(
-        {query},
-        R.propOr({}, 'options', updatedOptions(props))
-      ),
-      child
-    ),
     // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
-    props => apolloComponent(props)
+    // props of query are the query itself and the args that include options and options props post processing function
+    props => {
+      return e(
+        Query,
+        R.mergeAll([
+          {query},
+          R.propOr({}, 'args', updatedOptions(props)),
+          props
+        ]),
+        component
+      );
+    }
   )(props);
 });
 
@@ -335,8 +345,12 @@ export const authApolloComponentQueryContainer = R.curry((query, options, apollo
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work
  * @param {Object} config.apolloClient Optional Apollo client for client calls, authenticated for most calls
- * @param {Object|Function} config.variables Variables for the ApolloComponent container
- * @param {Object} config.errorPolicy Optional errorPolicy string for the ApolloComponent container
+ * @param {Object|Function} config.args Options ued by Apollo Query and Mutation
+ * @param {Object|Function} config.args.options Variables for the ApolloComponent container
+ * @param {Object|Function} config.args.options.variables Variables for the ApolloComponent container
+ * @param {String} config.args.options.errorPolicy Optional errorPolicy string for the ApolloComponent container
+ * @param {Function} config.args.props Post processing of the results from the query or mutation. Receives
+ * data and ownProps as arguments, where ownProps are the props passed into the query or mutation
  * @param {Object} component Apollo Component for component calls, otherwise leave null
  * @param {Object} props Required if the query is to accept arguments. If this is a component
  * query, values must be supplied initially to inform the structure of the arguments
@@ -359,12 +373,19 @@ export const authApolloQueryContainer = R.curry((config, query, component, props
     [() => R.not(R.isNil(component)),
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
-      apolloConfig => authApolloComponentQueryContainer(
-        query,
-        apolloConfig,
-        component,
-        props
-      )
+      apolloConfig => {
+        return R.chain(
+          value => {
+            return value;
+          },
+          authApolloComponentQueryContainer(
+            query,
+            apolloConfig,
+            component,
+            props
+          )
+        );
+      }
     ],
     [R.T, () => {
       throw new Error(`apolloConfig doesn't have an Apollo client and component is null: ${JSON.stringify(config)}`);

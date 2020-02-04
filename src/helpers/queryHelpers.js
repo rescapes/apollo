@@ -165,24 +165,26 @@ export const makeQueryContainer = v(R.curry(
    component,
    props) => {
     const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
-    log.debug(`Query:\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
-    return R.map(
-      queryResponse => {
-        log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-        // If we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
-        // If we're using an Apollo client we have a task and leave to the caller to run
-        return R.when(
-          Just.hasInstance,
-          R.prop('value')
-        )(queryResponse);
-      },
-      authApolloQueryContainer(
-        apolloConfig,
-        query,
-        component,
-        props
-      )
+    log.debug(`Creating Query:\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
+    const componentOrTask = authApolloQueryContainer(
+      apolloConfig,
+      query,
+      component,
+      props
     );
+    return R.when(
+      componentOrTask => R.has('run', componentOrTask),
+      // If it's a task report the result. Components have run their query
+      componentOrTask => {
+        return R.map(
+          queryResponse => {
+            log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+            return queryResponse
+          },
+          componentOrTask
+        );
+      }
+    )(componentOrTask);
   }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
@@ -198,7 +200,7 @@ export const makeQueryContainer = v(R.curry(
       ).isRequired,
       propsStructure: PropTypes.shape()
     })],
-    ['component', PropTypes.func],
+    ['component', PropTypes.shape()],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'
 );

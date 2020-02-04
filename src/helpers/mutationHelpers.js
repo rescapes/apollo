@@ -113,33 +113,40 @@ export const makeMutationRequestContainer = v(R.curry(
       namedOutputParams
     )}`;
 
-    log.debug(`Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+    log.debug(`Creating Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
 
     return R.cond([
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
-        apolloConfig => authApolloClientMutationRequestContainer(
-          apolloConfig,
-          {
-            mutation,
-            name,
-            variableName
-          },
-          namedProps
-        )
+        apolloConfig => {
+          return authApolloClientMutationRequestContainer(
+            apolloConfig,
+            {
+              mutation,
+              name,
+              variableName
+            },
+            namedProps
+          );
+        }
       ],
       // If we have an Apollo Component
       [() => R.not(R.isNil(component)),
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
-        () => R.chain(value => value,
-          authApolloComponentMutationContainer(
-            mutation,
-            apolloConfig,
-            component,
-            namedProps
-          )
-        )
+        () => {
+          return R.chain(
+            value => {
+              return value;
+            },
+            authApolloComponentMutationContainer(
+              mutation,
+              apolloConfig,
+              component,
+              namedProps
+            )
+          );
+        }
       ]
     ])(apolloConfig);
   }),
@@ -160,7 +167,7 @@ export const makeMutationRequestContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.func],
+    ['component', PropTypes.shape()],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationRequestContainer'

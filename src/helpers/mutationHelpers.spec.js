@@ -25,7 +25,7 @@ describe('mutationHelpers', () => {
     const {variablesAndTypes, namedOutputParams, crud} = mutationParts(
       {
         name,
-        outputParams: sampleResourceMutationOutputParams,
+        outputParams: sampleResourceMutationOutputParams
       }, sampleResourceProps
     );
 
@@ -59,12 +59,12 @@ describe('mutationHelpers', () => {
         () => localTestAuthTask
       )
     )();
+    const errors = [];
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
           expect(R.keys(reqStrPathThrowing('data.createRegion.region', response))).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
         }
-    }));
+    }, errors, done));
   }, 10000);
 });

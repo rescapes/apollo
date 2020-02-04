@@ -97,7 +97,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.func],
+    ['component', PropTypes.shape()],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationWithClientDirectiveContainer'
