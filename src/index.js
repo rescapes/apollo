@@ -27,6 +27,7 @@ export {
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
+export {makeMutationWithClientDirectiveContainer} from './helpers/mutationCacheHelpers'
 export {
   formatOutputParams,
   resolveGraphQLType,
@@ -45,4 +46,7 @@ export {
   sampleResourceOutputParams,
   sampleResourceProps
 } from './helpers/sampleData';
-export {testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask} from './helpers/testHelpers';
+export {
+  testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask, expectKeys
+} from './helpers/testHelpers';
+export {createStateLinkDefaults, defaultStateLinkResolvers} from './client/stateLink';

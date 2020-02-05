@@ -167,7 +167,7 @@ export const makeMutationRequestContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.shape()],
+    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationRequestContainer'

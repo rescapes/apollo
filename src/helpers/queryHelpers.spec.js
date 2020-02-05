@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQueryContainer, makeQuery, makeQueryForComponentTask} from './queryHelpers';
+import {makeQuery, makeQueryContainer} from './queryHelpers';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
-import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {localTestAuthTask, testConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -62,12 +62,14 @@ describe('queryHelpers', () => {
         () => localTestAuthTask
       )
     )();
+    const errors = [];
     task.run().listen(defaultRunConfig({
-      onResolved:
-        ({region}) => {
-          expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-          done();
-        }
-    }));
+        onResolved:
+          ({region}) => {
+            expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
+            done();
+          }
+      }, errors, done)
+    );
   }, 100000);
 });

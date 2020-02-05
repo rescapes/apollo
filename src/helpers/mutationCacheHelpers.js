@@ -13,9 +13,9 @@ import * as R from 'ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {reqStrPathThrowing, mergeDeep} from 'rescape-ramda';
+import {mergeDeep, reqStrPathThrowing} from 'rescape-ramda';
 import PropTypes from 'prop-types';
-import {makeFragementQuery, makeFragmentQuery} from './queryHelpers';
+import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {loggers} from 'rescape-log';
@@ -78,7 +78,9 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
         () => Just(data)
       ],
       // This should never happen
-      [() => { throw new Error("Neither apolloClient or component defined")}]
+      [() => {
+        throw new Error("Neither apolloClient or component defined");
+      }]
     ])(apolloConfig);
   }),
   [
@@ -97,7 +99,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.shape()],
+    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationWithClientDirectiveContainer'

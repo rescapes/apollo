@@ -200,7 +200,7 @@ export const makeQueryContainer = v(R.curry(
       ).isRequired,
       propsStructure: PropTypes.shape()
     })],
-    ['component', PropTypes.shape()],
+    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'
 );
