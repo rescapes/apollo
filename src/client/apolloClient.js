@@ -263,7 +263,6 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
  * are passed by the wrapped apolloComponent as props rather than as part of the options
- * @param {Object} component The component being wrapped in the mutation
  * @param {Object} options
  * @param {Object} options.query required query to use
  * @param {Object} options.options optional react-apollo options
@@ -273,7 +272,7 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentMutationContainer = R.curry((mutation, options, component, props) => {
+export const authApolloComponentMutationContainer = R.curry((mutation, options, props) => {
   return R.compose(
     // Wrap in a Maybe.Just so we can use kestral composition (R.composeK) on the results
     // TODO in the future we'll use Mutation with the async option and convert its promise to a Task
@@ -282,7 +281,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
     Just,
     // The child of Mutation is the passed in component, which might be another Query|Mutation or a straight React component
     // props of query are the query itself and the options that include variable and settings
-    props => {
+    props => ({ render }) => {
       return e(
         Mutation,
         R.mergeAll([
@@ -290,7 +289,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
           R.propOr({}, 'options', options),
           props
         ]),
-        component
+        render
       );
     }
   )(props);
@@ -312,7 +311,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentQueryContainer = R.curry((query, args, component, props) => {
+export const authApolloComponentQueryContainer = R.curry((query, args, props) => {
   // If variables is a function pass the props in
   const updatedOptions = props => R.over(
     R.lensPath(['options', 'variables']),
@@ -327,15 +326,17 @@ export const authApolloComponentQueryContainer = R.curry((query, args, component
     // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
     // props of query are the query itself and the args that include options and options props post processing function
     props => {
-      return e(
-        Query,
-        R.mergeAll([
-          {query},
-          R.propOr({}, 'args', updatedOptions(props)),
-          props
-        ]),
-        component
-      );
+      return ({render}) => {
+        return e(
+          Query,
+          R.mergeAll([
+            {query},
+            R.propOr({}, 'args', updatedOptions(props)),
+            props
+          ]),
+          render
+        );
+      };
     }
   )(props);
 });
@@ -351,7 +352,6 @@ export const authApolloComponentQueryContainer = R.curry((query, args, component
  * @param {String} config.args.options.errorPolicy Optional errorPolicy string for the ApolloComponent container
  * @param {Function} config.args.props Post processing of the results from the query or mutation. Receives
  * data and ownProps as arguments, where ownProps are the props passed into the query or mutation
- * @param {Object} component Apollo Component for component calls, otherwise leave null
  * @param {Object} props Required if the query is to accept arguments. If this is a component
  * query, values must be supplied initially to inform the structure of the arguments
  * Object of simple or complex parameters. Example of client execution variables
@@ -359,7 +359,7 @@ export const authApolloComponentQueryContainer = R.curry((query, args, component
  * Example of the same variables for a component, where only the type of the values matter
  * {city: "", data: {foo: 0}}
  */
-export const authApolloQueryContainer = R.curry((config, query, component, props) => {
+export const authApolloQueryContainer = R.curry((config, query, props) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
@@ -370,7 +370,7 @@ export const authApolloQueryContainer = R.curry((config, query, component, props
       )
     ],
     // Apollo Component
-    [() => R.not(R.isNil(component)),
+    [R.T,
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
       apolloConfig => {

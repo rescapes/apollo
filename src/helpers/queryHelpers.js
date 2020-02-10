@@ -152,7 +152,6 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
  *  props ahead of time with the container. It should be the expected prop names and
  *  example value types (e.g. 0 for Number) TODO we could use types instead of numbers, if we can figure out a type
  *  to identify primitives
- *  @param {Object} component. Optional Apollo component for Apollo component queries. Leave null for client queries
  *  @param {Object} props. The props for the query or an Apollo container that will supply the props
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
  *  are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
@@ -162,14 +161,12 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
 export const makeQueryContainer = v(R.curry(
   (apolloConfig,
    {name, readInputTypeMapper, outputParams, propsStructure},
-   component,
    props) => {
     const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
     log.debug(`Creating Query:\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
     const componentOrTask = authApolloQueryContainer(
       apolloConfig,
       query,
-      component,
       props
     );
     return R.when(
@@ -200,7 +197,6 @@ export const makeQueryContainer = v(R.curry(
       ).isRequired,
       propsStructure: PropTypes.shape()
     })],
-    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'
 );

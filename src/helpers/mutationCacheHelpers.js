@@ -32,7 +32,6 @@ const log = loggers.get('rescapeDefault');
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer
- * @param {Object} component The Apollo component for component queries
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
@@ -47,7 +46,6 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
      name, outputParams,
      propsStructure
    },
-   component,
    props) => {
 
     const fragment = gql`${makeFragmentQuery(name, {}, outputParams, R.pick(['__typename'], props))}`;
@@ -74,13 +72,10 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
         () => of(data)
       ],
       // If we have an Apollo Component
-      [() => component,
+      [R.T,
         () => Just(data)
       ],
-      // This should never happen
-      [() => {
-        throw new Error("Neither apolloClient or component defined");
-      }]
+
     ])(apolloConfig);
   }),
   [
@@ -99,7 +94,6 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationWithClientDirectiveContainer'

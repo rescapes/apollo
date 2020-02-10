@@ -41,7 +41,6 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
  * the server
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
- * @param {Object} apolloConfig.apolloComponent Optional Apollo component
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
@@ -57,7 +56,6 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
 export const makeQueryWithClientDirectiveContainer = R.curry((
   apolloConfig,
   {name, readInputTypeMapper, outputParams, propsStructure},
-  component,
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
@@ -67,7 +65,6 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   const componentOrTask = authApolloQueryContainer(
     apolloConfig,
     query,
-    component,
     props
   );
   return R.when(
@@ -91,7 +88,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  * should always call makeQueryContainer and it will consult the cache before querying externally. Or for
  * data only in the cache, loaded via ApolloLinkState, use makeQueryWithClientDirectiveContainer
  */
-export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, component, props) => {
+export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
   log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
@@ -107,7 +104,6 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
       {
         query
       },
-      component,
       props
     )
   );

@@ -54,14 +54,14 @@ export const authApolloClientQueryCacheContainer = R.curry((apolloClient, option
  * @returns {Maybe.Just} A Maybe.Just with the query results in {data}. The results are put in data to match the format of
  * non-cached queries.
  */
-export const authApolloComponentQueryCacheContainer = R.curry((query, options, component, props) => {
-  return Just(graphql(query, options)(component)(props));
+export const authApolloComponentQueryCacheContainer = R.curry((query, options, props) => {
+  return Just(graphql(query, options)(props));
 });
 
 /**
  * Direct read from the cache for testing
  */
-export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloConfig, query, component, props) => {
+export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloConfig, query, props) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
@@ -71,12 +71,11 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
         props
       )
     ],
-    [() => R.not(R.isNil(component)),
+    [R.T,
       // Extract the apolloConfig.apolloComponent--the React container, the options for the Apollo component query,
       // the props function for the Apollo component
       apolloConfig => authApolloComponentQueryCacheContainer(
         R.pick(['options', 'props'], apolloConfig),
-        component,
         query,
         props
       )

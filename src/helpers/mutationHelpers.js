@@ -81,7 +81,6 @@ ${mutationName}(${variableMappingString}) {
  *  @param {String} mutationOptions.variableTypeOverride
  *  @param {String} mutationNameOverride
  *  Creates need all required fields and updates need at minimum the id
- *  @param {Object} component Apollo component if not doing an Apollo Client mutation
  *  @param {Object} props The props for the mutation
  *  @return {Task|Object} A task for Apollo Client mutations or a component for Apollo component mutations
  */
@@ -92,7 +91,6 @@ export const makeMutationRequestContainer = v(R.curry(
      // These are only used for simple mutations where there is no complex input type
      variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
    },
-   component,
    props) => {
 
     // Filter out anything that begins with a _
@@ -131,7 +129,7 @@ export const makeMutationRequestContainer = v(R.curry(
         }
       ],
       // If we have an Apollo Component
-      [() => R.not(R.isNil(component)),
+      [R.T,
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
@@ -142,7 +140,6 @@ export const makeMutationRequestContainer = v(R.curry(
             authApolloComponentMutationContainer(
               mutation,
               apolloConfig,
-              component,
               namedProps
             )
           );
@@ -167,7 +164,6 @@ export const makeMutationRequestContainer = v(R.curry(
       variableTypeOverride: PropTypes.string,
       mutationNameOverride: PropTypes.string
     })],
-    ['component', PropTypes.func],
     ['props', PropTypes.shape().isRequired]
   ],
   'makeMutationRequestContainer'

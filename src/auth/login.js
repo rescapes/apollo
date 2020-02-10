@@ -74,19 +74,17 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
 /**
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
- * @param {Object} component Apollo component for component queries
  * @param {Object} props
  * @param {String} props.token The token to verify
  * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
  * token verification
  */
-export const verifyTokenRequestContainer = R.curry((apolloConfig, component, props) => makeMutationRequestContainer(
+export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
   apolloConfig,
   {
     outputParams: ['payload'],
     variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
   },
-  component,
   props
 ));
 
@@ -98,13 +96,12 @@ export const verifyTokenRequestContainer = R.curry((apolloConfig, component, pro
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
  *
  */
-export const refreshTokenContainer = R.curry((apolloConfig, component, props) => makeMutationRequestContainer(
+export const refreshTokenContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
   apolloConfig,
   {
     outputParams: ['payload'],
     variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
   },
-  component,
   props
 ));
 
