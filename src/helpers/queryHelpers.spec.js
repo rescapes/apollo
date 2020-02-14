@@ -40,7 +40,6 @@ describe('queryHelpers', () => {
             readInputTypeMapper: {},
             outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
           },
-          null,
           {key: createdRegion.key}
         )
       ),
@@ -51,7 +50,6 @@ describe('queryHelpers', () => {
             name: 'region',
             outputParams: ['key']
           },
-          null,
           {
             key: `test${moment().format('HH-mm-SS')}`,
             name: `Test${moment().format('HH-mm-SS')}`

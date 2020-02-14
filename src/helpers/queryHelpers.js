@@ -171,7 +171,7 @@ export const makeQueryContainer = v(R.curry(
     );
     return R.when(
       componentOrTask => R.has('run', componentOrTask),
-      // If it's a task report the result. Components have run their query
+      // If it's a task report the result. Components have to run their query
       componentOrTask => {
         return R.map(
           queryResponse => {

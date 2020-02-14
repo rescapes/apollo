@@ -59,21 +59,6 @@ export const testAuthTask = testConfig => loginToAuthClientTask(
 /**
  * Convenient way to check if an object has a few expected keys at the given path
  * @param {[String]} keyPaths keys or dot-separated key paths of the object to check
- * @param {String} strPath Dot separated path of keys into the object
- * @param {Object} obj The object to check
- * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
- */
-export const expectKeysAtStrPath = v(R.curry((keyPaths, strPath, obj) =>
-  expectKeys(keyPaths, reqStrPathThrowing(strPath)(obj))
-), [
-  ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
-  ['strPath', PropTypes.string.isRequired],
-  ['obj', PropTypes.shape({}).isRequired]
-]);
-
-/**
- * Convenient way to check if an object has a few expected keys at the given path
- * @param {[String]} keyPaths keys or dot-separated key paths of the object to check
  * @param {Object} obj The object to check
  * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
  */

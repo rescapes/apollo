@@ -279,9 +279,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
     // The async option will make the render method (here the child component) handle promises, working
     // with React Suspense and whatever else
     Just,
-    // The child of Mutation is the passed in component, which might be another Query|Mutation or a straight React component
-    // props of query are the query itself and the options that include variable and settings
-    props => ({ render }) => {
+    props => ({render}) => {
       return e(
         Mutation,
         R.mergeAll([
@@ -311,7 +309,7 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentQueryContainer = R.curry((query, args, props) => {
+export const authApolloComponentQueryContainer = R.curry((query, args, {render, ...props}) => {
   // If variables is a function pass the props in
   const updatedOptions = props => R.over(
     R.lensPath(['options', 'variables']),
@@ -323,20 +321,15 @@ export const authApolloComponentQueryContainer = R.curry((query, args, props) =>
     // The async option will make the render method (here the child component) handle promises, working
     // with React Suspense and whatever else
     Just,
-    // The child of Query is the passed in component, which might be another Query|Mutation or a straight React component
-    // props of query are the query itself and the args that include options and options props post processing function
     props => {
-      return ({render}) => {
-        return e(
-          Query,
-          R.mergeAll([
-            {query},
-            R.propOr({}, 'args', updatedOptions(props)),
-            props
-          ]),
-          render
-        );
-      };
+      return e(
+        Query,
+        R.mergeAll([
+          {query},
+          R.propOr({}, 'options', updatedOptions(props)),
+        ]),
+        render
+      );
     }
   )(props);
 });
@@ -381,7 +374,6 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
           authApolloComponentQueryContainer(
             query,
             apolloConfig,
-            component,
             props
           )
         );
