@@ -14,7 +14,7 @@ import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 import * as R from 'ramda';
-import {regionOutputParams} from '../stores/scopeStores/regionStore';
+import {regionOutputParams} from '../helpers/samples/sampleRegionStore'
 
 
 /**
@@ -174,7 +174,6 @@ const cycleRegion = async apolloClient => {
       name: 'region',
       outputParams: regionOutputParams
     },
-    null,
     {
       key: 'earth',
       name: 'Earth'

@@ -24,6 +24,7 @@ import {print} from 'graphql';
 import {promiseToTask, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
+import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -246,13 +247,13 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
  */
 export const authApolloClientQueryContainer = R.curry((apolloConfig, query, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-  const queryOptions = R.omit(['apolloClient'], apolloConfig);
 
   return fromPromised(() =>
     apolloClient.query(
       R.merge(
-        queryOptions,
-        {query, variables: props}
+        {query},
+        // Winnows the props to the apolloConfig.options.variables function
+        optionsWithWinnowedProps(apolloConfig, props)
       )
     )
   )();
@@ -309,13 +310,8 @@ export const authApolloComponentMutationContainer = R.curry((mutation, options, 
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentQueryContainer = R.curry((query, args, {render, ...props}) => {
-  // If variables is a function pass the props in
-  const updatedOptions = props => R.over(
-    R.lensPath(['options', 'variables']),
-    R.when(R.is(Function), R.applyTo(props)),
-    args
-  );
+export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {render, ...props}) => {
+
   return R.compose(
     // TODO in the future we'll use Query with the async option and convert its promise to a Task
     // The async option will make the render method (here the child component) handle promises, working
@@ -324,10 +320,11 @@ export const authApolloComponentQueryContainer = R.curry((query, args, {render, 
     props => {
       return e(
         Query,
-        R.mergeAll([
+        R.merge(
           {query},
-          R.propOr({}, 'options', updatedOptions(props)),
-        ]),
+          // Converts apolloConfig.options.variable function to the variable function called with the props result
+          optionsWithWinnowedProps(apolloConfig, props)
+        ),
         render
       );
     }
@@ -372,8 +369,8 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
             return value;
           },
           authApolloComponentQueryContainer(
-            query,
             apolloConfig,
+            query,
             props
           )
         );

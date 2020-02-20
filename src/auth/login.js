@@ -13,7 +13,7 @@ import * as R from 'ramda';
 import {
   noAuthApolloClient,
   authApolloClientTask,
-  noAuthApolloClientMutationRequestTask,
+  noAuthApolloClientMutationRequestTask
 } from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
 import gql from 'graphql-tag';
@@ -41,7 +41,7 @@ export const loginTask = v(R.curry((apolloConfig, variables) => {
   return noAuthApolloClientMutationRequestTask(
     apolloConfig,
     {mutation: loginMutation, variables}
-  )
+  );
 }), [
   ['noAuthClient', PropTypes.shape().isRequired],
   ['variables', PropTypes.shape({
@@ -79,14 +79,16 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
  * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
  * token verification
  */
-export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
-  apolloConfig,
-  {
-    outputParams: ['payload'],
-    variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
-  },
-  props
-));
+export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: ['payload'],
+      variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
+    },
+    props
+  );
+});
 
 /**
  * Refresh an apolloClient auth token.
@@ -96,14 +98,16 @@ export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => make
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
  *
  */
-export const refreshTokenContainer = R.curry((apolloConfig, props) => makeMutationRequestContainer(
-  apolloConfig,
-  {
-    outputParams: ['payload'],
-    variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
-  },
-  props
-));
+export const refreshTokenContainer = R.curry((apolloConfig, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: ['payload'],
+      variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
+    },
+    props
+  );
+});
 
 /**
  * Expects a GraphQLClient if already authenticated or login data if not

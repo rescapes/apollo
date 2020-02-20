@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqStrPath, pickDeepPaths} from 'rescape-ramda';
+import {mapObjToValues, reqStrPath, pickDeepPaths, strPathOr} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
 import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
@@ -275,3 +275,45 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => R.com
   ),
   convertFromGraphqlStructure
 )(graphqlListStructure);
+
+
+/**
+ * Uses apolloConfig.options.variables to winnow the given props.
+ * @param {Object} apolloConfig
+ * @param {Object} apolloConfig.options
+ * @param {Function|Object} apolloConfig.options.variables
+ * @param props
+ * @return {Object} The options with variables transformed from a function to the winnowed props. If apolloConfig.options
+ * is not given then {variables: props} is returned. If apolloConfig.options.variables is not given then
+ * {other options, variables: props} is returned
+ */
+export const optionsWithWinnowedProps = (apolloConfig, props) => {
+  // If options.variables is specified return options with variables set to variables(props) if variables is a function
+  // Else return {..., variables: props}
+  return R.over(
+    R.lensProp('variables'),
+    funcObjOrNull => R.ifElse(
+      R.is(Function),
+      func => func(props),
+      // Return the func if it's an object or else the props
+      maybeObj => maybeObj || props
+    )(funcObjOrNull),
+    R.propOr({}, 'options', apolloConfig)
+  );
+};
+
+/**
+ * Given an apolloConfig with options.variables, where variables is a function, this runs
+ * the props through the variables function to deliver the props that the query will be built upon.
+ * @param {Object} apolloConfig Apollo config
+ * @param {Object} apolloConfig.options
+ * @param {Function|Object} apolloConfig.options.variables A unary function that expects props and returns the winnowed props
+ * If an object then props are ignored and these values are returned. This would only occur if the variables were constant,
+ * which seems unlikely, but matches Apollo's possible configuration
+ * @param {Object} props Props to winnow
+ * @returns {Object} The winnowed props
+ */
+export const _winnowRequestProps = (apolloConfig, props) => {
+  const func = strPathOr(R.identity, 'options.variables', apolloConfig);
+  return R.when(R.is(Function), R.applyTo(props))(func);
+};

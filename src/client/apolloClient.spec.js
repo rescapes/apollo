@@ -9,14 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import gql from 'graphql-tag';
-import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from 'rescape-ramda';
-import {localTestAuthTask, testConfig, testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
+import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda';
+import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 import * as R from 'ramda';
-import {regionOutputParams} from '../stores/scopeStores/regionStore';
+import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore';
 import {makeQueryContainer} from '../helpers/queryHelpers';
-import {readInputTypeMapper} from '../stores/scopeStores/regionStore';
 import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';
 
 /**
@@ -51,7 +50,6 @@ describe('apolloClient', () => {
         ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
-          null,
           {key: region.key}
         )
       ),
@@ -61,27 +59,29 @@ describe('apolloClient', () => {
         ({apolloClient, region}) => makeQueryFromCacheContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
-          null
-        )({key: region.key})
+          {key: region.key}
+        )
       ),
       // Query so we can cache what we created
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, region}) => makeQueryContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
-          null
-        )({key: region.key})
+          {key: region.key}
+        )
       ),
       mapToNamedPathAndInputs('region', 'data.createRegion.region',
-        ({props, apolloClient}) => makeMutationRequestContainer(
-          {apolloClient},
-          {
-            name: 'region',
-            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
-            crud: 'create'
-          },
-          null
-        )(props)
+        ({props, apolloClient}) => {
+          return makeMutationRequestContainer(
+            {apolloClient},
+            {
+              name: 'region',
+              outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+              crud: 'create'
+            },
+            props
+          );
+        }
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask

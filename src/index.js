@@ -45,7 +45,7 @@ export {
   sampleResourceMutationOutputParams,
   sampleResourceOutputParams,
   sampleResourceProps
-} from './helpers/sampleData';
+} from './helpers/samples/sampleData';
 export {
   testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask, expectKeys
 } from './helpers/testHelpers';

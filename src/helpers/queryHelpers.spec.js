@@ -12,7 +12,7 @@
 import {makeQuery, makeQueryContainer} from './queryHelpers';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './sampleData';
+import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {localTestAuthTask, testConfig} from './testHelpers';
 import * as R from 'ramda';
@@ -34,13 +34,20 @@ describe('queryHelpers', () => {
     const task = R.composeK(
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, createdRegion}) => makeQueryContainer(
-          {apolloClient},
+          {
+            apolloClient,
+            options: {
+              variables: props => {
+                return R.pick(['key'], props);
+              }
+            }
+          },
           {
             name: 'regions',
             readInputTypeMapper: {},
             outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
           },
-          {key: createdRegion.key}
+          {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
         )
       ),
       mapToNamedPathAndInputs('createdRegion', 'data.createRegion.region',

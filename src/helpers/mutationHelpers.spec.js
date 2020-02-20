@@ -10,7 +10,7 @@
  */
 
 import {formatOutputParams} from './queryHelpers';
-import {sampleResourceMutationOutputParams, sampleResourceProps} from './sampleData';
+import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData';
 import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
 import {localTestAuthTask} from './testHelpers';
 import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
@@ -24,9 +24,20 @@ describe('mutationHelpers', () => {
     const name = 'sampleResource';
     const {variablesAndTypes, namedOutputParams, crud} = mutationParts(
       {
+        options: {
+          variables:
+            props => {
+              // Filters out other props
+              return R.pick(['resourceData'], props);
+            }
+        }
+      },
+      {
         name,
         outputParams: sampleResourceMutationOutputParams
-      }, sampleResourceProps
+      },
+      // If we are composing with other queries/mutations, we might have extra props that we want to ignore
+      R.merge(sampleResourceProps, {sillyPropWeDontUse: 1})
     );
 
     // create|update[Model Name]
@@ -49,7 +60,6 @@ describe('mutationHelpers', () => {
           name: 'region',
           outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
         },
-        null,
         {
           key: `test${moment().format('HH-mm-SS')}`,
           name: `Test${moment().format('HH-mm-SS')}`

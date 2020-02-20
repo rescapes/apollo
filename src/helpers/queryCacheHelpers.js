@@ -68,7 +68,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
     props
   );
   return R.when(
-    componentOrTask => R.has('run', componentOrTask),
+    componentOrTask => 'run' in componentOrTask,
     // If it's a task report the result. Components have run their query
     componentOrTask => {
       return R.map(

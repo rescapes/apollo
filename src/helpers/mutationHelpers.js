@@ -20,7 +20,7 @@
  */
 
 import * as R from 'ramda';
-import {formatOutputParams} from './requestHelpers';
+import {_winnowRequestProps, formatOutputParams} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
   capitalize,
@@ -98,6 +98,7 @@ export const makeMutationRequestContainer = v(R.curry(
 
     // Get the variable definition, arguments and outputParams
     const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
+      apolloConfig,
       {name, outputParams, variableTypeOverride, variableNameOverride},
       filteredProps
     );
@@ -172,6 +173,10 @@ export const makeMutationRequestContainer = v(R.curry(
 
 /**
  * Creates the parts needed for the mutation
+ * @param {Object} apolloConfig The apolloConfig
+ * @param {Object} [apolloConfig.options]
+ * @param {Function|Object} [apolloConfig.options.variable] When a function, called with props to produce the variables
+ * that will be used for the mutation. When an object overrides props. When undefined props is used
  * @param {String} name The name of the object type, e.g. region
  * @param {[Object|String]} outputParams Output params for the mutation
  * @param {String} variableTypeOverride Used to override the variable type, normally it's (Update|Create){Name}InputType
@@ -180,7 +185,14 @@ export const makeMutationRequestContainer = v(R.curry(
  * will force and update
  * @return {{variablesAndTypes: {}, variableName: *, namedOutputParams: *, namedProps: *, crud: *}}
  */
-export const mutationParts = ({name, outputParams, variableTypeOverride, variableNameOverride}, props) => {
+export const mutationParts = (
+  apolloConfig, {
+    name,
+    outputParams,
+    variableTypeOverride,
+    variableNameOverride
+  },
+  props) => {
   // Determine crud type from the presence of the id in the props
   const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
   // Create|Update[Model Name]InputType]
@@ -193,6 +205,13 @@ export const mutationParts = ({name, outputParams, variableTypeOverride, variabl
   // name of the object class being mutated. If we don't specify name an instead use the overrides,
   // we don't need name here
   const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
-  const namedProps = R.ifElse(R.isNil, R.always(props), () => ({[variableName]: props}))(name);
+  // Limits the props with apolloConfig.options.variables if specified
+  // This keeps extra variables out of the mutation when we are composing queries/mutations
+  const winnowedProps = _winnowRequestProps(apolloConfig, props);
+  const namedProps = R.ifElse(
+    R.isNil,
+    R.always(winnowedProps),
+    () => ({[variableName]: winnowedProps})
+  )(name);
   return {variablesAndTypes, variableName, namedOutputParams, namedProps, crud};
 };

@@ -30,7 +30,6 @@ describe('queryCacheHelpers', () => {
           readInputTypeMapper: {},
           outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
         },
-        null,
         {key: region.key}
       ),
       // Direct cache read as a sanity check
@@ -43,7 +42,6 @@ describe('queryCacheHelpers', () => {
             readInputTypeMapper: {},
             outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
           },
-          null,
           {key: region.key}
         )
       ),
@@ -57,7 +55,6 @@ describe('queryCacheHelpers', () => {
             readInputTypeMapper: {},
             outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
           },
-          null,
           {key: region.key}
         )
       ),
@@ -69,7 +66,6 @@ describe('queryCacheHelpers', () => {
             name: 'region',
             outputParams: ['key']
           },
-          null,
           {
             key: `test${moment().format('HH-mm-SS')}`,
             name: `Test${moment().format('HH-mm-SS')}`
@@ -78,6 +74,7 @@ describe('queryCacheHelpers', () => {
       ),
       () => localTestAuthTask
     )();
+    const errors = []
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
@@ -86,10 +83,7 @@ describe('queryCacheHelpers', () => {
           ).toEqual(
             ['id', 'key', 'name', 'geojson', '__typename']
           );
-          done();
         }
-    }));
+    }, errors, done));
   }, 100000);
-
-
 });

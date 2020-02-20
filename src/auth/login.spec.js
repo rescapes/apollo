@@ -32,11 +32,11 @@ describe('login', () => {
     R.composeK(
       mapToNamedPathAndInputs(
         'refreshToken', 'data.refreshToken.payload',
-        ({apolloClient, verifyToken, token}) => refreshTokenContainer({apolloClient}, null, {token})
+        ({apolloClient, verifyToken, token}) => refreshTokenContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs(
         'verifyToken', 'data.verifyToken.payload',
-        ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, null, {token})
+        ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         ({token}) => authApolloClientTask(

@@ -14,9 +14,9 @@ import {localTestAuthTask, expectKeys} from './testHelpers';
 import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import * as R from 'ramda';
 import {makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
-import {createSampleSettingsTask} from '../stores/settingsStore.sample';
+import {createSampleSettingsTask} from './samples/sampleSettingsStore';
 
-const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.mapbox'];
+const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass'];
 
 describe('mutationCacheHelpers', () => {
     test('makeMutationWithClientDirectiveContainer', done => {

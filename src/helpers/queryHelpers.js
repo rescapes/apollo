@@ -11,11 +11,11 @@
 
 import {mapObjToValues, compact, omitDeep} from 'rescape-ramda';
 import * as R from 'ramda';
-import {resolveGraphQLType, formatOutputParams} from './requestHelpers';
+import {resolveGraphQLType, formatOutputParams, _winnowRequestProps} from './requestHelpers';
 import {
   authApolloQueryContainer
 } from '../client/apolloClient';
-import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
+import {replaceValuesWithCountAtDepthAndStringify, strPathOr} from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
@@ -162,21 +162,28 @@ export const makeQueryContainer = v(R.curry(
   (apolloConfig,
    {name, readInputTypeMapper, outputParams, propsStructure},
    props) => {
-    const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
-    log.debug(`Creating Query:\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
+    // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
+    const winnowedProps = _winnowRequestProps(apolloConfig, props);
+    const query = gql`${makeQuery(
+      name, 
+      readInputTypeMapper, 
+      outputParams, 
+      winnowedProps
+    )}`;
+    log.debug(`Creating Query:\n${print(query)}\nArguments:\n${JSON.stringify(winnowedProps)}\n`);
     const componentOrTask = authApolloQueryContainer(
       apolloConfig,
       query,
       props
     );
     return R.when(
-      componentOrTask => R.has('run', componentOrTask),
+      componentOrTask => 'run' in componentOrTask,
       // If it's a task report the result. Components have to run their query
       componentOrTask => {
         return R.map(
           queryResponse => {
             log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-            return queryResponse
+            return queryResponse;
           },
           componentOrTask
         );

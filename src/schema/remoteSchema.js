@@ -12,10 +12,10 @@
 import {HttpLink} from 'apollo-link-http';
 import fetch from 'node-fetch';
 import {setContext} from 'apollo-link-context';
-import {makeRemoteExecutableSchema, introspectSchema} from 'graphql-tools';
-import {promiseToTask, reqStrPathThrowing} from 'rescape-ramda';
+import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
+import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
-import {of} from 'folktale/concurrency/task';
+import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
 
 const http = uri => new HttpLink({
@@ -53,7 +53,7 @@ export const remoteSchemaTask = config => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
         schema => ({schema, link, apolloClient}),
-        promiseToTask(introspectSchema(link))
+        fromPromised(l => introspectSchema(l))(link)
       );
     },
     // Authenticate
