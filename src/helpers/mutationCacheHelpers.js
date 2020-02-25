@@ -43,8 +43,8 @@ const log = loggers.get('rescapeDefault');
 export const makeMutationWithClientDirectiveContainer = v(R.curry(
   (apolloConfig,
    {
-     name, outputParams,
-     propsStructure
+     name,
+     outputParams,
    },
    props) => {
 

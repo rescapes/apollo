@@ -47,6 +47,6 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask, expectKeys
+  testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask
 } from './helpers/testHelpers';
 export {createStateLinkDefaults, defaultStateLinkResolvers} from './client/stateLink';

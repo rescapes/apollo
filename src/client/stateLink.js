@@ -110,8 +110,3 @@ export const createStateLinkDefaults = config => overDeep(
 );
 
 
-
-export const stateLinkResolversAndDefaults = config => ({
-  resolvers: defaultStateLinkResolvers, defaults: createStateLinkDefaults(R.pick(['settings', 'browser'], config))
-});
-

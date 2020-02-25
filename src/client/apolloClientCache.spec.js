@@ -24,6 +24,7 @@ describe('apolloClient', () => {
 
   test('test linkState initial state', async () => {
 
+    // The localTestAuthTask creates a client with state
     const {apolloClient} = await taskToPromise(localTestAuthTask);
     // Since settings has no idea I think the cache just returns everything for settings or the first one
     const queryDefaults = gql`

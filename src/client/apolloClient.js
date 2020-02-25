@@ -264,30 +264,35 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
  * are passed by the wrapped apolloComponent as props rather than as part of the options
- * @param {Object} options
- * @param {Object} options.query required query to use
- * @param {Object} options.options optional react-apollo options
- * @param {Object} options.options.variables optional.
+ * @param {Object} apolloComponent The apollo component. Contains options
+ * @param {Object} apolloComponent.options optional Mutation component properties
+ * @param {Object} apolloComponent.options.variables Variables mapping function. Props will have already
+ * been passed through this so it is not used here
  * @param {Object} options.options.errorPolicy optional error policy
- * @param {Object} options.prop optional mapping of props returned by the query.
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentMutationContainer = R.curry((mutation, options, props) => {
+export const authApolloComponentMutationContainer = R.curry((apolloConfig, mutation, {render, ...props}) => {
   return R.compose(
     // Wrap in a Maybe.Just so we can use kestral composition (R.composeK) on the results
     // TODO in the future we'll use Mutation with the async option and convert its promise to a Task
     // The async option will make the render method (here the child component) handle promises, working
     // with React Suspense and whatever else
     Just,
-    props => ({render}) => {
+    props => {
       return e(
         Mutation,
-        R.mergeAll([
+        R.merge(
           {mutation},
-          R.propOr({}, 'options', options),
-          props
-        ]),
+          // Merge options with the variables that have already been limited
+          R.merge(
+            R.compose(
+              options => R.omit(['variables'], options),
+              apolloConfig => R.propOr({}, 'options', apolloConfig)
+            )(apolloConfig),
+            {variables: props}
+          )
+        ),
         render
       );
     }
@@ -322,7 +327,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         Query,
         R.merge(
           {query},
-          // Converts apolloConfig.options.variable function to the variable function called with the props result
+          // Converts apolloConfig.options.variables function to the variable function called with the props result
           optionsWithWinnowedProps(apolloConfig, props)
         ),
         render

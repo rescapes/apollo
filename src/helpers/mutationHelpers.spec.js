@@ -28,7 +28,7 @@ describe('mutationHelpers', () => {
           variables:
             props => {
               // Filters out other props
-              return R.pick(['resourceData'], props);
+              return R.prop('resourceData', props);
             }
         }
       },

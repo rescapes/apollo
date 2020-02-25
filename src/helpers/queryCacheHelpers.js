@@ -45,7 +45,6 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param {String|Object} [outputParams] output parameters for the query in this style json format. See makeQueryContainer
- * @param {Object} [propsStructure] Optional Used when props can't be specified ahead of time
  * @param {Object} component The Apollo component for component queries
  * @param {Function} props The properties to pass to the query.
  * @returns {Task|Maybe} container that resolves to and object with the results of the query. Successful results
@@ -55,10 +54,10 @@ export const makeClientQuery = R.curry((queryName, inputParamTypeMapper, outputP
  */
 export const makeQueryWithClientDirectiveContainer = R.curry((
   apolloConfig,
-  {name, readInputTypeMapper, outputParams, propsStructure},
+  {name, readInputTypeMapper, outputParams},
   props
 ) => {
-  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props || propsStructure)}`;
+  const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
   log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries

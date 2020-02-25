@@ -55,29 +55,3 @@ export const testAuthTask = testConfig => loginToAuthClientTask(
   testStateLinkResolversAndDefaults,
   reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
-
-/**
- * Convenient way to check if an object has a few expected keys at the given path
- * @param {[String]} keyPaths keys or dot-separated key paths of the object to check
- * @param {Object} obj The object to check
- * @return {*} Expects the object has the given keys. Throws if expect fails* @return {*}
- */
-export const expectKeys = v(R.curry((keyPaths, obj) => expect(
-  R.compose(
-    // Put the keyPaths that survive in a set for comparison
-    a => new Set(a),
-    // Filter out keyPaths that don't resolve to a non-nil value
-    obj => R.filter(
-      keyPath => R.complement(R.isNil)(
-        R.view(R.lensPath(keyStringToLensPath(keyPath)), obj)
-      ),
-      keyPaths
-    )
-  )(obj)
-).toEqual(
-  new Set(keyPaths)
-)), [
-  ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
-  ['obj', PropTypes.shape({}).isRequired]
-]);
-

@@ -148,7 +148,6 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
  *  ]
  *
  *  In other words, start every type as a list and embed object types using {objectTypeKey: [...]}
- *  @param {Object} propsStructure This is only required for Apollo container since we don't need to specify actual
  *  props ahead of time with the container. It should be the expected prop names and
  *  example value types (e.g. 0 for Number) TODO we could use types instead of numbers, if we can figure out a type
  *  to identify primitives
@@ -160,7 +159,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
  */
 export const makeQueryContainer = v(R.curry(
   (apolloConfig,
-   {name, readInputTypeMapper, outputParams, propsStructure},
+   {name, readInputTypeMapper, outputParams},
    props) => {
     // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
     const winnowedProps = _winnowRequestProps(apolloConfig, props);
@@ -202,7 +201,6 @@ export const makeQueryContainer = v(R.curry(
           PropTypes.shape()
         ])
       ).isRequired,
-      propsStructure: PropTypes.shape()
     })],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'

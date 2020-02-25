@@ -93,14 +93,12 @@ export const makeMutationRequestContainer = v(R.curry(
    },
    props) => {
 
-    // Filter out anything that begins with a _
-    const filteredProps = omitDeepBy(R.startsWith('_'), props);
 
     // Get the variable definition, arguments and outputParams
     const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
       apolloConfig,
       {name, outputParams, variableTypeOverride, variableNameOverride},
-      filteredProps
+      props
     );
 
     // create|update[Model Name]
@@ -139,9 +137,10 @@ export const makeMutationRequestContainer = v(R.curry(
               return value;
             },
             authApolloComponentMutationContainer(
-              mutation,
               apolloConfig,
-              namedProps
+              mutation,
+              // Allow render through along with the namedProps
+              R.merge(R.pick(['render'], props), namedProps)
             )
           );
         }
@@ -192,9 +191,13 @@ export const mutationParts = (
     variableTypeOverride,
     variableNameOverride
   },
-  props) => {
+  props
+) => {
+  // Limits the props with apolloConfig.options.variables if specified
+  // This keeps extra variables out of the mutation when we are composing queries/mutations
+  const winnowedProps = _winnowRequestProps(apolloConfig, props);
   // Determine crud type from the presence of the id in the props
-  const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(props);
+  const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(winnowedProps);
   // Create|Update[Model Name]InputType]
   const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
   // The default variable type is the name of the type given + InputType
@@ -205,13 +208,15 @@ export const mutationParts = (
   // name of the object class being mutated. If we don't specify name an instead use the overrides,
   // we don't need name here
   const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
-  // Limits the props with apolloConfig.options.variables if specified
-  // This keeps extra variables out of the mutation when we are composing queries/mutations
-  const winnowedProps = _winnowRequestProps(apolloConfig, props);
+
   const namedProps = R.ifElse(
     R.isNil,
     R.always(winnowedProps),
     () => ({[variableName]: winnowedProps})
   )(name);
-  return {variablesAndTypes, variableName, namedOutputParams, namedProps, crud};
+  // Filter out anything that begins with a _. This can happen if we are mutating with data we got back
+  // from a query or other mutation
+  const filteredNamedProps = omitDeepBy(R.startsWith('_'), namedProps);
+
+  return {variablesAndTypes, variableName, namedOutputParams, namedProps: filteredNamedProps, crud};
 };
