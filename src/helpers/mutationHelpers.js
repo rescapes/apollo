@@ -25,7 +25,8 @@ import {authApolloClientMutationRequestContainer, authApolloComponentMutationCon
 import {
   capitalize,
   mapObjToValues,
-  omitDeepBy
+  omitDeepBy,
+  retryTask
 } from 'rescape-ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
@@ -116,14 +117,16 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          return authApolloClientMutationRequestContainer(
-            apolloConfig,
-            {
-              mutation,
-              name,
-              variableName
-            },
-            namedProps
+          return retryTask(
+            authApolloClientMutationRequestContainer(
+              apolloConfig,
+              {
+                mutation,
+                name,
+                variableName
+              },
+              namedProps
+            ), 3
           );
         }
       ],

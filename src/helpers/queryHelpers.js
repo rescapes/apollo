@@ -160,7 +160,8 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
 export const makeQueryContainer = v(R.curry(
   (apolloConfig,
    {name, readInputTypeMapper, outputParams},
-   props) => {
+   props
+  ) => {
     // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
     const winnowedProps = _winnowRequestProps(apolloConfig, props);
     const query = gql`${makeQuery(
@@ -200,7 +201,7 @@ export const makeQueryContainer = v(R.curry(
           PropTypes.array,
           PropTypes.shape()
         ])
-      ).isRequired,
+      ).isRequired
     })],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'

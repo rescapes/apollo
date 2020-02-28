@@ -203,30 +203,51 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
  * @return {Task<Result>} Task with Result.Ok with value in {data: {[queryName]: value}} or Result.Error instance
  * If stringPath and queryName are omited, the result Result.Ok just wraps response
  */
-export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolver = null, queryName = null) => R.map(
-  R.ifElse(
-    R.has('errors'),
-    Result.Error,
-    R.ifElse(
-      R.always(R.isNil(stringPathOrResolver)),
-      // If stringPath is not specified just wrap response in Result.Ok
-      Result.Ok,
-      // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
-      r => (R.ifElse(
-        R.always(R.is(Function, stringPathOrResolver)),
-        // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
-        R.chain(stringPathOrResolver),
-        // If it's a string call reqStrPath, expecting a Result.Ok
-        R.chain(reqStrPath(stringPathOrResolver))
-      )(reqStrPath('data', r))).map(
-        v => ({data: {[queryName]: v}})
-      ).mapError(
-        // If our path is incorrect, this is probably a coding error, but put it in errors
-        error => ({errors: [new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(r)}`)]})
-      )
-    )
-  )
-)(queryTask);
+export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolver = null, queryName = null) => {
+  return R.map(
+    response => {
+      return R.ifElse(
+        response => R.has('errors', response),
+        response => Result.Error(response),
+        response => {
+          return R.ifElse(
+            response => R.isNil(stringPathOrResolver, response),
+            // If stringPath is not specified just wrap response in Result.Ok
+            response => Result.Ok(response),
+            // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
+            response => R.ifElse(
+              () => {
+                return R.is(Function, stringPathOrResolver);
+              },
+              // If stringPathOrResolver is a function call it on response.data, expect it to return a Result.Ok
+              response => {
+                return R.chain(r => stringPathOrResolver(r), response);
+              },
+              // If it's a string call reqStrPath, expecting a Result.Ok
+              response => {
+                return R.chain(r => reqStrPath(stringPathOrResolver, r), response);
+              }
+            )(reqStrPath('data', response)).map(
+              v => {
+                return {data: {[queryName]: v}};
+              }
+            ).mapError(
+              // If our path is incorrect, this is probably a coding error, but put it in errors
+              error => {
+                return {
+                  errors: [
+                    new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(response)}`)
+                  ]
+                };
+              }
+            )
+          )(response);
+        }
+      )(response);
+    },
+    queryTask
+  );
+};
 
 /**
  * Converts string ids to int. This is needed because Apollo returns strings but expects ints

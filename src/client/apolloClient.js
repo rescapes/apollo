@@ -21,7 +21,7 @@ import {Just} from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
-import {promiseToTask, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {promiseToTask, reqStrPathThrowing, strPathOr, retryTask} from 'rescape-ramda';
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
@@ -358,11 +358,12 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
-      apolloConfig => authApolloClientQueryContainer(
+      apolloConfig => retryTask(
+        authApolloClientQueryContainer(
         apolloConfig,
         query,
         props
-      )
+      ), 3)
     ],
     // Apollo Component
     [R.T,
