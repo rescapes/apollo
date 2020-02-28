@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, reqStrPath, pickDeepPaths, strPathOr} from 'rescape-ramda';
+import {mapObjToValues, reqStrPath, pickDeepPaths, strPathOr, strPathOrNullOk} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
 import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
@@ -206,7 +206,7 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
 export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolver = null, queryName = null) => {
   return R.map(
     response => {
-      return R.ifElse(
+      const result = R.ifElse(
         response => R.has('errors', response),
         response => Result.Error(response),
         response => {
@@ -225,7 +225,17 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
               },
               // If it's a string call reqStrPath, expecting a Result.Ok
               response => {
-                return R.chain(r => reqStrPath(stringPathOrResolver, r), response);
+                return R.chain(
+                  r => {
+                    return R.ifElse(
+                      v => typeof v === 'undefined',
+                      // If the result is undefined then this will return a Result.Error
+                      () => reqStrPath(stringPathOrResolver, r),
+                      v => Result.Ok(v)
+                    )(strPathOrNullOk(undefined, stringPathOrResolver, r));
+                  },
+                  response
+                );
               }
             )(reqStrPath('data', response)).map(
               v => {
@@ -244,6 +254,7 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
           )(response);
         }
       )(response);
+      return result;
     },
     queryTask
   );
