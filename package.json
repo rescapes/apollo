@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.0.130",
+  "version": "0.0.131",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "src/index.js",
@@ -22,7 +22,7 @@
     "test:watch": "yarn test -- --watch",
     "test:cov": "yarn test -- --coverage",
     "build": "rollup -c",
-    "prepare": "yarn run install-peers && cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
+    "prepare": "cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
     "docs:build": "yarn run docs:prepare && gitbook build -g reactjs/redux && cp logo/apple-touch-icon.png _book/gitbook/images/apple-touch-icon-precomposed-152.png && cp logo/favicon.ico _book/gitbook/images",
@@ -46,10 +46,10 @@
     "debug": "^4.1.1",
     "fetch": "^1.1.0",
     "folktale": "^2.3.2",
-    "graphql": ">=14.0.2",
     "graphql-tag": "^2.10.1",
     "graphql-tools": "^4.0.5",
     "http-https": "^1.0.0",
+    "inflected": "^2.0.4",
     "node-fetch": "^2.6.0",
     "path": "^0.12.7",
     "prop-types": "^15.7.2",
@@ -111,7 +111,7 @@
     "rollup-plugin-terser": "^5.1.1"
   },
   "peerDependencies": {
-    "graphql": ">=14.0.2",
+    "graphql": ">=14.6.0",
     "react": ">=16.10.1",
     "rescape-geospatial-sankey": ">=0.7.17",
     "rescape-helpers": ">=1.1.99",
