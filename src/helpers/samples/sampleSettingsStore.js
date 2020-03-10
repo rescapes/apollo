@@ -10,11 +10,6 @@
  */
 
 import * as R from 'ramda';
-import {
-  makeMutationRequestContainer,
-  makeMutationWithClientDirectiveContainer,
-  makeQueryContainer
-} from 'rescape-apollo';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import settings from '../../helpers/privateTestSettings';
@@ -23,9 +18,13 @@ import {
   mapToNamedResponseAndInputs,
   mergeDeep,
   omitDeepPaths,
-  pickDeepPaths
+  pickDeepPaths, reqPathThrowing
 } from 'rescape-ramda';
 import moment from 'moment';
+import {makeMutationRequestContainer} from '../mutationHelpers';
+import {makeMutationWithClientDirective, makeMutationWithClientDirectiveContainer} from '../mutationCacheHelpers';
+import {makeQueryContainer} from '../queryHelpers';
+import {makeQueryFromCacheContainer} from '../queryCacheHelpers';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -47,22 +46,28 @@ import moment from 'moment';
  */
 export const createSampleSettingsTask = ({apolloClient}) => {
   return R.composeK(
-    mapToNamedResponseAndInputs('cacheOnlySettings',
-      ({props, settings, apolloClient}) => makeSettingsClientMutationContainer(
-        {apolloClient},
-        // These outputParams are used as output to the query of the cache before we update the cache with the cache only props
-        {outputParams: settingsOutputParams(true)},
-        // Combine props with the results of the mutation so we have the id and Apollo __typename properties
-        // We need these to write to the correct place in the cache
-        mergeDeep(props, settings)
-      )
+    // Now query for the server and cache-only props. This should match data in the cache and not need the server
+    // So let's force it go to the server so we are sure that the server and cache-only values work
+    mapToNamedPathAndInputs('settings', 'data.settings',
+      ({settingsWithoutCacheValues, apolloClient}) => {
+        return makeSettingsQueryContainer(
+          {apolloClient},
+          {outputParams: settingsOutputParams(false)},
+          R.pick(['id'], settingsWithoutCacheValues)
+        );
+      }
     ),
-    mapToNamedPathAndInputs('settings', 'data.createSettings.settings',
-      ({props, apolloClient}) => makeSettingsMutationContainer(
-        {apolloClient},
-        {outputParams: settingsOutputParams()},
-        props
-      )
+    // Mutate the settings to the database
+    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.createSettings.settings',
+      ({props, apolloClient}) => {
+        return makeSettingsMutationContainer(
+          {
+            apolloClient
+          },
+          {outputParams: settingsOutputParams(true)},
+          props
+        );
+      }
     )
   )(
     // Settings is merged into the overall application state
@@ -111,7 +116,7 @@ export const settingsOutputParams = (omitCacheOnlyFields = false) => [
         overpass: [
           'cellSize',
           'sleepBetweenCalls'
-        ],
+        ]
       }
     ]
   }
@@ -129,7 +134,7 @@ const cacheIdProps = ['id', '__typename', 'data.__typename'];
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Object} outputParams OutputParams for the query such as settingsOutputParams
  * @params {Object} props Arguments for the Settingss query. This can be {} or null to not filter.
- * @returns {Task} A Task containing the Settingss in an object with obj.data.settingss or errors in obj.errors
+ * @returns {Task} A Task containing the Settingss in an object with obj.data.settings or errors in obj.errors
  */
 export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, props) => {
     return makeQueryContainer(
@@ -141,7 +146,7 @@ export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams
   [
     ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['queryStructure', PropTypes.shape({
-      outputParams: PropTypes.array.isRequired,
+      outputParams: PropTypes.array.isRequired
     })
     ],
     ['props', PropTypes.shape().isRequired]
@@ -171,7 +176,24 @@ export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams
  */
 export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputParams}, props) => {
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          update: (store, {data: {createSettings: {settings}}}) => {
+            // Mutate the cache to save settings to the database that are not stored on the server
+            return makeSettingsClientMutation(
+              apolloConfig,
+              // These outputParams are used as output to the query of the cache before we update the cache with the cache only props
+              {outputParams: settingsOutputParams(true)},
+              // Combine props with the results of the mutation so we have the id and Apollo __typename properties
+              // We need these to write to the correct place in the cache
+              mergeDeep(props, R.pick(['id', '__typename'], settings))
+            );
+          }
+        }
+      }
+    ),
     {
       name: 'settings',
       outputParams
@@ -188,6 +210,32 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsMutationContainer');
 
+/**
+ * Updates the cached settings query with values that are never stored in the database as indicated above in cacheOnlyProps
+ */
+export const makeSettingsClientMutation = v(R.curry(
+  (apolloConfig, {outputParams}, props) => {
+    return makeMutationWithClientDirective(
+      apolloConfig,
+      {
+        name: 'settings',
+        outputParams
+      },
+      // These our the paths that we only want in the cache, not sent to the server
+      pickDeepPaths(
+        R.concat(cacheOnlyProps, cacheIdProps),
+        props
+      )
+    );
+  }
+), [
+  ['apolloConfig', PropTypes.shape().isRequired],
+  ['mutationStructure', PropTypes.shape({
+    outputParams: PropTypes.array.isRequired
+  })
+  ],
+  ['props', PropTypes.shape().isRequired]
+], 'makeSettingsClientMutationContainer');
 
 /**
  * Updates the cached settings query with values that are never stored in the database as indicated above in cacheOnlyProps

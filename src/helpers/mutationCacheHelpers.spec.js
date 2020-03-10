@@ -16,7 +16,8 @@ import * as R from 'ramda';
 import {makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
 import {createSampleSettingsTask} from './samples/sampleSettingsStore';
 
-const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass'];
+// A blend of values from the server and the cache-only values
+const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username'];
 
 describe('mutationCacheHelpers', () => {
     test('makeMutationWithClientDirectiveContainer', done => {
@@ -35,6 +36,6 @@ describe('mutationCacheHelpers', () => {
             expectKeys(someSettingsKeys, settings);
           }
       }, errors, done));
-    });
+    }, 100000);
   }
 );

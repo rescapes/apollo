@@ -11,8 +11,12 @@
 
 import {graphql} from 'react-apollo';
 import * as R from 'ramda';
-import {task, of} from 'folktale/concurrency/task';
+import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
+import {print} from 'graphql';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Only for testing. Reads values loaded from the server that we know are now in the cache
@@ -33,6 +37,7 @@ import {Just} from 'folktale/maybe';
  */
 export const authApolloClientQueryCacheContainer = R.curry((apolloClient, options, props) => {
   // readQuery isn't a promise, just a direct call I guess
+  log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(props)}`);
   return of({data: apolloClient.readQuery({variables: props, ...options})});
 });
 

@@ -9,20 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, compact, omitDeep} from 'rescape-ramda';
+import {capitalize, compact, mapObjToValues, omitDeep, replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import * as R from 'ramda';
-import {resolveGraphQLType, formatOutputParams, _winnowRequestProps} from './requestHelpers';
-import {
-  authApolloQueryContainer
-} from '../client/apolloClient';
-import {replaceValuesWithCountAtDepthAndStringify, strPathOr} from 'rescape-ramda';
+import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
+import {v} from 'rescape-validate';
+import {loggers} from 'rescape-log';
+import {singularize} from 'inflected';
+import PropTypes from 'prop-types';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
-import {v} from 'rescape-validate';
-import PropTypes from 'prop-types';
-import {loggers} from 'rescape-log';
-import {Just} from 'folktale/maybe';
-
+import {authApolloQueryContainer} from '../client/apolloClient';
 const log = loggers.get('rescapeDefault');
 
 /**
@@ -38,8 +34,12 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
   return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 });
 
-export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
-  return _makeQuery({isFragment: true}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+/**
+ * Creates a fragment query for fetching values from the cache
+ * @type {any}
+ */
+export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outputParams, props) => {
+  return _makeQuery({isFragment: true}, queryName, inputParamTypeMapper, outputParams, props);
 });
 
 /***
@@ -50,17 +50,17 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @param queryName
  * @param inputParamTypeMapper
  * @param outputParams
- * @param queryArguments
- * @param {String} [queryArguments.__typename] Only required for fragment queries
+ * @param props
+ * @param {String} [props.__typename] Only required for fragment queries
  * I think fragments never need args so only queryArguments.__typename should be specified for fragment queries
  * @return {string} The query string, not gql
  * @private
  */
-export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, queryArguments) => {
+export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
   // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
-  const cleanedQueryArguments = omitDeep(['__typename'], queryArguments);
+  const cleanedQueryArguments = omitDeep(['__typename'], props);
 
   // These are the first line parameter definitions of the query, which list the name and type
   const params = R.join(
@@ -94,7 +94,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
   // I think fragments never need args so only queryArguments.__typename should be specified for fragment queryies
   const queryOrFragment = R.ifElse(
     R.prop('isFragment'),
-    R.always(`fragment ${queryName} on ${R.prop('__typename', queryArguments)}`),
+    R.always(`fragment ${queryName} on ${R.prop('__typename', props)}`),
     R.always(`query ${queryName}`)
   )(queryConfig);
 
@@ -163,10 +163,17 @@ export const makeQueryContainer = v(R.curry(
    props
   ) => {
     // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
+    const nameTitle = R.compose(capitalize, singularize)(name);
+    const readInputTypeMapperOrDefault = R.defaultTo(
+      {
+        'data': `${nameTitle}DataTypeof${nameTitle}TypeRelatedReadInputType`
+      },
+      readInputTypeMapper
+    );
     const winnowedProps = _winnowRequestProps(apolloConfig, props);
     const query = gql`${makeQuery(
       name, 
-      readInputTypeMapper, 
+      readInputTypeMapperOrDefault, 
       outputParams, 
       winnowedProps
     )}`;
@@ -194,7 +201,7 @@ export const makeQueryContainer = v(R.curry(
     ['apolloConfig', PropTypes.shape().isRequired],
     ['queryOptions', PropTypes.shape({
       name: PropTypes.string.isRequired,
-      readInputTypeMapper: PropTypes.shape().isRequired,
+      readInputTypeMapper: PropTypes.shape(),
       outputParams: PropTypes.arrayOf(
         PropTypes.oneOfType([
           PropTypes.string,

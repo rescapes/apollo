@@ -140,7 +140,7 @@ const createApolloClient = (uri, stateLinkResolversAndDefaults, fixedHeaders = {
   });
   cache.writeData({data: defaults});
 
-  // Resetst the store to the defaults
+  // Resets the store to the defaults
   const restoreStoreToDefaults = () => {
     // doesn't actually reset the store. It refetches all active queries
     //apolloClient.resetStore();
@@ -200,22 +200,8 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  */
 export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, options, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-  const mutationOptions = R.omit(['apolloClient'], apolloConfig);
-  /*
-  TODO map result to match a component result
-  mutationResponse => {
-    const variableName = options.variableName;
-    const name = options.name;
-    log.debug(`makeMutationTask for ${variableName} responded: ${replaceValuesWithCountAtDepthAndStringify(2, mutationResponse)}`);
-    // Put the result in data[name] to match the style of queries
-    return of({
-      data: {
-        [name]: reqPathThrowing(['data', variableName, name], mutationResponse)
-      }
-    });
-  },
-  */
-  return promiseToTask(
+  const mutationOptions = R.propOr({}, ['options'], apolloConfig);
+  return fromPromised(() => (
     apolloClient.mutate(
       R.merge(
         mutationOptions, {
@@ -224,7 +210,7 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
         }
       )
     )
-  );
+  ))();
 });
 
 /***
@@ -248,15 +234,16 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
 export const authApolloClientQueryContainer = R.curry((apolloConfig, query, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
 
-  return fromPromised(() =>
-    apolloClient.query(
+  const task = fromPromised(() => {
+    return apolloClient.query(
       R.merge(
         {query},
         // Winnows the props to the apolloConfig.options.variables function
         optionsWithWinnowedProps(apolloConfig, props)
       )
     )
-  )();
+  })();
+  return task.map(x => x);
 });
 
 /**
@@ -360,10 +347,10 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
     [R.has('apolloClient'),
       apolloConfig => retryTask(
         authApolloClientQueryContainer(
-        apolloConfig,
-        query,
-        props
-      ), 3)
+          apolloConfig,
+          query,
+          props
+        ), 3)
     ],
     // Apollo Component
     [R.T,

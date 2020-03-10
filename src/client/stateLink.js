@@ -1,5 +1,5 @@
 import * as R from 'ramda';
-import {overDeep}  from 'rescape-ramda';
+import {overDeep} from 'rescape-ramda';
 import {v} from 'rescape-validate';
 import gql from 'graphql-tag';
 
@@ -18,6 +18,14 @@ import gql from 'graphql-tag';
 let nextTodoId = 1;
 /**
  * StateLink resolvers for testing.
+ * When we write values explicitly to the cache we need to use resolves to respond to the request and perform the write,
+ * just as we would on the server.
+ *
+ * To create your on stateLinkResolvers copy the examples provided here. Remember that explicit writes to the
+ * cache are only needed when the data is not from the server. Requests to the server are implicitly cached and sought
+ * on subsequent requests depending on the specified cache strategy.
+ *
+ * Note also that cache queries don't usually need resolvers.
  */
 export const defaultStateLinkResolvers = {
   Mutation: {
@@ -33,7 +41,7 @@ export const defaultStateLinkResolvers = {
       return null;
     },
 
-    // Example of adding a TODO
+    // Example of adding a TODO. We query the cache for the existing todos then append a new one to them and write
     addTodo: (_, {text}, {cache}) => {
       const query = gql`
           query GetTodos {
@@ -72,9 +80,11 @@ export const defaultStateLinkResolvers = {
       return null;
     }
   },
-  Query: {
-    // State Link resolvers. Only needed to do fancy stuff
-    //networkStatus: (obj, args, context, info) =>
+  // Example of matching a client directive deeply
+  ViewportDataType: {
+    special: (settings, _args, {cache}) => {
+      return 'special'
+    }
   }
 };
 
@@ -84,29 +94,33 @@ export const defaultStateLinkResolvers = {
  * @param {Object} config The application config. This matches our API settings object
  * and is used to form the shape of the cache to match the settings.
  */
-export const createStateLinkDefaults = config => overDeep(
-  (key, obj) => R.merge(obj, {__typename: key}),
-  R.merge(
-    config,
-    {
-      networkStatus: {
-        __typename: 'NetworkStatus',
-        isConnected: false
-      },
-      todos: []
-    }
-    /*
-    // Same as passing defaults above
-  cache.writeData({
-    data: {
-      networkStatus: {
-        __typename: 'NetworkStatus',
-       isConnected: true,
-      },
+export const createStateLinkDefaults = config => {
+  return overDeep(
+    (key, obj) => {
+      return R.merge(obj, {__typename: key});
     },
-  });
-     */
-  )
-);
+    R.merge(
+      config,
+      {
+        networkStatus: {
+          __typename: 'NetworkStatus',
+          isConnected: false
+        },
+        todos: []
+      }
+      /*
+      // Same as passing defaults above
+    cache.writeData({
+      data: {
+        networkStatus: {
+          __typename: 'NetworkStatus',
+         isConnected: true,
+        },
+      },
+    });
+       */
+    )
+  );
+};
 
 

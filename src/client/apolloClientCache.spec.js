@@ -14,7 +14,7 @@ import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 import * as R from 'ramda';
-import {regionOutputParams} from '../helpers/samples/sampleRegionStore'
+import {regionOutputParams} from '../helpers/samples/sampleRegionStore';
 
 
 /**
@@ -177,7 +177,14 @@ const cycleRegion = async apolloClient => {
     },
     {
       key: 'earth',
-      name: 'Earth'
+      name: 'Earth',
+      data: {
+        mapbox: {
+          viewport: {
+            zoom: 5
+          }
+        }
+      }
     }
   ));
 
@@ -196,6 +203,14 @@ const cycleRegion = async apolloClient => {
               id
               key
               name
+              data {
+                  mapbox {
+                      viewport {
+                          zoom
+                          special @client
+                      }
+                  }
+              }
           }
       }
   `;

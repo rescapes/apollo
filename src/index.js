@@ -50,3 +50,4 @@ export {
   testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask
 } from './helpers/testHelpers';
 export {createStateLinkDefaults, defaultStateLinkResolvers} from './client/stateLink';
+export {containerForApolloType} from './helpers/containerHelpers'
