@@ -11,8 +11,8 @@
 
 import * as R from 'ramda';
 import {
-  noAuthApolloClient,
-  authApolloClientTask,
+  noAuthApolloClientTask,
+  authApolloClientWithTokenTask,
   noAuthApolloClientMutationRequestTask
 } from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
@@ -21,6 +21,13 @@ import {ApolloClient} from 'apollo-client';
 import {PropTypes} from 'prop-types';
 import {v} from 'rescape-validate';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {
+  composeWithChain,
+  composeWithChainMDeep,
+  composeWithMapMDeep,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs
+} from 'rescape-ramda';
 
 const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
     tokenAuth(username: $username, password: $password) {
@@ -29,7 +36,7 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
 }`;
 
 /**
- * loginTask returning a User and token
+ * loginMutationTask returning a User and token
  * @param {Object} noAuthClient, Client an Apollo Client that doesn't need authentication
  * @param {Object} values
  * @param {String} values.username The username
@@ -37,7 +44,7 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginTask = v(R.curry((apolloConfig, variables) => {
+export const loginMutationTask = v(R.curry((apolloConfig, variables) => {
   return noAuthApolloClientMutationRequestTask(
     apolloConfig,
     {mutation: loginMutation, variables}
@@ -60,15 +67,24 @@ export const loginTask = v(R.curry((apolloConfig, variables) => {
  * @return {{apolloClient: ApolloClient, token}}
  */
 export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables) => {
-  // Use unauthenticated ApolloClient for login
-  const {apolloClient} = noAuthApolloClient(uri, stateLinkResolvers);
-  const login = loginTask({apolloClient});
-  return R.composeK(
+  return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
-    // TODO can we modify noAuthApolloClient by writing the auth data to the cache instead??
-    loginResult => authApolloClientTask(uri, stateLinkResolvers, R.prop('data', loginResult)),
-    args => login(args)
-  )(variables);
+    // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
+    ({uri, stateLinkResolvers, loginData}) => {
+      return authApolloClientWithTokenTask(uri, stateLinkResolvers, loginData);
+    },
+    mapToNamedPathAndInputs('loginData', 'data',
+      ({apolloConfig, variables}) => {
+        return loginMutationTask(apolloConfig, variables);
+      }
+    ),
+    mapToNamedResponseAndInputs('apolloConfig',
+      ({uri, stateLinkResolvers}) => {
+        // Use unauthenticated ApolloClient for login
+        return noAuthApolloClientTask(uri, stateLinkResolvers);
+      }
+    )
+  ])({uri, stateLinkResolvers, variables});
 });
 
 /**
@@ -122,13 +138,21 @@ export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentic
   auth => R.is(ApolloClient, auth),
   // Just wrap it in a task to match the other option
   apolloClient => of({apolloClient}),
-  R.composeK(
-    // map userLogin to authApolloClient and token
-    auth => authApolloClientTask(url, stateLinkResolvers, R.prop('data', auth)),
+  composeWithChain([
+    // map userLogin to authApolloClientTask and token
+    ({url, stateLinkResolvers, loginAuthentication}) => {
+      return authApolloClientWithTokenTask(url, stateLinkResolvers, R.prop('data', loginAuthentication));
+    },
+    mapToNamedResponseAndInputs('loginAuthentication',
+      ({apolloConfig, authentication}) => {
+        return loginMutationTask(apolloConfig, authentication);
+      }
+    ),
     // map login values to token
-    auth => {
-      const {apolloClient} = noAuthApolloClient(url, stateLinkResolvers);
-      return loginTask({apolloClient}, auth);
-    }
-  )
-)(authentication));
+    mapToNamedResponseAndInputs('apolloConfig',
+      ({url, stateLinkResolvers}) => {
+        return noAuthApolloClientTask(url, stateLinkResolvers);
+      }
+    )
+  ])
+)({url, stateLinkResolvers, authentication}));

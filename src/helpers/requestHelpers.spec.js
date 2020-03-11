@@ -17,12 +17,13 @@ import {
   convertFromGraphqlStructure,
   convertToGraphqlStructure,
   pickGraphqlPaths,
-  pickGraphqlPathsOver
+  pickGraphqlPathsOver, omitClientFields
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
+import {settingsOutputParams} from './samples/sampleSettingsStore';
 
 describe('requestHelpers', () => {
 
@@ -118,4 +119,43 @@ describe('requestHelpers', () => {
     ));
     expect(customResult).toEqual(Result.Ok({data: {noses: [{wipe: 'superduper'}, {wipe: 'cavity'}]}}));
   });
+
+  test('omitClientFields', () => {
+    expect(omitClientFields(settingsOutputParams)).toEqual(
+      [
+        'id',
+        'key',
+        {
+          'data': [
+            'domain',
+            {
+              api: [
+                'protocol',
+                'host',
+                'port',
+                'path'
+              ]
+            },
+            {
+              overpass: [
+                'cellSize',
+                'sleepBetweenCalls'
+              ]
+            },
+            {
+              mapbox: [
+                {
+                  'viewport': [
+                    'zoom',
+                    'latitude',
+                    'longitude'
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    )
+  })
 });

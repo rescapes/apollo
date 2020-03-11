@@ -11,29 +11,105 @@
 
 import {formatOutputParams} from './queryHelpers';
 import {localTestAuthTask, expectKeys} from './testHelpers';
-import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {
+  composeWithChain,
+  defaultRunConfig,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
+  mergeDeep, strPathOr
+} from 'rescape-ramda';
 import * as R from 'ramda';
-import {makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
-import {createSampleSettingsTask} from './samples/sampleSettingsStore';
+import {makeMutationWithClientDirective, makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
+import {
+  createCacheOnlyPropsForSettings,
+  createSampleSettingsTask,
+  makeSettingsQueryContainer,
+  settingsOutputParams
+} from './samples/sampleSettingsStore';
+import {of} from 'folktale/concurrency/task';
 
 // A blend of values from the server and the cache-only values
-const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username'];
+const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username', 'data.mapbox.mapboxAuthentication'];
 
 describe('mutationCacheHelpers', () => {
-    test('makeMutationWithClientDirectiveContainer', done => {
-      expect.assertions(1);
+    test('makeMutationWithClientDirectiveContainerCheckCaching', done => {
+      expect.assertions(2);
       const errors = [];
-      R.composeK(
-        mapToNamedPathAndInputs(
-          'settings',
-          'cacheOnlySettings',
-          ({apolloClient}) => createSampleSettingsTask({apolloClient})
+      composeWithChain([
+        // See if the all the settings are still in the cache
+        mapToNamedPathAndInputs('settings', 'data.settings',
+          ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+            return makeSettingsQueryContainer(
+              {
+                apolloClient,
+                options: {
+                  fetchPolicy: 'cache-only'
+                }
+              },
+              {outputParams: settingsOutputParams},
+              R.pick(['id'], settingsWithoutCacheValues)
+            );
+          }
         ),
+        (apolloConfig) => createSampleSettingsTask(apolloConfig),
         () => localTestAuthTask
-      )().run().listen(defaultRunConfig({
+      ])().run().listen(defaultRunConfig({
+        onResolved:
+          ({settings, settingsFromServer}) => {
+            expectKeys(someSettingsKeys, R.head(settings));
+            expectKeys(someSettingsKeys, R.head(settingsFromServer));
+          }
+      }, errors, done));
+    }, 100000);
+
+    test('makeMutationWithClientDirectiveContainerModifyCacheOnlyValues', done => {
+      const errors = [];
+      composeWithChain([
+        // See if the all correct settings in the cache
+        mapToNamedPathAndInputs('settings', 'data.settings',
+          ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+            return makeSettingsQueryContainer(
+              {
+                apolloClient,
+                options: {
+                  fetchPolicy: 'cache-only'
+                }
+              },
+              {outputParams: settingsOutputParams},
+              R.pick(['id'], settingsWithoutCacheValues)
+            );
+          }
+        ),
+        // Just update cache-only values like we would on the browser
+        mapToNamedResponseAndInputs('void',
+          ({settingsFromCache, apolloConfig}) => {
+            makeMutationWithClientDirective(
+              apolloConfig,
+              {
+                name: 'settings',
+                // output for the read fragment
+                outputParams: settingsOutputParams
+              },
+              // Make a nonsense change to cache only data
+              createCacheOnlyPropsForSettings(
+                R.compose(
+                  R.over(
+                    R.lensPath(['data', 'mapbox', 'mapboxAuthentication', 'mapboxApiAccessToken']),
+                    token => R.concat('happy', token)
+                  ),
+                  R.head
+                )(settingsFromCache)
+              )
+            );
+            return of(null);
+          }
+        ),
+        (apolloConfig) => createSampleSettingsTask(apolloConfig),
+        () => localTestAuthTask
+      ])().run().listen(defaultRunConfig({
         onResolved:
           ({settings}) => {
-            expectKeys(someSettingsKeys, settings);
+            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settings)).toContain('happy')
           }
       }, errors, done));
     }, 100000);

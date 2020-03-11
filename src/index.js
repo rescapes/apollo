@@ -10,17 +10,17 @@
  */
 
 export {
-  loginTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
+  loginMutationTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
 } from './auth/login';
 export {
   default as createApolloClient,
   authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
-  authApolloClient,
-  authApolloClientRequestTask,
   authApolloClientTask,
-  getApolloAuthClient,
-  noAuthApolloClient,
+  authApolloClientRequestTask,
+  authApolloClientWithTokenTask,
+  getApolloAuthClientTask,
+  noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
   noAuthApolloClientRequestTask

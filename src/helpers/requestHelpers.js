@@ -351,3 +351,23 @@ export const _winnowRequestProps = (apolloConfig, props) => {
   // Remove _typename props that might be left from the result of previous Apollo requests
   return omitDeepBy(R.startsWith('_'), resolvedProps);
 };
+
+/**
+ * Removes @client fields from the outputParams
+ * @param outputParams
+ * @return {*}
+ */
+export const omitClientFields = outputParams => {
+  return R.compose(
+    convertToGraphqlStructure,
+    obj => {
+      return omitDeepBy(
+        value => {
+          return R.both(R.is(String), R.includes('@client'))(value);
+        },
+        obj
+      );
+    },
+    convertFromGraphqlStructure
+  )(outputParams);
+};

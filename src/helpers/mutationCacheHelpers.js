@@ -13,12 +13,13 @@ import * as R from 'ramda';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {mergeDeep, reqStrPathThrowing} from 'rescape-ramda';
+import {capitalize, mergeDeep, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {loggers} from 'rescape-log';
+import {omitClientFields} from './requestHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -47,22 +48,33 @@ export const makeMutationWithClientDirective = v(R.curry(
      outputParams
    },
    props) => {
+    const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
     // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
-    const fragment = gql`${makeFragmentQuery(name, {}, outputParams, R.pick(['__typename'], props))}`;
+    const fragment = gql`${makeFragmentQuery(
+      name, 
+      {}, 
+      omitClientFields(outputParams), 
+      R.pick(['__typename'], props)
+    )}`;
     // The id to get use to get the right fragment
     const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
-    log.debug(`Query Fragment for writeFragment: ${print(fragment)} id: ${id}`);
+    log.debug(`Query Fragment: ${print(fragment)} id: ${id}`);
 
-    // Get the cache
-    const cache = reqStrPathThrowing('apolloClient.cache', apolloConfig);
     // Get the fragment
-    const result = cache.readFragment({fragment, id});
+    const result = apolloClient.readFragment({fragment, id});
     // Merge the existing cache data with the full props, where the props are the cache-only data to write
     // Be careful because props will override anything it matches with deep in result
     const data = mergeDeep(result, R.omit(['id', '__typename'], props));
     // Write the fragment
-    cache.writeFragment({fragment, id, data});
-    const test = cache.readFragment({fragment, id});
+    const writeFragment = gql`${makeFragmentQuery(
+      name, 
+      {}, 
+      outputParams, 
+      R.pick(['__typename'], props))
+    }`;
+    log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id}`);
+    apolloClient.writeFragment({fragment: writeFragment, id, data});
+    //const test = apolloClient.readFragment({fragment: writeFragment, id});
     return data;
   }),
   [
@@ -153,3 +165,63 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
   ],
   'makeMutationWithClientDirectiveContainer'
 );
+
+/**
+ * For objects that only exist in the cache we need to assign them a type name
+ * @param {String} typeName The plain type name, such as 'settings'. Used to name generate a cache-only __typename
+ * @param {Object} cacheOnlyObjs Keyed by the path to the object, such as 'data.authorization' and valued
+ * by
+ * @return {any}
+ */
+const cacheOnlyObjectTypeNames = (typeName, cacheOnlyObjs) => {
+  return R.fromPairs(
+    R.map(
+      path => {
+        return [
+          path,
+          R.join('', [
+              'CacheOnlyType',
+              capitalize(typeName),
+              ...R.compose(
+                R.map(capitalize),
+                R.split('.')
+              )(path)
+            ]
+          )
+        ];
+      }, cacheOnlyObjs)
+  );
+};
+
+/**
+ * Creates props that only belong in the cache based on the configuration
+ * @param {String} name The name of the object, such as 'settings', used to create cache-only __typenames
+ * @param {[String]} cacheOnlyObjs Paths of objects that only go in the cache. These get assigned type names
+ * so that they cache correctly.
+ * @param {[String]} cacheIdProps Paths of props that need to be included because they are ids or __typenames.
+ * This can probably be automated with something like pickDeepWhenOtherPropsExists(['__typename', 'id'], props)
+ * @param props
+ * @return {Object} The limit props with __typenames added to objects that don't have them
+ */
+export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props) => {
+  // These our the paths that we only want in the cache, not sent to the server
+  const limitedProps = pickDeepPaths(R.concat(cacheOnlyObjs, cacheIdProps), props);
+  // Use cacheOnlyObjectTypeNames to add __typenames to cache only objects that need them
+  return R.reduce(
+    (prps, [path, value]) => {
+      return R.over(
+        R.lensPath(R.split('.', path)),
+        pathValue => {
+          return R.unless(
+            R.isNil,
+            pathValue => {
+              return R.merge(pathValue, {__typename: value});
+            }
+          )(pathValue);
+        }
+      )(prps);
+    },
+    limitedProps,
+    R.toPairs(cacheOnlyObjectTypeNames(name, cacheOnlyObjs))
+  );
+};

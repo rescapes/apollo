@@ -10,18 +10,16 @@
  */
 
 import * as R from 'ramda';
-import {localTestAuthTask, testConfig} from '../helpers/testHelpers';
-import {authApolloClientTask, noAuthApolloClient} from '../client/apolloClient';
-import {reqStrPathThrowing, mapToNamedResponseAndInputs} from 'rescape-ramda';
+import {localTestAuthTask, testConfig, testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
+import {authApolloClientWithTokenTask} from '../client/apolloClient';
+import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {
-  refreshTokenContainer,
-  verifyTokenRequestContainer,
   authClientOrLoginTask,
-  loginToAuthClientTask
+  loginToAuthClientTask,
+  refreshTokenContainer,
+  verifyTokenRequestContainer
 } from './login';
-import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
-import {testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -39,7 +37,7 @@ describe('login', () => {
         ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        ({token}) => authApolloClientTask(
+        ({token}) => authApolloClientWithTokenTask(
           uri,
           testStateLinkResolversAndDefaults,
           {tokenAuth: {token}}

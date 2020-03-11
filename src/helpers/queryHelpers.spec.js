@@ -13,7 +13,7 @@ import {makeQuery, makeQueryContainer} from './queryHelpers';
 import gql from 'graphql-tag';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
-import {defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {composeWithChain, defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {localTestAuthTask, testConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -31,8 +31,28 @@ describe('queryHelpers', () => {
 
   test('makeQueryContainer', done => {
     const {settings: {api}} = testConfig;
-    const task = R.composeK(
+    const task = composeWithChain([
+      // See if we can get the value from the cache
       mapToNamedPathAndInputs('region', 'data.regions.0',
+        ({apolloClient, createdRegion}) => makeQueryContainer(
+          {
+            apolloClient,
+            options: {
+              variables: props => {
+                return R.pick(['key'], props);
+              }
+            },
+            fetchPolicy: 'cache-only'
+          },
+          {
+            name: 'regions',
+            readInputTypeMapper: {},
+            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+          },
+          {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
+        )
+      ),
+      mapToNamedPathAndInputs('region1', 'data.regions.0',
         ({apolloClient, createdRegion}) => makeQueryContainer(
           {
             apolloClient,
@@ -66,7 +86,7 @@ describe('queryHelpers', () => {
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask
       )
-    )();
+    ])();
     const errors = [];
     task.run().listen(defaultRunConfig({
         onResolved:

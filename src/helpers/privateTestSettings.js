@@ -38,7 +38,9 @@ export default {
     sleepBetweenCalls: 1000
   },
   mapbox: {
-    mapboxApiAccessToken: 'pk.eyJ1IjoiY2Fsb2NhbiIsImEiOiJjaXl1aXkxZjkwMG15MndxbmkxMHczNG50In0.07Zu3XXYijL6GJMuxFtvQg',
+    mapboxAuthentication: {
+      mapboxApiAccessToken: 'pk.eyJ1IjoiY2Fsb2NhbiIsImEiOiJjaXl1aXkxZjkwMG15MndxbmkxMHczNG50In0.07Zu3XXYijL6GJMuxFtvQg'
+    },
     // Initial viewport
     viewport: {
       zoom: 0,

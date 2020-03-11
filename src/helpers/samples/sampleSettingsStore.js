@@ -13,18 +13,16 @@ import * as R from 'ramda';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import settings from '../../helpers/privateTestSettings';
-import {
-  mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs,
-  mergeDeep,
-  omitDeepPaths,
-  pickDeepPaths, reqPathThrowing
-} from 'rescape-ramda';
+import {capitalize, mapToNamedPathAndInputs, mergeDeep, omitDeepBy, omitDeepPaths, pickDeepPaths} from 'rescape-ramda';
 import moment from 'moment';
 import {makeMutationRequestContainer} from '../mutationHelpers';
-import {makeMutationWithClientDirective, makeMutationWithClientDirectiveContainer} from '../mutationCacheHelpers';
+import {
+  createCacheOnlyProps,
+  makeMutationWithClientDirective,
+  makeMutationWithClientDirectiveContainer
+} from '../mutationCacheHelpers';
 import {makeQueryContainer} from '../queryHelpers';
-import {makeQueryFromCacheContainer} from '../queryCacheHelpers';
+import {omitClientFields} from '../requestHelpers';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -37,49 +35,6 @@ import {makeQueryFromCacheContainer} from '../queryCacheHelpers';
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * Creates a sample settings
- * @params apolloClient
- * @return {Object} Returns the cacheOnlySettings, which are the settings stored in the cache that combine
- * what was written to the server with what is only stored in the cache. settings contains what was only
- * stored on the server
- */
-export const createSampleSettingsTask = ({apolloClient}) => {
-  return R.composeK(
-    // Now query for the server and cache-only props. This should match data in the cache and not need the server
-    // So let's force it go to the server so we are sure that the server and cache-only values work
-    mapToNamedPathAndInputs('settings', 'data.settings',
-      ({settingsWithoutCacheValues, apolloClient}) => {
-        return makeSettingsQueryContainer(
-          {apolloClient},
-          {outputParams: settingsOutputParams(false)},
-          R.pick(['id'], settingsWithoutCacheValues)
-        );
-      }
-    ),
-    // Mutate the settings to the database
-    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.createSettings.settings',
-      ({props, apolloClient}) => {
-        return makeSettingsMutationContainer(
-          {
-            apolloClient
-          },
-          {outputParams: settingsOutputParams(true)},
-          props
-        );
-      }
-    )
-  )(
-    // Settings is merged into the overall application state
-    {
-      apolloClient,
-      props: {
-        key: `test${moment().format('HH-mm-SS')}`,
-        data: settings
-      }
-    }
-  );
-};
 
 
 // Every complex input type needs a type specified in graphql. Our type names are
@@ -90,7 +45,7 @@ export const readInputTypeMapper = {};
 
 // Global settings.
 // omitCacheOnlyFields to true to omit cache only fields from the query
-export const settingsOutputParams = (omitCacheOnlyFields = false) => [
+export const settingsOutputParams = [
   'id',
   'key',
   {
@@ -103,31 +58,125 @@ export const settingsOutputParams = (omitCacheOnlyFields = false) => [
           'port',
           'path'
         ],
-        // Used only in unit tests to authorize
-        // This will only come from the local cache using a @client directive
-        ...omitCacheOnlyFields ? {} :
-          {
-            'testAuthorization @client': [
-              'username',
-              'password'
-            ]
-          },
+        'testAuthorization @client': [
+          'username',
+          'password'
+        ],
         // Overpass API configuration to play nice with the server's strict throttling
         overpass: [
           'cellSize',
           'sleepBetweenCalls'
+        ],
+        mapbox: [
+          {
+            'mapboxAuthentication @client': [
+              'mapboxApiAccessToken'
+            ]
+          },
+          {
+            'viewport': [
+              'zoom',
+              'latitude',
+              'longitude'
+            ]
+          }
         ]
       }
     ]
   }
 ];
+
 // Paths to prop values that we don't store in the database, but only in the cache
 // The prop paths are marked with a client directive when querying (see settingsOutputParams)
 // so we never try to load them from the database.
-const cacheOnlyProps = ['data.testAuthorization', 'data.mapbox.mapboxApiAccessToken'];
-// These values come back from makeSettingsQueryContainer and makeSettingsMutationContainer.
-// Include these in makeSettingsClientMutationContainer so we know where to write to cache
-const cacheIdProps = ['id', '__typename', 'data.__typename'];
+const cacheOnlyObjs = ['data.testAuthorization', 'data.mapbox.mapboxAuthentication'];
+// These values come back from the server and get merged into cacheOnlyProps for identification
+const cacheIdProps = [
+  'id',
+  '__typename',
+  'data.__typename'
+];
+
+export const createCacheOnlyPropsForSettings = (props) => {
+  return createCacheOnlyProps({name: 'settings', cacheIdProps, cacheOnlyObjs}, props);
+};
+
+/**
+ * Creates a sample settings with a mutation and does various queries to show that values cached by the mutation.update
+ * remain in the cache as subsequent queries come in from the server
+ * @params apolloClient
+ * @return {Object} Returns the cacheOnlySettings, which are the settings stored in the cache that combine
+ * what was written to the server with what is only stored in the cache. settings contains what was only
+ * stored on the server
+ */
+export const createSampleSettingsTask = (apolloConfig) => {
+  return R.composeK(
+    // Now query and force it to got to the server.
+    // This risks wiping out our cash only values, but it seems InMemoryCache correctly merges the query results
+    mapToNamedPathAndInputs('settingsFromServer', 'data.settings',
+      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+        return makeSettingsQueryContainer(
+          {
+            apolloClient,
+            options: {
+              fetchPolicy: 'network-only'
+            }
+          },
+          {outputParams: settingsOutputParams},
+          R.pick(['id'], settingsWithoutCacheValues)
+        );
+      }
+    ),
+    // Now query for the server and cache-only props. This should match data in the cache and not need the server
+    // So let's force it go to the server so we are sure that the server and cache-only values work
+    mapToNamedPathAndInputs('settingsFromCache', 'data.settings',
+      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+        return makeSettingsQueryContainer(
+          {
+            apolloClient,
+            options: {
+              fetchPolicy: 'cache-only'
+            }
+          },
+          {outputParams: settingsOutputParams},
+          R.pick(['id'], settingsWithoutCacheValues)
+        );
+      }
+    ),
+    // Query to get the value in the cache.
+    // Note that the data that mutation puts in the cache is not matched here.
+    // It seems like the query itself must run once before the same data can be found in the cache
+    mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
+      ({settingsWithoutCacheValues, apolloConfig}) => {
+        return makeSettingsQueryContainer(
+          apolloConfig,
+          {outputParams: omitClientFields(settingsOutputParams)},
+          R.pick(['id'], settingsWithoutCacheValues)
+        );
+      }
+    ),
+    // Mutate the settings to the database
+    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.createSettings.settings',
+      ({props, apolloConfig}) => {
+        return makeSettingsMutationContainer(
+          apolloConfig,
+          {outputParams: omitClientFields(settingsOutputParams)},
+          props
+        );
+      }
+    )
+  )(
+    // Settings is merged into the overall application state
+    {
+      apolloConfig,
+      props: {
+        key: `test${moment().format('HH-mm-SS')}`,
+        data: settings
+      }
+    }
+  );
+};
+
 
 /**
  * Queries settingss
@@ -182,13 +231,14 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
         options: {
           update: (store, {data: {createSettings: {settings}}}) => {
             // Mutate the cache to save settings to the database that are not stored on the server
-            return makeSettingsClientMutation(
+            makeMutationWithClientDirective(
               apolloConfig,
-              // These outputParams are used as output to the query of the cache before we update the cache with the cache only props
-              {outputParams: settingsOutputParams(true)},
-              // Combine props with the results of the mutation so we have the id and Apollo __typename properties
-              // We need these to write to the correct place in the cache
-              mergeDeep(props, R.pick(['id', '__typename'], settings))
+              {
+                name: 'settings',
+                // output for the read fragment
+                outputParams: settingsOutputParams,
+              },
+              createCacheOnlyPropsForSettings(mergeDeep(settings, props))
             );
           }
         }
@@ -199,7 +249,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
       outputParams
     },
     // Remove client-side only values
-    omitDeepPaths(cacheOnlyProps, props)
+    omitDeepPaths(cacheOnlyObjs, props)
   );
 }), [
   ['apolloConfig', PropTypes.shape().isRequired],
@@ -209,33 +259,6 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
   ],
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsMutationContainer');
-
-/**
- * Updates the cached settings query with values that are never stored in the database as indicated above in cacheOnlyProps
- */
-export const makeSettingsClientMutation = v(R.curry(
-  (apolloConfig, {outputParams}, props) => {
-    return makeMutationWithClientDirective(
-      apolloConfig,
-      {
-        name: 'settings',
-        outputParams
-      },
-      // These our the paths that we only want in the cache, not sent to the server
-      pickDeepPaths(
-        R.concat(cacheOnlyProps, cacheIdProps),
-        props
-      )
-    );
-  }
-), [
-  ['apolloConfig', PropTypes.shape().isRequired],
-  ['mutationStructure', PropTypes.shape({
-    outputParams: PropTypes.array.isRequired
-  })
-  ],
-  ['props', PropTypes.shape().isRequired]
-], 'makeSettingsClientMutationContainer');
 
 /**
  * Updates the cached settings query with values that are never stored in the database as indicated above in cacheOnlyProps
@@ -250,7 +273,7 @@ export const makeSettingsClientMutationContainer = v(R.curry(
       },
       // These our the paths that we only want in the cache, not sent to the server
       pickDeepPaths(
-        R.concat(cacheOnlyProps, cacheIdProps),
+        R.concat(cacheOnlyObjs, cacheIdProps),
         props
       )
     );
