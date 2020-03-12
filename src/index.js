@@ -27,7 +27,7 @@ export {
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
-export {makeMutationWithClientDirectiveContainer} from './helpers/mutationCacheHelpers'
+export {makeMutationWithClientDirectiveContainer, makeMutationWithClientDirective} from './helpers/mutationCacheHelpers'
 export {
   formatOutputParams,
   resolveGraphQLType,
