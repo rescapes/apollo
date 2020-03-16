@@ -12,17 +12,17 @@
 import * as R from 'ramda';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
-import settings from '../../helpers/privateTestSettings';
-import {capitalize, mapToNamedPathAndInputs, mergeDeep, omitDeepBy, omitDeepPaths, pickDeepPaths} from 'rescape-ramda';
+import settings from '../helpers/privateTestSettings';
+import {mapToNamedPathAndInputs, mergeDeep, omitDeepPaths, pickDeepPaths} from 'rescape-ramda';
 import moment from 'moment';
-import {makeMutationRequestContainer} from '../mutationHelpers';
+import {makeMutationRequestContainer} from './mutationHelpers';
 import {
   createCacheOnlyProps,
-  makeMutationWithClientDirective,
+  makeCacheMutation,
   makeMutationWithClientDirectiveContainer
-} from '../mutationCacheHelpers';
-import {makeQueryContainer} from '../queryHelpers';
-import {omitClientFields} from '../requestHelpers';
+} from './mutationCacheHelpers';
+import {makeQueryContainer} from './queryHelpers';
+import {omitClientFields} from './requestHelpers';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -231,12 +231,12 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
         options: {
           update: (store, {data: {createSettings: {settings}}}) => {
             // Mutate the cache to save settings to the database that are not stored on the server
-            makeMutationWithClientDirective(
+            makeCacheMutation(
               apolloConfig,
               {
                 name: 'settings',
                 // output for the read fragment
-                outputParams: settingsOutputParams,
+                outputParams: settingsOutputParams
               },
               createCacheOnlyPropsForSettings(mergeDeep(settings, props))
             );
@@ -286,3 +286,20 @@ export const makeSettingsClientMutationContainer = v(R.curry(
   ],
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsClientMutationContainer');
+
+/**
+ * Writes the default settings to the cache
+ * @param apolloClient
+ * @return {*}
+ */
+export const writeSettingsToCache = apolloClient => {
+  return makeCacheMutation(
+    {apolloClient},
+    {
+      name: 'settings',
+      // output for the read fragment
+      outputParams: settingsOutputParams
+    },
+    settings
+  );
+};

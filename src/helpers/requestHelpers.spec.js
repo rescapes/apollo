@@ -23,7 +23,7 @@ import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
-import {settingsOutputParams} from './samples/sampleSettingsStore';
+import {settingsOutputParams} from './defaultSettingsStore';
 
 describe('requestHelpers', () => {
 

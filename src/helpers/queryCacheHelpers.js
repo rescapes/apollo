@@ -14,7 +14,7 @@ import {
   authApolloQueryContainer
 } from '../client/apolloClient';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 import {_makeQuery, makeQuery} from './queryHelpers';

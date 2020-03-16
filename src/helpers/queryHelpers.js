@@ -16,7 +16,7 @@ import {v} from 'rescape-validate';
 import {loggers} from 'rescape-log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
 const log = loggers.get('rescapeDefault');

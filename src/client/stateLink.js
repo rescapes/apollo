@@ -1,7 +1,7 @@
 import * as R from 'ramda';
 import {overDeep} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 
 /**
  * Created by Andy Likuski on 2019.04.16
@@ -31,13 +31,23 @@ export const defaultStateLinkResolvers = {
   Mutation: {
     // Example of a simple cache property networkStatus
     updateNetworkStatus: (_, {isConnected}, {cache}) => {
+      const query = gql`
+          query MyUpdateNetworkStatusQuery {
+              networkStatus {
+                  isConnected
+              }
+          }
+      `;
       const data = {
         networkStatus: {
           __typename: 'NetworkStatus',
           isConnected
         }
       };
-      cache.writeData({data});
+      cache.writeQuery({
+        query,
+        data
+      });
       return null;
     },
 
@@ -108,17 +118,6 @@ export const createStateLinkDefaults = config => {
         },
         todos: []
       }
-      /*
-      // Same as passing defaults above
-    cache.writeData({
-      data: {
-        networkStatus: {
-          __typename: 'NetworkStatus',
-         isConnected: true,
-        },
-      },
-    });
-       */
     )
   );
 };

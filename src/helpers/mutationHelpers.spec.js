@@ -17,7 +17,7 @@ import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowin
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 
 describe('mutationHelpers', () => {
   test('makeMutation', () => {

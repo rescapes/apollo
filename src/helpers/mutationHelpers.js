@@ -28,7 +28,7 @@ import {
   omitDeepBy,
   retryTask
 } from 'rescape-ramda';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';

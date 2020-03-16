@@ -20,6 +20,7 @@ import {
   verifyTokenRequestContainer
 } from './login';
 import {parseApiUrl} from 'rescape-helpers';
+import {writeSettingsToCache} from '../helpers/defaultSettingsStore';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -40,7 +41,8 @@ describe('login', () => {
         ({token}) => authApolloClientWithTokenTask(
           uri,
           testStateLinkResolversAndDefaults,
-          {tokenAuth: {token}}
+          {tokenAuth: {token}},
+          writeSettingsToCache
         )
       ),
       mapToNamedPathAndInputs('token', 'token',
@@ -61,12 +63,22 @@ describe('login', () => {
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
-    const task = authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig));
+    const task = authClientOrLoginTask(
+      uri,
+      testStateLinkResolversAndDefaults,
+      reqStrPathThrowing('settings.testAuthorization', testConfig),
+      writeSettingsToCache
+    );
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, apolloClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(uri, testStateLinkResolversAndDefaults, apolloClient).run().listen(defaultRunConfig(
+          authClientOrLoginTask(
+            uri,
+            testStateLinkResolversAndDefaults,
+            apolloClient,
+            writeSettingsToCache
+          ).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
                 expect(apolloClient).toEqual(apolloClient2);
@@ -81,7 +93,13 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
 
-    loginToAuthClientTask(uri, testStateLinkResolversAndDefaults, reqStrPathThrowing('settings.testAuthorization', testConfig)).run().listen(defaultRunConfig(
+    const errors = []
+    loginToAuthClientTask(
+      uri,
+      testStateLinkResolversAndDefaults,
+      reqStrPathThrowing('settings.testAuthorization', testConfig),
+      writeSettingsToCache
+    ).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
@@ -89,7 +107,7 @@ describe('login', () => {
             expect(response.token).not.toBeNull();
             done();
           }
-      })
+      }, errors, done)
     );
   });
 });

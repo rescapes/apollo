@@ -27,7 +27,7 @@ export {
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
-export {makeMutationWithClientDirectiveContainer, makeMutationWithClientDirective} from './helpers/mutationCacheHelpers'
+export {makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps} from './helpers/mutationCacheHelpers'
 export {
   formatOutputParams,
   resolveGraphQLType,
@@ -35,7 +35,9 @@ export {
   mapQueryTaskToNamedResultAndInputs,
   objIdToInt,
   pickGraphqlPaths,
-  pickGraphqlPathsOver
+  pickGraphqlPathsOver,
+  omitClientFields,
+  optionsWithWinnowedProps
 } from './helpers/requestHelpers';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 

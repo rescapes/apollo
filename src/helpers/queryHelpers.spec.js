@@ -10,7 +10,8 @@
  */
 
 import {makeQuery, makeQueryContainer} from './queryHelpers';
-import gql from 'graphql-tag';
+
+import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
 import {composeWithChain, defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';

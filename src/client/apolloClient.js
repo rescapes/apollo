@@ -8,26 +8,22 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {defaultDataIdFromObject, InMemoryCache} from 'apollo-cache-inmemory';
-
-import {setContext} from 'apollo-link-context';
-import {ApolloClient} from 'apollo-client';
-import {onError} from 'apollo-link-error';
-import {ApolloLink} from 'apollo-link';
-import {createHttpLink} from 'apollo-link-http';
+import {ApolloClient, ApolloLink, createHttpLink, defaultDataIdFromObject, InMemoryCache} from '@apollo/client';
+import {setContext} from '@apollo/link-context';
+import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
-import {fromPromised, of} from 'folktale/concurrency/task';
+import {fromPromised} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
 import {
+  composeWithMapMDeep,
+  mapToNamedResponseAndInputs,
   promiseToTask,
   reqStrPathThrowing,
-  strPathOr,
   retryTask,
-  composeWithMapMDeep,
-  mapToNamedResponseAndInputs
+  strPathOr
 } from 'rescape-ramda';
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
@@ -42,19 +38,7 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} stateLinkResolversAndDefaults The stateLinkResolvers for the schema or
  * An object with resolvers and defaults keys to pass both resolvers and defaults
  * Example {
- *  resolvers: {
-    Mutation: {
-      updateNetworkStatus: (_, { isConnected }, { cache }) => {
-        const data = {
-          networkStatus: {
-            __typename: 'NetworkStatus',
-            isConnected
-          },
-        };
-        cache.writeData({ data });
-        return null;
-      },
-    },
+ *  resolvers: { ... see stateLink.defaultStateLinkResolvers for examples
   },
   defaults: {
     networkStatus: {
@@ -68,9 +52,10 @@ const log = loggers.get('rescapeDefault');
  *     authorization: authToken
  *   }
  * } used for hard coding the authorization for testing
+ * @param {Function} writeDefaults expecting apolloClient that writes defaults ot the cache
  * @return {{apolloClient: ApolloClient}}
  */
-const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}) => {
+const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}, writeDefaults) => {
   const httpLink = createHttpLink({
     fetch,
     uri
@@ -80,19 +65,29 @@ const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders
   const errorLink = createErrorLink();
   const cache = createInMemoryCache({
     // Enforce no-modifying of objects
-    freezeResults: true,
+    freezeResults: true
   });
   return composeWithMapMDeep(1, [
     ({cache}) => {
+      const {resolvers, defaults} = R.ifElse(
+        R.has('resolvers'),
+        // Specified as obj
+        R.identity,
+        // Just resolvers and no defaults were specified
+        resolvers => ({resolvers, defaults: {}})
+      )(stateLinkResolversAndDefaults);
       // Once createPersistedCacheTask we can create the apollo client
       return _completeApolloClient({
-        stateLinkResolversAndDefaults,
+        resolvers,
+        defaults,
         links: [
           errorLink,
           authLink,
           httpLink
         ],
-        cache
+        cache,
+        // Write the defaults
+        writeDefaults,
       });
     },
     mapToNamedResponseAndInputs('void',
@@ -166,6 +161,17 @@ const createErrorLink = () => {
  */
 const createInMemoryCache = () => {
   return new InMemoryCache({
+    typePolicies: {
+      settings: (obj, {
+        typename, selectionSet, fragmentMap
+      }) => {
+        return R.ifElse(
+          R.prop('id'),
+          obj => defaultDataIdFromObject(obj),
+          obj => defaultDataIdFromObject(R.merge({'id': 'default'}, obj))
+        )(obj);
+      }
+    },
     dataIdFromObject: object => {
       switch (object.__typename) {
         // Store the default settings with a magic id. Settings are stored in the database but the initial
@@ -199,24 +205,17 @@ const createPersistedCacheTask = (cache) => {
 
 /**
  * Use the stateLinkResolversAndDefaults, links, and cache to complete the ApolloClient
- * @param stateLinkResolversAndDefaults
- * @param links
- * @param cache
- * @return {{apolloClient: ApolloClient<unknown>, restoreStoreToDefaults: (function(): ApolloClient<unknown>)}}
+ * @param {Object} resolvers The resolvers to give the client
+ * @param {[Object]} links List of links to give the Apollo Client.
+ * @param {Object} cache InMemoryCache instance
+ * @param {Function} Expects apolloClient and writeDefaults
+ * @return {{apolloClient: ApolloClient<unknown>})
  * @private
  */
-const _completeApolloClient = ({stateLinkResolversAndDefaults, links, cache}) => {
-  const {resolvers, defaults} = R.ifElse(
-    R.has('resolvers'),
-    // Specified as obj
-    R.identity,
-    // Just resolvers and no defaults were specified
-    resolvers => ({resolvers, defaults: {}})
-  )(stateLinkResolversAndDefaults);
+const _completeApolloClient = ({resolvers, links, cache, writeDefaults}) => {
+
   // Create the ApolloClient using the following ApolloClientOptions
   const apolloClient = new ApolloClient({
-    // Don't make snapshots that protect against object mutation. We never modify objects
-    assumeImmutableResults: true,
     // This is just a guess at link order.
     // I know stateLink goes after errorLink and before httpLink
     // (https://www.apollographql.com/docs/link/links/state.html)
@@ -231,17 +230,11 @@ const _completeApolloClient = ({stateLinkResolversAndDefaults, links, cache}) =>
       }
     }
   });
-  cache.writeData({data: defaults});
-  // Resets the store to the defaults
-  const restoreStoreToDefaults = () => {
-    // doesn't actually reset the store. It refetches all active queries
-    //apolloClient.resetStore();
-    apolloClient.cache.reset();
-    apolloClient.cache.writeData({data: defaults});
-    return apolloClient;
-  };
+
+  writeDefaults(apolloClient);
+  client.onResetStore(() => writeDefaults(apolloClient));
   // Return apolloClient and a function to restore the defaults
-  return {apolloClient, restoreStoreToDefaults};
+  return {apolloClient};
 };
 
 
@@ -473,13 +466,15 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {Object} authToken: Probably just for tests, pass the auth token in so we don't have to use
  * local storage to store are auth token
+ * @param {Function} writeDefaults expecting apolloClient that writes defaults ot the cache
  * @return {{apolloClient: ApolloClient}}
  */
-export const getApolloAuthClientTask = (url, stateLinkResolvers, authToken) => {
+export const getApolloAuthClientTask = (url, stateLinkResolvers, authToken, writeDefaults) => {
   return createApolloClientTask(url, stateLinkResolvers,
     {
       authorization: `JWT ${authToken}`
-    }
+    },
+    writeDefaults
   );
 };
 
@@ -490,8 +485,8 @@ export const getApolloAuthClientTask = (url, stateLinkResolvers, authToken) => {
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @return {{apolloClient: ApolloClient}}
  */
-export const noAuthApolloClientTask = (url, stateLinkResolvers) => {
-  return createApolloClientTask(url, stateLinkResolvers);
+export const noAuthApolloClientTask = (url, stateLinkResolvers, writeDefaults) => {
+  return createApolloClientTask(url, stateLinkResolvers, writeDefaults);
 };
 
 /**
@@ -503,10 +498,10 @@ export const noAuthApolloClientTask = (url, stateLinkResolvers) => {
  * @return {{apolloClient: ApolloClient, restoreStoreToDefaults}} restoreStoreToDefaults can be called to
  * reset the default values of the cache for logout
  */
-export const authApolloClientTask = (url, stateLinkResolverAndDefaults, authToken) => {
+export const authApolloClientTask = (url, stateLinkResolverAndDefaults, authToken, writeDefaults) => {
   return createApolloClientTask(url, stateLinkResolverAndDefaults, {
     authorization: `JWT ${authToken}`
-  });
+  }, writeDefaults);
 };
 
 /**
@@ -533,14 +528,14 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
  * @param {String} userLogin.tokenAuth.token The user token
  * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
  */
-export const authApolloClientWithTokenTask = R.curry((url, stateLinkResolversAndDefaults, userLogin) => {
+export const authApolloClientWithTokenTask = R.curry((url, stateLinkResolversAndDefaults, userLogin, writeDefaults) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => R.merge(
       {token},
       obj
     ),
-    authApolloClientTask(url, stateLinkResolversAndDefaults, token)
+    authApolloClientTask(url, stateLinkResolversAndDefaults, token, writeDefaults)
   );
 });
 

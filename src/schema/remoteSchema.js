@@ -9,14 +9,15 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {HttpLink} from 'apollo-link-http';
+import {HttpLink} from '@apollo/client'
 import fetch from 'node-fetch';
-import {setContext} from 'apollo-link-context';
+import {setContext} from '@apollo/link-context';
 import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
+import {writeSettingsToCache} from '../helpers/defaultSettingsStore';
 
 const http = uri => new HttpLink({
   uri,
@@ -49,7 +50,7 @@ export const remoteSchemaTask = config => {
   return R.composeK(
     // Create a link that concats HTTP to Authentication
     // Our authenticated link hard-codes the token. I don't know how to use the context
-    ({uri, apolloClient, token}) => {
+    ({uri, apolloClient, token, writeDefaults}) => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
         schema => ({schema, link, apolloClient}),
@@ -59,13 +60,15 @@ export const remoteSchemaTask = config => {
     // Authenticate
     config => {
       const uri = reqStrPathThrowing('settings.api.uri', config);
+      const writeDefaults = reqStrPathThrowing('writeDefaults', config)
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
         authClientOrLoginTask(
           uri,
           // StateLinkResolvers are empty for now
           {},
-          reqStrPathThrowing('settings.testAuthorization', config)
+          reqStrPathThrowing('settings.testAuthorization', config),
+          writeDefaults
         )
       );
     }
@@ -76,6 +79,7 @@ export const remoteSchemaTask = config => {
  * Generates a reolsed schema from the server
  * https://www.apollographql.com/docs/graphql-tools/remote-schemas.html
  * @param {Object} config Needs settings.api.uri and settings.apiAithorization = {username=..., password=...}
+ * @param {Function} config.writeDefaults Function expecting apolloClient that writes defaults to the cache
  * @return {Task<{schema: GraphQLSchema, link: HttpLink}>}
  */
 export const remoteLinkedSchemaTask = config => {

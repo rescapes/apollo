@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import gql from 'graphql-tag';
+import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import {capitalize, mergeDeep, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
@@ -20,6 +20,7 @@ import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {loggers} from 'rescape-log';
 import {omitClientFields} from './requestHelpers';
+import {mapped} from 'ramda-lens';
 
 const log = loggers.get('rescapeDefault');
 
@@ -41,7 +42,7 @@ const log = loggers.get('rescapeDefault');
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs.
  */
-export const makeMutationWithClientDirective = v(R.curry(
+export const makeCacheMutation = v(R.curry(
   (apolloConfig,
    {
      name,
@@ -95,7 +96,7 @@ export const makeMutationWithClientDirective = v(R.curry(
     })],
     ['props', PropTypes.shape().isRequired]
   ],
-  'makeMutationWithClientDirective'
+  'makeCacheMutation'
 );
 
 /**
@@ -124,7 +125,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
    },
    props) => {
 
-    const data = makeMutationWithClientDirective(
+    const data = makeCacheMutation(
       apolloConfig,
       {
         name,
@@ -184,6 +185,8 @@ const cacheOnlyObjectTypeNames = (typeName, cacheOnlyObjs) => {
               capitalize(typeName),
               ...R.compose(
                 R.map(capitalize),
+                // Eliminate wildcards from the path name
+                R.filter(R.complement(R.equals)('*')),
                 R.split('.')
               )(path)
             ]
@@ -210,7 +213,18 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
   return R.reduce(
     (prps, [path, value]) => {
       return R.over(
-        R.lensPath(R.split('.', path)),
+        // Use mapped for * to construct a lens prop that works on arrays.
+        // TODO Not sure if this works for * on objects, but that's a strange shape for stored data anyway
+        R.apply(R.compose,
+          R.map(
+            str => R.ifElse(
+              R.equals('*'),
+              () => mapped,
+              str => R.lensProp(str)
+            )(str),
+            R.split('.', path)
+          )
+        ),
         pathValue => {
           return R.unless(
             R.isNil,

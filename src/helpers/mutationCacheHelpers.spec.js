@@ -10,22 +10,22 @@
  */
 
 import {formatOutputParams} from './queryHelpers';
-import {localTestAuthTask, expectKeys} from './testHelpers';
+import {expectKeys, localTestAuthTask} from './testHelpers';
 import {
   composeWithChain,
   defaultRunConfig,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  mergeDeep, strPathOr
+  strPathOr
 } from 'rescape-ramda';
 import * as R from 'ramda';
-import {makeMutationWithClientDirective, makeMutationWithClientDirectiveContainer} from './mutationCacheHelpers';
+import {makeCacheMutation} from './mutationCacheHelpers';
 import {
   createCacheOnlyPropsForSettings,
   createSampleSettingsTask,
   makeSettingsQueryContainer,
   settingsOutputParams
-} from './samples/sampleSettingsStore';
+} from './defaultSettingsStore';
 import {of} from 'folktale/concurrency/task';
 
 // A blend of values from the server and the cache-only values
@@ -57,6 +57,7 @@ describe('mutationCacheHelpers', () => {
         onResolved:
           ({settings, settingsFromServer}) => {
             expectKeys(someSettingsKeys, R.head(settings));
+
             expectKeys(someSettingsKeys, R.head(settingsFromServer));
           }
       }, errors, done));
@@ -83,7 +84,7 @@ describe('mutationCacheHelpers', () => {
         // Just update cache-only values like we would on the browser
         mapToNamedResponseAndInputs('void',
           ({settingsFromCache, apolloConfig}) => {
-            makeMutationWithClientDirective(
+            makeCacheMutation(
               apolloConfig,
               {
                 name: 'settings',

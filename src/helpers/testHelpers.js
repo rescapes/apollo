@@ -16,11 +16,16 @@ import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {createStateLinkDefaults, defaultStateLinkResolvers} from '../client/stateLink';
+import {writeSettingsToCache} from './defaultSettingsStore';
 
 /**
  * The config for test
  */
-export const testConfig = getCurrentConfig({settings: privateTestSettings});
+export const testConfig = R.merge(
+  getCurrentConfig({settings: privateTestSettings}),
+  // For write the defaults to the cache
+  {writeDefaults: writeSettingsToCache}
+);
 
 // Apollo Link State defaults are based on the config.
 // TODO I've limited the keys here to keep out regions and users. If all tests are based on a server
@@ -38,7 +43,8 @@ export const testStateLinkResolversAndDefaults = {
 export const localTestAuthTask = loginToAuthClientTask(
   reqStrPathThrowing('settings.api.uri', testConfig),
   testStateLinkResolversAndDefaults,
-  reqStrPathThrowing('settings.testAuthorization', testConfig)
+  reqStrPathThrowing('settings.testAuthorization', testConfig),
+  writeSettingsToCache
 );
 
 /**
@@ -53,7 +59,8 @@ export const localTestAuthTask = loginToAuthClientTask(
 export const testAuthTask = testConfig => loginToAuthClientTask(
   reqStrPathThrowing('settings.api.uri', testConfig),
   testStateLinkResolversAndDefaults,
-  reqStrPathThrowing('settings.testAuthorization', testConfig)
+  reqStrPathThrowing('settings.testAuthorization', testConfig),
+  writeSettingsToCache
 );
 
 /**
