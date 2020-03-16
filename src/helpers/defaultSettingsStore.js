@@ -29,7 +29,7 @@ import {
 } from './mutationCacheHelpers';
 import {makeQueryContainer} from './queryHelpers';
 import {omitClientFields} from './requestHelpers';
-import {of} from 'folktale/concurrency/task'
+import {of} from 'folktale/concurrency/task';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -232,56 +232,40 @@ export const makeSettingsClientMutationContainer = v(R.curry(
  */
 export const writeConfigToServerAndCache = config => (apolloClient, {reset}) => {
   const settings = R.prop('settings', config);
-  return R.ifElse(
-    R.identity,
-    () => {
-      return makeCacheMutation(
-        {apolloClient},
-        {
-          name: 'settings',
-          // output for the read fragment
-          outputParams: settingsOutputParams
-        },
-        R.prop('settings', config)
-      );
-    },
-    () => {
-      return composeWithChain([
-        // Update/Create the default settings to the database. This puts them in the cache
-        mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
-          ({props, apolloConfig, settings: {data: {settings}}}) => {
-            return makeSettingsMutationContainer(
-              apolloConfig,
-              {outputParams: settingsOutputParams},
-              R.merge(props, R.pick(['id'], R.propOr({}, 0, settings)))
-            );
-          }
-        ),
-        // Fetch the props if they exist on the server
-        mapToNamedResponseAndInputs('settings',
-          ({apolloConfig, props}) => {
-            return makeSettingsQueryContainer(
-              R.merge(apolloConfig, {
-                options: {
-                  fetchPolicy: 'network-only'
-                }
-              }),
-              {outputParams: omitClientFields(settingsOutputParams)},
-              R.pick(['key'], props)
-            );
-          }
-        )
-      ])({
-          apolloConfig: {apolloClient},
-          config,
-          props: {
-            key: 'default',
-            data: settings
-          }
-        }
-      );
+  return composeWithChain([
+    // Update/Create the default settings to the database. This puts them in the cache
+    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
+      ({props, apolloConfig, settings: {data: {settings}}}) => {
+        return makeSettingsMutationContainer(
+          apolloConfig,
+          {outputParams: settingsOutputParams},
+          R.merge(props, R.pick(['id'], R.propOr({}, 0, settings)))
+        );
+      }
+    ),
+    // Fetch the props if they exist on the server
+    mapToNamedResponseAndInputs('settings',
+      ({apolloConfig, props}) => {
+        return makeSettingsQueryContainer(
+          R.merge(apolloConfig, {
+            options: {
+              fetchPolicy: 'network-only'
+            }
+          }),
+          {outputParams: omitClientFields(settingsOutputParams)},
+          R.pick(['key'], props)
+        );
+      }
+    )
+  ])({
+      apolloConfig: {apolloClient},
+      config,
+      props: {
+        key: 'default',
+        data: settings
+      }
     }
-  )(reset);
+  );
 };
 
 /**

@@ -22,7 +22,7 @@ import {writeDefaultSettingsToCache, writeConfigToServerAndCache} from './defaul
 /**
  * The config for test
  */
-export const testConfig = {settings: privateTestSettings};
+export const testConfig = {settings: privateTestSettings, writeDefaults: writeDefaultSettingsToCache};
 
 const defaultSettingsWithTestValues = createDefaultSettingsWithTestValues(
   R.pick(['settings', 'browser'], testConfig)

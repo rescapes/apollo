@@ -21,6 +21,7 @@ import {
 } from './login';
 import {parseApiUrl} from 'rescape-helpers';
 import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
+import {defaultStateLinkResolvers} from '..';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -59,7 +60,7 @@ describe('login', () => {
           }
       }, errors, done)
     );
-  });
+  }, 10000);
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
@@ -81,7 +82,7 @@ describe('login', () => {
           ).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
-                expect(apolloClient).toEqual(apolloClient2);
+                expect(apolloClient).toEqual(apolloClient2.authentication);
                 done();
               }
             })
@@ -89,7 +90,7 @@ describe('login', () => {
         }
       }
     ));
-  });
+  }, 10000);
 
   test('loginToAuthClientTask', done => {
 
@@ -109,5 +110,5 @@ describe('login', () => {
           }
       }, errors, done)
     );
-  });
+  }, 10000);
 });

@@ -1,7 +1,7 @@
 import * as R from 'ramda';
 import {overDeep} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 
 /**
  * Created by Andy Likuski on 2019.04.16
@@ -55,7 +55,7 @@ export const defaultStateLinkResolvers = {
     addTodo: (_, {text}, {cache}) => {
       const query = gql`
           query GetTodos {
-              todos @client {
+              todos {
                   id
                   text
                   completed
@@ -63,11 +63,17 @@ export const defaultStateLinkResolvers = {
           }
       `;
 
-      const previous = cache.readQuery({query});
+      // Since we can't initialize the cache anymore, this moronically fail if there are no todos
+      let data;
       const newTodo = {id: nextTodoId++, text, completed: false, __typename: 'TodoItem'};
-      const data = {
-        todos: previous.todos.concat([newTodo])
-      };
+      try {
+        const previous = cache.readQuery({query});
+        data = {
+          todos: previous.todos.concat([newTodo])
+        };
+      } catch {
+        data = {todos: []};
+      }
 
       // you can also do cache.writeData({ data }) here if you prefer
       cache.writeQuery({query, data});
@@ -92,7 +98,7 @@ export const defaultStateLinkResolvers = {
   // Example of matching a client directive deeply
   ViewportDataType: {
     special: (settings, _args, {cache}) => {
-      return 'special'
+      return 'special';
     }
   }
 };

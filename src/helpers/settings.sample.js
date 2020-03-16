@@ -82,7 +82,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
       }
     ),
     // Mutate the settings to the database
-    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.updateSettings.settings',
+    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
       ({props, apolloConfig}) => {
         return makeSettingsMutationContainer(
           apolloConfig,
