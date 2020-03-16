@@ -85,7 +85,6 @@ export const defaultStateLinkResolvers = {
       const todo = cache.readFragment({fragment, id});
       const data = {...todo, completed: !todo.completed};
 
-      // you can also do cache.writeData({ data, id }) here if you prefer
       cache.writeFragment({fragment, id, data});
       return null;
     }
@@ -104,9 +103,10 @@ export const defaultStateLinkResolvers = {
  * @param {Object} config The application config. This matches our API settings object
  * and is used to form the shape of the cache to match the settings.
  */
-export const createStateLinkDefaults = config => {
+export const createDefaultSettingsWithTestValues = config => {
   return overDeep(
     (key, obj) => {
+      // Key is e.g. settings, browser
       return R.merge(obj, {__typename: key});
     },
     R.merge(

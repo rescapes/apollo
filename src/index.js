@@ -16,10 +16,10 @@ export {
   default as createApolloClient,
   authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
-  authApolloClientTask,
+  getApolloClientTask,
   authApolloClientRequestTask,
-  authApolloClientWithTokenTask,
-  getApolloAuthClientTask,
+  getOrCreateAuthApolloClientWithTokenTask,
+  getOrCreateApolloAuthClientTaskAndSetDefaults,
   noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
@@ -49,7 +49,7 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  testAuthTask, testStateLinkResolversAndDefaults, testConfig, localTestAuthTask
+  testAuthTask, testConfig, localTestAuthTask
 } from './helpers/testHelpers';
-export {createStateLinkDefaults, defaultStateLinkResolvers} from './client/stateLink';
+export {createDefaultSettingsWithTestValues, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers'

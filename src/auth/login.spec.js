@@ -10,8 +10,8 @@
  */
 
 import * as R from 'ramda';
-import {localTestAuthTask, testConfig, testStateLinkResolversAndDefaults} from '../helpers/testHelpers';
-import {authApolloClientWithTokenTask} from '../client/apolloClient';
+import {localTestAuthTask, testConfig} from '../helpers/testHelpers';
+import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
 import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {
   authClientOrLoginTask,
@@ -20,7 +20,7 @@ import {
   verifyTokenRequestContainer
 } from './login';
 import {parseApiUrl} from 'rescape-helpers';
-import {writeSettingsToCache} from '../helpers/defaultSettingsStore';
+import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
@@ -38,11 +38,11 @@ describe('login', () => {
         ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        ({token}) => authApolloClientWithTokenTask(
+        ({token}) => getOrCreateAuthApolloClientWithTokenTask(
           uri,
-          testStateLinkResolversAndDefaults,
+          defaultStateLinkResolvers,
           {tokenAuth: {token}},
-          writeSettingsToCache
+          writeDefaultSettingsToCache
         )
       ),
       mapToNamedPathAndInputs('token', 'token',
@@ -65,9 +65,9 @@ describe('login', () => {
     // Try it with login info
     const task = authClientOrLoginTask(
       uri,
-      testStateLinkResolversAndDefaults,
+      defaultStateLinkResolvers,
       reqStrPathThrowing('settings.testAuthorization', testConfig),
-      writeSettingsToCache
+      writeDefaultSettingsToCache
     );
     task.run().listen(defaultRunConfig(
       {
@@ -75,9 +75,9 @@ describe('login', () => {
           // Try it with an auth client
           authClientOrLoginTask(
             uri,
-            testStateLinkResolversAndDefaults,
+            defaultStateLinkResolvers,
             apolloClient,
-            writeSettingsToCache
+            writeDefaultSettingsToCache
           ).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
@@ -96,9 +96,9 @@ describe('login', () => {
     const errors = []
     loginToAuthClientTask(
       uri,
-      testStateLinkResolversAndDefaults,
+      defaultStateLinkResolvers,
       reqStrPathThrowing('settings.testAuthorization', testConfig),
-      writeSettingsToCache
+      writeDefaultSettingsToCache
     ).run().listen(defaultRunConfig(
       {
         onResolved:

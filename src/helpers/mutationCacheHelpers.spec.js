@@ -22,11 +22,11 @@ import * as R from 'ramda';
 import {makeCacheMutation} from './mutationCacheHelpers';
 import {
   createCacheOnlyPropsForSettings,
-  createSampleSettingsTask,
   makeSettingsQueryContainer,
   settingsOutputParams
 } from './defaultSettingsStore';
 import {of} from 'folktale/concurrency/task';
+import {createSampleSettingsTask} from './settings.sample';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username', 'data.mapbox.mapboxAuthentication'];
@@ -110,7 +110,7 @@ describe('mutationCacheHelpers', () => {
       ])().run().listen(defaultRunConfig({
         onResolved:
           ({settings}) => {
-            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settings)).toContain('happy')
+            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settings)).toContain('happy');
           }
       }, errors, done));
     }, 100000);

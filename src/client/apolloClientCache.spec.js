@@ -52,7 +52,7 @@ describe('apolloClient', () => {
 
   test('test linkState mutation', async done => {
     expect.assertions(8);
-    const {apolloClient, restoreStoreToDefaults} = await taskToPromise(localTestAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask);
     // Mutate the network status
     const mutateNetworkStatus = gql`
         mutation updateNetworkStatus($isConnected: Boolean) {

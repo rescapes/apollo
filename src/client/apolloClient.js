@@ -12,14 +12,14 @@ import {ApolloClient, ApolloLink, createHttpLink, defaultDataIdFromObject, InMem
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
-import {fromPromised} from 'folktale/concurrency/task';
+import {fromPromised, of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
 import {
-  composeWithMapMDeep,
-  mapToNamedResponseAndInputs,
+  composeWithChain, composeWithMapMDeep,
+  mapToNamedResponseAndInputs, memoized,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
@@ -35,7 +35,7 @@ const log = loggers.get('rescapeDefault');
 /**
  * Creates an ApolloClient.
  * @param {String} uri The uri of the graphql server
- * @param {Object} stateLinkResolversAndDefaults The stateLinkResolvers for the schema or
+ * @param {Object} stateLinkResolversConfig The stateLinkResolvers for the schema or
  * An object with resolvers and defaults keys to pass both resolvers and defaults
  * Example {
  *  resolvers: { ... see stateLink.defaultStateLinkResolvers for examples
@@ -52,10 +52,9 @@ const log = loggers.get('rescapeDefault');
  *     authorization: authToken
  *   }
  * } used for hard coding the authorization for testing
- * @param {Function} writeDefaults expecting apolloClient that writes defaults ot the cache
  * @return {{apolloClient: ApolloClient}}
  */
-const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders = {}, writeDefaults) => {
+export const getOrCreateApolloClientTask = memoized((uri, stateLinkResolvers, fixedHeaders) => {
   const httpLink = createHttpLink({
     fetch,
     uri
@@ -63,32 +62,21 @@ const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders
 
   const authLink = createAuthLinkContext(fixedHeaders);
   const errorLink = createErrorLink();
-  const cache = createInMemoryCache({
-    // Enforce no-modifying of objects
-    freezeResults: true
-  });
+  const cache = createInMemoryCache();
   return composeWithMapMDeep(1, [
     ({cache}) => {
-      const {resolvers, defaults} = R.ifElse(
-        R.has('resolvers'),
-        // Specified as obj
-        R.identity,
-        // Just resolvers and no defaults were specified
-        resolvers => ({resolvers, defaults: {}})
-      )(stateLinkResolversAndDefaults);
       // Once createPersistedCacheTask we can create the apollo client
-      return _completeApolloClient({
-        resolvers,
-        defaults,
-        links: [
-          errorLink,
-          authLink,
-          httpLink
-        ],
-        cache,
-        // Write the defaults
-        writeDefaults,
-      });
+      return {
+        apolloClient: _completeApolloClient({
+          stateLinkResolvers,
+          links: [
+            errorLink,
+            authLink,
+            httpLink
+          ],
+          cache
+        })
+      };
     },
     mapToNamedResponseAndInputs('void',
       cache => {
@@ -97,7 +85,7 @@ const createApolloClientTask = (uri, stateLinkResolversAndDefaults, fixedHeaders
       }
     )
   ])({cache});
-};
+});
 
 /**
  *  Authorization link
@@ -204,18 +192,16 @@ const createPersistedCacheTask = (cache) => {
 };
 
 /**
- * Use the stateLinkResolversAndDefaults, links, and cache to complete the ApolloClient
- * @param {Object} resolvers The resolvers to give the client
+ * Use the stateLinkResolversConfig, links, and cache to complete the ApolloClient
+ * @param {Object} stateLinkResolvers The stateLinkResolvers to give the client
  * @param {[Object]} links List of links to give the Apollo Client.
  * @param {Object} cache InMemoryCache instance
- * @param {Function} Expects apolloClient and writeDefaults
- * @return {{apolloClient: ApolloClient<unknown>})
+ * @return {Object} {apolloClient: ApolloClient}
  * @private
  */
-const _completeApolloClient = ({resolvers, links, cache, writeDefaults}) => {
-
+const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
   // Create the ApolloClient using the following ApolloClientOptions
-  const apolloClient = new ApolloClient({
+  return new ApolloClient({
     // This is just a guess at link order.
     // I know stateLink goes after errorLink and before httpLink
     // (https://www.apollographql.com/docs/link/links/state.html)
@@ -223,7 +209,7 @@ const _completeApolloClient = ({resolvers, links, cache, writeDefaults}) => {
     // Use InMemoryCache
     cache,
     // Needed to make the @client direct go to the cache
-    resolvers,
+    resolvers: stateLinkResolvers,
     defaultOptions: {
       query: {
         errorPolicy: "all"
@@ -231,10 +217,6 @@ const _completeApolloClient = ({resolvers, links, cache, writeDefaults}) => {
     }
   });
 
-  writeDefaults(apolloClient);
-  client.onResetStore(() => writeDefaults(apolloClient));
-  // Return apolloClient and a function to restore the defaults
-  return {apolloClient};
 };
 
 
@@ -328,7 +310,7 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
       )
     );
   })();
-  return task.map(x => x);
+  return task
 });
 
 /**
@@ -469,39 +451,63 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * @param {Function} writeDefaults expecting apolloClient that writes defaults ot the cache
  * @return {{apolloClient: ApolloClient}}
  */
-export const getApolloAuthClientTask = (url, stateLinkResolvers, authToken, writeDefaults) => {
-  return createApolloClientTask(url, stateLinkResolvers,
-    {
-      authorization: `JWT ${authToken}`
+export const getOrCreateApolloAuthClientTaskAndSetDefaults = (url, stateLinkResolvers, authToken, writeDefaults) => {
+  return composeWithChain([
+    ({apolloConfig, writeDefaults}) => {
+      const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+      // Set writeDefaults to reset the cache. reset: true tells the function that this isn't the initial call
+      apolloClient.onResetStore(() => writeDefaults(apolloClient, {reset: true}));
+      const taskIfNotTask = obj => {
+        return R.unless(obj => 'run' in obj, of)(obj);
+      };
+      // Write the initial defaults as a task if not one already, return the apolloClient
+      // The initial write sets reset: false in case we need to go to the server the first time to get the values
+      // or the structure of the values
+      return R.map(
+        () => ({apolloClient}),
+        taskIfNotTask(writeDefaults(apolloClient, {reset: false}))
+      );
     },
-    writeDefaults
-  );
+    mapToNamedResponseAndInputs('apolloConfig',
+      ({url, stateLinkResolvers, authToken}) => {
+        // Memoized call
+        return getOrCreateApolloClientTask(url, stateLinkResolvers,
+          {
+            authorization: `JWT ${authToken}`
+          }
+        );
+      }
+    )
+  ])({url, stateLinkResolvers, authToken, writeDefaults});
 };
 
 
 /**
- * Non auth client for logging in
+ * Given a token returns the cached GraphQL client
+ * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * Optionally {resolvers: ..., defaults: ...} to include default values
+ * @param {String} authToken The auth token created from logging in
+ * happens when the client is first created
+ * @return {{apolloClient: ApolloClient, restoreStoreToDefaults}} restoreStoreToDefaults can be called to
+ * reset the default values of the cache for logout
+ */
+export const getApolloClientTask = (url, stateLinkResolvers, authToken) => {
+  return getOrCreateApolloClientTask(url, stateLinkResolvers,
+    {
+      authorization: `JWT ${authToken}`
+    }
+  );
+};
+
+/**
+ * Non auth client for logging in. Returns a client that can only be used for logging in
  * @param {string} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @return {{apolloClient: ApolloClient}}
  */
-export const noAuthApolloClientTask = (url, stateLinkResolvers, writeDefaults) => {
-  return createApolloClientTask(url, stateLinkResolvers, writeDefaults);
-};
-
-/**
- * Given a token returns a GraphQL client
- * @param url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} stateLinkResolverAndDefaults: Resolvers for the stateLink, meaning local caching
- * Optionally {resolvers: ..., defaults: ...} to include default values
- * @param authToken
- * @return {{apolloClient: ApolloClient, restoreStoreToDefaults}} restoreStoreToDefaults can be called to
- * reset the default values of the cache for logout
- */
-export const authApolloClientTask = (url, stateLinkResolverAndDefaults, authToken, writeDefaults) => {
-  return createApolloClientTask(url, stateLinkResolverAndDefaults, {
-    authorization: `JWT ${authToken}`
-  }, writeDefaults);
+export const noAuthApolloClientTask = (url, stateLinkResolvers) => {
+  return getOrCreateApolloClientTask(url, stateLinkResolvers, {});
 };
 
 /**
@@ -517,25 +523,24 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
 };
 
 /**
- * Chained task version of authApolloClientTask
- * Given a userLogin with a tokenAuth.token create the authApolloClientTask and return it and the token
+ * Chained task version of getApolloClientTask
+ * Given a userLogin with a tokenAuth.token create the getApolloClientTask and return it and the token
  * This method is synchronous but returns a Task to be used in API chains
  * @param {String} url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} stateLinkResolversAndDefaults: Resolvers for the stateLink, meaning local caching.
- * Optionally {resolvers: ..., defaults: ...} to include default values
+ * @param {Object} stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Object} userLogin Return value from loginMutationTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
  * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
  */
-export const authApolloClientWithTokenTask = R.curry((url, stateLinkResolversAndDefaults, userLogin, writeDefaults) => {
+export const getOrCreateAuthApolloClientWithTokenTask = R.curry((url, stateLinkResolvers, userLogin, writeDefaults) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => R.merge(
       {token},
       obj
     ),
-    authApolloClientTask(url, stateLinkResolversAndDefaults, token, writeDefaults)
+    getOrCreateApolloAuthClientTaskAndSetDefaults(url, stateLinkResolvers, token, writeDefaults)
   );
 });
 
@@ -544,6 +549,7 @@ export const authApolloClientWithTokenTask = R.curry((url, stateLinkResolversAnd
  * @param apolloClient The authenticated Apollo Client
  * @return {Task} A Task that makes the request when run
  */
-export const authApolloClientRequestTask = R.curry((apolloClient, args) => promiseToTask(apolloClient.request(args)));
+export const authApolloClientRequestTask = R.curry((apolloClient, args) => {
+  return fromPromised(() => apolloClient.request(args))();
+});
 
-export default createApolloClientTask;

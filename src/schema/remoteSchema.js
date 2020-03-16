@@ -9,7 +9,8 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {HttpLink} from '@apollo/client'
+import {parseApiUrl} from 'rescape-helpers';
+import {HttpLink} from '@apollo/client';
 import fetch from 'node-fetch';
 import {setContext} from '@apollo/link-context';
 import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
@@ -17,7 +18,8 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
-import {writeSettingsToCache} from '../helpers/defaultSettingsStore';
+import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
+import {testConfig} from '..';
 
 const http = uri => new HttpLink({
   uri,
@@ -59,8 +61,8 @@ export const remoteSchemaTask = config => {
     },
     // Authenticate
     config => {
-      const uri = reqStrPathThrowing('settings.api.uri', config);
-      const writeDefaults = reqStrPathThrowing('writeDefaults', config)
+      const uri = parseApiUrl(reqStrPathThrowing('settings.api', testConfig));
+      const writeDefaults = reqStrPathThrowing('writeDefaults', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
         authClientOrLoginTask(

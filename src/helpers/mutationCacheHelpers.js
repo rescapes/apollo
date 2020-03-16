@@ -54,6 +54,7 @@ export const makeCacheMutation = v(R.curry(
     const fragment = gql`${makeFragmentQuery(
       name, 
       {}, 
+      // Don't output cache only fields here. We just want the id
       omitClientFields(outputParams), 
       R.pick(['__typename'], props)
     )}`;

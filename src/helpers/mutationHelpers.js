@@ -23,12 +23,13 @@ import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
-  capitalize,
+  capitalize, composeWithMapMDeep,
   mapObjToValues,
   omitDeepBy,
-  retryTask
+  retryTask,
+  duplicateKey
 } from 'rescape-ramda';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
@@ -84,6 +85,9 @@ ${mutationName}(${variableMappingString}) {
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Object} props The props for the mutation
  *  @return {Task|Object} A task for Apollo Client mutations or a component for Apollo component mutations
+ *  The resolved value or object is {data: {create|update[capitalize(name)]: {name: {...obj...}}}} when the operation
+ *  completes. For simplicity the middle key is duplicated to {data: mutate { name: {...obj...}}} sdo the caller
+ *  doesn't need to know if the request was a create or update
  */
 export const makeMutationRequestContainer = v(R.curry(
   (apolloConfig,
@@ -93,8 +97,6 @@ export const makeMutationRequestContainer = v(R.curry(
      variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
    },
    props) => {
-
-
     // Get the variable definition, arguments and outputParams
     const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
       apolloConfig,
@@ -117,17 +119,25 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          return retryTask(
-            authApolloClientMutationRequestContainer(
-              apolloConfig,
-              {
-                mutation,
-                name,
-                variableName
-              },
-              namedProps
-            ), 3
-          );
+          return composeWithMapMDeep(1, [
+            response => {
+              // Copy the return value at create... or update... to mutate
+              return _addMutateKeyToMutationResponse(response);
+            },
+            () => {
+              return retryTask(
+                authApolloClientMutationRequestContainer(
+                  apolloConfig,
+                  {
+                    mutation,
+                    name,
+                    variableName
+                  },
+                  namedProps
+                ), 3
+              );
+            }
+          ])();
         }
       ],
       // If we have an Apollo Component
@@ -136,8 +146,8 @@ export const makeMutationRequestContainer = v(R.curry(
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
           return R.chain(
-            value => {
-              return value;
+            response => {
+              return _addMutateKeyToMutationResponse(response);
             },
             authApolloComponentMutationContainer(
               apolloConfig,
@@ -172,6 +182,28 @@ export const makeMutationRequestContainer = v(R.curry(
   'makeMutationRequestContainer'
 );
 
+/**
+ *
+ * Take whatever prop came back with data that begins with create/update and make a copy at mutate
+ * It's a pain to check whether a dynamic query was a create or update when we don't care
+ * @param {Object} response
+ * @return {Object} response with duplicated mutate key
+ * @private
+ */
+export const _addMutateKeyToMutationResponse = response => {
+  const createOrUpdateKey = R.find(
+    key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
+    R.keys(R.propOr({}, 'data', response))
+  );
+  return R.when(
+    () => {
+      return createOrUpdateKey;
+    },
+    response => {
+      return duplicateKey(R.lensProp('data'), createOrUpdateKey, ['mutate'], response);
+    }
+  )(response);
+};
 
 /**
  * Creates the parts needed for the mutation

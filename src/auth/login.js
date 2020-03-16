@@ -12,7 +12,7 @@
 import * as R from 'ramda';
 import {
   noAuthApolloClientTask,
-  authApolloClientWithTokenTask,
+  getOrCreateAuthApolloClientWithTokenTask,
   noAuthApolloClientMutationRequestTask
 } from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
@@ -71,7 +71,7 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
     ({uri, stateLinkResolvers, loginData}) => {
-      return authApolloClientWithTokenTask(uri, stateLinkResolvers, loginData, writeDefaults);
+      return getOrCreateAuthApolloClientWithTokenTask(uri, stateLinkResolvers, loginData, writeDefaults);
     },
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, variables}) => {
@@ -81,7 +81,7 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
     mapToNamedResponseAndInputs('apolloConfig',
       ({uri, stateLinkResolvers}) => {
         // Use unauthenticated ApolloClient for login
-        return noAuthApolloClientTask(uri, stateLinkResolvers, writeDefaults);
+        return noAuthApolloClientTask(uri, stateLinkResolvers);
       }
     )
   ])({uri, stateLinkResolvers, variables});
@@ -139,9 +139,14 @@ export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentic
   // Just wrap it in a task to match the other option
   apolloClient => of({apolloClient}),
   composeWithChain([
-    // map userLogin to authApolloClientTask and token
+    // map userLogin to getApolloClientTask and token
     ({url, stateLinkResolvers, loginAuthentication}) => {
-      return authApolloClientWithTokenTask(url, stateLinkResolvers, R.prop('data', loginAuthentication), writeDefaults);
+      return getOrCreateAuthApolloClientWithTokenTask(
+        url,
+        stateLinkResolvers,
+        R.prop('data', loginAuthentication),
+        writeDefaults
+      );
     },
     mapToNamedResponseAndInputs('loginAuthentication',
       ({apolloConfig, authentication}) => {

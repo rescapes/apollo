@@ -13,9 +13,15 @@ import * as R from 'ramda';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import settings from '../helpers/privateTestSettings';
-import {mapToNamedPathAndInputs, mergeDeep, omitDeepPaths, pickDeepPaths} from 'rescape-ramda';
-import moment from 'moment';
-import {makeMutationRequestContainer} from './mutationHelpers';
+import {
+  composeWithChain,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
+  mergeDeep,
+  omitDeepPaths,
+  pickDeepPaths, reqPathThrowing, reqStrPathThrowing
+} from 'rescape-ramda';
+import {_addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
 import {
   createCacheOnlyProps,
   makeCacheMutation,
@@ -23,6 +29,7 @@ import {
 } from './mutationCacheHelpers';
 import {makeQueryContainer} from './queryHelpers';
 import {omitClientFields} from './requestHelpers';
+import {of} from 'folktale/concurrency/task'
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -102,83 +109,6 @@ export const createCacheOnlyPropsForSettings = (props) => {
 };
 
 /**
- * Creates a sample settings with a mutation and does various queries to show that values cached by the mutation.update
- * remain in the cache as subsequent queries come in from the server
- * @params apolloClient
- * @return {Object} Returns the cacheOnlySettings, which are the settings stored in the cache that combine
- * what was written to the server with what is only stored in the cache. settings contains what was only
- * stored on the server
- */
-export const createSampleSettingsTask = (apolloConfig) => {
-  return R.composeK(
-    // Now query and force it to got to the server.
-    // This risks wiping out our cash only values, but it seems InMemoryCache correctly merges the query results
-    mapToNamedPathAndInputs('settingsFromServer', 'data.settings',
-      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
-        return makeSettingsQueryContainer(
-          {
-            apolloClient,
-            options: {
-              fetchPolicy: 'network-only'
-            }
-          },
-          {outputParams: settingsOutputParams},
-          R.pick(['id'], settingsWithoutCacheValues)
-        );
-      }
-    ),
-    // Now query for the server and cache-only props. This should match data in the cache and not need the server
-    // So let's force it go to the server so we are sure that the server and cache-only values work
-    mapToNamedPathAndInputs('settingsFromCache', 'data.settings',
-      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
-        return makeSettingsQueryContainer(
-          {
-            apolloClient,
-            options: {
-              fetchPolicy: 'cache-only'
-            }
-          },
-          {outputParams: settingsOutputParams},
-          R.pick(['id'], settingsWithoutCacheValues)
-        );
-      }
-    ),
-    // Query to get the value in the cache.
-    // Note that the data that mutation puts in the cache is not matched here.
-    // It seems like the query itself must run once before the same data can be found in the cache
-    mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
-      ({settingsWithoutCacheValues, apolloConfig}) => {
-        return makeSettingsQueryContainer(
-          apolloConfig,
-          {outputParams: omitClientFields(settingsOutputParams)},
-          R.pick(['id'], settingsWithoutCacheValues)
-        );
-      }
-    ),
-    // Mutate the settings to the database
-    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.createSettings.settings',
-      ({props, apolloConfig}) => {
-        return makeSettingsMutationContainer(
-          apolloConfig,
-          {outputParams: omitClientFields(settingsOutputParams)},
-          props
-        );
-      }
-    )
-  )(
-    // Settings is merged into the overall application state
-    {
-      apolloConfig,
-      props: {
-        key: `test${moment().format('HH-mm-SS')}`,
-        data: settings
-      }
-    }
-  );
-};
-
-
-/**
  * Queries settingss
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Object} outputParams OutputParams for the query such as settingsOutputParams
@@ -229,7 +159,8 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {outputPar
       apolloConfig,
       {
         options: {
-          update: (store, {data: {createSettings: {settings}}}) => {
+          update: (store, response) => {
+            const settings = reqStrPathThrowing('data.mutate.settings', _addMutateKeyToMutationResponse(response));
             // Mutate the cache to save settings to the database that are not stored on the server
             makeCacheMutation(
               apolloConfig,
@@ -287,19 +218,73 @@ export const makeSettingsClientMutationContainer = v(R.curry(
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsClientMutationContainer');
 
+
 /**
- * Writes the default settings to the cache
- * @param apolloClient
- * @return {*}
+ * Writes or rewrites the default settings to the cache. Other values in the config are ignored
+ * and must be added manually
+ * @param {Object} config The settings to write. It must match Settings object of the Apollo schema,
+ * although cache-only values can be included
+ * @param {Object} apolloClient The Apollo Client
+ * @param {Object} config
+ * @param {Boolean } config.reset True if this is a reset call, false if it's the initial writing of the settings to cache
+ * @return {Object|Task} If we are reseting, returns and object that can be ignored. If setting initially, returns
+ * a task to be run so that we can read/write from/to the server if needed
  */
-export const writeSettingsToCache = apolloClient => {
-  return makeCacheMutation(
-    {apolloClient},
-    {
-      name: 'settings',
-      // output for the read fragment
-      outputParams: settingsOutputParams
+export const writeConfigToServerAndCache = config => (apolloClient, {reset}) => {
+  const settings = R.prop('settings', config);
+  return R.ifElse(
+    R.identity,
+    () => {
+      return makeCacheMutation(
+        {apolloClient},
+        {
+          name: 'settings',
+          // output for the read fragment
+          outputParams: settingsOutputParams
+        },
+        R.prop('settings', config)
+      );
     },
-    settings
-  );
+    () => {
+      return composeWithChain([
+        // Update/Create the default settings to the database. This puts them in the cache
+        mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
+          ({props, apolloConfig, settings: {data: {settings}}}) => {
+            return makeSettingsMutationContainer(
+              apolloConfig,
+              {outputParams: settingsOutputParams},
+              R.merge(props, R.pick(['id'], R.propOr({}, 0, settings)))
+            );
+          }
+        ),
+        // Fetch the props if they exist on the server
+        mapToNamedResponseAndInputs('settings',
+          ({apolloConfig, props}) => {
+            return makeSettingsQueryContainer(
+              R.merge(apolloConfig, {
+                options: {
+                  fetchPolicy: 'network-only'
+                }
+              }),
+              {outputParams: omitClientFields(settingsOutputParams)},
+              R.pick(['key'], props)
+            );
+          }
+        )
+      ])({
+          apolloConfig: {apolloClient},
+          config,
+          props: {
+            key: 'default',
+            data: settings
+          }
+        }
+      );
+    }
+  )(reset);
 };
+
+/**
+ * Writes or rewrites the default settings to the cache
+ */
+export const writeDefaultSettingsToCache = writeConfigToServerAndCache(settings);

@@ -94,7 +94,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
   // I think fragments never need args so only queryArguments.__typename should be specified for fragment queryies
   const queryOrFragment = R.ifElse(
     R.prop('isFragment'),
-    R.always(`fragment ${queryName} on ${R.prop('__typename', props)}`),
+    R.always(`fragment ${queryName}Fragment on ${R.prop('__typename', props)}`),
     R.always(`query ${queryName}`)
   )(queryConfig);
 
