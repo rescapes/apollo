@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {localTestAuthTask, testConfig} from '../helpers/testHelpers';
+import {localTestAuthTask, testCacheOptions, testConfig} from '../helpers/testHelpers';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
 import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {
@@ -25,6 +25,7 @@ import {defaultStateLinkResolvers} from '..';
 
 const {settings: {api}} = testConfig;
 const uri = parseApiUrl(api);
+const cacheOptions = testCacheOptions;
 
 describe('login', () => {
   test('testLoginCredentials', done => {
@@ -39,11 +40,13 @@ describe('login', () => {
         ({apolloClient, token}) => verifyTokenRequestContainer({apolloClient}, {token})
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        ({token}) => getOrCreateAuthApolloClientWithTokenTask(
-          uri,
-          defaultStateLinkResolvers,
-          {tokenAuth: {token}},
-          writeDefaultSettingsToCache
+        ({token}) => getOrCreateAuthApolloClientWithTokenTask({
+            cacheOptions,
+            uri,
+            stateLinkResolvers: defaultStateLinkResolvers,
+            writeDefaults: writeDefaultSettingsToCache
+          },
+          {tokenAuth: {token}}
         )
       ),
       mapToNamedPathAndInputs('token', 'token',
@@ -64,22 +67,24 @@ describe('login', () => {
 
   test('authClientOrLoginTask', done => {
     // Try it with login info
-    const task = authClientOrLoginTask(
-      uri,
-      defaultStateLinkResolvers,
-      reqStrPathThrowing('settings.testAuthorization', testConfig),
-      writeDefaultSettingsToCache
+    const task = authClientOrLoginTask({
+        cacheOptions,
+        uri,
+        stateLinkResolvers: defaultStateLinkResolvers,
+        writeDefaults: writeDefaultSettingsToCache
+      },
+      reqStrPathThrowing('settings.testAuthorization', testConfig)
     );
     task.run().listen(defaultRunConfig(
       {
         onResolved: ({token, apolloClient}) => {
           // Try it with an auth client
-          authClientOrLoginTask(
+          authClientOrLoginTask({
+            cacheOptions,
             uri,
-            defaultStateLinkResolvers,
-            apolloClient,
-            writeDefaultSettingsToCache
-          ).run().listen(defaultRunConfig(
+            stateLinkResolvers: defaultStateLinkResolvers,
+            writeDefaults: writeDefaultSettingsToCache
+          }, apolloClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {
                 expect(apolloClient).toEqual(apolloClient2.authentication);
@@ -94,12 +99,14 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
 
-    const errors = []
-    loginToAuthClientTask(
-      uri,
-      defaultStateLinkResolvers,
-      reqStrPathThrowing('settings.testAuthorization', testConfig),
-      writeDefaultSettingsToCache
+    const errors = [];
+    loginToAuthClientTask({
+        cacheOptions,
+        uri,
+        stateLinkResolvers: defaultStateLinkResolvers,
+        writeDefaults: writeDefaultSettingsToCache
+      },
+      reqStrPathThrowing('settings.testAuthorization', testConfig)
     ).run().listen(defaultRunConfig(
       {
         onResolved:

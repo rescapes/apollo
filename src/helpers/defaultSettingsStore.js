@@ -261,6 +261,7 @@ export const writeConfigToServerAndCache = config => (apolloClient, {reset}) => 
       apolloConfig: {apolloClient},
       config,
       props: {
+        // We currently use 'default' for the only settings in the database
         key: 'default',
         data: settings
       }

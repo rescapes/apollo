@@ -22,7 +22,6 @@ import * as R from 'ramda'
  * unless they are cache only values like testAuthorization and mapboxApiAccessToken below.
  * See settingsStore.js
  */
-//R.over(R.lensProp('api'), api => R.merge(api, {uri: parseApiUrl(api)}), {
 export default {
   domain: 'localhost',
   api: {

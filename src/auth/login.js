@@ -59,19 +59,27 @@ export const loginMutationTask = v(R.curry((apolloConfig, variables) => {
 
 /**
  * Login and return an authenticated client task
- * @param {String} uri graphql uri
- * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
- * @param {Object} values
- * @param {String} values.username The username
- * @param {String} values.password The password
+ * @param {Object} config
+ * @param {Object} config.cacheOptions
+ * @param {String} config.uri graphql uri
+ * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} props
+ * @param {String} props.username The username
+ * @param {String} props.password The password
  * @return {{apolloClient: ApolloClient, token}}
  */
-export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables, writeDefaults) => {
+export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, props) => {
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
     ({uri, stateLinkResolvers, loginData}) => {
-      return getOrCreateAuthApolloClientWithTokenTask(uri, stateLinkResolvers, loginData, writeDefaults);
+      return getOrCreateAuthApolloClientWithTokenTask({
+          cacheOptions,
+          uri,
+          stateLinkResolvers,
+          writeDefaults
+        }, loginData
+      );
     },
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, variables}) => {
@@ -81,10 +89,10 @@ export const loginToAuthClientTask = R.curry((uri, stateLinkResolvers, variables
     mapToNamedResponseAndInputs('apolloConfig',
       ({uri, stateLinkResolvers}) => {
         // Use unauthenticated ApolloClient for login
-        return noAuthApolloClientTask(uri, stateLinkResolvers);
+        return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers});
       }
     )
-  ])({uri, stateLinkResolvers, variables});
+  ])({uri, stateLinkResolvers, variables: props});
 });
 
 /**
@@ -127,14 +135,17 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
 
 /**
  * Expects a GraphQLClient if already authenticated or login data if not
- * @param {String} url The URL to create client with if authentication is not already a GraphQLClient
- * @param {Object} stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} config
+ * @param {Object} config.cacheOptions
+ * @param {String} config.url The URL to create client with if authentication is not already a GraphQLClient
+ * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Function} config.writeDefaults. Function to write default values to the client
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
  * @returns {Task<Object>} {apolloClient: Authorized Apollo Client, token: The authentication token,
  * function to clear the link state}
  */
-export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentication, writeDefaults) => {
+export const authClientOrLoginTask = R.curry(({cacheOptions, url, stateLinkResolvers, writeDefaults}, authentication) => {
   return R.ifElse(
     ({authentication}) => R.is(ApolloClient, authentication),
     // Just wrap it in a task to match the other option
@@ -142,11 +153,13 @@ export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentic
     composeWithChain([
       // map userLogin to getApolloClientTask and token
       ({url, stateLinkResolvers, loginAuthentication}) => {
-        return getOrCreateAuthApolloClientWithTokenTask(
-          url,
-          stateLinkResolvers,
-          R.prop('data', loginAuthentication),
-          writeDefaults
+        return getOrCreateAuthApolloClientWithTokenTask({
+            cacheOptions,
+            url,
+            stateLinkResolvers,
+            writeDefaults
+          },
+          R.prop('data', loginAuthentication)
         );
       },
       mapToNamedResponseAndInputs('loginAuthentication',
@@ -157,7 +170,7 @@ export const authClientOrLoginTask = R.curry((url, stateLinkResolvers, authentic
       // map login values to token
       mapToNamedResponseAndInputs('apolloConfig',
         ({url, stateLinkResolvers}) => {
-          return noAuthApolloClientTask(url, stateLinkResolvers);
+          return noAuthApolloClientTask({cacheOptions, url, stateLinkResolvers});
         }
       )
     ])

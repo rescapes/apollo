@@ -18,8 +18,10 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
-import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
 import {testConfig} from '..';
+import {testCacheOptions} from '../helpers/testHelpers';
+
+const cacheOptions = testCacheOptions;
 
 const http = uri => new HttpLink({
   uri,
@@ -65,12 +67,14 @@ export const remoteSchemaTask = config => {
       const writeDefaults = reqStrPathThrowing('writeDefaults', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
-        authClientOrLoginTask(
-          uri,
-          // StateLinkResolvers are empty for now
-          {},
-          reqStrPathThrowing('settings.testAuthorization', config),
-          writeDefaults
+        authClientOrLoginTask({
+            cacheOptions,
+            uri,
+            // StateLinkResolvers are empty for now
+            stateLinkResolvers: {},
+            writeDefaults
+          },
+          reqStrPathThrowing('settings.testAuthorization', config)
         )
       );
     }

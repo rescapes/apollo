@@ -13,7 +13,6 @@ export {
   loginMutationTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
 } from './auth/login';
 export {
-  default as createApolloClient,
   authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
   getApolloClientTask,
@@ -23,11 +22,17 @@ export {
   noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
-  noAuthApolloClientRequestTask
+  noAuthApolloClientRequestTask,
+  authApolloComponentMutationContainer,
+  authApolloComponentQueryContainer,
+  authApolloQueryContainer,
+  getOrCreateApolloClientTask
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
 export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
-export {makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps} from './helpers/mutationCacheHelpers'
+export {
+  makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps
+} from './helpers/mutationCacheHelpers';
 export {
   formatOutputParams,
   resolveGraphQLType,
@@ -49,7 +54,9 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  testAuthTask, testConfig, localTestAuthTask
+  testAuthTask, testConfig, localTestAuthTask, testCacheOptions, expectKeys
 } from './helpers/testHelpers';
 export {createDefaultSettingsWithTestValues, defaultStateLinkResolvers} from './client/stateLink';
-export {containerForApolloType} from './helpers/containerHelpers'
+export {containerForApolloType} from './helpers/containerHelpers';
+export {typePoliciesWithMergeObjects} from './helpers/clientHelpers';
+

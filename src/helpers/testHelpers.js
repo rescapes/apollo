@@ -8,7 +8,6 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {getCurrentConfig} from 'rescape-sample-data';
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
@@ -17,7 +16,9 @@ import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {createDefaultSettingsWithTestValues, defaultStateLinkResolvers} from '../client/stateLink';
-import {writeDefaultSettingsToCache, writeConfigToServerAndCache} from './defaultSettingsStore';
+import {writeConfigToServerAndCache, writeDefaultSettingsToCache} from './defaultSettingsStore';
+import {typePoliciesWithMergeObjects} from './clientHelpers';
+import {defaultDataIdFromObject} from '@apollo/client';
 
 /**
  * The config for test
@@ -29,14 +30,43 @@ const defaultSettingsWithTestValues = createDefaultSettingsWithTestValues(
 );
 
 /**
+ * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
+ * when updating the cache
+ * @type {any}
+ */
+export const testCacheOptions = {
+  typePolicies: typePoliciesWithMergeObjects([
+    {type: 'SettingsType', fields: ['data']},
+    {type: 'RegionType', fields: ['data']}
+  ]),
+  dataIdFromObject: object => {
+    switch (object.__typename) {
+      // Store the default settings with a magic id. Settings are stored in the database but the initial
+      // settings come from code so don't have an id
+      case 'settings':
+        return R.ifElse(
+          R.prop('id'),
+          obj => defaultDataIdFromObject(obj),
+          obj => defaultDataIdFromObject(R.merge({'id': 'default'}, obj))
+        )(object);
+      // Default behavior. Useful for debugging to se how the object's id is determined
+      default:
+        return defaultDataIdFromObject(object);
+    }
+  }
+};
+
+/**
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const localTestAuthTask = loginToAuthClientTask(
-  parseApiUrl(reqStrPathThrowing('settings.api', testConfig)),
-  defaultStateLinkResolvers,
-  reqStrPathThrowing('settings.testAuthorization', testConfig),
-  writeConfigToServerAndCache(defaultSettingsWithTestValues)
+export const localTestAuthTask = loginToAuthClientTask({
+    cacheOptions: testCacheOptions,
+    uri: parseApiUrl(reqStrPathThrowing('settings.api', testConfig)),
+    stateLinkResolvers: defaultStateLinkResolvers,
+    writeDefaults: writeConfigToServerAndCache(defaultSettingsWithTestValues)
+  },
+  reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
 
 /**
@@ -48,11 +78,14 @@ export const localTestAuthTask = loginToAuthClientTask(
  * Returns an object {apolloClient:An authorized client}
  *
  */
-export const testAuthTask = testConfig => loginToAuthClientTask(
-  reqStrPathThrowing('settings.api.uri', testConfig),
-  defaultStateLinkResolvers,
-  reqStrPathThrowing('settings.testAuthorization', testConfig),
-  writeDefaultSettingsToCache
+
+export const testAuthTask = testConfig => loginToAuthClientTask({
+    cacheOptions: testCacheOptions,
+    uri: parseApiUrl(reqStrPathThrowing('settings.api', testConfig)),
+    stateLinkResolvers: defaultStateLinkResolvers,
+    writeDefaults: writeConfigToServerAndCache(defaultSettingsWithTestValues)
+  },
+  reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
 
 /**
@@ -84,3 +117,4 @@ export const expectKeys = v(R.curry((keyPaths, obj) => {
   ['keys', PropTypes.arrayOf(PropTypes.string).isRequired],
   ['obj', PropTypes.shape({}).isRequired]
 ]);
+

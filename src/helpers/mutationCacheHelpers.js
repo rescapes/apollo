@@ -76,7 +76,8 @@ export const makeCacheMutation = v(R.curry(
     }`;
     log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id}`);
     apolloClient.writeFragment({fragment: writeFragment, id, data});
-    //const test = apolloClient.readFragment({fragment: writeFragment, id});
+    // read to verify that the write succeeded. If this throws then we did something wrong
+    const test = apolloClient.readFragment({fragment: writeFragment, id});
     return data;
   }),
   [
