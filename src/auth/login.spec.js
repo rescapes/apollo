@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {localTestAuthTask, testCacheOptions, testConfig} from '../helpers/testHelpers';
+import {localTestAuthTask, testCacheOptions, localTestConfig} from '../helpers/testHelpers';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
 import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {
@@ -23,7 +23,7 @@ import {parseApiUrl} from 'rescape-helpers';
 import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '..';
 
-const {settings: {api}} = testConfig;
+const {settings: {api}} = localTestConfig;
 const uri = parseApiUrl(api);
 const cacheOptions = testCacheOptions;
 
@@ -73,7 +73,7 @@ describe('login', () => {
         stateLinkResolvers: defaultStateLinkResolvers,
         writeDefaults: writeDefaultSettingsToCache
       },
-      reqStrPathThrowing('settings.testAuthorization', testConfig)
+      reqStrPathThrowing('settings.testAuthorization', localTestConfig)
     );
     task.run().listen(defaultRunConfig(
       {
@@ -106,7 +106,7 @@ describe('login', () => {
         stateLinkResolvers: defaultStateLinkResolvers,
         writeDefaults: writeDefaultSettingsToCache
       },
-      reqStrPathThrowing('settings.testAuthorization', testConfig)
+      reqStrPathThrowing('settings.testAuthorization', localTestConfig)
     ).run().listen(defaultRunConfig(
       {
         onResolved:

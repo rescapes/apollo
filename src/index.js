@@ -54,9 +54,9 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  testAuthTask, testConfig, localTestAuthTask, testCacheOptions, expectKeys
+  testAuthTask, localTestConfig, localTestAuthTask, testCacheOptions, expectKeys
 } from './helpers/testHelpers';
-export {createDefaultSettingsWithTestValues, defaultStateLinkResolvers} from './client/stateLink';
+export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers';
 export {typePoliciesWithMergeObjects} from './helpers/clientHelpers';
 

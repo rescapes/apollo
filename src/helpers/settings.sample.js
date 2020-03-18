@@ -38,8 +38,8 @@ import {makeSettingsMutationContainer, makeSettingsQueryContainer, settingsOutpu
 export const createSampleSettingsTask = (apolloConfig) => {
   return R.composeK(
     // Now query and force it to got to the server.
-    // This risks wiping out our cash only values, but it seems InMemoryCache correctly merges the query results
-    mapToNamedPathAndInputs('settingsFromServer', 'data.settings',
+    // This MUST use omitClientFields or the query will return data: null
+    mapToNamedPathAndInputs('settingsFromServerOnly', 'data.settings',
       ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
         return makeSettingsQueryContainer(
           {
@@ -48,7 +48,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
               fetchPolicy: 'network-only'
             }
           },
-          {outputParams: settingsOutputParams},
+          {outputParams: omitClientFields(settingsOutputParams)},
           R.pick(['id'], settingsWithoutCacheValues)
         );
       }
@@ -66,19 +66,20 @@ export const createSampleSettingsTask = (apolloConfig) => {
           },
           {outputParams: settingsOutputParams},
           R.pick(['id'], settingsWithoutCacheValues)
-        );
+        ).map(x => x)
       }
     ),
     // Query to get the value in the cache.
     // Note that the data that mutation puts in the cache is not matched here.
+    // However the result of this query correctly merges that from the server with the cache-only values
     // It seems like the query itself must run once before the same data can be found in the cache
     mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
       ({settingsWithoutCacheValues, apolloConfig}) => {
         return makeSettingsQueryContainer(
           apolloConfig,
-          {outputParams: omitClientFields(settingsOutputParams)},
+          {outputParams: settingsOutputParams},
           R.pick(['id'], settingsWithoutCacheValues)
-        );
+        )
       }
     ),
     // Mutate the settings to the database

@@ -11,13 +11,13 @@
 
 import {remoteSchemaTask, remoteLinkedSchemaTask} from './remoteSchema';
 import {defaultRunConfig} from 'rescape-ramda';
-import {testConfig} from '../helpers/testHelpers';
+import {localTestConfig} from '../helpers/testHelpers';
 
 describe('schema', () => {
   test('remoteSchemaTask', done => {
     expect.assertions(1);
     const errors = [];
-    remoteSchemaTask(testConfig).run().listen(
+    remoteSchemaTask(localTestConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO add test resolvers and query
@@ -30,7 +30,7 @@ describe('schema', () => {
   test('remoteLinkedSchemaTask', done => {
     expect.assertions(1);
     const errors = [];
-    remoteLinkedSchemaTask(testConfig).run().listen(
+    remoteLinkedSchemaTask(localTestConfig).run().listen(
       defaultRunConfig({
         onResolved: schema => {
           // TODO test queries

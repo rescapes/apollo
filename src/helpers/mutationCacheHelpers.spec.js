@@ -55,10 +55,9 @@ describe('mutationCacheHelpers', () => {
         () => localTestAuthTask
       ])().run().listen(defaultRunConfig({
         onResolved:
-          ({settings, settingsFromServer}) => {
+          ({settings, settingsFromQuery}) => {
             expectKeys(someSettingsKeys, R.head(settings));
-
-            expectKeys(someSettingsKeys, R.head(settingsFromServer));
+            expectKeys(someSettingsKeys, R.head(settingsFromQuery));
           }
       }, errors, done));
     }, 100000);

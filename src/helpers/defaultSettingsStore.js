@@ -19,7 +19,7 @@ import {
   mapToNamedResponseAndInputs,
   mergeDeep,
   omitDeepPaths,
-  pickDeepPaths, reqPathThrowing, reqStrPathThrowing
+  pickDeepPaths, reqPathThrowing, reqStrPathThrowing, strPathOr
 } from 'rescape-ramda';
 import {_addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
 import {
@@ -226,25 +226,27 @@ export const makeSettingsClientMutationContainer = v(R.curry(
  * although cache-only values can be included
  * @param {Object} apolloClient The Apollo Client
  * @param {Object} config
- * @param {Boolean } config.reset True if this is a reset call, false if it's the initial writing of the settings to cache
+ * @param {Boolean } config.reset TODO Currenlty Unused True if this is a reset call, false if it's the initial writing of the settings to cache
  * @return {Object|Task} If we are reseting, returns and object that can be ignored. If setting initially, returns
  * a task to be run so that we can read/write from/to the server if needed
  */
 export const writeConfigToServerAndCache = config => (apolloClient, {reset}) => {
+  // Only the settings are written to the server
   const settings = R.prop('settings', config);
   return composeWithChain([
     // Update/Create the default settings to the database. This puts them in the cache
     mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
-      ({props, apolloConfig, settings: {data: {settings}}}) => {
+      ({props, apolloConfig, settingsFromServer}) => {
+        const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
         return makeSettingsMutationContainer(
           apolloConfig,
           {outputParams: settingsOutputParams},
-          R.merge(props, R.pick(['id'], R.propOr({}, 0, settings)))
+          R.merge(props, R.pick(['id'], settings))
         );
       }
     ),
     // Fetch the props if they exist on the server
-    mapToNamedResponseAndInputs('settings',
+    mapToNamedResponseAndInputs('settingsFromServer',
       ({apolloConfig, props}) => {
         return makeSettingsQueryContainer(
           R.merge(apolloConfig, {

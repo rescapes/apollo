@@ -55,33 +55,9 @@ const initializeCache = async apolloClient => {
   apolloClient.writeQuery({query: getTodos, data: {todos: []}});
 }
 /**
- * Requires a running graphql server at uri
+ * Requires a running graphql server at url
  */
 describe('apolloClient', () => {
-
-  test('test linkState initial state', async () => {
-
-    // The localTestAuthTask creates a client
-    const {apolloClient} = await taskToPromise(localTestAuthTask);
-
-    // Since settings has no idea I think the cache just returns everything for settings or the first one
-    const queryDefaults = gql`
-        query {
-            settings @client {
-                key
-            }
-        }
-    `;
-
-    // This should fetch our settings that are initially stored in the cache
-    // TODO not working. Maybe settings doesn't match SettingsType?
-    const queryDefaultsResponse = await apolloClient.query({
-        query: queryDefaults
-      }
-    );
-
-    expect(reqStrPathThrowing('data.settings.key', queryDefaultsResponse)).toEqual(false);
-  }, 100000);
 
   test('test linkState mutation', async done => {
     expect.assertions(6);

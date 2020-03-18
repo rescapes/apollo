@@ -47,7 +47,14 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
                         // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
-                        return mergeObjects(existing, incoming);
+                        return mergeObjects(
+                          // Remove incoming keys from existing and clone it to unfreeze it.
+                          // since it comes from the cache and will be written to the cache
+                          // This assumes a merge strategy that takes the keys of incoming and doesn't do
+                          // more fine-grained merging
+                          R.compose(unfrozen => R.merge(existing, unfrozen), R.clone, R.omit(R.keys(incoming)))(existing),
+                          incoming
+                        );
                       }
                     }
                   };

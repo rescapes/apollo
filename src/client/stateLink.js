@@ -109,22 +109,16 @@ export const defaultStateLinkResolvers = {
  * @param {Object} config The application config. This matches our API settings object
  * and is used to form the shape of the cache to match the settings.
  */
-export const createDefaultSettingsWithTestValues = config => {
-  return overDeep(
-    (key, obj) => {
-      // Key is e.g. settings, browser
-      return R.merge(obj, {__typename: key});
-    },
-    R.merge(
-      config,
-      {
-        networkStatus: {
-          __typename: 'NetworkStatus',
-          isConnected: false
-        },
-        todos: []
-      }
-    )
+export const mergeLocalTestValuesIntoConfig = config => {
+  return R.merge(
+    config,
+    {
+      networkStatus: {
+        __typename: 'NetworkStatus',
+        isConnected: false
+      },
+      todos: []
+    }
   );
 };
 

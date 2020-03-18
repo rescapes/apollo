@@ -469,7 +469,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
 /**
  * Given a token returns a GraphQL client
  * @param {Object} config
- * @param {String} config.url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * local storage to store are auth token
  * @param {Function} config.writeDefaults expecting apolloClient that writes defaults ot the cache
@@ -479,7 +479,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
 export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
   {
     cacheOptions,
-    url,
+    uri,
     stateLinkResolvers,
     writeDefaults
   }, authToken
@@ -501,11 +501,11 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
       );
     },
     mapToNamedResponseAndInputs('apolloConfig',
-      ({url, stateLinkResolvers, authToken}) => {
+      ({uri, stateLinkResolvers, authToken}) => {
         // Memoized call
         return getOrCreateApolloClientTask({
             cacheOptions,
-            url,
+            uri,
             stateLinkResolvers,
             fixedHeaders: {
               authorization: `JWT ${authToken}`
@@ -514,7 +514,7 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
         );
       }
     )
-  ])({url, stateLinkResolvers, authToken, writeDefaults});
+  ])({uri, stateLinkResolvers, authToken, writeDefaults});
 };
 
 /**
@@ -523,7 +523,7 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
  * @param {Object} config.cacheOptions
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
  * @param {Function} config.cacheOptions.dataIdFromObject See createInMemoryCache
- * @param {String} config.url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param {String} authToken The auth token created from logging in
@@ -532,12 +532,12 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
  * reset the default values of the cache for logout
  */
 export const getApolloClientTask = (
-  {cacheOptions, url, stateLinkResolvers},
+  {cacheOptions, uri, stateLinkResolvers},
   authToken
 ) => {
   return getOrCreateApolloClientTask({
     cacheOptions,
-    url,
+    uri,
     stateLinkResolvers,
     fixedHeaders: {
       authorization: `JWT ${authToken}`
@@ -549,12 +549,12 @@ export const getApolloClientTask = (
  * Non auth client for logging in. Returns a client that can only be used for logging in
  * @param {Object} config The config
  * @param {Object} config.cacheOptions
- * @param {string} config.url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {string} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @return {{apolloClient: ApolloClient}}
  */
-export const noAuthApolloClientTask = ({cacheOptions, url, stateLinkResolvers}) => {
-  return getOrCreateApolloClientTask({cacheOptions, url, stateLinkResolvers, fixedHeaders: {}});
+export const noAuthApolloClientTask = ({cacheOptions, uri, stateLinkResolvers}) => {
+  return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, fixedHeaders: {}});
 };
 
 /**
@@ -575,7 +575,7 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
  * This method is synchronous but returns a Task to be used in API chains
  * @param {Object} config
  * @param {Object} config.cacheOptions
- * @param {String} config.url Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaults
  * @param {Object} userLogin Return value from loginMutationTask() api call
@@ -583,7 +583,7 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
  * @param {String} userLogin.tokenAuth.token The user token
  * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
  */
-export const getOrCreateAuthApolloClientWithTokenTask = R.curry(({cacheOptions, url, stateLinkResolvers, writeDefaults}, userLogin) => {
+export const getOrCreateAuthApolloClientWithTokenTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, userLogin) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => {
@@ -594,7 +594,7 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry(({cacheOptions, 
     },
     getOrCreateApolloAuthClientTaskAndSetDefaults({
       cacheOptions,
-      url,
+      uri,
       stateLinkResolvers,
       writeDefaults
     }, token)

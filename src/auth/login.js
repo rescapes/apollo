@@ -137,7 +137,7 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
  * Expects a GraphQLClient if already authenticated or login data if not
  * @param {Object} config
  * @param {Object} config.cacheOptions
- * @param {String} config.url The URL to create client with if authentication is not already a GraphQLClient
+ * @param {String} config.uri The URL to create client with if authentication is not already a GraphQLClient
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaults. Function to write default values to the client
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
@@ -145,17 +145,17 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
  * @returns {Task<Object>} {apolloClient: Authorized Apollo Client, token: The authentication token,
  * function to clear the link state}
  */
-export const authClientOrLoginTask = R.curry(({cacheOptions, url, stateLinkResolvers, writeDefaults}, authentication) => {
+export const authClientOrLoginTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, authentication) => {
   return R.ifElse(
     ({authentication}) => R.is(ApolloClient, authentication),
     // Just wrap it in a task to match the other option
     apolloClient => of({apolloClient}),
     composeWithChain([
       // map userLogin to getApolloClientTask and token
-      ({url, stateLinkResolvers, loginAuthentication}) => {
+      ({uri, stateLinkResolvers, loginAuthentication}) => {
         return getOrCreateAuthApolloClientWithTokenTask({
             cacheOptions,
-            url,
+            uri,
             stateLinkResolvers,
             writeDefaults
           },
@@ -169,10 +169,10 @@ export const authClientOrLoginTask = R.curry(({cacheOptions, url, stateLinkResol
       ),
       // map login values to token
       mapToNamedResponseAndInputs('apolloConfig',
-        ({url, stateLinkResolvers}) => {
-          return noAuthApolloClientTask({cacheOptions, url, stateLinkResolvers});
+        ({uri, stateLinkResolvers}) => {
+          return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers});
         }
       )
     ])
-  )({url, stateLinkResolvers, authentication: authentication});
+  )({uri, stateLinkResolvers, authentication: authentication});
 });

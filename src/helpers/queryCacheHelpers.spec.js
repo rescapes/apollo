@@ -11,7 +11,7 @@
 
 import {makeQueryContainer} from './queryHelpers';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {localTestAuthTask} from './testHelpers';
+import {expectKeys, localTestAuthTask} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
@@ -74,14 +74,13 @@ describe('queryCacheHelpers', () => {
       ),
       () => localTestAuthTask
     )();
-    const errors = []
+    const errors = [];
     task.run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(
-            R.keys(reqStrPathThrowing('data.regions.0', response))
-          ).toEqual(
-            ['id', 'key', 'name', 'geojson', '__typename']
+          expectKeys(
+            ['id', 'key', 'name', 'geojson', '__typename'],
+            reqStrPathThrowing('data.regions.0', response)
           );
         }
     }, errors, done));

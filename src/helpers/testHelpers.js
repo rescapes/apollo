@@ -11,23 +11,34 @@
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
-import {keyStringToLensPath, reqStrPathThrowing} from 'rescape-ramda';
+import {keyStringToLensPath, reqStrPathThrowing, strPathOr, overDeep} from 'rescape-ramda';
 import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
-import {createDefaultSettingsWithTestValues, defaultStateLinkResolvers} from '../client/stateLink';
-import {writeConfigToServerAndCache, writeDefaultSettingsToCache} from './defaultSettingsStore';
+import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
+import {writeConfigToServerAndCache} from './defaultSettingsStore';
 import {typePoliciesWithMergeObjects} from './clientHelpers';
-import {defaultDataIdFromObject} from '@apollo/client';
+
+// Add typename to each obj
+const addTypeNameDeep = obj => {
+  return overDeep(
+    (key, obj) => {
+      // Key is e.g. settings, browser
+      return R.merge(obj, {__typename: key});
+    }, obj);
+};
 
 /**
- * The config for test
+ * The config for test. We add some cache only properties to
  */
-export const testConfig = {settings: privateTestSettings, writeDefaults: writeDefaultSettingsToCache};
-
-const defaultSettingsWithTestValues = createDefaultSettingsWithTestValues(
-  R.pick(['settings', 'browser'], testConfig)
+export const localTestConfig = mergeLocalTestValuesIntoConfig(R.merge(
+  addTypeNameDeep({settings: privateTestSettings}),
+  {
+    writeDefaults: writeConfigToServerAndCache,
+    stateLinkResolvers: defaultStateLinkResolvers
+  })
 );
+
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
@@ -37,56 +48,44 @@ const defaultSettingsWithTestValues = createDefaultSettingsWithTestValues(
 export const testCacheOptions = {
   typePolicies: typePoliciesWithMergeObjects([
     {type: 'SettingsType', fields: ['data']},
+    {type: 'SettingsDataType', fields: ['mapbox']},
     {type: 'RegionType', fields: ['data']}
-  ]),
-  dataIdFromObject: object => {
-    switch (object.__typename) {
-      // Store the default settings with a magic id. Settings are stored in the database but the initial
-      // settings come from code so don't have an id
-      case 'settings':
-        return R.ifElse(
-          R.prop('id'),
-          obj => defaultDataIdFromObject(obj),
-          obj => defaultDataIdFromObject(R.merge({'id': 'default'}, obj))
-        )(object);
-      // Default behavior. Useful for debugging to se how the object's id is determined
-      default:
-        return defaultDataIdFromObject(object);
-    }
-  }
+  ])
 };
 
-/**
- * Task to return and authorized client for tests
- * Returns an object {apolloClient:An authorized client}
- */
-export const localTestAuthTask = loginToAuthClientTask({
-    cacheOptions: testCacheOptions,
-    uri: parseApiUrl(reqStrPathThrowing('settings.api', testConfig)),
-    stateLinkResolvers: defaultStateLinkResolvers,
-    writeDefaults: writeConfigToServerAndCache(defaultSettingsWithTestValues)
-  },
-  reqStrPathThrowing('settings.testAuthorization', testConfig)
-);
 
 /**
  * Task to return and authorized client for tests
- * @param {Object} testConfig The configuration to set up the test
- * @param {Object} testConfig.settings.api.uri. Uril of the API
+ * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} testConfig The configuration to set up the test
+ * @param {Object} testConfig.settings.api
+ * @param {String} [testConfig.settings.api.protocol] E.g. 'http'
+ * @param {String} [testConfig.settings.api.host] E.g. 'localhost'
+ * @param {String} [testConfig.settings.api.port] E.g. '8008'
+ * @param {String} [testConfig.settings.api.path] E.g. '/graphql/'
+ * @param {String} [testConfig.settings.api.uri] Uri to use instead of the above parts
  * @param {Object} testConfig.settings.testAuthorization Special test section in the settings with
+ * @param {Object} [testConfig.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
+ * @param {Function} testConfig.writeDefaults Required. Function to write defaults to the cache.
+ * Accepts the testConfig with the writeDefaults key removed
+ * @param {Object} [testConfig.testCacheOptions] An object to pass to the Apollo InMemoryCache.
+ * This can have options the class takes such as typePolicies. Defaults to testCacheOptions
  * a username and password
  * Returns an object {apolloClient:An authorized client}
- *
  */
-
 export const testAuthTask = testConfig => loginToAuthClientTask({
     cacheOptions: testCacheOptions,
-    uri: parseApiUrl(reqStrPathThrowing('settings.api', testConfig)),
-    stateLinkResolvers: defaultStateLinkResolvers,
-    writeDefaults: writeConfigToServerAndCache(defaultSettingsWithTestValues)
+    uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.api', testConfig)), 'uri', testConfig),
+    stateLinkResolvers: strPathOr({}, 'stateLinkResolvers', testConfig),
+    writeDefaults: reqStrPathThrowing('writeDefaults', testConfig)(R.omit(['writeDefaults'], testConfig))
   },
   reqStrPathThrowing('settings.testAuthorization', testConfig)
 );
+
+/**
+ * Task to return and authorized client for tests
+ * Returns an object {apolloClient:An authorized client}
+ */
+export const localTestAuthTask = testAuthTask(localTestConfig);
 
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency

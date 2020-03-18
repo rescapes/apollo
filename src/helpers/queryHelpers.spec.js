@@ -11,11 +11,11 @@
 
 import {makeQuery, makeQueryContainer} from './queryHelpers';
 
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
 import {composeWithChain, defaultRunConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
-import {localTestAuthTask, testConfig} from './testHelpers';
+import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
@@ -31,7 +31,8 @@ describe('queryHelpers', () => {
   });
 
   test('makeQueryContainer', done => {
-    const {settings: {api}} = testConfig;
+    expect.assertions(1);
+    const {settings: {api}} = localTestConfig;
     const task = composeWithChain([
       // See if we can get the value from the cache
       mapToNamedPathAndInputs('region', 'data.regions.0',
@@ -92,8 +93,7 @@ describe('queryHelpers', () => {
     task.run().listen(defaultRunConfig({
         onResolved:
           ({region}) => {
-            expect(R.keys(region)).toEqual(['id', 'key', 'name', 'geojson', '__typename']);
-            done();
+            expectKeys(['id', 'key', 'name', 'geojson', '__typename'], region);
           }
       }, errors, done)
     );

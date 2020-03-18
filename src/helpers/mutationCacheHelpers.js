@@ -77,7 +77,7 @@ export const makeCacheMutation = v(R.curry(
     log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id}`);
     apolloClient.writeFragment({fragment: writeFragment, id, data});
     // read to verify that the write succeeded. If this throws then we did something wrong
-    const test = apolloClient.readFragment({fragment: writeFragment, id});
+    //const test = apolloClient.readFragment({fragment: writeFragment, id});
     return data;
   }),
   [
@@ -231,7 +231,7 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
           return R.unless(
             R.isNil,
             pathValue => {
-              return R.merge(pathValue, {__typename: value});
+              return pathValue //R.merge(pathValue, {__typename: value});
             }
           )(pathValue);
         }

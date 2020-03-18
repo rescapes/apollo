@@ -18,7 +18,7 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
-import {testConfig} from '..';
+import {localTestConfig} from '..';
 import {testCacheOptions} from '../helpers/testHelpers';
 
 const cacheOptions = testCacheOptions;
@@ -63,7 +63,7 @@ export const remoteSchemaTask = config => {
     },
     // Authenticate
     config => {
-      const uri = parseApiUrl(reqStrPathThrowing('settings.api', testConfig));
+      const uri = parseApiUrl(reqStrPathThrowing('settings.api', localTestConfig));
       const writeDefaults = reqStrPathThrowing('writeDefaults', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
