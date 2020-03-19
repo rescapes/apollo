@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {capitalize, compact, mapObjToValues, omitDeep, replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
+import {capitalize, compact, mapObjToValues, omitDeep, replaceValuesWithCountAtDepthAndStringify, memoized} from 'rescape-ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
 import {v} from 'rescape-validate';
@@ -44,6 +44,8 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
 
 /***
  *
+ * Makes a query or fragment query.
+ * Memoized so we don't give Apollo the same query twice
  * @param {Object} queryConfig
  * @param {Boolean} queryConfig.client If true adds a client directive
  * @param {Boolean} queryConfig.isFragment If true creates a fragment
@@ -56,7 +58,7 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @return {string} The query string, not gql
  * @private
  */
-export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
+export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
   // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
@@ -115,7 +117,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
   return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
   ${output}
 }`;
-};
+});
 
 /**
  * Creates a query task for any type

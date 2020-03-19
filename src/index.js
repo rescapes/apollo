@@ -59,4 +59,13 @@ export {
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers';
 export {typePoliciesWithMergeObjects} from './helpers/clientHelpers';
-
+export {
+  writeDefaultSettingsToCache,
+  settingsOutputParams,
+  makeSettingsMutationContainer,
+  makeSettingsClientMutationContainer,
+  createCacheOnlyPropsForSettings,
+  readInputTypeMapper,
+  makeSettingsQueryContainer,
+  writeConfigToServerAndCache
+} from './helpers/defaultSettingsStore';

@@ -231,7 +231,7 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
           return R.unless(
             R.isNil,
             pathValue => {
-              return pathValue //R.merge(pathValue, {__typename: value});
+              return R.merge(pathValue, {__typename: value});
             }
           )(pathValue);
         }

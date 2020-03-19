@@ -11,7 +11,7 @@
 import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
 import {loginToAuthClientTask} from '../auth/login';
-import {keyStringToLensPath, reqStrPathThrowing, strPathOr, overDeep} from 'rescape-ramda';
+import {keyStringToLensPath, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
@@ -19,26 +19,14 @@ import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../clie
 import {writeConfigToServerAndCache} from './defaultSettingsStore';
 import {typePoliciesWithMergeObjects} from './clientHelpers';
 
-// Add typename to each obj
-const addTypeNameDeep = obj => {
-  return overDeep(
-    (key, obj) => {
-      // Key is e.g. settings, browser
-      return R.merge(obj, {__typename: key});
-    }, obj);
-};
-
 /**
  * The config for test. We add some cache only properties to
  */
-export const localTestConfig = mergeLocalTestValuesIntoConfig(R.merge(
-  addTypeNameDeep({settings: privateTestSettings}),
-  {
-    writeDefaults: writeConfigToServerAndCache,
-    stateLinkResolvers: defaultStateLinkResolvers
-  })
-);
-
+export const localTestConfig = mergeLocalTestValuesIntoConfig({
+  settings: privateTestSettings,
+  writeDefaults: writeConfigToServerAndCache,
+  stateLinkResolvers: defaultStateLinkResolvers
+});
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
