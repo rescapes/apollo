@@ -19,14 +19,6 @@ import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../clie
 import {writeConfigToServerAndCache} from './defaultSettingsStore';
 import {typePoliciesWithMergeObjects} from './clientHelpers';
 
-/**
- * The config for test. We add some cache only properties to
- */
-export const localTestConfig = mergeLocalTestValuesIntoConfig({
-  settings: privateTestSettings,
-  writeDefaults: writeConfigToServerAndCache,
-  stateLinkResolvers: defaultStateLinkResolvers
-});
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
@@ -41,6 +33,15 @@ export const testCacheOptions = {
   ])
 };
 
+/**
+ * The config for test. We add some cache only properties to
+ */
+export const localTestConfig = mergeLocalTestValuesIntoConfig({
+  settings: privateTestSettings,
+  writeDefaults: writeConfigToServerAndCache,
+  stateLinkResolvers: defaultStateLinkResolvers,
+  cacheOptions: testCacheOptions
+});
 
 /**
  * Task to return and authorized client for tests
@@ -55,13 +56,15 @@ export const testCacheOptions = {
  * @param {Object} [testConfig.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
  * @param {Function} testConfig.writeDefaults Required. Function to write defaults to the cache.
  * Accepts the testConfig with the writeDefaults key removed
- * @param {Object} [testConfig.testCacheOptions] An object to pass to the Apollo InMemoryCache.
+ * @param {Object} [testConfig.cacheOptions] An object to pass to the Apollo InMemoryCache.
+ * @param {Object} [testConfig.cacheOptions.typePolicies] Type policies for the Apollo InMemoryCache. These
+ * policies specify merging strategies, and must be included for types that store cache only values
  * This can have options the class takes such as typePolicies. Defaults to testCacheOptions
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
 export const testAuthTask = testConfig => loginToAuthClientTask({
-    cacheOptions: testCacheOptions,
+    cacheOptions: strPathOr({}, 'cacheOptions', testConfig),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.api', testConfig)), 'uri', testConfig),
     stateLinkResolvers: strPathOr({}, 'stateLinkResolvers', testConfig),
     writeDefaults: reqStrPathThrowing('writeDefaults', testConfig)(R.omit(['writeDefaults'], testConfig))

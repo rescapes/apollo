@@ -52,7 +52,7 @@ export const makeCacheMutation = v(R.curry(
     const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
     // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
     const fragment = gql`${makeFragmentQuery(
-      name, 
+      `${name}WithoutClientFields`, 
       {}, 
       // Don't output cache only fields here. We just want the id
       omitClientFields(outputParams), 
@@ -69,7 +69,7 @@ export const makeCacheMutation = v(R.curry(
     const data = mergeDeep(result, R.omit(['id', '__typename'], props));
     // Write the fragment
     const writeFragment = gql`${makeFragmentQuery(
-      name, 
+      `${name}WithClientFields`, 
       {}, 
       outputParams, 
       R.pick(['__typename'], props))
