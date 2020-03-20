@@ -61,14 +61,16 @@ export {containerForApolloType} from './helpers/containerHelpers';
 export {typePoliciesWithMergeObjects, createAuthTask} from './helpers/clientHelpers';
 export {
   writeDefaultSettingsToCache,
-  defaultSettingsOutputParams,
+  defaultSettingsOutputParams
+} from './helpers/defaultSettingsStore';
+export {
   makeSettingsMutationContainer,
   makeSettingsClientMutationContainer,
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   makeSettingsQueryContainer,
   writeConfigToServerAndCache
-} from './helpers/defaultSettingsStore';
+} from './helpers/settingsStore';
 export {
   typePoliciesConfig
 } from './config';

@@ -15,7 +15,7 @@ import {mapToNamedPathAndInputs} from 'rescape-ramda';
 import moment from 'moment';
 import {omitClientFields} from './requestHelpers';
 import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
-import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingStore';
+import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingsStore';
 
 /**
  * Created by Andy Likuski on 2019.01.22

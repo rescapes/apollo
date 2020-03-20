@@ -23,7 +23,7 @@ import {makeCacheMutation} from './mutationCacheHelpers';
 import {defaultSettingsOutputParams} from './defaultSettingsStore';
 import {of} from 'folktale/concurrency/task';
 import {createSampleSettingsTask} from './settings.sample';
-import {makeSettingsQueryContainer} from './settingStore';
+import {makeSettingsQueryContainer} from './settingsStore';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username', 'data.mapbox.mapboxAuthentication'];

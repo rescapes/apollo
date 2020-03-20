@@ -14,7 +14,7 @@ import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
-import {writeConfigToServerAndCache} from './settingStore'
+import {writeConfigToServerAndCache} from './settingsStore'
 import {createAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
 import {typePoliciesConfig} from '../config';
 import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';

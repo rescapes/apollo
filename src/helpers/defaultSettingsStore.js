@@ -1,5 +1,5 @@
 import settings from './privateTestSettings';
-import {writeConfigToServerAndCache} from './settingStore';
+import {writeConfigToServerAndCache} from './settingsStore';
 
 /**
  * Created by Andy Likuski on 2018.12.31
