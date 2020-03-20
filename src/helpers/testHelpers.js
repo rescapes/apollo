@@ -8,29 +8,26 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {parseApiUrl} from 'rescape-helpers';
 import * as R from 'ramda';
-import {loginToAuthClientTask} from '../auth/login';
-import {keyStringToLensPath, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {keyStringToLensPath} from 'rescape-ramda';
 import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
-import {writeConfigToServerAndCache} from './defaultSettingsStore';
-import {typePoliciesWithMergeObjects} from './clientHelpers';
-
+import {writeConfigToServerAndCache} from './settingStore'
+import {createAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
+import {typePoliciesConfig} from '../config';
+import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
  * when updating the cache
  * @type {any}
  */
-export const testCacheOptions = {
-  typePolicies: typePoliciesWithMergeObjects([
-    {type: 'SettingsType', fields: ['data']},
-    {type: 'SettingsDataType', fields: ['mapbox']},
-    {type: 'RegionType', fields: ['data']}
-  ])
+export const cacheOptions = {
+  typePolicies: typePoliciesWithMergeObjects(
+    typePoliciesConfig
+  )
 };
 
 /**
@@ -38,45 +35,24 @@ export const testCacheOptions = {
  */
 export const localTestConfig = mergeLocalTestValuesIntoConfig({
   settings: privateTestSettings,
-  writeDefaults: writeConfigToServerAndCache,
-  stateLinkResolvers: defaultStateLinkResolvers,
-  cacheOptions: testCacheOptions
+  settingsConfig: {
+    settingsOutputParams: defaultSettingsOutputParams,
+    cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+    cacheIdProps: defaultSettingsCacheIdProps
+  },
+  apollo: {
+    writeDefaults: writeConfigToServerAndCache,
+    stateLinkResolvers: defaultStateLinkResolvers,
+    cacheOptions
+  }
 });
 
-/**
- * Task to return and authorized client for tests
- * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} testConfig The configuration to set up the test
- * @param {Object} testConfig.settings.api
- * @param {String} [testConfig.settings.api.protocol] E.g. 'http'
- * @param {String} [testConfig.settings.api.host] E.g. 'localhost'
- * @param {String} [testConfig.settings.api.port] E.g. '8008'
- * @param {String} [testConfig.settings.api.path] E.g. '/graphql/'
- * @param {String} [testConfig.settings.api.uri] Uri to use instead of the above parts
- * @param {Object} testConfig.settings.testAuthorization Special test section in the settings with
- * @param {Object} [testConfig.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
- * @param {Function} testConfig.writeDefaults Required. Function to write defaults to the cache.
- * Accepts the testConfig with the writeDefaults key removed
- * @param {Object} [testConfig.cacheOptions] An object to pass to the Apollo InMemoryCache.
- * @param {Object} [testConfig.cacheOptions.typePolicies] Type policies for the Apollo InMemoryCache. These
- * policies specify merging strategies, and must be included for types that store cache only values
- * This can have options the class takes such as typePolicies. Defaults to testCacheOptions
- * a username and password
- * Returns an object {apolloClient:An authorized client}
- */
-export const testAuthTask = testConfig => loginToAuthClientTask({
-    cacheOptions: strPathOr({}, 'cacheOptions', testConfig),
-    uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.api', testConfig)), 'uri', testConfig),
-    stateLinkResolvers: strPathOr({}, 'stateLinkResolvers', testConfig),
-    writeDefaults: reqStrPathThrowing('writeDefaults', testConfig)(R.omit(['writeDefaults'], testConfig))
-  },
-  reqStrPathThrowing('settings.testAuthorization', testConfig)
-);
 
 /**
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const localTestAuthTask = testAuthTask(localTestConfig);
+export const localTestAuthTask = createAuthTask(localTestConfig);
 
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency

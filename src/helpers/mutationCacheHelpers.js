@@ -10,10 +10,10 @@
  */
 
 import * as R from 'ramda';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {capitalize, mergeDeep, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
+import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
@@ -66,7 +66,11 @@ export const makeCacheMutation = v(R.curry(
     const result = apolloClient.readFragment({fragment, id});
     // Merge the existing cache data with the full props, where the props are the cache-only data to write
     // Be careful because props will override anything it matches with deep in result
-    const data = mergeDeep(result, R.omit(['id', '__typename'], props));
+    const data = mergeDeepWithRecurseArrayItemsByRight(
+      item => R.when(R.is(Object), R.propOr(v, 'id'))(item),
+      result,
+      R.omit(['id', '__typename'], props)
+    );
     // Write the fragment
     const writeFragment = gql`${makeFragmentQuery(
       `${name}WithClientFields`, 
@@ -74,10 +78,16 @@ export const makeCacheMutation = v(R.curry(
       outputParams, 
       R.pick(['__typename'], props))
     }`;
-    log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id}`);
+    log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id} args: ${JSON.stringify(R.pick(['__typename'], props))}`);
     apolloClient.writeFragment({fragment: writeFragment, id, data});
-    // read to verify that the write succeeded. If this throws then we did something wrong
-    //const test = apolloClient.readFragment({fragment: writeFragment, id});
+    // Read to verify that the write succeeded.
+    // If this throws then we did something wrong
+    try {
+      const test = apolloClient.readFragment({fragment: writeFragment, id});
+    } catch (e) {
+      log.error('Could not read the fragment just written to the cache');
+      throw e;
+    }
     return data;
   }),
   [

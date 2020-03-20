@@ -8,7 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {ApolloClient, ApolloLink, createHttpLink, defaultDataIdFromObject, InMemoryCache} from '@apollo/client';
+import {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} from '@apollo/client';
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
@@ -18,10 +18,12 @@ import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
 import {
-  composeWithChain, composeWithMapMDeep,
-  mapToNamedResponseAndInputs, memoized, memoizedWith,
-  promiseToTask,
   compact,
+  composeWithChain,
+  composeWithMapMDeep,
+  mapToNamedResponseAndInputs,
+  memoizedWith,
+  promiseToTask,
   reqStrPathThrowing,
   retryTask,
   strPathOr
@@ -473,6 +475,10 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * local storage to store are auth token
  * @param {Function} config.writeDefaults expecting apolloClient that writes defaults ot the cache
+ * @param {Object} config.settingsConfig
+ * @param {Array} config.settingsConfig.settingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
  * @param {String} authToken: Authenticates the client
  * @return {{apolloClient: ApolloClient}}
  */
@@ -481,14 +487,16 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
     cacheOptions,
     uri,
     stateLinkResolvers,
-    writeDefaults
-  }, authToken
+    writeDefaults,
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+  },
+  authToken
 ) => {
   return composeWithChain([
-    ({apolloConfig, writeDefaults}) => {
+    ({apolloConfig, cacheOnlyObjs, cacheIdProps, settingsOutputParams, writeDefaults}) => {
       const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
       // Set writeDefaults to reset the cache. reset: true tells the function that this isn't the initial call
-      apolloClient.onResetStore(() => writeDefaults(apolloClient, {reset: true}));
+      apolloClient.onResetStore(() => writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}));
       const taskIfNotTask = obj => {
         return R.unless(obj => 'run' in obj, of)(obj);
       };
@@ -497,7 +505,7 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
       // or the structure of the values
       return R.map(
         () => ({apolloClient}),
-        taskIfNotTask(writeDefaults(apolloClient, {reset: false}))
+        taskIfNotTask(writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}))
       );
     },
     mapToNamedResponseAndInputs('apolloConfig',
@@ -514,7 +522,7 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
         );
       }
     )
-  ])({uri, stateLinkResolvers, authToken, writeDefaults});
+  ])({uri, stateLinkResolvers, authToken, writeDefaults, cacheOnlyObjs, cacheIdProps, settingsOutputParams});
 };
 
 /**
@@ -578,12 +586,23 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaults
+ * @param {Array} config.outputParams Teh settings outputParams
  * @param {Object} userLogin Return value from loginMutationTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
+ * @param {Object} config.settingsConfig
+ * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
  */
-export const getOrCreateAuthApolloClientWithTokenTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, userLogin) => {
+export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
+  {
+    cacheOptions, uri, stateLinkResolvers, writeDefaults,
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+  },
+  userLogin
+) => {
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => {
@@ -596,7 +615,8 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry(({cacheOptions, 
       cacheOptions,
       uri,
       stateLinkResolvers,
-      writeDefaults
+      writeDefaults,
+      settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
     }, token)
   );
 });

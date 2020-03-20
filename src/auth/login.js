@@ -66,9 +66,13 @@ export const loginMutationTask = v(R.curry((apolloConfig, variables) => {
  * @param {Object} props
  * @param {String} props.username The username
  * @param {String} props.password The password
+ * @param {Object} config.settingsConfig
+ * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {{apolloClient: ApolloClient, token}}
  */
-export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, props) => {
+export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}}, props) => {
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
@@ -77,7 +81,8 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
           cacheOptions,
           uri,
           stateLinkResolvers,
-          writeDefaults
+          writeDefaults,
+          settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
         }, loginData
       );
     },
@@ -139,13 +144,25 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
  * @param {Object} config.cacheOptions
  * @param {String} config.uri The URL to create client with if authentication is not already a GraphQLClient
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Array} config.defaultSettingsOutputParams the settings output params
  * @param {Function} config.writeDefaults. Function to write default values to the client
+ * @param {Object} config.settingsConfig
+ * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
  * @returns {Task<Object>} {apolloClient: Authorized Apollo Client, token: The authentication token,
  * function to clear the link state}
  */
-export const authClientOrLoginTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults}, authentication) => {
+export const authClientOrLoginTask = R.curry((
+  {
+    cacheOptions,
+    uri,
+    stateLinkResolvers,
+    writeDefaults,
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+  }, authentication) => {
   return R.ifElse(
     ({authentication}) => R.is(ApolloClient, authentication),
     // Just wrap it in a task to match the other option
@@ -157,7 +174,8 @@ export const authClientOrLoginTask = R.curry(({cacheOptions, uri, stateLinkResol
             cacheOptions,
             uri,
             stateLinkResolvers,
-            writeDefaults
+            writeDefaults,
+            settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
           },
           R.prop('data', loginAuthentication)
         );

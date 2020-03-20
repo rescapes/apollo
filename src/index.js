@@ -54,14 +54,14 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  testAuthTask, localTestConfig, localTestAuthTask, testCacheOptions, expectKeys
+  localTestConfig, localTestAuthTask, cacheOptions, expectKeys
 } from './helpers/testHelpers';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers';
-export {typePoliciesWithMergeObjects} from './helpers/clientHelpers';
+export {typePoliciesWithMergeObjects, createAuthTask} from './helpers/clientHelpers';
 export {
   writeDefaultSettingsToCache,
-  settingsOutputParams,
+  defaultSettingsOutputParams,
   makeSettingsMutationContainer,
   makeSettingsClientMutationContainer,
   createCacheOnlyPropsForSettings,
@@ -69,3 +69,9 @@ export {
   makeSettingsQueryContainer,
   writeConfigToServerAndCache
 } from './helpers/defaultSettingsStore';
+export {
+  typePoliciesConfig
+} from './config';
+export {
+  makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
+} from './helpers/queryCacheHelpers';

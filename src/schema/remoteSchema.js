@@ -18,10 +18,9 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
-import {localTestConfig} from '..';
-import {testCacheOptions} from '../helpers/testHelpers';
-
-const cacheOptions = testCacheOptions;
+import {localTestConfig, defaultSettingsOutputParams} from '..';
+import {cacheOptions} from '../helpers/testHelpers';
+import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs} from '../helpers/defaultSettingsStore';
 
 const http = uri => new HttpLink({
   uri,
@@ -47,6 +46,10 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
  * @param {Object} config.settings.testAuthorization For testing. Normally the user would enter these
  * @param {String} config.settings.testAuthorization.username the username to log in with
  * @param {String} config.settings.testAuthorization.password the password
+ * @param {Object} config.settingsConfig
+ * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @returns {Task<Object>} Resolves with an object containing the schema, the authenticated ApolloLink, and
  *
  */
@@ -64,7 +67,7 @@ export const remoteSchemaTask = config => {
     // Authenticate
     config => {
       const uri = parseApiUrl(reqStrPathThrowing('settings.api', localTestConfig));
-      const writeDefaults = reqStrPathThrowing('writeDefaults', config);
+      const writeDefaults = reqStrPathThrowing('apollo.writeDefaults', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
         authClientOrLoginTask({
@@ -72,7 +75,8 @@ export const remoteSchemaTask = config => {
             uri,
             // StateLinkResolvers are empty for now
             stateLinkResolvers: {},
-            writeDefaults
+            writeDefaults,
+            settingsConfig: reqStrPathThrowing('settingsConfig', config)
           },
           reqStrPathThrowing('settings.testAuthorization', config)
         )

@@ -14,7 +14,8 @@ import settings from '../helpers/privateTestSettings';
 import {mapToNamedPathAndInputs} from 'rescape-ramda';
 import moment from 'moment';
 import {omitClientFields} from './requestHelpers';
-import {makeSettingsMutationContainer, makeSettingsQueryContainer, settingsOutputParams} from './defaultSettingsStore';
+import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
+import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingStore';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -48,7 +49,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
               fetchPolicy: 'network-only'
             }
           },
-          {outputParams: omitClientFields(settingsOutputParams)},
+          {outputParams: omitClientFields(defaultSettingsOutputParams)},
           R.pick(['id'], settingsWithoutCacheValues)
         );
       }
@@ -56,7 +57,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // Now query for the server and cache-only props. This should match data in the cache and not need the server
     // So let's force it go to the server so we are sure that the server and cache-only values work
     mapToNamedPathAndInputs('settingsFromCache', 'data.settings',
-      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+      ({settingsWithoutCacheValues, apolloConfig: {apolloClient}, defaultSettingsOutputParams}) => {
         return makeSettingsQueryContainer(
           {
             apolloClient,
@@ -64,9 +65,9 @@ export const createSampleSettingsTask = (apolloConfig) => {
               fetchPolicy: 'cache-only'
             }
           },
-          {outputParams: settingsOutputParams},
+          {outputParams: defaultSettingsOutputParams},
           R.pick(['id'], settingsWithoutCacheValues)
-        ).map(x => x)
+        );
       }
     ),
     // Query to get the value in the cache.
@@ -74,20 +75,24 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // However the result of this query correctly merges that from the server with the cache-only values
     // It seems like the query itself must run once before the same data can be found in the cache
     mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
-      ({settingsWithoutCacheValues, apolloConfig}) => {
+      ({settingsWithoutCacheValues, apolloConfig, defaultSettingsOutputParams}) => {
         return makeSettingsQueryContainer(
           apolloConfig,
-          {outputParams: settingsOutputParams},
+          {outputParams: defaultSettingsOutputParams},
           R.pick(['id'], settingsWithoutCacheValues)
-        )
+        );
       }
     ),
     // Mutate the settings to the database
     mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
-      ({props, apolloConfig}) => {
+      ({props, apolloConfig, defaultSettingsOutputParams}) => {
         return makeSettingsMutationContainer(
           apolloConfig,
-          {outputParams: omitClientFields(settingsOutputParams)},
+          {
+            outputParams: omitClientFields(defaultSettingsOutputParams),
+            cacheIdProps: defaultSettingsCacheIdProps,
+            cacheOnlyObjs: defaultSettingsCacheOnlyObjs
+          },
           props
         );
       }
@@ -96,6 +101,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // Settings is merged into the overall application state
     {
       apolloConfig,
+      defaultSettingsOutputParams,
       props: {
         key: `test${moment().format('HH-mm-SS')}`,
         data: settings

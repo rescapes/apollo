@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {localTestAuthTask, testCacheOptions, localTestConfig} from '../helpers/testHelpers';
+import {localTestAuthTask, cacheOptions, localTestConfig} from '../helpers/testHelpers';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
 import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {
@@ -20,12 +20,16 @@ import {
   verifyTokenRequestContainer
 } from './login';
 import {parseApiUrl} from 'rescape-helpers';
-import {writeDefaultSettingsToCache} from '../helpers/defaultSettingsStore';
-import {defaultStateLinkResolvers} from '..';
+import {
+  defaultSettingsCacheIdProps,
+  defaultSettingsCacheOnlyObjs,
+  defaultSettingsOutputParams,
+  writeDefaultSettingsToCache
+} from '../helpers/defaultSettingsStore';
+import {defaultStateLinkResolvers} from '../client/stateLink';
 
 const {settings: {api}} = localTestConfig;
 const uri = parseApiUrl(api);
-const cacheOptions = testCacheOptions;
 
 describe('login', () => {
   test('testLoginCredentials', done => {
@@ -44,7 +48,8 @@ describe('login', () => {
             cacheOptions,
             uri,
             stateLinkResolvers: defaultStateLinkResolvers,
-            writeDefaults: writeDefaultSettingsToCache
+            writeDefaults: writeDefaultSettingsToCache,
+            settingsOutputParams: defaultSettingsOutputParams
           },
           {tokenAuth: {token}}
         )
@@ -71,7 +76,8 @@ describe('login', () => {
         cacheOptions,
         uri,
         stateLinkResolvers: defaultStateLinkResolvers,
-        writeDefaults: writeDefaultSettingsToCache
+        writeDefaults: writeDefaultSettingsToCache,
+        settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
       },
       reqStrPathThrowing('settings.testAuthorization', localTestConfig)
     );
@@ -83,7 +89,8 @@ describe('login', () => {
             cacheOptions,
             uri,
             stateLinkResolvers: defaultStateLinkResolvers,
-            writeDefaults: writeDefaultSettingsToCache
+            writeDefaults: writeDefaultSettingsToCache,
+            settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
           }, apolloClient).run().listen(defaultRunConfig(
             {
               onResolved: ({token, apolloClient: apolloClient2}) => {

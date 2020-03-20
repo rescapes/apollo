@@ -23,7 +23,7 @@ import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
-import {settingsOutputParams} from './defaultSettingsStore';
+import {defaultSettingsOutputParams} from './defaultSettingsStore';
 
 describe('requestHelpers', () => {
 
@@ -121,7 +121,7 @@ describe('requestHelpers', () => {
   });
 
   test('omitClientFields', () => {
-    expect(omitClientFields(settingsOutputParams)).toEqual(
+    expect(omitClientFields(defaultSettingsOutputParams)).toEqual(
       [
         'id',
         'key',

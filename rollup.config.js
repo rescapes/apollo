@@ -11,8 +11,18 @@ const config = {
     'src/index.js',
     'src/auth/login.js',
     'src/client/apolloClient.js',
+    'src/client/apolloClientCache.js',
+    'src/helpers/clientHelpers.js',
+    'src/helpers/containerHelpers.js',
+    'src/helpers/defaultSettingsStore.js',
+    'src/helpers/mutationCacheHelpers',
+    'src/helpers/mutationHelpers.js',
+    'src/helpers/queryCacheHelpers.js',
     'src/helpers/queryHelpers.js',
-    'src/helpers/mutationHelpers.js'
+    'src/helpers/requestHelpers.js',
+    'src/helpers/testHelpers.js',
+    'src/schema/remoteSchema.js',
+    'src/config.js'
   ],
   plugins: []
 };
