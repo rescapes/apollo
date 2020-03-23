@@ -9,18 +9,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  mapObjToValues,
-  reqStrPath,
-  pickDeepPaths,
-  strPathOr,
-  strPathOrNullOk,
-  omitDeepBy,
-  overDeep
-} from 'rescape-ramda';
+import {mapObjToValues, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
-import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-helpers';
+import {convertFromGraphqlStructure, convertToGraphqlStructure} from 'rescape-helpers';
 
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic
@@ -45,12 +37,7 @@ import {convertToGraphqlStructure, convertFromGraphqlStructure} from 'rescape-he
  *]
  * @returns {String} The output params in graphql format
  */
-export const formatOutputParams = (outputParam) => {
-  // TODO can we format here?
-  return _formatOutputParams(outputParam);
-};
-
-export const _formatOutputParams = (outputParam) => {
+export const formatOutputParams = outputParam => {
   const v = R.cond([
     // Value is a string or number, just return it on one line
     [R.either(R.is(String), R.is(Number)),
@@ -61,7 +48,7 @@ export const _formatOutputParams = (outputParam) => {
     [R.is(Array),
       list => R.flatten([
         R.map(item => {
-            return `${_formatOutputParams(item)}`;
+            return `${formatOutputParams(item)}`;
           }, list
         )
       ])
@@ -69,11 +56,17 @@ export const _formatOutputParams = (outputParam) => {
     [R.is(Object),
       obj => R.flatten(mapObjToValues(
         (value, key) => {
-          return [
-            `${key} {`,
-            `${_formatOutputParams(value)}`,
-            `}`
-          ];
+          // Recurse if value is an object. If not, just return key since value is simply truthy to indicate key
+          // represent a primitive graphql property
+          return R.ifElse(
+            R.is(Object),
+            v => [
+              `${key} {`,
+              `${formatOutputParams(v)}`,
+              `}`
+            ],
+            () => [key]
+          )(value);
         },
         obj
       ))
@@ -284,12 +277,10 @@ export const objIdToInt = obj => R.over(R.lensProp('id'), parseInt, obj);
  * @returns {[Object|String]} The pruned graphqlListStructure
  */
 export const pickGraphqlPaths = (paths, graphqlListStructure) => {
-  const input = convertFromGraphqlStructure(graphqlListStructure);
-  const modified = pickDeepPaths(
+  return pickDeepPaths(
     paths,
-    input
+    graphqlListStructure
   );
-  return convertToGraphqlStructure(modified);
 };
 
 /**
@@ -301,9 +292,8 @@ export const pickGraphqlPaths = (paths, graphqlListStructure) => {
  * @param {[Object|String]} graphqlListStructure
  * @returns {[Object|String]} The pruned graphqlListStructure
  */
-export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => R.compose(
-  convertToGraphqlStructure,
-  R.over(
+export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => {
+  return R.over(
     lens,
     data => {
       const minimumData = pickDeepPaths(paths, data);
@@ -312,10 +302,8 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => R.com
       }
       return minimumData;
     }
-  ),
-  convertFromGraphqlStructure
-)(graphqlListStructure);
-
+  )(graphqlListStructure);
+};
 
 /**
  * Uses apolloConfig.options.variables to winnow the given props.
@@ -362,20 +350,14 @@ export const _winnowRequestProps = (apolloConfig, props) => {
 
 /**
  * Removes @client fields from the outputParams
- * @param outputParams
+ * @param {Array|Object} outputParams
  * @return {*}
  */
 export const omitClientFields = outputParams => {
-  return R.compose(
-    convertToGraphqlStructure,
-    obj => {
-      return omitDeepBy(
-        value => {
-          return R.both(R.is(String), R.includes('@client'))(value);
-        },
-        obj
-      );
+  return omitDeepBy(
+    value => {
+      return R.both(R.is(String), R.includes('@client'))(value);
     },
-    convertFromGraphqlStructure
-  )(outputParams);
+    outputParams
+  );
 };

@@ -43,7 +43,7 @@ export const createCacheOnlyPropsForSettings = ({cacheOnlyObjs, cacheIdProps}, p
 /**
  * Queries settingss
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
- * @params {Object} outputParams OutputParams for the query such as defaultSettingsOutputParams
+ * @params {Array|Object} outputParams OutputParams for the query such as defaultSettingsOutputParams
  * @params {Object} props Arguments for the Settingss query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Settingss in an object with obj.data.settings or errors in obj.errors
  */
@@ -57,7 +57,10 @@ export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams
   [
     ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['queryStructure', PropTypes.shape({
-      outputParams: PropTypes.array.isRequired
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired,
     })
     ],
     ['props', PropTypes.shape().isRequired]
@@ -119,7 +122,10 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
   ['mutationStructure', PropTypes.shape({
     cacheOnlyObjs: PropTypes.array.isRequired,
     cacheIdProps: PropTypes.array.isRequired,
-    outputParams: PropTypes.array.isRequired
+    outputParams: PropTypes.oneOfType([
+      PropTypes.array,
+      PropTypes.shape()
+    ]).isRequired,
   }).isRequired
   ],
   ['props', PropTypes.shape().isRequired]

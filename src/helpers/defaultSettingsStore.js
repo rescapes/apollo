@@ -12,50 +12,41 @@ import {writeConfigToServerAndCache} from './settingsStore';
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 // Global settings.
 // omitCacheOnlyFields to true to omit cache only fields from the query
-export const defaultSettingsOutputParams = [
-  'id',
-  'key',
-  {
-    'data': [
-      'domain',
+export const defaultSettingsOutputParams = {
+  id: 1,
+  key: 1,
+  data: {
+    domain: 1,
+    api: {
+      protocol: 1,
+      host: 1,
+      port: 1,
+      path: 1
+    },
+    'testAuthorization @client': {
+      username: 1,
+      password: 1
+    },
+    // Overpass API configuration to play nice with the server's strict throttling
+    overpass: {
+      cellSize: 1,
+      sleepBetweenCalls: 1
+    },
+    mapbox:
       {
-        api: [
-          'protocol',
-          'host',
-          'port',
-          'path'
-        ],
-        'testAuthorization @client': [
-          'username',
-          'password'
-        ],
-        // Overpass API configuration to play nice with the server's strict throttling
-        overpass: [
-          'cellSize',
-          'sleepBetweenCalls'
-        ],
-        mapbox: [
-          {
-            'mapboxAuthentication @client': [
-              'mapboxApiAccessToken'
-            ]
-          },
-          {
-            'viewport': [
-              'zoom',
-              'latitude',
-              'longitude'
-            ]
-          }
-        ]
+        'mapboxAuthentication @client': {
+          mapboxApiAccessToken: 1
+        },
+        viewport: {
+          zoom: 1,
+          latitude: 1,
+          longitude: 1
+        }
       }
-    ]
   }
-];
+};
 
 // Paths to prop values that we don't store in the database, but only in the cache
 // The prop paths are marked with a client directive when querying (see defaultSettingsOutputParams)

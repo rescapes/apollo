@@ -113,53 +113,39 @@ export const sampleInputParamTypeMapper = {
 };
 // Default output params for query. Just add more to these as needed.
 // Later we'll let the user specify
-export const sampleResourceOutputParams = [
-  'id',
-  'name',
-  {
-    'data': [
-      {
-        'settings': [
-          'defaultLocation',
-          {
-            'stages': [
-              'key',
-              'targets'
-            ]
-          }
-        ]
-      },
-      'rawData',
-      'material',
-      {
-        'graph': [
-          {
-            'nodes': [
-              'name',
-              'type',
-              'value',
-              {
-                'geometry': [
-                  'type',
-                  'coordinates'
-                ]
-              },
-              'properties',
-              'propertyValues'
-            ]
-          },
-          {
-            'links': [
-              'value',
-              'source',
-              'target'
-            ]
-          }
-        ]
+export const sampleResourceOutputParams = {
+  id: 1,
+  name: 1,
+  data: {
+    settings: {
+      defaultLocation: 1,
+      stages: {
+        key: 1,
+        targets: 1
       }
-    ]
+    },
+    rawData: 1,
+    material: 1,
+    graph: {
+      'nodes': {
+        name: 1,
+        type: 1,
+        value: 1,
+        geometry: {
+          type: 1,
+          coordinates: 1
+        },
+        properties: 1,
+        propertyValues: 1
+      },
+      links: {
+        value: 1,
+        source: 1,
+        target: 1
+      }
+    }
   }
-];
+};
 
 export const sampleResourceProps = {
   resourceData: {
@@ -170,13 +156,13 @@ export const sampleResourceProps = {
           4.3517,
           50.8503
         ],
-        columns: [
-          "siteName",
-          "location",
-          "coordinates",
-          "junctionStage",
-          "annualTonnage"
-        ],
+        columns: {
+          siteName: 1,
+          location: 1,
+          coordinates: 1,
+          junctionStage: 1,
+          annualTonnage: 1
+        },
         stageKey: "junctionStage",
         valueKey: "annualTonnage",
         locationKey: "coordinates",

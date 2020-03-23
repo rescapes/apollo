@@ -476,7 +476,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * local storage to store are auth token
  * @param {Function} config.writeDefaults expecting apolloClient that writes defaults ot the cache
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.settingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.settingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
  * @param {String} authToken: Authenticates the client
@@ -587,12 +587,12 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaults
- * @param {Array} config.outputParams Teh settings outputParams
+ * @param {Array|Object} config.outputParams Teh settings outputParams
  * @param {Object} userLogin Return value from loginMutationTask() api call
  * @param {Object} userLogin.tokenAuth
  * @param {String} userLogin.tokenAuth.token The user token
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.

@@ -26,7 +26,7 @@ const log = loggers.get('rescapeDefault');
  * @param {String} queryName
  * @param {Object} inputParamTypeMapper maps Object params paths to the correct input type for the query
  * e.g. { 'data': 'DataTypeRelatedReadInputType' }
- * @param {Object} outputParams
+ * @param {Array|Object} outputParams
  * @param {Object} queryArguments
  * @returns {String} The query in a string
  */
@@ -51,7 +51,7 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @param {Boolean} queryConfig.isFragment If true creates a fragment
  * @param queryName
  * @param inputParamTypeMapper
- * @param outputParams
+ * @param {Array|Object} outputParams
  * @param props
  * @param {String} [props.__typename] Only required for fragment queries
  * I think fragments never need args so only queryArguments.__typename should be specified for fragment queries
@@ -133,7 +133,7 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
  * @param {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @param {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param {[String|Object]} outputParams output parameters for the query in this style json format:
+ * @param {Array|Object} outputParams output parameters for the query in this style json format:
  *  [
  *    'id',
  *    {
@@ -204,13 +204,10 @@ export const makeQueryContainer = v(R.curry(
     ['queryOptions', PropTypes.shape({
       name: PropTypes.string.isRequired,
       readInputTypeMapper: PropTypes.shape(),
-      outputParams: PropTypes.arrayOf(
-        PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.array,
-          PropTypes.shape()
-        ])
-      ).isRequired
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired,
     })],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'

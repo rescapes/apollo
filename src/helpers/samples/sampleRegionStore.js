@@ -24,46 +24,38 @@ export const readInputTypeMapper = {
   'geojson': 'FeatureCollectionDataTypeofRegionTypeRelatedReadInputType'
 };
 
-export const regionOutputParams = [
-  'id',
-  'deleted',
-  'key',
-  'name',
-  'createdAt',
-  'updatedAt',
-  {
-    geojson: [
-      'type',
-      {
-        features: [
-          'type',
-          'id',
-          {
-            geometry: [
-              'type',
-              'coordinates'
-            ]
-          },
-          'properties'
-        ]
+export const regionOutputParams = {
+  id: 1,
+  deleted: 1,
+  key: 1,
+  name: 1,
+  createdAt: 1,
+  updatedAt: 1,
+  geojson: {
+    type: 1,
+    features: {
+      type: 1,
+      id: 1,
+      geometry: {
+        type: 1,
+        coordinates: 1
       },
-      'generator',
-      'copyright'
-    ],
-    data: [
-      {
-        locations: [
-          'params'
-        ]
-      }
-    ]
+      properties: 1
+    },
+    generator: 1,
+    copyright: 1
+  },
+  data: {
+    locations: {
+      params: 1
+    }
   }
-];
+};
 
 /**
  * Queries regions
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
- * @params {Object} outputParams OutputParams for the query such as regionOutputParams
+ * @params {Array|Object} outputParams OutputParams for the query such as regionOutputParams
  * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
  */
@@ -75,7 +67,10 @@ export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams}
   [
     ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
     ['queryStructure', PropTypes.shape({
-      outputParams: PropTypes.array.isRequired,
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired
     })],
     ['props', PropTypes.shape().isRequired]
   ],
@@ -86,7 +81,7 @@ export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams}
  * Makes a Region mutation
  * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo component
  * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
- * @param [String|Object] outputParams output parameters for the query in this style json format:
+ * @param {Array|Object} outputParams output parameters for the query in this style json format:
  *  ['id',
  *   {
  *        data: [
@@ -115,7 +110,10 @@ export const makeRegionMutationContainer = v(R.curry(
   )), [
   ['apolloConfig', PropTypes.shape().isRequired],
   ['mutationStructure', PropTypes.shape({
-    outputParams: PropTypes.array.isRequired
+    outputParams: PropTypes.oneOfType([
+      PropTypes.array,
+      PropTypes.shape()
+    ]).isRequired
   })
   ],
   ['props', PropTypes.shape().isRequired]

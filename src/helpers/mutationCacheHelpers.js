@@ -33,7 +33,7 @@ const log = loggers.get('rescapeDefault');
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer.
+ * @param {Array|Object} outputParams output parameters for the query in this style json format. See makeQueryContainer.
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself
  * @param {Object} props The properties to pass to the query.
@@ -56,7 +56,7 @@ export const makeCacheMutation = v(R.curry(
       const error = `makeCacheMutation: Error: outputParams do not contain any @client directives. Found ${
         JSON.stringify(outputParams)
       }. @client directives are for writing cache-only values to to cache.`;
-      throw(error)
+      throw(error);
     }
     const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
     // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
@@ -103,13 +103,10 @@ export const makeCacheMutation = v(R.curry(
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
       name: PropTypes.string.isRequired,
-      outputParams: PropTypes.arrayOf(
-        PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.array,
-          PropTypes.shape()
-        ])
-      ).isRequired,
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired,
       // These are only used for simple mutations where there is no complex input type
       variableNameOverride: PropTypes.string,
       variableTypeOverride: PropTypes.string,
@@ -134,7 +131,7 @@ export const makeCacheMutation = v(R.curry(
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer
+ * @param {Array|Object} outputParams output parameters for the query in this style json format. See makeQueryContainer
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself.
  * @param {Object} props The properties to pass to the query.
@@ -178,13 +175,10 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
       name: PropTypes.string.isRequired,
-      outputParams: PropTypes.arrayOf(
-        PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.array,
-          PropTypes.shape()
-        ])
-      ).isRequired,
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired,
       // These are only used for simple mutations where there is no complex input type
       variableNameOverride: PropTypes.string,
       variableTypeOverride: PropTypes.string,

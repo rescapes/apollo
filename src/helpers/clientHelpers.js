@@ -89,12 +89,12 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  * @param {String} [config.settings.api.uri] Uri to use instead of the above parts
  * @param {Object} config.settings.testAuthorization Special test section in the settings with
  * @param {Object} [config.apollo.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
- * @param {Function} config.apollo.writeDefaults Required. Function to write defaults to the cache.
- * Accepts the testConfig with the writeDefaults key removed
+ * @param {Function} config.apollo.writeDefaultsCreator Required. Function to write defaults to the cache.
+ * Accepts the testConfig with the writeDefaultsCreator key removed
  * @param {Object} [config.apollo.cacheOptions] An object to pass to the Apollo InMemoryCache.
  * @param {Object} [config.apollo.cacheOptions.typePolicies] Type policies for the Apollo InMemoryCache. These
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * policies specify merging strategies, and must be included for types that store cache only values
@@ -106,7 +106,7 @@ export const createAuthTask = config => loginToAuthClientTask({
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
-    writeDefaults: reqStrPathThrowing('apollo.writeDefaults', config)(omitDeep(['apollo.writeDefaults'], config)),
+    writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
     settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
   },
   reqStrPathThrowing('settings.testAuthorization', config)

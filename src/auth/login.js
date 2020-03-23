@@ -67,7 +67,7 @@ export const loginMutationTask = v(R.curry((apolloConfig, variables) => {
  * @param {String} props.username The username
  * @param {String} props.password The password
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {{apolloClient: ApolloClient, token}}
@@ -112,7 +112,7 @@ export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
     {
-      outputParams: ['payload'],
+      outputParams: {payload: 1},
       variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
     },
     props
@@ -131,7 +131,7 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
     {
-      outputParams: ['payload'],
+      outputParams: {payload: 1},
       variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
     },
     props
@@ -147,7 +147,7 @@ export const refreshTokenContainer = R.curry((apolloConfig, props) => {
  * @param {Array} config.defaultSettingsOutputParams the settings output params
  * @param {Function} config.writeDefaults. Function to write default values to the client
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already

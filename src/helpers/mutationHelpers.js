@@ -42,7 +42,7 @@ const log = loggers.get('rescapeDefault');
  * @param {String} queryName
  * @param {Object} variablesAndTypes: Keyed by the variable name and valued by the variable type
  * graphql, then translated here to a graphql string
- * @param {Object} outputParams
+ * @param {Array|Object} outputParams
  */
 export const makeMutation = R.curry((mutationName, variablesAndTypes, outputParams) => {
   const variableString = R.join(', ', mapObjToValues((type, name) => `$${name}: ${type}!`, variablesAndTypes));
@@ -64,7 +64,7 @@ ${mutationName}(${variableMappingString}) {
  * @param {Object} mutationOptions
  * @param {String} mutationOptions.name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
  * Required unless variableNameOverride is specified
- * @param [String|Object] mutationOptions.outputParams output parameters for the query in this style json format.
+ * @param [Array|Object] mutationOptions.outputParams output parameters for the query in this style json format.
  * Note that you can pass @client directives here and they will be omitted in the mutation. That way you can
  * use the same outputParameters to create writeFragments to put client only values in the cache.
  *  ['id',
@@ -109,11 +109,27 @@ export const makeMutationRequestContainer = v(R.curry(
     // create|update[Model Name]
     const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
 
-    const mutation = gql`${makeMutation(
-      createOrUpdateName,
-      variablesAndTypes ,
-      namedOutputParams
-    )}`;
+    let mutation;
+    try {
+      mutation = gql`${makeMutation(
+          createOrUpdateName,
+          variablesAndTypes ,
+          namedOutputParams
+        )}`;
+    } catch (e) {
+      log.error(`Unable to create mutation with the following properties: ${JSON.stringify({
+        createOrUpdateName,
+        variablesAndTypes,
+        namedOutputParams
+      })}. Mutation string: ${
+        makeMutation(
+          createOrUpdateName,
+          variablesAndTypes ,
+          namedOutputParams
+        )
+      }`);
+      throw e;
+    }
 
     log.debug(`Creating Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
 
@@ -167,13 +183,10 @@ export const makeMutationRequestContainer = v(R.curry(
     ['mutationOptions', PropTypes.shape({
       // Required unless variableNameOverride is specified
       name: PropTypes.string,
-      outputParams: PropTypes.arrayOf(
-        PropTypes.oneOfType([
-          PropTypes.string,
-          PropTypes.array,
-          PropTypes.shape()
-        ])
-      ).isRequired,
+      outputParams: PropTypes.oneOfType([
+        PropTypes.array,
+        PropTypes.shape()
+      ]).isRequired,
       // These are only used for simple mutations where there is no complex input type
       variableNameOverride: PropTypes.string,
       variableTypeOverride: PropTypes.string,
@@ -214,7 +227,7 @@ export const _addMutateKeyToMutationResponse = response => {
  * @param {Function|Object} [apolloConfig.options.variable] When a function, called with props to produce the variables
  * that will be used for the mutation. When an object overrides props. When undefined props is used
  * @param {String} name The name of the object type, e.g. region
- * @param {[Object|String]} outputParams Output params for the mutation
+ * @param {Array|Object} outputParams Output params for the mutation
  * @param {String} variableTypeOverride Used to override the variable type, normally it's (Update|Create){Name}InputType
  * @param {String} variableNameOverride Override the variableName, normally {name}Data
  * @param {Object} props Just used to determin if an update or create is needed by reading props.id. Passing just {id: true}

@@ -49,7 +49,7 @@ describe('queryHelpers', () => {
           {
             name: 'regions',
             readInputTypeMapper: {},
-            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+            outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
           },
           {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
         )
@@ -67,7 +67,7 @@ describe('queryHelpers', () => {
           {
             name: 'regions',
             readInputTypeMapper: {},
-            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+            outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
           },
           {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
         )
@@ -77,7 +77,7 @@ describe('queryHelpers', () => {
           {apolloClient},
           {
             name: 'region',
-            outputParams: ['key']
+            outputParams: {key: 1}
           },
           {
             key: `test${moment().format('HH-mm-SS')}`,

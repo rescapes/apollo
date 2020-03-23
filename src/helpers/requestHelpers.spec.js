@@ -22,43 +22,77 @@ import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
 import {defaultSettingsOutputParams} from './defaultSettingsStore';
+import {print} from 'graphql';
+import {gql} from '@apollo/client';
 
 describe('requestHelpers', () => {
 
-  const outputParams = [
-    'id',
-    'name',
-    {
-      'data': [
-        {
-          'settings': [
-            'defaultLocation',
-            {
-              'stages': [
-                'key',
-                'targets'
-              ]
-            }
-          ]
+  const outputParams = {
+    id: 1,
+    name: 1,
+    data: {
+      settings: {
+        defaultLocation: 1,
+        stages: {
+          key: 1,
+          target: 1
         }
-      ]
+      }
     }
-  ];
+  };
 
   test('formatOutputParameters', () => {
-    const output = formatOutputParams(outputParams);
-    expect(output).toMatchSnapshot();
+    const output = formatOutputParams(
+      outputParams
+    );
+    expect(print(gql`query fooQuery { foo ${output} }`)).toEqual(
+      `query fooQuery {
+  foo
+  id
+  name
+  data {
+    settings {
+      defaultLocation
+      stages {
+        key
+        target
+      }
+    }
+  }
+}
+`);
   });
-
 
   test('pickPaths', () => {
     const output = pickGraphqlPaths(['id', 'name', 'data.settings.stages.key'], outputParams);
-    expect(output).toMatchSnapshot();
+    expect(output).toEqual({
+      data: {
+        settings: {
+          stages: {
+            key: 1
+          }
+        }
+      },
+      id: 1,
+      name: 1
+    });
   });
 
   test('pickGraphqlPathsOver', () => {
     const output = pickGraphqlPathsOver(R.lensProp('data'), ['settings.stages.key'], outputParams);
-    expect(output).toMatchSnapshot();
+    expect(output).toEqual(
+      {
+        data: {
+          settings: {
+            stages: {
+              key: 1
+            }
+          }
+        },
+        id: 1,
+        name: 1
+      }
+    );
   });
 
   test('formInputParameters', () => {
@@ -120,40 +154,33 @@ describe('requestHelpers', () => {
 
   test('omitClientFields', () => {
     expect(omitClientFields(defaultSettingsOutputParams)).toEqual(
-      [
-        'id',
-        'key',
-        {
-          'data': [
-            'domain',
+      {
+        id: 1,
+        key: 1,
+        data: {
+          domain: 1,
+          api: {
+            protocol: 1,
+            host: 1,
+            port: 1,
+            path: 1
+          },
+          // Overpass API configuration to play nice with the server's strict throttling
+          overpass: {
+            cellSize: 1,
+            sleepBetweenCalls: 1
+          },
+          mapbox:
             {
-              api: [
-                'protocol',
-                'host',
-                'port',
-                'path'
-              ]
-            },
-            {
-              overpass: [
-                'cellSize',
-                'sleepBetweenCalls'
-              ]
-            },
-            {
-              mapbox: [
-                {
-                  'viewport': [
-                    'zoom',
-                    'latitude',
-                    'longitude'
-                  ]
-                }
-              ]
+              viewport: {
+                zoom: 1,
+                latitude: 1,
+                longitude: 1
+              }
             }
-          ]
         }
-      ]
-    )
-  })
+      }
+    );
+  });
+
 });

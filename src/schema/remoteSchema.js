@@ -47,7 +47,7 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
  * @param {String} config.settings.testAuthorization.username the username to log in with
  * @param {String} config.settings.testAuthorization.password the password
  * @param {Object} config.settingsConfig
- * @param {Array} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @returns {Task<Object>} Resolves with an object containing the schema, the authenticated ApolloLink, and
@@ -57,7 +57,7 @@ export const remoteSchemaTask = config => {
   return R.composeK(
     // Create a link that concats HTTP to Authentication
     // Our authenticated link hard-codes the token. I don't know how to use the context
-    ({uri, apolloClient, token, writeDefaults}) => {
+    ({uri, apolloClient, token}) => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
         schema => ({schema, link, apolloClient}),
@@ -67,7 +67,7 @@ export const remoteSchemaTask = config => {
     // Authenticate
     config => {
       const uri = parseApiUrl(reqStrPathThrowing('settings.api', localTestConfig));
-      const writeDefaults = reqStrPathThrowing('apollo.writeDefaults', config);
+      const writeDefaults = reqStrPathThrowing('apollo.writeDefaultsCreator', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
         authClientOrLoginTask({

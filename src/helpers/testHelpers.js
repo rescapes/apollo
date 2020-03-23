@@ -14,10 +14,14 @@ import privateTestSettings from './privateTestSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
-import {writeConfigToServerAndCache} from './settingsStore'
+import {writeConfigToServerAndCache} from './settingsStore';
 import {createAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
 import {typePoliciesConfig} from '../config';
-import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
+import {
+  defaultSettingsCacheIdProps,
+  defaultSettingsCacheOnlyObjs,
+  defaultSettingsOutputParams
+} from './defaultSettingsStore';
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
@@ -41,12 +45,11 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
     cacheIdProps: defaultSettingsCacheIdProps
   },
   apollo: {
-    writeDefaults: writeConfigToServerAndCache,
+    writeDefaultsCreator: writeConfigToServerAndCache,
     stateLinkResolvers: defaultStateLinkResolvers,
     cacheOptions
   }
 });
-
 
 /**
  * Task to return and authorized client for tests

@@ -17,7 +17,7 @@ import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowin
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 
 describe('mutationHelpers', () => {
   test('makeMutation', () => {
@@ -58,7 +58,16 @@ describe('mutationHelpers', () => {
         {apolloClient},
         {
           name: 'region',
-          outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+          outputParams: {
+            id: 1,
+            key: 1,
+            name: 1,
+            geojson: {
+              features: {
+                type: 1
+              }
+            }
+          }
         },
         {
           key: `test${moment().format('HH-mm-SS')}`,

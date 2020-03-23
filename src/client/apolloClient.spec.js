@@ -8,7 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda';
 import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
@@ -76,7 +76,16 @@ describe('apolloClient', () => {
             {apolloClient},
             {
               name: 'region',
-              outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}],
+              outputParams: {
+                id: 1,
+                key: 1,
+                name: 1,
+                geojson: {
+                  features: {
+                    type: 1
+                  }
+                }
+              },
               crud: 'create'
             },
             props
