@@ -15,9 +15,9 @@ import {
 } from 'rescape-ramda';
 import {omitClientFields} from './requestHelpers';
 import settings from './privateTestSettings';
-import {v} from 'rescape-validate'
-import * as R from 'ramda'
-import PropTypes from 'prop-types'
+import {v} from 'rescape-validate';
+import * as R from 'ramda';
+import PropTypes from 'prop-types';
 
 /**
  * Created by Andy Likuski on 2020.03.20
@@ -117,39 +117,13 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
 }), [
   ['apolloConfig', PropTypes.shape().isRequired],
   ['mutationStructure', PropTypes.shape({
+    cacheOnlyObjs: PropTypes.array.isRequired,
+    cacheIdProps: PropTypes.array.isRequired,
     outputParams: PropTypes.array.isRequired
-  })
+  }).isRequired
   ],
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsMutationContainer');
-
-/**
- * Updates the cached settings query with values that are never stored in the database as indicated above in cacheOnlyProps
- */
-export const makeSettingsClientMutationContainer = v(R.curry(
-  (apolloConfig, {outputParams}, props) => {
-    return makeMutationWithClientDirectiveContainer(
-      apolloConfig,
-      {
-        name: 'settings',
-        outputParams
-      },
-      // These our the paths that we only want in the cache, not sent to the server
-      pickDeepPaths(
-        R.concat(defaultSettingsCacheOnlyObjs, defaultSettingsCacheIdProps),
-        props
-      )
-    );
-  }
-), [
-  ['apolloConfig', PropTypes.shape().isRequired],
-  ['mutationStructure', PropTypes.shape({
-    outputParams: PropTypes.array.isRequired
-  })
-  ],
-  ['props', PropTypes.shape().isRequired]
-], 'makeSettingsClientMutationContainer');
-
 
 /**
  * Writes or rewrites the default settings to the cache. Other values in the config are ignored
@@ -157,43 +131,50 @@ export const makeSettingsClientMutationContainer = v(R.curry(
  * @param {Object} config The settings to write. It must match Settings object of the Apollo schema,
  * although cache-only values can be included
  */
-export const writeConfigToServerAndCache = (config) => (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
-  // Only the settings are written to the server
-  const settings = R.prop('settings', config);
-  return composeWithChain([
-    // Update/Create the default settings to the database. This puts them in the cache
-    mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
-      ({props, apolloConfig, settingsFromServer}) => {
-        const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
-        return makeSettingsMutationContainer(
-          apolloConfig,
-          {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
-          R.merge(props, R.pick(['id'], settings))
-        );
+export const writeConfigToServerAndCache = (config) => {
+  return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
+    // Only the settings are written to the server
+    const settings = R.prop('settings', config);
+    return composeWithChain([
+      // Update/Create the default settings to the database. This puts them in the cache
+      mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
+        ({props, apolloConfig, settingsFromServer}) => {
+          const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
+          return makeSettingsMutationContainer(
+            apolloConfig,
+            {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
+            R.merge(props, R.pick(['id'], settings))
+          );
+        }
+      ),
+      // Fetch the props if they exist on the server
+      mapToNamedResponseAndInputs('settingsFromServer',
+        ({apolloConfig, props}) => {
+          return makeSettingsQueryContainer(
+            R.merge(apolloConfig, {
+              options: {
+                fetchPolicy: 'network-only'
+              }
+            }),
+            {outputParams: omitClientFields(settingsOutputParams)},
+            R.pick(['key'], props)
+          );
+        }
+      )
+    ])({
+        apolloConfig: {apolloClient},
+        config,
+        props: {
+          // We currently use 'default' for the only settings in the database
+          key: 'default',
+          data: settings
+        }
       }
-    ),
-    // Fetch the props if they exist on the server
-    mapToNamedResponseAndInputs('settingsFromServer',
-      ({apolloConfig, props}) => {
-        return makeSettingsQueryContainer(
-          R.merge(apolloConfig, {
-            options: {
-              fetchPolicy: 'network-only'
-            }
-          }),
-          {outputParams: omitClientFields(settingsOutputParams)},
-          R.pick(['key'], props)
-        );
-      }
-    )
-  ])({
-      apolloConfig: {apolloClient},
-      config,
-      props: {
-        // We currently use 'default' for the only settings in the database
-        key: 'default',
-        data: settings
-      }
-    }
-  );
-};
+    );
+  };
+} /*, [
+  ['config', PropTypes.shape({
+    settings: PropTypes.shape().isRequired
+  }).isRequired]
+], 'writeConfigToServerAndCache');
+*/

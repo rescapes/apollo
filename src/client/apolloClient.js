@@ -488,10 +488,11 @@ export const getOrCreateApolloAuthClientTaskAndSetDefaults = (
     uri,
     stateLinkResolvers,
     writeDefaults,
-    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+    settingsConfig
   },
   authToken
 ) => {
+  const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   return composeWithChain([
     ({apolloConfig, cacheOnlyObjs, cacheIdProps, settingsOutputParams, writeDefaults}) => {
       const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
@@ -599,10 +600,11 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
 export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
   {
     cacheOptions, uri, stateLinkResolvers, writeDefaults,
-    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+    settingsConfig
   },
   userLogin
 ) => {
+  const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => {

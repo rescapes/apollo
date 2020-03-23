@@ -12,7 +12,13 @@
 import * as R from 'ramda';
 import {localTestAuthTask, cacheOptions, localTestConfig} from '../helpers/testHelpers';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
-import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
+import {
+  composeWithChain,
+  defaultRunConfig,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing
+} from 'rescape-ramda';
 import {
   authClientOrLoginTask,
   loginToAuthClientTask,
@@ -27,6 +33,7 @@ import {
   writeDefaultSettingsToCache
 } from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '../client/stateLink';
+import {createAuthTask} from '..';
 
 const {settings: {api}} = localTestConfig;
 const uri = parseApiUrl(api);
@@ -49,7 +56,11 @@ describe('login', () => {
             uri,
             stateLinkResolvers: defaultStateLinkResolvers,
             writeDefaults: writeDefaultSettingsToCache,
-            settingsOutputParams: defaultSettingsOutputParams
+            settingsConfig: {
+              cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+              cacheIdProps: defaultSettingsCacheIdProps,
+              settingsOutputParams: defaultSettingsOutputParams
+            }
           },
           {tokenAuth: {token}}
         )
@@ -71,50 +82,54 @@ describe('login', () => {
   }, 10000);
 
   test('authClientOrLoginTask', done => {
+    const errors = [];
     // Try it with login info
-    const task = authClientOrLoginTask({
-        cacheOptions,
-        uri,
-        stateLinkResolvers: defaultStateLinkResolvers,
-        writeDefaults: writeDefaultSettingsToCache,
-        settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
-      },
-      reqStrPathThrowing('settings.testAuthorization', localTestConfig)
+    const task = composeWithChain([
+      // Try it with an auth client
+      mapToNamedResponseAndInputs('apolloConfig',
+        ({apolloClient}) => authClientOrLoginTask({
+          cacheOptions,
+          uri,
+          stateLinkResolvers: defaultStateLinkResolvers,
+          writeDefaults: writeDefaultSettingsToCache,
+          settingsConfig: {
+            cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+            cacheIdProps: defaultSettingsCacheIdProps,
+            settingsOutputParams: defaultSettingsOutputParams
+          }
+        }, apolloClient)
+      ),
+      () => authClientOrLoginTask({
+          cacheOptions,
+          uri,
+          stateLinkResolvers: defaultStateLinkResolvers,
+          writeDefaults: writeDefaultSettingsToCache,
+          settingsConfig: {
+            cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+            cacheIdProps: defaultSettingsCacheIdProps,
+            settingsOutputParams: defaultSettingsOutputParams
+          }
+        },
+        reqStrPathThrowing('settings.testAuthorization', localTestConfig)
+      )
+    ])();
+    task.run().listen(
+      defaultRunConfig(
+        {
+          onResolved: ({apolloClient, apolloConfig}) => {
+            // The second auth used the first apolloClient for it's authentication field
+            expect(apolloClient).toEqual(reqStrPathThrowing('apolloClient.authentication', apolloConfig));
+            done();
+          }
+        }, errors, done
+      )
     );
-    task.run().listen(defaultRunConfig(
-      {
-        onResolved: ({token, apolloClient}) => {
-          // Try it with an auth client
-          authClientOrLoginTask({
-            cacheOptions,
-            uri,
-            stateLinkResolvers: defaultStateLinkResolvers,
-            writeDefaults: writeDefaultSettingsToCache,
-            settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
-          }, apolloClient).run().listen(defaultRunConfig(
-            {
-              onResolved: ({token, apolloClient: apolloClient2}) => {
-                expect(apolloClient).toEqual(apolloClient2.authentication);
-                done();
-              }
-            })
-          );
-        }
-      }
-    ));
   }, 10000);
 
   test('loginToAuthClientTask', done => {
 
     const errors = [];
-    loginToAuthClientTask({
-        cacheOptions,
-        uri,
-        stateLinkResolvers: defaultStateLinkResolvers,
-        writeDefaults: writeDefaultSettingsToCache
-      },
-      reqStrPathThrowing('settings.testAuthorization', localTestConfig)
-    ).run().listen(defaultRunConfig(
+    createAuthTask(localTestConfig).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {

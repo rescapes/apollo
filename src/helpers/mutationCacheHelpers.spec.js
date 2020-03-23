@@ -20,10 +20,14 @@ import {
 } from 'rescape-ramda';
 import * as R from 'ramda';
 import {makeCacheMutation} from './mutationCacheHelpers';
-import {defaultSettingsOutputParams} from './defaultSettingsStore';
+import {
+  defaultSettingsCacheIdProps,
+  defaultSettingsCacheOnlyObjs,
+  defaultSettingsOutputParams
+} from './defaultSettingsStore';
 import {of} from 'folktale/concurrency/task';
 import {createSampleSettingsTask} from './settings.sample';
-import {makeSettingsQueryContainer} from './settingsStore';
+import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username', 'data.mapbox.mapboxAuthentication'];
@@ -89,6 +93,10 @@ describe('mutationCacheHelpers', () => {
               },
               // Make a nonsense change to cache only data
               createCacheOnlyPropsForSettings(
+                {
+                  cacheIdProps: defaultSettingsCacheIdProps,
+                  cacheOnlyObjs: defaultSettingsCacheOnlyObjs
+                },
                 R.compose(
                   R.over(
                     R.lensPath(['data', 'mapbox', 'mapboxAuthentication', 'mapboxApiAccessToken']),

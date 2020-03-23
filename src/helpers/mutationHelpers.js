@@ -20,7 +20,7 @@
  */
 
 import * as R from 'ramda';
-import {_winnowRequestProps, formatOutputParams} from './requestHelpers';
+import {_winnowRequestProps, formatOutputParams, omitClientFields} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
   capitalize, composeWithMapMDeep,
@@ -64,7 +64,9 @@ ${mutationName}(${variableMappingString}) {
  * @param {Object} mutationOptions
  * @param {String} mutationOptions.name The lowercase name of the resource to mutate. E.g. 'region' for mutateRegion
  * Required unless variableNameOverride is specified
- * @param [String|Object] mutationOptions.outputParams output parameters for the query in this style json format:
+ * @param [String|Object] mutationOptions.outputParams output parameters for the query in this style json format.
+ * Note that you can pass @client directives here and they will be omitted in the mutation. That way you can
+ * use the same outputParameters to create writeFragments to put client only values in the cache.
  *  ['id',
  *   {
  *        data: [
@@ -78,7 +80,7 @@ ${mutationName}(${variableMappingString}) {
  *       ]
  *    }
  *  ]
- *  // These are only used for simple mutations where there is no complex input type
+ *  // The following params are only used for simple mutations where there is no complex input type:
  *  @param {String} mutationOptions.variableNameOverride
  *  @param {String} mutationOptions.variableTypeOverride
  *  @param {String} mutationNameOverride
@@ -100,7 +102,7 @@ export const makeMutationRequestContainer = v(R.curry(
     // Get the variable definition, arguments and outputParams
     const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
       apolloConfig,
-      {name, outputParams, variableTypeOverride, variableNameOverride},
+      {name, outputParams: omitClientFields(outputParams), variableTypeOverride, variableNameOverride},
       props
     );
 

@@ -14,8 +14,6 @@ import {
   formatOutputParams,
   formatInputParams,
   mapQueryTaskToNamedResultAndInputs,
-  convertFromGraphqlStructure,
-  convertToGraphqlStructure,
   pickGraphqlPaths,
   pickGraphqlPathsOver, omitClientFields
 } from './requestHelpers';

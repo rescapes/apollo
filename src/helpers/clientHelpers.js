@@ -56,7 +56,11 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                           // since it comes from the cache and will be written to the cache
                           // This assumes a merge strategy that takes the keys of incoming and doesn't do
                           // more fine-grained merging
-                          R.compose(unfrozen => R.merge(existing, unfrozen), R.clone, R.omit(R.keys(incoming)))(existing),
+                          R.compose(
+                            unfrozen => R.merge(existing, unfrozen),
+                            R.clone,
+                            R.omit(R.keys(incoming))
+                          )(existing),
                           incoming
                         );
                       }

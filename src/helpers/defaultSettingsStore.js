@@ -72,4 +72,4 @@ export const defaultSettingsCacheIdProps = [
 /**
  * Writes or rewrites the default settings to the cache
  */
-export const writeDefaultSettingsToCache = writeConfigToServerAndCache(settings);
+export const writeDefaultSettingsToCache = writeConfigToServerAndCache({settings});

@@ -75,7 +75,7 @@ export const remoteSchemaTask = config => {
             uri,
             // StateLinkResolvers are empty for now
             stateLinkResolvers: {},
-            writeDefaults,
+            writeDefaults: writeDefaults(config),
             settingsConfig: reqStrPathThrowing('settingsConfig', config)
           },
           reqStrPathThrowing('settings.testAuthorization', config)

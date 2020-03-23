@@ -71,7 +71,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
       }
     ),
     // Query to get the value in the cache.
-    // Note that the data that mutation puts in the cache is not matched here.
+    // Note that the data that mutation put in the cache is not matched here.
     // However the result of this query correctly merges that from the server with the cache-only values
     // It seems like the query itself must run once before the same data can be found in the cache
     mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
@@ -89,7 +89,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
         return makeSettingsMutationContainer(
           apolloConfig,
           {
-            outputParams: omitClientFields(defaultSettingsOutputParams),
+            outputParams: defaultSettingsOutputParams,
             cacheIdProps: defaultSettingsCacheIdProps,
             cacheOnlyObjs: defaultSettingsCacheOnlyObjs
           },

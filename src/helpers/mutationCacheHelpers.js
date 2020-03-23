@@ -33,7 +33,9 @@ const log = loggers.get('rescapeDefault');
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer
+ * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer.
+ * outputParams must contain @client directives that match values in props. Otherwise this function will not write
+ * anything to the cache that wasn't written by the mutation itself
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
@@ -49,13 +51,20 @@ export const makeCacheMutation = v(R.curry(
      outputParams
    },
    props) => {
+    const outputParamsWithOmitedClientFields = omitClientFields(outputParams);
+    if (R.equals(outputParams, outputParamsWithOmitedClientFields)) {
+      const error = `makeCacheMutation: Error: outputParams do not contain any @client directives. Found ${
+        JSON.stringify(outputParams)
+      }. @client directives are for writing cache-only values to to cache.`;
+      throw(error)
+    }
     const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
     // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
     const fragment = gql`${makeFragmentQuery(
       `${name}WithoutClientFields`, 
       {}, 
       // Don't output cache only fields here. We just want the id
-      omitClientFields(outputParams), 
+      outputParamsWithOmitedClientFields, 
       R.pick(['__typename'], props)
     )}`;
     // The id to get use to get the right fragment
@@ -85,7 +94,7 @@ export const makeCacheMutation = v(R.curry(
     try {
       const test = apolloClient.readFragment({fragment: writeFragment, id});
     } catch (e) {
-      log.error('Could not read the fragment just written to the cache');
+      log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
       throw e;
     }
     return data;
@@ -112,8 +121,13 @@ export const makeCacheMutation = v(R.curry(
 );
 
 /**
- * Like makeMutationContainer but creates a query with a client directive so values come back from the link state and not
- * the server
+ * Like makeMutationContainer but creates a query from outputParams that contain at least one @client directive
+ * to read existing values from the cache and write cache only values in props that match the @client directives
+ * in the outpuParams
+ *
+ * Note that it's currently not possible to use this to without @client directives in the outputParams. If there
+ * is a use case for writing to the cache based on a query without @client directives, then change the code to enable.
+ *
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
@@ -121,6 +135,8 @@ export const makeCacheMutation = v(R.curry(
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param [String|Object] outputParams output parameters for the query in this style json format. See makeQueryContainer
+ * outputParams must contain @client directives that match values in props. Otherwise this function will not write
+ * anything to the cache that wasn't written by the mutation itself.
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
