@@ -9,10 +9,14 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import * as R from 'ramda';
-import {omitDeep, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {mergeDeepWithRecurseArrayItemsByRight, omitDeep, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {loginToAuthClientTask} from '../auth/login';
-import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
+import {
+  defaultSettingsCacheIdProps,
+  defaultSettingsCacheOnlyObjs,
+  defaultSettingsOutputParams
+} from './defaultSettingsStore';
 
 /**
  * Create a typePolicies object that merges specified fields. This is needed so that non-normalized types
@@ -40,7 +44,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields}) => {
+      ({type, fields, idPathLookup}) => {
         return {
           [type]: {
             // Each field
@@ -51,18 +55,37 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
                         // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
-                        return mergeObjects(
-                          // Remove incoming keys from existing and clone it to unfreeze it.
-                          // since it comes from the cache and will be written to the cache
-                          // This assumes a merge strategy that takes the keys of incoming and doesn't do
-                          // more fine-grained merging
-                          R.compose(
-                            unfrozen => R.merge(existing, unfrozen),
-                            R.clone,
-                            R.omit(R.keys(incoming))
-                          )(existing),
-                          incoming
-                        );
+                        if (Array.isArray(existing) || Array.isArray(incoming)) {
+                          // Merge array items by given the configured id path or default to id,
+                          // but drop existing items that have no match in incoming
+                          return mergeDeepWithRecurseArrayItemsByRight(
+                            v => {
+                              return R.when(
+                                v => R.is(Object, v),
+                                v => {
+                                  // Get the configured idPath if one exists
+                                  const idPath = R.propOr('id', field, idPathLookup || {});
+                                  return strPathOr(null, idPath, v);
+                                }
+                              )(v);
+                            },
+                            existing,
+                            incoming
+                          );
+                        } else {
+                          return mergeObjects(
+                            // Remove incoming keys from existing and clone it to unfreeze it.
+                            // since it comes from the cache and will be written to the cache
+                            // This assumes a merge strategy that takes the keys of incoming and doesn't do
+                            // more fine-grained merging
+                            R.compose(
+                              unfrozen => R.merge(existing, unfrozen),
+                              R.clone,
+                              R.omit(R.keys(incoming))
+                            )(existing),
+                            incoming
+                          );
+                        }
                       }
                     }
                   };
@@ -108,7 +131,11 @@ export const createAuthTask = config => loginToAuthClientTask({
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
     writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
-    settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
+    settingsConfig: {
+      cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+      cacheIdProps: defaultSettingsCacheIdProps,
+      settingsOutputParams: defaultSettingsOutputParams
+    }
   },
   reqStrPathThrowing('settings.data.testAuthorization', config)
 );

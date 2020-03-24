@@ -13,7 +13,13 @@ import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
+import {
+  capitalize,
+  mergeDeepWithRecurseArrayItemsByRight,
+  pickDeepPaths,
+  reqStrPathThrowing,
+  strPathOr
+} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
@@ -34,6 +40,7 @@ const log = loggers.get('rescapeDefault');
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param {Array|Object} outputParams output parameters for the query in this style json format. See makeQueryContainer.
+ * @param {Array|Object} [idPathLookup] Optinoal lookup
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself
  * @param {Object} props The properties to pass to the query.
@@ -48,7 +55,8 @@ export const makeCacheMutation = v(R.curry(
   (apolloConfig,
    {
      name,
-     outputParams
+     outputParams,
+     idPathLookup
    },
    props) => {
     const outputParamsWithOmitedClientFields = omitClientFields(outputParams);
@@ -76,7 +84,15 @@ export const makeCacheMutation = v(R.curry(
     // Merge the existing cache data with the full props, where the props are the cache-only data to write
     // Be careful because props will override anything it matches with deep in result
     const data = mergeDeepWithRecurseArrayItemsByRight(
-      item => R.when(R.is(Object), R.propOr(v, 'id'))(item),
+      (item, propKey) => R.when(
+        R.is(Object),
+        item => {
+          return strPathOr(
+            item,
+            R.propOr('id', propKey, idPathLookup),
+            item)
+        }
+      )(item),
       result,
       R.omit(['id', '__typename'], props)
     );

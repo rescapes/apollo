@@ -20,7 +20,7 @@ describe('clientHelpers', () => {
         },
         {
           type: 'BettingType',
-          fields: ['deck', 'tricks']
+          fields: ['deck', 'tricks'],
         }
       ])
     )).toEqual(
