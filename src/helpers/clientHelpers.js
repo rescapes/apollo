@@ -59,7 +59,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                           // Merge array items by given the configured id path or default to id,
                           // but drop existing items that have no match in incoming
                           return mergeDeepWithRecurseArrayItemsByRight(
-                            v => {
+                            (v, propKey) => {
                               return R.when(
                                 v => R.is(Object, v),
                                 v => {

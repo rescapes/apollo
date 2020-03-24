@@ -71,7 +71,7 @@ export const makeCacheMutation = v(R.curry(
     const fragment = gql`${makeFragmentQuery(
       `${name}WithoutClientFields`, 
       {}, 
-      // Don't output cache only fields here. We just want the id
+      // Don't output cache only fields makeMutationWithClientDirectiveContainerhere. We just want the id
       outputParamsWithOmitedClientFields, 
       R.pick(['__typename'], props)
     )}`;
@@ -162,7 +162,8 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
   (apolloConfig,
    {
      name,
-     outputParams
+     outputParams,
+     idPathLookup
    },
    props) => {
 
@@ -170,7 +171,8 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       apolloConfig,
       {
         name,
-        outputParams
+        outputParams,
+        idPathLookup
       },
       props
     );
