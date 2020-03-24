@@ -86,7 +86,7 @@ describe('queryHelpers', () => {
         )
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => localTestAuthTask
+        () => localTestAuthTask()
       )
     ])();
     const errors = [];

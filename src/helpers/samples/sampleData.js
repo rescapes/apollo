@@ -11,7 +11,11 @@
 import {mergeDeep} from 'rescape-ramda';
 import * as R from 'ramda';
 
-const sample_settings = {
+/**
+ * Example of a sankey setting data structure that can be defined on resource.data
+ * @type {{settings: {value_key: string, default_location: number[], columns: [string, string, string, string, string], stages: ({name: string, targets: [string], key: string}|{name: string, targets: [string], key: string}|{name: string, targets: [string], key: string}|{name: string, targets: [string, string], key: string}|{name: string, targets: [string], key: string})[], node_name_key: string, location_key: string, stage_key: string}}}
+ */
+const sample_resource_data = {
   settings: {
     default_location: [4.3517, 50.8503],
     columns: [
@@ -40,7 +44,7 @@ export const sampleResources = R.map(
   resource => mergeDeep(
     resource,
     {
-      data: sample_settings
+      data: sample_resource_data
     }
   ),
   [

@@ -174,9 +174,4 @@ export const writeConfigToServerAndCache = (config) => {
       }
     );
   };
-}; /*, [
-  ['config', PropTypes.shape({
-    settings: PropTypes.shape().isRequired
-  }).isRequired]
-], 'writeConfigToServerAndCache');
-*/
+};

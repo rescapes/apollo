@@ -55,7 +55,7 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const localTestAuthTask = createAuthTask(localTestConfig);
+export const localTestAuthTask = () => createAuthTask(localTestConfig);
 
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency

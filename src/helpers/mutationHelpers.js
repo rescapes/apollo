@@ -213,11 +213,8 @@ export const _addMutateKeyToMutationResponse = ({name, silent}, response) => {
     key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
     R.keys(R.propOr({}, 'data', response))
   );
-  return R.when(
+  return R.ifElse(
     () => {
-      if (!silent) {
-        log.error(`Mutation response is null for mutation of ${name}`);
-      }
       return createOrUpdateKey;
     },
     response => {
@@ -231,6 +228,12 @@ export const _addMutateKeyToMutationResponse = ({name, silent}, response) => {
         }`);
       }
       return updated;
+    },
+    response => {
+      if (!silent) {
+        log.error(`Mutation response is null for mutation ${name}`);
+      }
+      return response;
     }
   )(response);
 };

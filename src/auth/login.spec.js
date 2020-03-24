@@ -66,7 +66,7 @@ describe('login', () => {
         )
       ),
       mapToNamedPathAndInputs('token', 'token',
-        () => localTestAuthTask
+        () => localTestAuthTask()
       )
     )({}).run().listen(defaultRunConfig(
       {

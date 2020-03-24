@@ -24,7 +24,7 @@ import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from
 describe('apolloClient', () => {
 
   test('Confirm Apollo Client queries work', async () => {
-    const {apolloClient} = await taskToPromise(localTestAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask());
     const response = await apolloClient.query({
       query: gql`query regionsQuery {
           regions {
@@ -93,7 +93,7 @@ describe('apolloClient', () => {
         }
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => localTestAuthTask
+        () => localTestAuthTask()
       )
       )({props})
     );

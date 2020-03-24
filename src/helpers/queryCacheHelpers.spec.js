@@ -99,7 +99,7 @@ describe('queryCacheHelpers', () => {
           }
         )
       ),
-      () => localTestAuthTask
+      () => localTestAuthTask()
     )();
     const errors = [];
     task.run().listen(defaultRunConfig({

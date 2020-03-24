@@ -61,7 +61,7 @@ describe('apolloClient', () => {
 
   test('test linkState mutation', async done => {
     expect.assertions(6);
-    const {apolloClient} = await taskToPromise(localTestAuthTask);
+    const {apolloClient} = await taskToPromise(localTestAuthTask());
 
     const mutateAddTodo = gql`
         mutation addTodo($text: String) {

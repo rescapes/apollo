@@ -53,7 +53,7 @@ describe('mutationCacheHelpers', () => {
           }
         ),
         (apolloConfig) => createSampleSettingsTask(apolloConfig),
-        () => localTestAuthTask
+        () => localTestAuthTask()
       ])().run().listen(defaultRunConfig({
         onResolved:
           ({settings, settingsFromQuery}) => {
@@ -110,7 +110,7 @@ describe('mutationCacheHelpers', () => {
           }
         ),
         (apolloConfig) => createSampleSettingsTask(apolloConfig),
-        () => localTestAuthTask
+        () => localTestAuthTask()
       ])().run().listen(defaultRunConfig({
         onResolved:
           ({settings}) => {
