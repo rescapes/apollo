@@ -91,7 +91,11 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
       {
         options: {
           update: (store, response) => {
-            const settings = reqStrPathThrowing('data.mutate.settings', _addMutateKeyToMutationResponse(response));
+            // Add mutate to response.data so we dont' have to guess if it's a create or udpate
+            const settings = reqStrPathThrowing(
+              'data.mutate.settings',
+              _addMutateKeyToMutationResponse({silent: true}, response)
+            );
             // Mutate the cache to save settings to the database that are not stored on the server
             makeCacheMutation(
               apolloConfig,

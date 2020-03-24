@@ -91,7 +91,7 @@ describe('queryCacheHelpers', () => {
           {apolloClient},
           {
             name: 'region',
-            outputParams: {key: 1}
+            outputParams: {id: 1, key: 1}
           },
           {
             key: `test${moment().format('HH-mm-SS')}`,
