@@ -10,7 +10,7 @@
  */
 import * as R from 'ramda';
 import {keyStringToLensPath} from 'rescape-ramda';
-import privateTestSettings from './privateTestSettings';
+import settings from './privateSettings';
 import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
@@ -38,7 +38,7 @@ export const cacheOptions = {
  * The config for test. We add some cache only properties to
  */
 export const localTestConfig = mergeLocalTestValuesIntoConfig({
-  settings: privateTestSettings,
+  settings,
   settingsConfig: {
     settingsOutputParams: defaultSettingsOutputParams,
     cacheOnlyObjs: defaultSettingsCacheOnlyObjs,

@@ -10,11 +10,15 @@
  */
 
 import * as R from 'ramda';
-import settings from '../helpers/privateTestSettings';
+import settings from './privateSettings';
 import {mapToNamedPathAndInputs} from 'rescape-ramda';
 import moment from 'moment';
 import {omitClientFields} from './requestHelpers';
-import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs, defaultSettingsOutputParams} from './defaultSettingsStore';
+import {
+  defaultSettingsCacheIdProps,
+  defaultSettingsCacheOnlyObjs,
+  defaultSettingsOutputParams
+} from './defaultSettingsStore';
 import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingsStore';
 
 /**
@@ -102,10 +106,12 @@ export const createSampleSettingsTask = (apolloConfig) => {
     {
       apolloConfig,
       defaultSettingsOutputParams,
-      props: {
-        key: `test${moment().format('HH-mm-SS')}`,
-        data: settings
-      }
+      // Give the default settings a new to create a new settings object in the database
+      // Normally we just have the default settings in the database
+      props: R.merge(
+        settings,
+        {key: `test${moment().format('HH-mm-SS')}`}
+      )
     }
   );
 };

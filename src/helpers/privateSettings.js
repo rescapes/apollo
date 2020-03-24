@@ -22,34 +22,37 @@ import {reqStrPathThrowing} from 'rescape-ramda';
  * See settingsStore.js
  */
 export default {
-  domain: 'localhost',
-  api: {
-    protocol: 'http',
-    host: 'localhost',
-    port: '8008',
-    path: '/graphql/'
-  },
-  // Used to authenticate with the API above in tests
-  // @client only
-  testAuthorization: {
-    username: 'test',
-    password: 'testpass'
-  },
-  // Overpass API configuration to play nice with the server's strict throttling
-  overpass: {
-    cellSize: 100,
-    sleepBetweenCalls: 1000
-  },
-  mapbox: {
-    // @client only
-    mapboxAuthentication: {
-      mapboxApiAccessToken:  reqStrPathThrowing('MAPBOX_API_ACCESS_TOKEN', process.env)
+  key: 'default',
+  data: {
+    domain: 'localhost',
+    api: {
+      protocol: 'http',
+      host: 'localhost',
+      port: '8008',
+      path: '/graphql/'
     },
-    // Initial viewport
-    viewport: {
-      zoom: 0,
-      latitude: 0,
-      longitude: 0
+    // Used to authenticate with the API above in tests
+    // @client only
+    testAuthorization: {
+      username: 'test',
+      password: 'testpass'
+    },
+    // Overpass API configuration to play nice with the server's strict throttling
+    overpass: {
+      cellSize: 100,
+      sleepBetweenCalls: 1000
+    },
+    mapbox: {
+      // @client only
+      mapboxAuthentication: {
+        mapboxApiAccessToken: reqStrPathThrowing('MAPBOX_API_ACCESS_TOKEN', process.env)
+      },
+      // Initial viewport
+      viewport: {
+        zoom: 0,
+        latitude: 0,
+        longitude: 0
+      }
     }
   }
 };

@@ -81,13 +81,14 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
 /**
  * Task to return and authorized client for tests
  * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} config The configuration to set up the test
- * @param {Object} config.settings.api
- * @param {String} [config.settings.api.protocol] E.g. 'http'
- * @param {String} [config.settings.api.host] E.g. 'localhost'
- * @param {String} [config.settings.api.port] E.g. '8008'
- * @param {String} [config.settings.api.path] E.g. '/graphql/'
- * @param {String} [config.settings.api.uri] Uri to use instead of the above parts
- * @param {Object} config.settings.testAuthorization Special test section in the settings with
+ * @param {Object} config.settings.data
+ * @param {Object} config.settings.data.api
+ * @param {String} [config.settings.data.api.protocol] E.g. 'http'
+ * @param {String} [config.settings.data.api.host] E.g. 'localhost'
+ * @param {String} [config.settings.data.api.port] E.g. '8008'
+ * @param {String} [config.settings.data.api.path] E.g. '/graphql/'
+ * @param {String} [config.settings.data.api.uri] Uri to use instead of the above parts
+ * @param {Object} config.settings.data.testAuthorization Special test section in the settings with
  * @param {Object} [config.apollo.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
  * @param {Function} config.apollo.writeDefaultsCreator Required. Function to write defaults to the cache.
  * Accepts the testConfig with the writeDefaultsCreator key removed
@@ -104,10 +105,10 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  */
 export const createAuthTask = config => loginToAuthClientTask({
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
-    uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.api', config)), 'uri', config),
+    uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
     writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
     settingsConfig: {cacheOnlyObjs: defaultSettingsCacheOnlyObjs, cacheIdProps: defaultSettingsCacheIdProps, settingsOutputParams: defaultSettingsOutputParams}
   },
-  reqStrPathThrowing('settings.testAuthorization', config)
+  reqStrPathThrowing('settings.data.testAuthorization', config)
 );

@@ -49,7 +49,16 @@ describe('queryCacheHelpers', () => {
           {
             name: 'regions',
             readInputTypeMapper: {},
-            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+            outputParams: {
+              id: 1,
+              key: 1,
+              name: 1,
+              geojson: {
+                features: {
+                  type: 1
+                }
+              }
+            }
           },
           {key: region.key}
         )
@@ -62,7 +71,16 @@ describe('queryCacheHelpers', () => {
           {
             name: 'regions',
             readInputTypeMapper: {},
-            outputParams: ['id', 'key', 'name', {geojson: [{features: ['type']}]}]
+            outputParams: {
+              id: 1,
+              key: 1,
+              name: 1,
+              geojson: {
+                features: {
+                  type: 1
+                }
+              }
+            }
           },
           {key: region.key}
         )
@@ -73,7 +91,7 @@ describe('queryCacheHelpers', () => {
           {apolloClient},
           {
             name: 'region',
-            outputParams: ['key']
+            outputParams: {key: 1}
           },
           {
             key: `test${moment().format('HH-mm-SS')}`,

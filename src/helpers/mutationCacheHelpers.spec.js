@@ -26,7 +26,7 @@ import {
   defaultSettingsOutputParams
 } from './defaultSettingsStore';
 import {of} from 'folktale/concurrency/task';
-import {createSampleSettingsTask} from './settings.sample';
+import {createSampleSettingsTask} from './defaultSettingsStore.sample';
 import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore';
 
 // A blend of values from the server and the cache-only values

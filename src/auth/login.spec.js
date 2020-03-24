@@ -35,7 +35,7 @@ import {
 import {defaultStateLinkResolvers} from '../client/stateLink';
 import {createAuthTask} from '..';
 
-const {settings: {api}} = localTestConfig;
+const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
 
 describe('login', () => {
@@ -110,7 +110,7 @@ describe('login', () => {
             settingsOutputParams: defaultSettingsOutputParams
           }
         },
-        reqStrPathThrowing('settings.testAuthorization', localTestConfig)
+        reqStrPathThrowing('settings.data.testAuthorization', localTestConfig)
       )
     ])();
     task.run().listen(

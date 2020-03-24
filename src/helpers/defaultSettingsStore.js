@@ -1,4 +1,4 @@
-import settings from './privateTestSettings';
+import settings from './privateSettings';
 import {writeConfigToServerAndCache} from './settingsStore';
 
 /**

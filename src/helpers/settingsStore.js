@@ -1,20 +1,16 @@
-import {
-  createCacheOnlyProps,
-  makeCacheMutation,
-  makeMutationWithClientDirectiveContainer
-} from './mutationCacheHelpers';
+import {createCacheOnlyProps, makeCacheMutation} from './mutationCacheHelpers';
 import {makeQueryContainer} from './queryHelpers';
 import {_addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
 import {
   composeWithChain,
-  mapToNamedPathAndInputs, mapToNamedResponseAndInputs,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
   mergeDeep,
   omitDeepPaths,
-  pickDeepPaths,
-  reqStrPathThrowing, strPathOr
+  reqStrPathThrowing,
+  strPathOr
 } from 'rescape-ramda';
 import {omitClientFields} from './requestHelpers';
-import settings from './privateTestSettings';
 import {v} from 'rescape-validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
@@ -41,7 +37,7 @@ export const createCacheOnlyPropsForSettings = ({cacheOnlyObjs, cacheIdProps}, p
 };
 
 /**
- * Queries settingss
+ * Queries settings
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Array|Object} outputParams OutputParams for the query such as defaultSettingsOutputParams
  * @params {Object} props Arguments for the Settingss query. This can be {} or null to not filter.
@@ -60,7 +56,7 @@ export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams
       outputParams: PropTypes.oneOfType([
         PropTypes.array,
         PropTypes.shape()
-      ]).isRequired,
+      ]).isRequired
     })
     ],
     ['props', PropTypes.shape().isRequired]
@@ -125,7 +121,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
     outputParams: PropTypes.oneOfType([
       PropTypes.array,
       PropTypes.shape()
-    ]).isRequired,
+    ]).isRequired
   }).isRequired
   ],
   ['props', PropTypes.shape().isRequired]
@@ -134,7 +130,8 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
 /**
  * Writes or rewrites the default settings to the cache. Other values in the config are ignored
  * and must be added manually
- * @param {Object} config The settings to write. It must match Settings object of the Apollo schema,
+ * @param {Object} config
+ * @param {Object} config.settings The settings to write. It must match Settings object of the Apollo schema,
  * although cache-only values can be included
  */
 export const writeConfigToServerAndCache = (config) => {
@@ -169,16 +166,11 @@ export const writeConfigToServerAndCache = (config) => {
       )
     ])({
         apolloConfig: {apolloClient},
-        config,
-        props: {
-          // We currently use 'default' for the only settings in the database
-          key: 'default',
-          data: settings
-        }
+        props: settings
       }
     );
   };
-} /*, [
+}; /*, [
   ['config', PropTypes.shape({
     settings: PropTypes.shape().isRequired
   }).isRequired]

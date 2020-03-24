@@ -42,10 +42,11 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
  * Gets resolves to a remote schema based on the config
  * @param {Object} config
  * @param {Object} config.settings
- * @param {Object} config.settings.api.uri The full uri to the api on a server. E.g. http://foo.bar:8008/graphql
- * @param {Object} config.settings.testAuthorization For testing. Normally the user would enter these
- * @param {String} config.settings.testAuthorization.username the username to log in with
- * @param {String} config.settings.testAuthorization.password the password
+ * @param {Object} config.settings.data
+ * @param {Object} config.settings.data.api.uri The full uri to the api on a server. E.g. http://foo.bar:8008/graphql
+ * @param {Object} config.settings.data.testAuthorization For testing. Normally the user would enter these
+ * @param {String} config.settings.data.testAuthorization.username the username to log in with
+ * @param {String} config.settings.data.testAuthorization.password the password
  * @param {Object} config.settingsConfig
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
@@ -66,7 +67,7 @@ export const remoteSchemaTask = config => {
     },
     // Authenticate
     config => {
-      const uri = parseApiUrl(reqStrPathThrowing('settings.api', localTestConfig));
+      const uri = parseApiUrl(reqStrPathThrowing('settings.data.api', localTestConfig));
       const writeDefaults = reqStrPathThrowing('apollo.writeDefaultsCreator', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
@@ -78,7 +79,7 @@ export const remoteSchemaTask = config => {
             writeDefaults: writeDefaults(config),
             settingsConfig: reqStrPathThrowing('settingsConfig', config)
           },
-          reqStrPathThrowing('settings.testAuthorization', config)
+          reqStrPathThrowing('settings.data.testAuthorization', config)
         )
       );
     }
