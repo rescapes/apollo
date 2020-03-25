@@ -13,13 +13,7 @@ import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {
-  capitalize,
-  mergeDeepWithRecurseArrayItemsByRight,
-  pickDeepPaths,
-  reqStrPathThrowing,
-  strPathOr
-} from 'rescape-ramda';
+import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
@@ -27,6 +21,7 @@ import {Just} from 'folktale/maybe';
 import {loggers} from 'rescape-log';
 import {omitClientFields} from './requestHelpers';
 import {mapped} from 'ramda-lens';
+import {firstMatchingPathLookup} from './utilityHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -40,7 +35,8 @@ const log = loggers.get('rescapeDefault');
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param {Array|Object} outputParams output parameters for the query in this style json format. See makeQueryContainer.
- * @param {Array|Object} [idPathLookup] Optinoal lookup
+ * @param {Array|Object} [idPathLookup] Optional lookup for array items by the array's field key to see how to
+ * identify the array item. This is a path to an id, such as 'region.id' for userRegions.region.id
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself
  * @param {Object} props The properties to pass to the query.
@@ -87,10 +83,9 @@ export const makeCacheMutation = v(R.curry(
       (item, propKey) => R.when(
         R.is(Object),
         item => {
-          return strPathOr(
-            item,
-            R.propOr('id', propKey, idPathLookup),
-            item)
+          // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
+          // item[propKey] does not have its own id.
+          return firstMatchingPathLookup(idPathLookup, propKey, item);
         }
       )(item),
       result,

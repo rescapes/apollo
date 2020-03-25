@@ -17,6 +17,7 @@ import {
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
 } from './defaultSettingsStore';
+import {firstMatchingPathLookup} from './utilityHelpers';
 
 /**
  * Create a typePolicies object that merges specified fields. This is needed so that non-normalized types
@@ -59,15 +60,10 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                           // Merge array items by given the configured id path or default to id,
                           // but drop existing items that have no match in incoming
                           return mergeDeepWithRecurseArrayItemsByRight(
-                            (v, propKey) => {
-                              return R.when(
-                                v => R.is(Object, v),
-                                v => {
-                                  // Get the configured idPath if one exists
-                                  const idPath = R.propOr('id', field, idPathLookup || {});
-                                  return strPathOr(null, idPath, v);
-                                }
-                              )(v);
+                            item => {
+                              // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
+                              // item[field] does not have its own id.
+                              return firstMatchingPathLookup(idPathLookup, field, item);
                             },
                             existing,
                             incoming
@@ -99,6 +95,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
     )
   );
 };
+
 
 
 /**

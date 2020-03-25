@@ -8,3 +8,47 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import {findMapped, strPathOr, toArrayIfNot} from 'rescape-ramda';
+
+/**
+ * Used to give an id to an item based on the id of a child object in that item. Example
+ * item = {
+ *   userRegions: {
+ *     region: {id: 1},
+ *     data: {}
+ *   }
+ * }
+ * idPathLookup = {userRegions: ['region.id', 'region.__ref']}
+ * propKey = 'userRegions'
+ * This will return 1 since region.id is a path to a non-nul value in item.
+ *
+ * For a given object and propKey, look up the propKey in the idPathLookup to get the possible paths in item
+ * that point to a unique id. Return the first non-null value in item mapped by one of the paths.
+ * @param {Object} [idPathLookup] Object keyed by propKeys and valued by list of strings or a single string path.
+ * If a key matching propKey exists then the first value in item[key] matching a path value will be returned.
+ * The default path for any propKey is 'id', so idPathLookup can be null or missing propKeys
+ * @param {String} propKey property key of item to find an id for
+ * @param {Object} item Item to search
+ * @return {*} The first found value representing an id or item[propKey]. Throws if no non null value is found
+ */
+export const firstMatchingPathLookup = (idPathLookup, propKey, item) => {
+  // Find the matching id paths(s) or default to id
+  const idPaths = toArrayIfNot(R.propOr('id', propKey, idPathLookup));
+  const value = findMapped(idPath => {
+      return strPathOr(
+        null,
+        idPath,
+        item
+      );
+    },
+    idPaths
+  );
+  if (R.isNil(value)) {
+    throw new Error(`firstMatchingPathLookup: Bad configuration or data. No id-value found in item ${
+      inspect(item)
+    } using for propKey ${propKey} using idPathLookup: ${
+      inspect(idPathLookup)
+    } or using the default 'id' property`);
+  }
+  return R.defaultTo(item, value);
+};
