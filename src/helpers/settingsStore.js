@@ -1,11 +1,10 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers';
 import {makeQueryContainer} from './queryHelpers';
-import {_addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
+import {addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
 import {
   composeWithChain,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  mergeDeep,
   omitDeepPaths,
   reqStrPathThrowing,
   strPathOr
@@ -101,7 +100,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
             // Add mutate to response.data so we dont' have to guess if it's a create or udpate
             const settings = reqStrPathThrowing(
               'data.mutate.settings',
-              _addMutateKeyToMutationResponse({silent: true}, response)
+              addMutateKeyToMutationResponse({silent: true}, response)
             );
             // Add the cache only values to the persisted settings
             const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
@@ -114,7 +113,8 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
                 // output for the read fragment
                 outputParams
               },
-              createCacheOnlyPropsForSettings({cacheOnlyObjs, cacheIdProps}, propsWithCacheOnlyItems)
+              propsWithCacheOnlyItems
+              //createCacheOnlyPropsForSettings({cacheOnlyObjs, cacheIdProps}, propsWithCacheOnlyItems)
             );
           }
         }

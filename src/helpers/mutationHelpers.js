@@ -139,7 +139,7 @@ export const makeMutationRequestContainer = v(R.curry(
         apolloConfig => {
           return composeWithMapMDeep(1, [
             response => {
-              return _addMutateKeyToMutationResponse({name}, response);
+              return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
               return retryTask(
@@ -164,7 +164,7 @@ export const makeMutationRequestContainer = v(R.curry(
         () => {
           return R.chain(
             response => {
-              return _addMutateKeyToMutationResponse({name}, response);
+              return addMutateKeyToMutationResponse({name}, response);
             },
             authApolloComponentMutationContainer(
               apolloConfig,
@@ -208,7 +208,7 @@ export const makeMutationRequestContainer = v(R.curry(
  * @return {Object} response with duplicated mutate key
  * @private
  */
-export const _addMutateKeyToMutationResponse = ({name, silent}, response) => {
+export const addMutateKeyToMutationResponse = ({name, silent}, response) => {
   const createOrUpdateKey = R.find(
     key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
     R.keys(R.propOr({}, 'data', response))

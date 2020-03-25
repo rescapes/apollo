@@ -9,7 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import * as R from 'ramda';
-import {mergeDeepWithRecurseArrayItemsByRight, omitDeep, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {
+  mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight,
+  mergeDeepWithRecurseArrayItemsByRight,
+  omitDeep,
+  reqStrPathThrowing,
+  strPathOr
+} from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
 import {loginToAuthClientTask} from '../auth/login';
 import {
@@ -55,33 +61,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                   return {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
-                        // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
-                        if (Array.isArray(existing) || Array.isArray(incoming)) {
-                          // Merge array items by given the configured id path or default to id,
-                          // but drop existing items that have no match in incoming
-                          return mergeDeepWithRecurseArrayItemsByRight(
-                            item => {
-                              // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
-                              // item[field] does not have its own id.
-                              return firstMatchingPathLookup(idPathLookup, field, item);
-                            },
-                            existing,
-                            incoming
-                          );
-                        } else {
-                          return mergeObjects(
-                            // Remove incoming keys from existing and clone it to unfreeze it.
-                            // since it comes from the cache and will be written to the cache
-                            // This assumes a merge strategy that takes the keys of incoming and doesn't do
-                            // more fine-grained merging
-                            R.compose(
-                              unfrozen => R.merge(existing, unfrozen),
-                              R.clone,
-                              R.omit(R.keys(incoming))
-                            )(existing),
-                            incoming
-                          );
-                        }
+                        return mergeField({mergeObjects, idPathLookup}, field, existing, incoming);
                       }
                     }
                   };
@@ -96,7 +76,49 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   );
 };
 
-
+/**
+ * Merge objects including thos with arrays
+ * @param {Object} config
+ * @param {Function} config.mergeObjects InMemoryCache's merge function
+ * @param {Object} config.idPathLookup Id path lookup for objects wihtout ids
+ * @param {String} field The current field of existint and incoming
+ * @param {Object} existing Existing cache item
+ * @param {Object} incoming Incoming cache write item
+ * @return {Object} The merged cache object
+ */
+const mergeField = ({mergeObjects, idPathLookup}, field, existing, incoming) => {
+  // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
+  // Remove incoming keys from existing and clone it to unfreeze it.
+  // since it comes from the cache and will be written to the cache
+  const clone = existing => R.unless(
+    R.isNil,
+    R.compose(
+      unfrozen => R.merge(existing, unfrozen),
+      R.clone,
+      R.omit(R.keys(incoming || {}))
+    )
+  )(existing);
+  // Merge array items by given the configured id path or default to id,
+  // but drop existing items that have no match in incoming
+  if (!existing || !incoming) {
+    return mergeObjects(clone(existing), incoming)
+  }
+  return mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight(
+    item => {
+      // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
+      // item[field] does not have its own id.
+      return firstMatchingPathLookup(idPathLookup, field, item);
+    },
+    (existing, incoming) => {
+      return mergeObjects(
+        clone(existing),
+        incoming
+      );
+    },
+    existing,
+    incoming
+  );
+};
 
 /**
  * Task to return and authorized client for tests

@@ -10,8 +10,8 @@
  */
 
 // Enzyme setup
-import enzyme from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+//import enzyme from 'enzyme';
+//import Adapter from 'enzyme-adapter-react-16';
 // Makes localStorage available in node to Apollo
 import 'localstorage-polyfill'
 import 'regenerator-runtime'
@@ -20,9 +20,11 @@ import {rescapeDefaultTransports} from 'rescape-log'
 // Set the loggers to debug level
 rescapeDefaultTransports.fileCombined.level = 'debug';
 rescapeDefaultTransports.console.level = 'debug';
+Error.stackTraceLimit = Infinity;
 
-enzyme.configure({adapter: new Adapter()});
+//enzyme.configure({adapter: new Adapter()});
 
+/*
 global.navigator = {
   userAgent: 'node.js'
 };
@@ -31,9 +33,9 @@ if (process.env.NODE_ENV !== 'production') {
   require('longjohn');
 }
 
-Error.stackTraceLimit = Infinity;
 
 // https://github.com/facebook/jest/issues/3251
 process.on('unhandledRejection', reason => {
   throw reason
 });
+ */

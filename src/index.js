@@ -29,9 +29,14 @@ export {
   getOrCreateApolloClientTask
 } from './client/apolloClient';
 export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
-export {makeMutation, makeMutationRequestContainer, mutationParts} from './helpers/mutationHelpers';
 export {
-  makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps
+  makeMutation,
+  makeMutationRequestContainer,
+  mutationParts,
+  addMutateKeyToMutationResponse
+} from './helpers/mutationHelpers';
+export {
+  makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
 } from './helpers/mutationCacheHelpers';
 export {
   formatOutputParams,
@@ -78,4 +83,4 @@ export {
 export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
 } from './helpers/queryCacheHelpers';
-export {firstMatchingPathLookup} from './helpers/utilityHelpers'
+export {firstMatchingPathLookup} from './helpers/utilityHelpers';
