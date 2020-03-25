@@ -21,6 +21,7 @@ const config = {
     'src/helpers/queryHelpers.js',
     'src/helpers/requestHelpers.js',
     'src/helpers/testHelpers.js',
+    'src/helpers/utilityHelpers.js',
     'src/schema/remoteSchema.js',
     'src/config.js'
   ],

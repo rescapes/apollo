@@ -78,3 +78,4 @@ export {
 export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
 } from './helpers/queryCacheHelpers';
+export {firstMatchingPathLookup} from './helpers/utilityHelpers'
