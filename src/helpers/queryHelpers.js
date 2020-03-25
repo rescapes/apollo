@@ -36,6 +36,13 @@ export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams,
 
 /**
  * Creates a fragment query for fetching values from the cache
+ * @param {String} queryName Unique query name
+ * @param {Object} inputParamTypeMapper Used to generate the correct complex input types
+ * @param {Array|Object} outputParams
+ * @param props Only for __typename
+ * @param {String} [props.__typename] Only required for fragment queries
+ * I think fragments never need args so only queryArguments.__typename should be specified for fragment queries
+ * @return {string} The query string, not gql
  * @type {any}
  */
 export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outputParams, props) => {

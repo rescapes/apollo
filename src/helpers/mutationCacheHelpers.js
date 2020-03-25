@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {inspect} from 'util';
 import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -31,11 +32,15 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
- * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
- * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * @params {Object} mutationConfig
+ * @params {String} mutationConfig.name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @params {Object} mutationConfig.readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
- * @param {Array|Object} outputParams output parameters for the query in this style json format. See makeQueryContainer.
- * @param {Array|Object} [idPathLookup] Optional lookup for array items by the array's field key to see how to
+ * @param {Array|Object} mutationConfig.outputParams output parameters for the query in this style json format. See makeQueryContainer.
+ * @param {Array|Object} [mutationConfig.idPathLookup] Optional lookup for array items by the array's field key to see how to
+ * @param {Boolean} [mutationConfig.mergeFromCacheFirst] Default false. If true do a deep merge with the existing
+ * value in cache before writing. This usually isn't needed because the cache is configured with type polcies that
+ * do the merging.
  * identify the array item. This is a path to an id, such as 'region.id' for userRegions.region.id
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself
@@ -52,45 +57,28 @@ export const makeCacheMutation = v(R.curry(
    {
      name,
      outputParams,
-     idPathLookup
+     idPathLookup,
+     mergeFromCacheFirst
    },
    props) => {
-    const outputParamsWithOmitedClientFields = omitClientFields(outputParams);
-    if (R.equals(outputParams, outputParamsWithOmitedClientFields)) {
+    const outputParamsWithOmittedClientFields = omitClientFields(outputParams);
+    if (R.equals(outputParams, outputParamsWithOmittedClientFields)) {
       const error = `makeCacheMutation: Error: outputParams do not contain any @client directives. Found ${
         JSON.stringify(outputParams)
       }. @client directives are for writing cache-only values to to cache.`;
       throw(error);
     }
     const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-    // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
-    const fragment = gql`${makeFragmentQuery(
-      `${name}WithoutClientFields`, 
-      {}, 
-      // Don't output cache only fields makeMutationWithClientDirectiveContainerhere. We just want the id
-      outputParamsWithOmitedClientFields, 
-      R.pick(['__typename'], props)
-    )}`;
     // The id to get use to get the right fragment
     const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
-    log.debug(`Query Fragment: ${print(fragment)} id: ${id}`);
 
-    // Get the fragment
-    const result = apolloClient.readFragment({fragment, id});
-    // Merge the existing cache data with the full props, where the props are the cache-only data to write
-    // Be careful because props will override anything it matches with deep in result
-    const data = mergeDeepWithRecurseArrayItemsByRight(
-      (item, propKey) => R.when(
-        R.is(Object),
-        item => {
-          // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
-          // item[propKey] does not have its own id.
-          return firstMatchingPathLookup(idPathLookup, propKey, item);
-        }
-      )(item),
-      result,
-      R.omit(['id', '__typename'], props)
-    );
+    // Optionally merge the existing cache data into the props before writing.
+    // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
+    const propsWithPossibleMerge = R.when(
+      () => mergeFromCacheFirst,
+      props => mergeExistingFromCache({apolloClient, idPathLookup, outputParamsWithOmittedClientFields, id}, props)
+    )(props);
+
     // Write the fragment
     const writeFragment = gql`${makeFragmentQuery(
       `${name}WithClientFields`, 
@@ -98,8 +86,14 @@ export const makeCacheMutation = v(R.curry(
       outputParams, 
       R.pick(['__typename'], props))
     }`;
-    log.debug(`Query write Fragment: ${print(writeFragment)} id: ${id} args: ${JSON.stringify(R.pick(['__typename'], props))}`);
-    apolloClient.writeFragment({fragment: writeFragment, id, data});
+
+    log.debug(`Query write Fragment: ${
+      print(writeFragment)
+    } id: ${id} args: ${
+      JSON.stringify(propsWithPossibleMerge, null, 2)
+    }`);
+
+    apolloClient.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
     // Read to verify that the write succeeded.
     // If this throws then we did something wrong
     try {
@@ -108,7 +102,7 @@ export const makeCacheMutation = v(R.curry(
       log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
       throw e;
     }
-    return data;
+    return propsWithPossibleMerge;
   }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
@@ -127,6 +121,63 @@ export const makeCacheMutation = v(R.curry(
   ],
   'makeCacheMutation'
 );
+
+/**
+ * Reads from the cache and merges the results with props. Props values take precendence, and array items
+ * are merged by the id path configured in idPathLookup
+ * @param apolloClient
+ * @param idPathLookup
+ * @param outputParamsWithOmittedClientFields
+ * @param id
+ * @param props
+ * @return {*}
+ */
+const mergeExistingFromCache = ({apolloClient, idPathLookup, outputParamsWithOmittedClientFields, id}, props) => {
+  // TODO It would be ideal not to merge what's in the cache before writing our cache only values,
+  // since the cache write will deep merge existing with incoming anyway. But unless we do this merge
+  // here we don't see able to match what is already in the cache. It might be possible to only
+  // write fragments with cache-only items here that would merge correctly. For now we do a single write
+  // of pre-merged data that will be merged again by the cache
+
+  // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
+  const fragment = gql`${makeFragmentQuery(
+      `${name}WithoutClientFields`, 
+      {}, 
+      // Don't output cache only fields where
+      outputParamsWithOmittedClientFields, 
+      R.pick(['__typename'], props)
+    )}`;
+  log.debug(`Query Fragment: ${print(fragment)} id: ${id}`);
+
+  // Get the fragment
+  const result = apolloClient.readFragment({fragment, id});
+
+  return mergeCacheable({idPathLookup}, result, props);
+};
+
+/**
+ * Merges an existing cache object with an incoming, merging array items by configured id
+ * @param config
+ * @param [config.idPathLookup] Optional id path look for array items needing to resolve and id
+ * @param existing
+ * @param incoming
+ * @return {*}
+ */
+export const mergeCacheable = ({idPathLookup}, existing, incoming) => {
+  // Merge the existing cache data with the full props, where the props are the cache-only data to write
+  return mergeDeepWithRecurseArrayItemsByRight(
+    (item, propKey) => R.when(
+      R.is(Object),
+      item => {
+        // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
+        // item[propKey] does not have its own id.
+        return firstMatchingPathLookup(idPathLookup, propKey, item);
+      }
+    )(item),
+    existing,
+    incoming
+  );
+};
 
 /**
  * Like makeMutationContainer but creates a query from outputParams that contain at least one @client directive

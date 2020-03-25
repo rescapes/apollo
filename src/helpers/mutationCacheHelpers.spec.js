@@ -30,7 +30,9 @@ import {createSampleSettingsTask} from './defaultSettingsStore.sample';
 import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore';
 
 // A blend of values from the server and the cache-only values
-const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username', 'data.mapbox.mapboxAuthentication'];
+const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',
+  'data.mapbox.viewport', 'data.mapbox.mapboxAuthentication'
+];
 
 describe('mutationCacheHelpers', () => {
     test('makeMutationWithClientDirectiveContainerCheckCaching', done => {

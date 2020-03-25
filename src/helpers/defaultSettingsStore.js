@@ -56,7 +56,8 @@ export const defaultSettingsCacheOnlyObjs = ['data.testAuthorization', 'data.map
 export const defaultSettingsCacheIdProps = [
   'id',
   '__typename',
-  'data.__typename'
+  'data.__typename',
+  'data.mapbox.__typename',
 ];
 
 

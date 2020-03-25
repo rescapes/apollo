@@ -52,5 +52,5 @@ export const firstMatchingPathLookup = (idPathLookup, propKey, item) => {
       inspect(idPathLookup)
     } or using the default 'id' property`);
   }
-  return R.defaultTo(item, value);
+  return value
 };

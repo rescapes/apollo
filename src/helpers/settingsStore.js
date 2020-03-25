@@ -1,4 +1,4 @@
-import {createCacheOnlyProps, makeCacheMutation} from './mutationCacheHelpers';
+import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers';
 import {makeQueryContainer} from './queryHelpers';
 import {_addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
 import {
@@ -32,6 +32,13 @@ import PropTypes from 'prop-types';
 // TODO These value should be derived from the schema
 export const readInputTypeMapper = {};
 
+/**
+ * Uses the given configuration to extract the props that only belong in the cache
+ * @param cacheOnlyObjs
+ * @param cacheIdProps
+ * @param props
+ * @return {Object} Modified props
+ */
 export const createCacheOnlyPropsForSettings = ({cacheOnlyObjs, cacheIdProps}, props) => {
   return createCacheOnlyProps({name: 'settings', cacheIdProps, cacheOnlyObjs}, props);
 };
@@ -96,6 +103,9 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
               'data.mutate.settings',
               _addMutateKeyToMutationResponse({silent: true}, response)
             );
+            // Add the cache only values to the persisted settings
+            const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
+
             // Mutate the cache to save settings to the database that are not stored on the server
             makeCacheMutation(
               apolloConfig,
@@ -104,7 +114,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
                 // output for the read fragment
                 outputParams
               },
-              createCacheOnlyPropsForSettings({cacheOnlyObjs, cacheIdProps}, mergeDeep(settings, props))
+              createCacheOnlyPropsForSettings({cacheOnlyObjs, cacheIdProps}, propsWithCacheOnlyItems)
             );
           }
         }
