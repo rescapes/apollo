@@ -138,8 +138,10 @@ export const makeMutationRequestContainer = v(R.curry(
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
           return composeWithMapMDeep(1, [
-            response => {
-              return addMutateKeyToMutationResponse({name}, response);
+            component => {
+              return component;
+              // TODO this probably has to happen in the hoc component wrapper. We haven't actualy called mutate here
+              // addMutateKeyToMutationResponse({name}, response);
             },
             () => {
               return retryTask(

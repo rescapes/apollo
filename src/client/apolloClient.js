@@ -451,8 +451,8 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
       // and the props function for the Apollo component
       apolloConfig => {
         return R.chain(
-          value => {
-            return value;
+          component => {
+            return component;
           },
           authApolloComponentQueryContainer(
             apolloConfig,

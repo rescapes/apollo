@@ -98,11 +98,9 @@ const mergeField = ({mergeObjects, idPathLookup}, field, existing, incoming) => 
       R.omit(R.keys(incoming || {}))
     )
   )(existing);
+
   // Merge array items by given the configured id path or default to id,
   // but drop existing items that have no match in incoming
-  if (!existing || !incoming) {
-    return mergeObjects(clone(existing), incoming)
-  }
   return mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight(
     item => {
       // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
@@ -110,6 +108,7 @@ const mergeField = ({mergeObjects, idPathLookup}, field, existing, incoming) => 
       return firstMatchingPathLookup(idPathLookup, field, item);
     },
     (existing, incoming) => {
+      // Handle objects with mergeObjects
       return mergeObjects(
         clone(existing),
         incoming
