@@ -1,6 +1,8 @@
+import {makeMutationRequestContainer} from '../mutationHelpers';
+
 /**
- * Created by Andy Likuski on 2018.12.31
- * Copyright (c) 2018 Andy Likuski
+ * Created by Andy Likuski on 2020.04.01
+ * Copyright (c) 2020 Andy Likuski
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -9,11 +11,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as R from 'ramda';
-import {v} from 'rescape-validate';
-import PropTypes from 'prop-types';
-import {makeMutationRequestContainer} from '../mutationHelpers';
-import {makeQueryContainer} from '../queryHelpers';
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType
@@ -52,69 +49,40 @@ export const regionOutputParams = {
   }
 };
 
-/**
- * Queries regions
- * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
- * @params {Array|Object} outputParams OutputParams for the query such as regionOutputParams
- * @params {Object} props Arguments for the Regions query. This can be {} or null to not filter.
- * @returns {Task} A Task containing the Regions in an object with obj.data.regions or errors in obj.errors
- */
-export const makeRegionsQueryContainer = v(R.curry((apolloConfig, {outputParams}, props) => {
-    return makeQueryContainer(
-      apolloConfig,
-      {name: 'regions', readInputTypeMapper, outputParams});
-  }),
-  [
-    ['apolloConfig', PropTypes.shape({apolloClient: PropTypes.shape()}).isRequired],
-    ['queryStructure', PropTypes.shape({
-      outputParams: PropTypes.oneOfType([
-        PropTypes.array,
-        PropTypes.shape()
-      ]).isRequired
-    })],
-    ['props', PropTypes.shape().isRequired]
-  ],
-  'makeRegionsQueryContainer'
-);
-
-/**
- * Makes a Region mutation
- * @param {Object} apolloConfig Configuration of the Apollo Client when using one instead of an Apollo component
- * @param {Object} apolloConfig.apolloClient An authorized Apollo Client
- * @param {Array|Object} outputParams output parameters for the query in this style json format:
- *  ['id',
- *   {
- *        data: [
- *         'foo',
- *         {
- *            properties: [
- *             'type',
- *            ]
- *         },
- *         'bar',
- *       ]
- *    }
- *  ]
- *  @param {Object} props Object matching the shape of a region. E.g. {id: 1, city: "Stavanger", data: {foo: 2}}
- *  @returns {Task|Object} A container. For ApolloClient mutations we get a Task back. For Apollo components
- *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
- */
-export const makeRegionMutationContainer = v(R.curry(
-  (apolloConfig, {outputParams}, props) => makeMutationRequestContainer(
-    apolloConfig,
+// Each query and mutation expects a container to compose then props
+export const apolloContainers = {
+  // Creates a function expecting a component to wrap and props
+  queryRegions: props => makeMutationRequestContainer(
+    {
+      options: {
+        variables: (props) => {
+          return {
+            id: parseInt(props.region.id)
+          };
+        },
+        // Pass through error so we can handle it in the component
+        errorPolicy: 'all'
+      }
+    },
     {
       name: 'region',
-      outputParams
+      outputParams: regionOutputParams
     },
     props
-  )), [
-  ['apolloConfig', PropTypes.shape().isRequired],
-  ['mutationStructure', PropTypes.shape({
-    outputParams: PropTypes.oneOfType([
-      PropTypes.array,
-      PropTypes.shape()
-    ]).isRequired
-  })
-  ],
-  ['props', PropTypes.shape().isRequired]
-], 'makeRegionMutationContainer');
+  ),
+  mutateRegion: props => makeMutationRequestContainer(
+    {
+      options: {
+        variables: (props) => {
+          return R.propOr({}, 'region', props);
+        },
+        errorPolicy: 'all'
+      }
+    },
+    {
+      name: 'region',
+      outputParams: regionOutputParams
+    },
+    props
+  )
+};

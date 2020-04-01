@@ -138,10 +138,8 @@ export const makeMutationRequestContainer = v(R.curry(
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
           return composeWithMapMDeep(1, [
-            component => {
-              return component;
-              // TODO this probably has to happen in the hoc component wrapper. We haven't actualy called mutate here
-              // addMutateKeyToMutationResponse({name}, response);
+            response => {
+              return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
               return retryTask(
@@ -165,8 +163,10 @@ export const makeMutationRequestContainer = v(R.curry(
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
           return R.chain(
-            response => {
-              return addMutateKeyToMutationResponse({name}, response);
+            component => {
+              return component
+              // TODO do we have to do this in the HOC?
+              //return addMutateKeyToMutationResponse({name}, response);
             },
             authApolloComponentMutationContainer(
               apolloConfig,
