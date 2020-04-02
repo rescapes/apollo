@@ -28,7 +28,7 @@ export {
   authApolloQueryContainer,
   getOrCreateApolloClientTask
 } from './client/apolloClient';
-export {makeQuery, makeQueryContainer} from './helpers/queryHelpers';
+export {makeQuery, makeQueryContainer, apolloQueryResponsesTask, createRequestVariables} from './helpers/queryHelpers';
 export {
   makeMutation,
   makeMutationRequestContainer,
@@ -84,4 +84,4 @@ export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
 } from './helpers/queryCacheHelpers';
 export {firstMatchingPathLookup} from './helpers/utilityHelpers';
-export {apolloHOC} from './helpers/componentHelpers'
+export {apolloHOC} from './helpers/componentHelpers';

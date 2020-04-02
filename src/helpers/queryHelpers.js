@@ -9,7 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {capitalize, compact, mapObjToValues, omitDeep, replaceValuesWithCountAtDepthAndStringify, memoized} from 'rescape-ramda';
+import {
+  capitalize,
+  compact,
+  mapObjToValues,
+  omitDeep,
+  replaceValuesWithCountAtDepthAndStringify,
+  memoized,
+  composeWithChain,
+  mapToNamedResponseAndInputs, mapToMergedResponseAndInputs, reqStrPathThrowing, traverseReduce
+} from 'rescape-ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
 import {v} from 'rescape-validate';
@@ -19,7 +28,10 @@ import PropTypes from 'prop-types';
 import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
+import {of, fromPromised} from 'folktale/concurrency/task'
+
 const log = loggers.get('rescapeDefault');
+
 
 /**
  * Makes a graphql query based on the queryParams
@@ -219,3 +231,83 @@ export const makeQueryContainer = v(R.curry(
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'
 );
+
+/**
+ *
+ * Use given props to call the function at requests.arg.options, and then get the .variables of the returned value
+ * @param {Function} apolloComponent Expects props and returns an Apollo Component
+ * @param {Object} props
+ * @returns {Object} variables to use for the query
+ */
+export const createRequestVariables = (apolloComponent, props) => {
+  return reqStrPathThrowing('props.variables', apolloComponent(props));
+};
+
+/**
+ * Runs the apollo queries in queryComponents. This is currently only used for testing the queries of
+ * an Apollo React component
+ * @param {Task} schemaTask Task that resolves to the the schema and apolloClient {schema, apolloClient}
+ * @param {Task} resolvedPropsTask A task that resolves the props to use
+ * @param {Object} queryComponents Keyed by name and valued by a query function expecting props
+ * @return {Task} The query results keyed by queryComponent keys
+ * @private
+ */
+export const apolloQueryResponsesTask = ({schemaTask, resolvedPropsTask}, queryComponents) => {
+  // Task Object -> Task
+  return composeWithChain([
+    // Wait for all the queries to finish
+    ({queryComponents, mappedProps, apolloClient}) => {
+      return traverseReduce(
+        (acc, obj) => R.merge(acc, obj),
+        of({}),
+        mapObjToValues(
+          (query, key) => {
+            // Create variables for the current graphqlQueryObj by sending props to its configuration
+            // Add a render function that returns null to prevent react from complaining
+            // Normally the render function creates the child components, passing the Apollo request results as props
+            const props = R.merge(mappedProps, {render: props => null});
+            const queryVariables = createRequestVariables(query, props);
+            log.debug(JSON.stringify(queryVariables));
+            const task = fromPromised(
+              () => {
+                return apolloClient.query({
+                  // pass props the query so we can get the Query component and extract the query string
+                  query: reqStrPathThrowing('props.query', query(props)),
+                  // queryVariables are called with props to give us the variables for our query. This is just like Apollo
+                  // does, accepting props to allow the container to form the variables for the query
+                  variables: queryVariables
+                });
+              }
+            )();
+            return R.map(
+              response => {
+                return {[key]: response};
+              },
+              task
+            );
+          },
+          queryComponents
+        )
+      );
+    },
+    // Resolve the schemaTask
+    mapToMergedResponseAndInputs(
+      ({}) => {
+        return schemaTask;
+      }
+    ),
+    // Resolve the parent props and map using initialState
+    // TODO this used to be here for Redux
+    mapToNamedResponseAndInputs('mappedProps',
+      ({props}) => {
+        return of(props);
+      }
+    ),
+    // Resolve the props from the task
+    mapToNamedResponseAndInputs('props',
+      () => {
+        return resolvedPropsTask;
+      }
+    )
+  ])({schemaTask, resolvedPropsTask, queryComponents});
+};
