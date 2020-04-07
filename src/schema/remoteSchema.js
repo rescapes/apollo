@@ -67,7 +67,7 @@ export const remoteSchemaTask = config => {
     },
     // Authenticate
     config => {
-      const uri = parseApiUrl(reqStrPathThrowing('settings.data.api', localTestConfig));
+      const uri = parseApiUrl(reqStrPathThrowing('settings.data.api', config));
       const writeDefaults = reqStrPathThrowing('apollo.writeDefaultsCreator', config);
       return R.map(
         ({apolloClient, token}) => ({uri, apolloClient, token}),
