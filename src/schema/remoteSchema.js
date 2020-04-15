@@ -61,8 +61,12 @@ export const remoteSchemaTask = config => {
     ({uri, apolloClient, token}) => {
       const link = createAuthenticatedLink(uri, token);
       return R.map(
-        schema => ({schema, link, apolloClient}),
-        fromPromised(l => introspectSchema(l))(link)
+        schema => {
+          return {schema, link, apolloClient};
+        },
+        fromPromised(l => {
+          return introspectSchema(l);
+        })(link)
       );
     },
     // Authenticate

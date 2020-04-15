@@ -281,6 +281,7 @@ export const noAuthApolloClientQueryRequestTask = (apolloConfig, args) => {
  */
 export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => {
   const mutationOptions = R.omit(['apolloClient'], apolloConfig);
+  log.debug(`noAuthApolloClientMutationRequestTask: ${print(options.mutation)} props: ${JSON.stringify(options.variables)}`);
   return fromPromised(
     () => reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options))
   )();
