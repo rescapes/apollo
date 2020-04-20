@@ -12,7 +12,6 @@
 import {mapObjToValues, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
-import {convertFromGraphqlStructure, convertToGraphqlStructure} from 'rescape-helpers';
 
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic

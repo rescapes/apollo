@@ -13,7 +13,7 @@ import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescap
 import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
-import * as R from 'ramda';
+import * as R from 'ramda'
 import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';

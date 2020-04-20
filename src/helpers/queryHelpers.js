@@ -246,13 +246,13 @@ export const createRequestVariables = (apolloComponent, props) => {
 /**
  * Runs the apollo queries in queryComponents. This is currently only used for testing the queries of
  * an Apollo React component
- * @param {Task} schemaTask Task that resolves to the the schema and apolloClient {schema, apolloClient}
+ * @param {Task} apolloConfigTask Task that resolves to the the schema and apolloClient {schema, apolloClient}
  * @param {Task} resolvedPropsTask A task that resolves the props to use
  * @param {Object} queryComponents Keyed by name and valued by a query function expecting props
  * @return {Task} The query results keyed by queryComponent keys
  * @private
  */
-export const apolloQueryResponsesTask = ({schemaTask, resolvedPropsTask}, queryComponents) => {
+export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, queryComponents) => {
   // Task Object -> Task
   return composeWithChain([
     // Wait for all the queries to finish
@@ -290,10 +290,10 @@ export const apolloQueryResponsesTask = ({schemaTask, resolvedPropsTask}, queryC
         )
       );
     },
-    // Resolve the schemaTask
+    // Resolve the apolloConfigTask
     mapToMergedResponseAndInputs(
       ({}) => {
-        return schemaTask;
+        return apolloConfigTask;
       }
     ),
     // Resolve the parent props and map using initialState
@@ -309,5 +309,5 @@ export const apolloQueryResponsesTask = ({schemaTask, resolvedPropsTask}, queryC
         return resolvedPropsTask;
       }
     )
-  ])({schemaTask, resolvedPropsTask, queryComponents});
+  ])({apolloConfigTask, resolvedPropsTask, queryComponents});
 };
