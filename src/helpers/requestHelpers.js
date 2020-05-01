@@ -106,7 +106,7 @@ export const formatOutputParams = outputParam => {
  *    }
  *  ]
  *}
- *]
+ *}
  * @returns {String} The input params in graphql format
  */
 export const formatInputParams = (inputParam, omitOuterBraces = false, indentLevel = 0) => {
@@ -195,7 +195,7 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
 /**
  * Runs a query task that resolves to {data: {[query|mutationName]: ...}} or {errors: []}. Then
  * process that to return a Result.Ok if there is a day and a Result.Error if there is an error
- * @param {Object} queryTask Contains {data: ...} or {errors: ...}
+ * @param {Object} queryContainer Contains {data: ...} or {errors: ...}
  * @param {String|Function} stringPathOrResolver The path to the desired value within the response.data property.
  * If just response.data is desired, leave stringPath and queryName blank. If a function then it expects
  * response.data and returns a Result.Ok with the desired values or Result.Error if values aren't found where expected
@@ -203,18 +203,20 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
  * @return {Task<Result>} Task with Result.Ok with value in {data: {[queryName]: value}} or Result.Error instance
  * If stringPath and queryName are omited, the result Result.Ok just wraps response
  */
-export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolver = null, queryName = null) => {
+export const mapQueryContainerToNamedResultAndInputs = (
+  queryContainer, stringPathOrResolver = null, queryName = null
+) => {
   return R.map(
-    response => {
-      const result = R.ifElse(
-        response => R.has('errors', response),
-        response => Result.Error(response),
-        response => {
+    queryContainerResponse => {
+      return R.ifElse(
+        queryContainerResponse => R.has('errors', queryContainerResponse),
+        queryContainerResponse => Result.Error(queryContainerResponse),
+        queryContainerResponse => {
           return R.ifElse(
             response => R.isNil(stringPathOrResolver, response),
             // If stringPath is not specified just wrap response in Result.Ok
             response => Result.Ok(response),
-            // Otherwise extract the desired value and put it in {data: [queryName]: ...}}
+            // Otherwise extract the desired value and put it in {data: [queryName]: ...}
             response => R.ifElse(
               () => {
                 return R.is(Function, stringPathOrResolver);
@@ -251,12 +253,11 @@ export const mapQueryTaskToNamedResultAndInputs = (queryTask, stringPathOrResolv
                 };
               }
             )
-          )(response);
-        }
-      )(response);
-      return result;
+          )(queryContainerResponse);
+        },
+      )(queryContainerResponse);
     },
-    queryTask
+    queryContainer
   );
 };
 

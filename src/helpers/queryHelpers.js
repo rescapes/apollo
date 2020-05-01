@@ -176,7 +176,7 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
  *  @param {Task} An apollo query task that resolves to and object with the results of the query. Successful results
  *  are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
  *  of different could be merged together into the data field. This also matches what Apollo components expect.
- *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryTaskToNamedResultAndInputs
+ *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs
  */
 export const makeQueryContainer = v(R.curry(
   (apolloConfig,

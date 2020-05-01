@@ -42,7 +42,7 @@ export {
   formatOutputParams,
   resolveGraphQLType,
   formatInputParams,
-  mapQueryTaskToNamedResultAndInputs,
+  mapQueryContainerToNamedResultAndInputs,
   objIdToInt,
   pickGraphqlPaths,
   pickGraphqlPathsOver,
