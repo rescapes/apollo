@@ -1,4 +1,8 @@
 import {makeMutationRequestContainer} from '../mutationHelpers';
+import * as R from 'ramda'
+import {makeQuery, makeQueryContainer} from '../queryHelpers';
+import {loggers} from 'rescape-log';
+const log = loggers.get('rescapeDefault');
 
 /**
  * Created by Andy Likuski on 2020.04.01
@@ -52,7 +56,7 @@ export const regionOutputParams = {
 // Each query and mutation expects a container to compose then props
 export const apolloContainers = {
   // Creates a function expecting a component to wrap and props
-  queryRegions: props => makeMutationRequestContainer(
+  queryRegions: props => makeQueryContainer(
     {
       options: {
         variables: (props) => {
@@ -74,7 +78,13 @@ export const apolloContainers = {
     {
       options: {
         variables: (props) => {
-          return R.propOr({}, 'region', props);
+          // Only allow the name to be updated
+          return R.pick(['id', 'name'], props.region)
+        },
+        options: {
+          update: (store, response) => {
+            log.debug(response)
+          }
         },
         errorPolicy: 'all'
       }

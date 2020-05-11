@@ -10,21 +10,61 @@
  */
 
 import {apolloHOC} from './componentHelpers';
-import {makeMutationRequestContainer} from './mutationHelpers';
 import {e} from 'rescape-helpers-component';
-import * as R from 'ramda';
 import {adopt} from 'react-adopt';
 import {Component} from 'react';
 import {apolloContainers} from './samples/sampleRegionStore';
+import {mount} from 'enzyme';
+import {fromPromised, of} from 'folktale/concurrency/task';
+import {
+  composeWithChain,
+  composeWithMap,
+  defaultRunConfig,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing
+} from 'rescape-ramda';
+import PropTypes from 'prop-types';
+import {localTestAuthTask} from './testHelpers';
+import {act} from 'react-dom/test-utils';
+import {v} from 'rescape-validate';
+import {ApolloProvider} from '@apollo/react-hooks';
+
+/**
+ * Wraps a component in an Apollo Provider for testing
+ * @param apolloConfig
+ * @param apolloConfig.apolloClient
+ * @param component
+ * @param props for the component
+ * @return {*}
+ */
+const mountWithApolloClient = v((apolloConfig, component) => {
+  let c;
+  act(() => {
+    c = mount(
+      e(
+        ApolloProvider,
+        {client: reqStrPathThrowing('apolloClient', apolloConfig)},
+        component
+      )
+    );
+  });
+  return c;
+}, [
+  ['apolloConfig', PropTypes.shape({
+    apolloClient: PropTypes.shape().isRequired
+  }).isRequired],
+  ['component', PropTypes.oneOfType([PropTypes.shape(), PropTypes.func]).isRequired]
+], 'mountWithApolloClient');
+
 
 describe('componentHelpers', () => {
-  test('apolloHOC', () => {
+
+  test('apolloHOC', done => {
     // This produces a component class that expects a props object keyed by the keys in apolloContainers
     // The value at each key is the result of the corresponding query container or the mutate function of the corresponding
     // mutation container
     const AdoptedApolloContainer = adopt(apolloContainers);
-    // Wrap AdoptedApolloContainer in
-    const apolloHoc = apolloHOC(AdoptedApolloContainer);
+    const errors = [];
 
     class Sample extends Component {
       render() {
@@ -34,6 +74,36 @@ describe('componentHelpers', () => {
       }
     }
 
-    expect(apolloHoc(Sample)).toBeTruthy();
+    // why is this needed?
+    Sample.displayName = 'Sample';
+
+    composeWithChain([
+        mapToNamedResponseAndInputs('mounted',
+        ({apolloConfig}) => {
+          return of(mountWithApolloClient(
+            apolloConfig,
+            e(
+              // Wrap AdoptedApolloContainer in
+              // Creates an HOC component whose child is AdoptedApolloContainer whose child is Sample
+              apolloHOC(AdoptedApolloContainer, Sample),
+              {region: {id: 1}, _testApolloRenderProps: true}
+            )
+          ));
+        }),
+        mapToNamedResponseAndInputs('apolloConfig',
+          () => localTestAuthTask()
+        )
+      ]
+    )().run().listen(defaultRunConfig({
+      onResolved: ({mounted}) => {
+        const apolloHoc = mounted.find('ApolloHOC').instance();
+        expect(apolloHoc).toBeTruthy()
+        // This is a function so I guess I can't use instance()
+        const adoptedContainer = mounted.find(AdoptedApolloContainer.displayName)
+        expect(adoptedContainer.length).toBeTruthy()
+        const sample = mounted.find(Sample.displayName).instance();
+        expect(sample).toBeTruthy()
+      }
+    }, errors, done));
   });
 });

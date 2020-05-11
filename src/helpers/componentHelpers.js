@@ -28,7 +28,9 @@ import * as R from 'ramda';
  * instantiates Component with those prosp
  */
 export const apolloHOC = R.curry((AdoptedApolloContainer, Component) => {
-  return class extends React.Component {
+  // This is only a class to support _apolloRenderProps
+  // this.props are the props passed from the parent component, not the Apollo component request result props
+  return class ApolloHOC extends React.Component {
     render() {
       const self = this;
       // this.props are the props passed from the parent component, not the Apollo component request result props
@@ -44,7 +46,7 @@ export const apolloHOC = R.curry((AdoptedApolloContainer, Component) => {
             // Set this for tests so we can call the mutate functions passed by apollo
             self._apolloRenderProps = props;
           }
-          return e(Component, R.omit(['_apolloRenderProps'], props));
+          return e(Component, props);
         }
       );
     }

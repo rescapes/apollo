@@ -9,13 +9,17 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// Enzyme setup
-//import enzyme from 'enzyme';
-//import Adapter from 'enzyme-adapter-react-16';
+
 // Makes localStorage available in node to Apollo
+import enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
 import 'localstorage-polyfill'
 import 'regenerator-runtime'
 import {rescapeDefaultTransports} from 'rescape-log'
+
+import 'jest-enzyme';
+require('jsdom-global')();
+enzyme.configure({adapter: new Adapter()});
 
 // Set the loggers to debug level
 rescapeDefaultTransports.fileCombined.level = 'debug';

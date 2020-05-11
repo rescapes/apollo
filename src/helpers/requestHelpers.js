@@ -193,8 +193,9 @@ export const resolveGraphQLType = R.curry((inputParamTypeMapper, key, value) => 
 
 
 /**
- * Runs a query task that resolves to {data: {[query|mutationName]: ...}} or {errors: []}. Then
- * process that to return a Result.Ok if there is a day and a Result.Error if there is an error
+ * Resolves a query container to the query results {data: {[query|mutationName]: ...}} or {errors: []}. Then
+ * process that to return a Result.Ok if there is a day and a Result.Error if there is an error. This
+ * works on both task that run queries and Apollo Query components.
  * @param {Object} queryContainer Contains {data: ...} or {errors: ...}
  * @param {String|Function} stringPathOrResolver The path to the desired value within the response.data property.
  * If just response.data is desired, leave stringPath and queryName blank. If a function then it expects

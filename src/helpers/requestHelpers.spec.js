@@ -127,14 +127,26 @@ describe('requestHelpers', () => {
     expect(resolve('foo', Number)).toEqual('Number');
   });
 
-  test('mapQueryTaskToNamedResultAndInputs', async () => {
-    const result = await taskToPromise(mapQueryContainerToNamedResultAndInputs(of({data: 'superduper'})));
+  test('mapQueryContainerToNamedResultAndInputs', async () => {
+    const result = await taskToPromise(mapQueryContainerToNamedResultAndInputs(
+      of({data: 'superduper'}))
+    );
     expect(result).toEqual(Result.Ok({data: 'superduper'}));
-    const result1 = await taskToPromise(mapQueryContainerToNamedResultAndInputs(of({data: {flowing: {nose: 'superduper'}}}), 'flowing.nose', 'nose'));
+    const result1 = await taskToPromise(mapQueryContainerToNamedResultAndInputs(
+      of({data: {flowing: {nose: 'superduper'}}}),
+      'flowing.nose',
+      'nose'
+    ));
     expect(result1).toEqual(Result.Ok({data: {nose: 'superduper'}}));
-    const responsePathError = await taskToPromise(mapQueryContainerToNamedResultAndInputs(of({data: {flowing: {nose: 'superduper'}}}), 'flowing.tooth', 'nose'));
+    const responsePathError = await taskToPromise(mapQueryContainerToNamedResultAndInputs(
+      of({data: {flowing: {nose: 'superduper'}}}),
+      'flowing.tooth',
+      'nose'
+    ));
     expect(R.length(reqStrPathThrowing('errors', responsePathError.merge()))).toEqual(1);
-    const responseError = await taskToPromise(mapQueryContainerToNamedResultAndInputs(of({errors: [new Error('What the heck?')]})));
+    const responseError = await taskToPromise(mapQueryContainerToNamedResultAndInputs(
+      of({errors: [new Error('What the heck?')]}))
+    );
     expect(R.length(reqStrPathThrowing('errors', responseError.merge()))).toEqual(1);
 
     // If we have a custom resolver
