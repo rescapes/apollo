@@ -84,4 +84,11 @@ export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
 } from './helpers/queryCacheHelpers';
 export {firstMatchingPathLookup} from './helpers/utilityHelpers';
-export {apolloHOC} from './helpers/componentHelpers';
+export {
+  apolloHOC,
+  apolloDependentHOC,
+  componentRenderedWithChildrenRenderProp,
+  componentRenderedWithChildrenRenderPropMaybe,
+  componentAndChildRenderedWithChildrenRenderProp,
+  componentAndChildRenderedWithChildrenRenderPropMaybe,
+} from './helpers/componentHelpers';

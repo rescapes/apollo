@@ -1,6 +1,7 @@
 import React from 'react';
 import {e} from 'rescape-helpers-component';
 import * as R from 'ramda';
+import * as Maybe from 'folktale/maybe'
 
 /**
  * Created by Andy Likuski on 2020.04.01
@@ -21,20 +22,20 @@ import * as R from 'ramda';
  * passed to Component each time for testing. I feel like this is something Enzyme should do but doesn't seem to,
  * although it has a renderProps function to access the render function
  * _testApolloRenderProps allows tests to namely access the mutate function and call it
- * @param {Object} AdoptedApolloContainer The container class to instantiate
+ * @param {Object} ApolloContainer An apollo component (Query, Mutation) or a container of adopted apollo components
  * @param {Object} Component The container class to instantiate, which expects the Apollo container request result props
  * @returns {Object} A React Component class whose render method instantiates AdoptedApolloContainer and gives
  * it a child that is a render prop. This render receives props from the Apollo component request results and
  * instantiates Component with those prosp
  */
-export const apolloHOC = R.curry((AdoptedApolloContainer, Component) => {
+export const apolloHOC = R.curry((ApolloContainer, Component) => {
   // This is only a class to support _apolloRenderProps
   // this.props are the props passed from the parent component, not the Apollo component request result props
   return class ApolloHOC extends React.Component {
     render() {
       const self = this;
       // this.props are the props passed from the parent component, not the Apollo component request result props
-      return e(AdoptedApolloContainer, this.props,
+      return e(ApolloContainer, this.props,
         // The Adopted apollo container expects a render function at the children prop
         // This function provides Component with the results of the Apollo component request results
         // in the form ({
@@ -51,4 +52,57 @@ export const apolloHOC = R.curry((AdoptedApolloContainer, Component) => {
       );
     }
   };
+});
+
+export const apolloDependentHOC = R.curry((DependentContainers, Component) => {
+  return R.compose(
+    ...R.map(DependentContainer => {
+      return component => {
+        const hoc = apolloHOC(DependentContainer, component);
+        hoc.displayName = `ApolloHOC(${DependentContainer.displayName})(${component.displayName})`;
+        return hoc;
+      };
+    }, DependentContainers)
+  )(Component);
+});
+
+/**
+ * Given a component and the props passed to it, extract the children component/render prop from the props and create a
+ * render prop called children passed to component along with the other props. The children function
+ * calls the extracted children component/function
+ * @param component
+ * @return {*}
+ */
+export const componentRenderedWithChildrenRenderProp = component => {
+  return ({children, ...props}) => {
+    return component(R.merge(props, {
+      children: p => {
+        return children(p);
+      }
+    }));
+  };
+};
+export const componentRenderedWithChildrenRenderPropMaybe = component => {
+  return Maybe.Just(
+    componentAndChildRenderedWithChildrenRenderProp(component)
+  );
+};
+
+/**
+ * Given a component and its child component and the props passed to teh component, extract the children
+ * render prop from the props and create a render prop called children passed to component along with
+ * the other props. The children function calls childComponent with the children render prop, allowing
+ * us to build-up the children via the render prop
+ */
+export const componentAndChildRenderedWithChildrenRenderProp = R.curry((childComponent, component) => {
+  return ({children, ...props}) => {
+    return component(R.merge(props, {
+      children: p => {
+        return childComponent(R.merge(p, {children}));
+      }
+    }));
+  };
+});
+export const componentAndChildRenderedWithChildrenRenderPropMaybe = R.curry((childComponent, component) => {
+  return Maybe.Just(componentAndChildRenderedWithChildrenRenderProp(childComponent, component));
 });

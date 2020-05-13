@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {apolloHOC} from './componentHelpers';
+import {apolloDependentHOC, apolloHOC} from './componentHelpers';
 import {e} from 'rescape-helpers-component';
 import {adopt} from 'react-adopt';
 import {Component} from 'react';
-import {apolloContainers} from './samples/sampleRegionStore';
+import {apolloContainers, dependentApolloContainers} from './samples/sampleRegionStore';
 import {mount} from 'enzyme';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {
@@ -90,6 +90,53 @@ describe('componentHelpers', () => {
             )
           ));
         }),
+        mapToNamedResponseAndInputs('apolloConfig',
+          () => localTestAuthTask()
+        )
+      ]
+    )().run().listen(defaultRunConfig({
+      onResolved: ({mounted}) => {
+        const hoc = mounted.find('ApolloHOC').instance();
+        expect(hoc).toBeTruthy()
+        // This is a function so I guess I can't use instance()
+        const adoptedContainer = mounted.find(AdoptedApolloContainer.displayName)
+        expect(adoptedContainer.length).toBeTruthy()
+        const sample = mounted.find(Sample.displayName).instance();
+        expect(sample).toBeTruthy()
+      }
+    }, errors, done));
+  });
+
+  test('apolloSequntialHOC', done => {
+    // This produces a component class that expects a props object keyed by the keys in apolloContainers
+    // The value at each key is the result of the corresponding query container or the mutate function of the corresponding
+    // mutation container
+    const errors = [];
+
+    class Sample extends Component {
+      render() {
+        return e(
+          'div'
+        );
+      }
+    }
+
+    // why is this needed?
+    Sample.displayName = 'Sample';
+
+    composeWithChain([
+        mapToNamedResponseAndInputs('mounted',
+          ({apolloConfig}) => {
+            return of(mountWithApolloClient(
+              apolloConfig,
+              e(
+                // Wrap AdoptedApolloContainer in
+                // Creates an Sequential HOC component whose child is AdoptedApolloContainer whose child is Sample
+                apolloDependentHOC(dependentApolloContainers, Sample),
+                {region: {id: 1}, _testApolloRenderProps: true}
+              )
+            ));
+          }),
         mapToNamedResponseAndInputs('apolloConfig',
           () => localTestAuthTask()
         )

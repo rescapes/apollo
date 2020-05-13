@@ -1,7 +1,15 @@
 import {makeMutationRequestContainer} from '../mutationHelpers';
-import * as R from 'ramda'
+import * as R from 'ramda';
 import {makeQuery, makeQueryContainer} from '../queryHelpers';
 import {loggers} from 'rescape-log';
+import {mapObjToValues, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {adopt} from 'react-adopt';
+
+export const userStateReadInputTypeMapper = {
+  'user': 'UserTypeofUserStateTypeRelatedReadInputType',
+  'data': 'UserStateDataTypeofUserStateTypeRelatedReadInputType'
+};
+
 const log = loggers.get('rescapeDefault');
 
 /**
@@ -53,6 +61,42 @@ export const regionOutputParams = {
   }
 };
 
+export const userOutputParams = {
+  id: 1,
+  lastLogin: 1,
+  username: 1,
+  firstName: 1,
+  lastName: 1,
+  email: 1,
+  isStaff: 1,
+  isActive: 1,
+  dateJoined: 1
+};
+
+
+/**
+ * Creates userState output params
+ * @param userScopeFragmentOutputParams Object keyed by 'region', 'project', etc with
+ * the output params those should return within userState.data.[userRegions|userProject|...]
+ * @return {*} The complete UserState output params
+ * @return {*{}}
+ */
+export const userStateOutputParams = {
+  id: 1,
+  user: {id: 1},
+  data: {
+    userRegions: {
+      region: {
+        id: 1,
+        deleted: 1,
+        key: 1,
+        name: 1
+      }
+    }
+  }
+};
+
+
 // Each query and mutation expects a container to compose then props
 export const apolloContainers = {
   // Creates a function expecting a component to wrap and props
@@ -79,11 +123,11 @@ export const apolloContainers = {
       options: {
         variables: (props) => {
           // Only allow the name to be updated
-          return R.pick(['id', 'name'], props.region)
+          return R.pick(['id', 'name'], props.region);
         },
         options: {
           update: (store, response) => {
-            log.debug(response)
+            log.debug(response);
           }
         },
         errorPolicy: 'all'
@@ -96,3 +140,45 @@ export const apolloContainers = {
     props
   )
 };
+
+// Each query and mutation expects a container to compose then props
+export const dependentApolloContainers = [
+  adopt({queryCurrentUserState: props => makeQueryContainer({
+      options: {
+        variables: (props) => {
+          // Nothing, rely on the server's current user
+          return {};
+        },
+        errorPolicy: 'all'
+      }
+    },
+    {
+      name: 'userStates',
+      readInputTypeMapper: userStateReadInputTypeMapper,
+      outputParams: userStateOutputParams
+    },
+    props
+  )}),
+  // Creates a function expecting a component to wrap and props
+  // This expects the userstate
+  adopt({region: props => makeQueryContainer(
+    {
+      options: {
+        // Don't run this unless we have data from queryCurrentUserState
+        skip: R.complement(strPathOr)(false, 'props.queryCurrentUserState.data.userState.data.regions.0.id', props),
+        variables: props => {
+          return {
+            id: parseInt(reqStrPathThrowing('props.queryCurrentUserState.data.userState.data.regions.0.id', props))
+          };
+        },
+        // Pass through error so we can handle it in the component
+        errorPolicy: 'all'
+      }
+    },
+    {
+      name: 'region',
+      outputParams: regionOutputParams
+    },
+    props
+  )})
+];

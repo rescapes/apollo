@@ -255,7 +255,7 @@ export const mapQueryContainerToNamedResultAndInputs = (
               }
             )
           )(queryContainerResponse);
-        },
+        }
       )(queryContainerResponse);
     },
     queryContainer
@@ -317,16 +317,24 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => {
  * {other options, variables: props} is returned
  */
 export const optionsWithWinnowedProps = (apolloConfig, props) => {
+
+
   // If options.variables is specified return options with variables set to variables(props) if variables is a function
   // Else return {..., variables: props}
   return R.over(
     R.lensProp('variables'),
-    funcObjOrNull => R.ifElse(
-      R.is(Function),
-      func => func(props),
-      // Return the func if it's an object or else the props
-      maybeObj => maybeObj || props
-    )(funcObjOrNull),
+    funcObjOrNull => {
+      if (strPathOr(false, 'options.skip', apolloConfig)) {
+        // We can winnow the props if the component doesn't have the props it needs, as indicated by options.skip
+        return {}
+      }
+      return R.ifElse(
+        R.is(Function),
+        func => func(props),
+        // Return the object if it's an object or else the props
+        maybeObj => maybeObj || props
+      )(funcObjOrNull);
+    },
     R.propOr({}, 'options', apolloConfig)
   );
 };

@@ -17,7 +17,7 @@ import {
   replaceValuesWithCountAtDepthAndStringify,
   memoized,
   composeWithChain,
-  mapToNamedResponseAndInputs, mapToMergedResponseAndInputs, reqStrPathThrowing, traverseReduce
+  mapToNamedResponseAndInputs, mapToMergedResponseAndInputs, reqStrPathThrowing, traverseReduce, strPathOr
 } from 'rescape-ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
@@ -191,17 +191,36 @@ export const makeQueryContainer = v(R.curry(
       },
       readInputTypeMapper
     );
-    const winnowedProps = _winnowRequestProps(apolloConfig, props);
+
+    // See if the query is ready to run
+    const skip = strPathOr(false, 'options.skip', apolloConfig);
+    // If it is winnow the props using the query's options.variables. Else leave the props alone
+    // and the query won't run
+    const winnowedProps = R.ifElse(
+      () => skip,
+      () => ({}),
+      props => _winnowRequestProps(apolloConfig, props)
+    )(props);
     const query = gql`${makeQuery(
       name, 
       readInputTypeMapperOrDefault, 
       outputParams, 
       winnowedProps
     )}`;
-    log.debug(`Creating Query:\n${print(query)}\nArguments:\n${JSON.stringify(winnowedProps)}\n`);
+    log.debug(`Creating Query:\n${
+      print(query)
+    }\n
+    Arguments:\n${
+      R.ifElse(
+        () => skip,
+        () => 'Props are not ready', 
+        (winnowedProps) => JSON.stringify(winnowedProps)
+      )(winnowedProps)
+    }\n`);
     const componentOrTask = authApolloQueryContainer(
       apolloConfig,
       query,
+      // Non-winnowed props because the component does calls its options.variables function
       props
     );
     return R.when(
