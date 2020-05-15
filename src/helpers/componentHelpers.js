@@ -67,42 +67,42 @@ export const apolloDependentHOC = R.curry((DependentContainers, Component) => {
 });
 
 /**
- * Given a component and the props passed to it, extract the children component/render prop from the props and create a
- * render prop called children passed to component along with the other props. The children function
+ * Given a component and the props passed to it, extract the render prop or children component from the props and create a
+ * render prop called render passed to component along with the other props. The children function
  * calls the extracted children component/function
  * @param component
  * @return {*}
  */
 export const componentRenderedWithChildrenRenderProp = component => {
-  return ({children, ...props}) => {
+  return ({render, children, ...props}) => {
     return component(R.merge(props, {
-      children: p => {
-        return children(p);
+      render: p => {
+        return render ? render(p) : children(p);
       }
     }));
   };
 };
 export const componentRenderedWithChildrenRenderPropMaybe = component => {
   return Maybe.Just(
-    componentAndChildRenderedWithChildrenRenderProp(component)
+    componentAndChildRenderedWithRenderProp(component)
   );
 };
 
 /**
- * Given a component and its child component and the props passed to teh component, extract the children
+ * Given a component and its child component and the props passed to the component, extract the
  * render prop from the props and create a render prop called children passed to component along with
  * the other props. The children function calls childComponent with the children render prop, allowing
  * us to build-up the children via the render prop
  */
-export const componentAndChildRenderedWithChildrenRenderProp = R.curry((childComponent, component) => {
-  return ({children, ...props}) => {
+export const componentAndChildRenderedWithRenderProp = R.curry((childComponent, component) => {
+  return ({render, ...props}) => {
     return component(R.merge(props, {
-      children: p => {
-        return childComponent(R.merge(p, {children}));
+      render: p => {
+        return childComponent(R.merge(p, {render}));
       }
     }));
   };
 });
 export const componentAndChildRenderedWithChildrenRenderPropMaybe = R.curry((childComponent, component) => {
-  return Maybe.Just(componentAndChildRenderedWithChildrenRenderProp(childComponent, component));
+  return Maybe.Just(componentAndChildRenderedWithRenderProp(childComponent, component));
 });

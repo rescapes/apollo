@@ -89,6 +89,6 @@ export {
   apolloDependentHOC,
   componentRenderedWithChildrenRenderProp,
   componentRenderedWithChildrenRenderPropMaybe,
-  componentAndChildRenderedWithChildrenRenderProp,
+  componentAndChildRenderedWithRenderProp,
   componentAndChildRenderedWithChildrenRenderPropMaybe,
 } from './helpers/componentHelpers';

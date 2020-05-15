@@ -29,6 +29,7 @@ import {gql} from '@apollo/client'
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
 import {of, fromPromised} from 'folktale/concurrency/task'
+import {localTestAuthTask} from './testHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -280,24 +281,31 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
         (acc, obj) => R.merge(acc, obj),
         of({}),
         mapObjToValues(
-          (query, key) => {
+          (queryContainerExpectingProps, key) => {
+
             // Create variables for the current graphqlQueryObj by sending props to its configuration
             // Add a render function that returns null to prevent react from complaining
             // Normally the render function creates the child components, passing the Apollo request results as props
             const props = R.merge(mappedProps, {render: props => null});
-            const queryVariables = createRequestVariables(query, props);
-            log.debug(JSON.stringify(queryVariables));
+            const task = composeWithChain([
+              ({apolloConfig, props}) => queryContainerExpectingProps(R.merge(apolloConfig, props)),
+              mapToNamedResponseAndInputs('apolloConfig',
+              () => localTestAuthTask()
+              )
+            ])({props})
+            /*
             const task = fromPromised(
               () => {
                 return apolloClient.query({
                   // pass props the query so we can get the Query component and extract the query string
-                  query: reqStrPathThrowing('props.query', query(props)),
+                  query: reqStrPathThrowing('props.query', queryContainerExpectingProps(props)),
                   // queryVariables are called with props to give us the variables for our query. This is just like Apollo
                   // does, accepting props to allow the container to form the variables for the query
                   variables: queryVariables
                 });
               }
             )();
+             */
             return R.map(
               response => {
                 return {[key]: response};

@@ -393,10 +393,12 @@ export const authApolloComponentMutationContainer = R.curry((apolloConfig, mutat
  * @param {Function} [args.props] optional react-apollo options TODO is this allowed?
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} props The props For the component or a subcomponent if this component is wrapping another
+ * @param {Function} props.render Optional render prop
+ * @param {Function} props.children Optional render prop if render isn't used
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {render, ...props}) => {
+export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {render, children, ...props}) => {
 
   return R.compose(
     // TODO in the future we'll use Query with the async option and convert its promise to a Task
@@ -411,7 +413,8 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
           // Converts apolloConfig.options.variables function to the variable function called with the props result
           optionsWithWinnowedProps(apolloConfig, props)
         ),
-        render
+        // If either a render prop or children prop is specified, use it. This is approximately what react-adopt does
+        render || children
       );
     }
   )(props);
