@@ -35,24 +35,52 @@ export const embedComponents = (childComponent, parentComponent) => {
 };
 
 /**
- * If we have a component, wrap it in a Maybe so we can chain
- * @param list
- * @return {*}
+ * If we have a component, wrap it in a Maybe so we can chain with the props that the component returns.
+ * If it's a task chain it with the next task
+ * @param {[Task|Object]} list Each is a task that resolves to the Apollo request response or returns an
+ * Apollo Component
+ * @return {[Task|Object]} The resolution of the final task of list (the first in the list since we're
+ * evaluating bottom to top) or returns the built up component from bottom to top, where the outermost component
+ * is the from the bottom of list and the most embedded component is from the top of list. If a task
+ * the return value will expect props to start the task evaluation chain. If a component, it will expect
+ * to be given a component that is to be the child component of the innermost component (the one from the
+ * top of list). The result of passing the child component is a composed component expecting props.
  */
 export const composeWithComponentMaybeOrTaskChain = list => {
-  return R.composeWith(
-    (nextPropsToTaskOrComponent, res) => {
-      return R.ifElse(
-        res => R.both(R.is(Object), res => 'run' in res)(res),
-        // Chain task with the next function
-        // This gives the props that result from the task to a function that produces a task
-        task => R.chain(nextPropsToTaskOrComponent, task),
-        // Pass the component to the next function, which produces the child component.
-        // embedComponentsOrPassPropsToTask makes an hoc from the child component and component
-        // so that component can pass props to the child component and get a children render prop
-        // to the child component (the render prop to create the grandchild)
-        component => embedComponents(nextPropsToTaskOrComponent, component)
-      )(res);
-    }
-  )(list);
+  return componentOrProps => {
+    const composed = R.composeWith(
+      (nextPropsToTaskOrComponent, res) => {
+        return R.ifElse(
+          res => R.both(R.is(Object), res => 'run' in res)(res),
+          // Chain task with the next function
+          // This gives the props that result from the task to a function that produces a task
+          task => R.chain(nextPropsToTaskOrComponent, task),
+          // Pass the component to the next function, which produces the child component.
+          // embedComponentsOrPassPropsToTask makes an hoc from the child component and component
+          // so that component can pass props to the child component and get a children render prop
+          // to the child component (the render prop to create the grandchild)
+          component => embedComponents(nextPropsToTaskOrComponent, component)
+        )(res);
+      }
+    )(list);
+    // For tasks, componentOrPropsOrBoth is always just props
+    // For components, componentOrPropsOrBoth is the child component. Since we must pass composed the props
+    // first, we pass props below and then component after.
+    // We could optional expect props with/ a children props as the child component here,
+    // but I think we'll always pass the child component before the props
+    return R.ifElse(
+      R.is(Function),
+      // Match the form of HOC(component)(props), even though composed expects props first
+      component => {
+        return props => {
+          // For components, pass props first, then the child component. This returns a complete component
+          return composed(props)(component);
+        };
+      },
+      props => {
+        // For tasks, just pass the props. This returns a task that is ready to execute
+        return composed(props);
+      }
+    )(componentOrProps);
+  };
 };

@@ -123,6 +123,59 @@ describe('monadHelpersComponent', () => {
     return Maybe.Just(childrenPropToRenderPropCallingChild(childComponent, component));
   });
 
+  // Accepts the props and returns a component expecting it's child component
+  // This is like a React component that takes children, but we split it up so we can call
+  // the inner function on the next compose line
+  const componentOrTaskConsumingARenderProp = (config, props) => {
+    const modifiedProps = R.merge(
+      props, {
+        data: {
+          keyCount: R.length(R.keys(props))
+        }
+      }
+    );
+    return R.ifElse(
+      () => R.propOr(false, 'task', config),
+      // Pretend the resolved props are a task
+      modifiedProps => of(modifiedProps),
+      // Return the resolved props to the children
+      // We return a function expecting the children
+      modifiedProps => children => children(modifiedProps)
+    )(modifiedProps);
+  };
+
+  // Render function component that does something and renders the children function that is given to it
+  // This would typically do something asynchronous
+  const dependentComponentOrTaskConsumingRenderProp = (config, {children, ...props}) => {
+    const data = reqStrPathThrowing('data', props);
+    const loading = strPathOr(false, 'loading', data);
+    if (loading) {
+      // If loading pass along the props without processing
+      return children(props);
+    }
+
+    const loadedData = R.merge(
+      props,
+      {
+        data: R.over(
+          R.lensProp('keyCount'),
+          keyCount => {
+            return `dynamite ${keyCount}`;
+          },
+          data
+        )
+      }
+    );
+    return R.ifElse(
+      () => R.propOr(false, 'task', config),
+      // Pretend the resolved props are a task
+      of,
+      // return the resolved props to the children
+      loadedData => children(loadedData)
+    )(loadedData);
+  };
+
+
   test('Basic', () => {
     expect(higherOrderComponent(componentConsumingARenderProp)(simpleComponent)(outerProps)).toEqual(
       'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":2}}'
@@ -312,60 +365,8 @@ describe('monadHelpersComponent', () => {
     );
   });
 
-  test('Compose bottom to top hocs with task or component', done => {
-    // Accepts the props and returns a component expecting it's child component
-    // This is like a React component that takes children, but we split it up so we can call
-    // the inner function on the next compose line
-    const componentOrTaskConsumingARenderProp = (config, props) => {
-      const modifiedProps = R.merge(
-        props, {
-          data: {
-            keyCount: R.length(R.keys(props))
-          }
-        }
-      );
-      return R.ifElse(
-        () => R.propOr(false, 'task', config),
-        // Pretend the resolved props are a task
-        modifiedProps => of(modifiedProps),
-        // Return the resolved props to the children
-        // We return a function expecting the children
-        modifiedProps => children => children(modifiedProps)
-      )(modifiedProps);
-    };
-
-    // Render function component that does something and renders the children function that is given to it
-    // This would typically do something asynchronous
-    const dependentComponentOrTaskConsumingRenderProp = (config, {children, ...props}) => {
-      const data = reqStrPathThrowing('data', props);
-      const loading = strPathOr(false, 'loading', data);
-      if (loading) {
-        // If loading pass along the props without processing
-        return children(props);
-      }
-
-      const loadedData = R.merge(
-        props,
-        {
-          data: R.over(
-            R.lensProp('keyCount'),
-            keyCount => {
-              return `dynamite ${keyCount}`;
-            },
-            data
-          )
-        }
-      );
-      return R.ifElse(
-        () => R.propOr(false, 'task', config),
-        // Pretend the resolved props are a task
-        of,
-        // return the resolved props to the children
-        loadedData => children(loadedData)
-      )(loadedData);
-    };
-
-
+  test('Compose Apollo style request tasks and compose Apollo style components', done => {
+    expect.assertions(2);
     const props = R.merge(outerProps, {children: simpleComponent});
     // Make a composeWithChain that can handle components or tasks
     const composed = config => composeWithComponentMaybeOrTaskChain([
@@ -374,14 +375,17 @@ describe('monadHelpersComponent', () => {
       props => dependentComponentOrTaskConsumingRenderProp(config, props),
       // props -> either task or unary function needing the child component from above. The child gets props made here.
       props => componentOrTaskConsumingARenderProp(config, props)
-    ])(props);
+    ])
+    const composedForTask = composed({task: true})
+    const composedForComponent = composed({})
 
-    // Key count is now 3 because 'children' is part of the count
-    expect(composed({})(simpleComponent)).toEqual(
+    // Call composed with the component then the props, which is how we'll do it in the real
+    // world when we treat composed as an HOC wrapping component
+    expect(composedForComponent(simpleComponent)(props)).toEqual(
       'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 3"}}'
     );
     const errors = [];
-    composed({task: true}).run().listen(defaultRunConfig({
+    composedForTask(props).run().listen(defaultRunConfig({
       onResolved: value => {
         expect(value).toEqual(
           // The task results don't include the simpleComponent
