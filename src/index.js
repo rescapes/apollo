@@ -92,3 +92,5 @@ export {
   componentAndChildRenderedWithRenderProp,
   componentAndChildRenderedWithChildrenRenderPropMaybe,
 } from './helpers/componentHelpers';
+
+export {composeWithComponentMaybeOrTaskChain} from './helpers/componentHelpersMonadic'

@@ -393,31 +393,22 @@ export const authApolloComponentMutationContainer = R.curry((apolloConfig, mutat
  * @param {Function} [args.props] optional react-apollo options TODO is this allowed?
  * @param {Object} apolloComponent The apolloComponent
  * @param {Object} props The props For the component or a subcomponent if this component is wrapping another
- * @param {Function} props.render Optional render prop
- * @param {Function} props.children Optional render prop if render isn't used
- * @param {Just} Returns a Maybe.Just containing the component.
+ * @param {Function}
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
 export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {render, children, ...props}) => {
-
-  return R.compose(
-    // TODO in the future we'll use Query with the async option and convert its promise to a Task
-    // The async option will make the render method (here the child component) handle promises, working
-    // with React Suspense and whatever else
-    Just,
-    props => {
-      return e(
-        Query,
-        R.merge(
-          {query},
-          // Converts apolloConfig.options.variables function to the variable function called with the props result
-          optionsWithWinnowedProps(apolloConfig, props)
-        ),
-        // If either a render prop or children prop is specified, use it. This is approximately what react-adopt does
-        render || children
-      );
-    }
-  )(props);
+  // Return the Query element wrapped in a function that expects the children prop.
+  // Query's response is sent via a render prop to children
+  return e(
+    Query,
+    R.merge(
+      {query},
+      // Converts apolloConfig.options.variables function to the variable function called with the props result
+      optionsWithWinnowedProps(apolloConfig, props)
+    ),
+    // Render prop
+    responseProps => (render || children)(responseProps)
+  );
 });
 
 
@@ -454,15 +445,10 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
       // Extract the options for the Apollo component query,
       // and the props function for the Apollo component
       apolloConfig => {
-        return R.chain(
-          component => {
-            return component;
-          },
-          authApolloComponentQueryContainer(
-            apolloConfig,
-            query,
-            props
-          )
+        return authApolloComponentQueryContainer(
+          apolloConfig,
+          query,
+          props
         );
       }
     ],

@@ -10,20 +10,27 @@
  */
 
 import {of} from 'folktale/concurrency/task';
-import {Just} from 'folktale/maybe';
-import * as R from 'ramda'
+import * as R from 'ramda';
+import {callRenderProp, getRenderProp, getRenderPropFunction} from './componentHelpersMonadic';
 
 /**
- * Returns a Task.of if we are doing an ApolloClient request or Maybe.Just if we are doing an Apollo component request
- * TODO in the future when React components can return promises we won't need to support Maybe
+ * Returns a Task.of if we are doing an ApolloClient request.
+ * For components return a component expecting a render prop that is called with obj: children => children(obj)
  * @param {Object} apolloConfig
  * @param {Object} apolloConfig.apolloClient If present then of is returned
- * @returns {Function} expecting and object for an of or Just container
+ * @param {Object} props The props to wrap in the task or for components the props to merge
+ * into whatever is given by the parent. The render prop from the parent or props is called.
+ * @returns {Task|Function} a task that resolves to the props or a component that when called
+ * finds the render props and calls that with the props
  */
-export const containerForApolloType = R.curry((apolloConfig, obj) => {
+export const containerForApolloType = R.curry((apolloConfig, props) => {
   return R.ifElse(
     R.always(R.propOr(false, 'apolloClient', apolloConfig)),
-    of,
-    Just
-  )(obj)
+    props => {
+      return of(props);
+    },
+    props => {
+      return callRenderProp(props);
+    }
+  )(props);
 });

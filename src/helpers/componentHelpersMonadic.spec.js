@@ -10,7 +10,7 @@
  */
 
 import * as R from 'ramda';
-import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda'
+import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda';
 import * as Maybe from 'folktale/maybe';
 import {of} from 'folktale/concurrency/task';
 import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic';
@@ -127,6 +127,7 @@ describe('monadHelpersComponent', () => {
   // This is like a React component that takes children, but we split it up so we can call
   // the inner function on the next compose line
   const componentOrTaskConsumingARenderProp = (config, props) => {
+    // Do something to the props like an hoc component would
     const modifiedProps = R.merge(
       props, {
         data: {
@@ -138,9 +139,8 @@ describe('monadHelpersComponent', () => {
       () => R.propOr(false, 'task', config),
       // Pretend the resolved props are a task
       modifiedProps => of(modifiedProps),
-      // Return the resolved props to the children
-      // We return a function expecting the children
-      modifiedProps => children => children(modifiedProps)
+      // Return the resolved props to the expected children component
+      modifiedProps => reqStrPathThrowing('children', props)(modifiedProps)
     )(modifiedProps);
   };
 
@@ -347,8 +347,6 @@ describe('monadHelpersComponent', () => {
 
   // Compose from bottom to top with hoc functions that handle building up the render prop
   test('Compose bottom to top hocs with maybes', () => {
-
-
     // Since we need to return maybes we can't expose the props in the compose
     const hoc = composeWithChain([
       // Shed the Maybe of doubt!
@@ -367,29 +365,38 @@ describe('monadHelpersComponent', () => {
 
   test('Compose Apollo style request tasks and compose Apollo style components', done => {
     expect.assertions(2);
-    const props = R.merge(outerProps, {children: simpleComponent});
     // Make a composeWithChain that can handle components or tasks
-    const composed = config => composeWithComponentMaybeOrTaskChain([
-      props => dependentComponentOrTaskConsumingRenderProp(config, props),
-      // composeWithComponentMaybeOrTaskChain
-      props => dependentComponentOrTaskConsumingRenderProp(config, props),
-      // props -> either task or unary function needing the child component from above. The child gets props made here.
-      props => componentOrTaskConsumingARenderProp(config, props)
-    ])
-    const composedForTask = composed({task: true})
-    const composedForComponent = composed({})
+    const composed = config => {
+      return props => {
+        return composeWithComponentMaybeOrTaskChain([
+          props => {
+            return dependentComponentOrTaskConsumingRenderProp(config, props);
+          },
+          // composeWithComponentMaybeOrTaskChain
+          props => {
+            return dependentComponentOrTaskConsumingRenderProp(config, props);
+          },
+          // props -> either task or unary function needing the child component from above. The child gets props made here.
+          props => {
+            return componentOrTaskConsumingARenderProp(config, props);
+          }
+        ])(props);
+      };
+    };
+    const composedForTask = composed({task: true});
+    const composedForComponent = composed({});
 
     // Call composed with the component then the props, which is how we'll do it in the real
     // world when we treat composed as an HOC wrapping component
-    expect(composedForComponent(simpleComponent)(props)).toEqual(
+    expect(composedForComponent(R.merge(outerProps, {children: simpleComponent}))).toEqual(
       'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 3"}}'
     );
     const errors = [];
-    composedForTask(props).run().listen(defaultRunConfig({
+    composedForTask(outerProps).run().listen(defaultRunConfig({
       onResolved: value => {
         expect(value).toEqual(
-          // The task results don't include the simpleComponent
-          {"data": {"keyCount": "dynamite dynamite 3"}, "jello": "squish", "stone": "squash"}
+          // The task results don't include the simpleComponent results or the children render prop
+          {"data": {"keyCount": "dynamite dynamite 2"}, "jello": "squish", "stone": "squash"}
         );
       }
     }, errors, done));

@@ -210,8 +210,7 @@ export const makeQueryContainer = v(R.curry(
     )}`;
     log.debug(`Creating Query:\n${
       print(query)
-    }\n
-    Arguments:\n${
+    }\nArguments:\n${
       R.ifElse(
         () => skip,
         () => 'Props are not ready', 
@@ -264,8 +263,7 @@ export const createRequestVariables = (apolloComponent, props) => {
 };
 
 /**
- * Runs the apollo queries in queryComponents. This is currently only used for testing the queries of
- * an Apollo React component
+ * Runs the apollo queries in queryComponents as tasks.
  * @param {Task} apolloConfigTask Task that resolves to the the schema and apolloClient {schema, apolloClient}
  * @param {Task} resolvedPropsTask A task that resolves the props to use
  * @param {Object} queryComponents Keyed by name and valued by a query function expecting props
@@ -282,7 +280,6 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
         of({}),
         mapObjToValues(
           (queryContainerExpectingProps, key) => {
-
             // Create variables for the current graphqlQueryObj by sending props to its configuration
             // Add a render function that returns null to prevent react from complaining
             // Normally the render function creates the child components, passing the Apollo request results as props
@@ -293,19 +290,6 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
               () => localTestAuthTask()
               )
             ])({props})
-            /*
-            const task = fromPromised(
-              () => {
-                return apolloClient.query({
-                  // pass props the query so we can get the Query component and extract the query string
-                  query: reqStrPathThrowing('props.query', queryContainerExpectingProps(props)),
-                  // queryVariables are called with props to give us the variables for our query. This is just like Apollo
-                  // does, accepting props to allow the container to form the variables for the query
-                  variables: queryVariables
-                });
-              }
-            )();
-             */
             return R.map(
               response => {
                 return {[key]: response};

@@ -17,29 +17,56 @@ import * as R from 'ramda';
  */
 /**
  * Given a child component and its parent component, returns a function that expects the children
- * render prop for the childComponent (i.e. the grandchildren). Providing the grandchildren
+ * render prop for the childComponent (i.e. the render prop that makes grandchildren). Providing the grandchildren
  * render prop results in calling the parentComponent with the childComponent, and the childComponent's
  * input props are modified to include the grandchildren render prop at props.children
  * @param childComponent
  * @param parentComponent
  * @return {function(*=): *}
  */
-export const embedComponents = (childComponent, parentComponent) => {
-  // Otherwise call component with child component as the child, modifying childComponent's incoming
-  // props to given it its children render prop
+export const embedComponents = (config, childComponent, parentComponent) => {
+  // Wrap parentComponent in an HOC component that expects a render function, grandchildren
   return grandchildren => {
-    return parentComponent(p => {
-      return childComponent(R.merge(p, {children: grandchildren}));
+    // Pass a modified version of childComponent that adds a children render prop
+    const f = parentComponent(p => {
+      if (R.prop('_testApolloRenderProps', config)) {
+        f._apolloRenderProps = p
+      }
+
+      return childComponent(R.merge(p, {
+        children: grandchildren,
+        render: grandchildren
+      }));
     });
+    return f
   };
 };
+
+export const getRenderProp = props => {
+  return R.find(prop => R.propOr(null, prop, props), ['render', 'children']);
+};
+
+export const getRenderPropFunction = props => {
+  return R.prop(
+    getRenderProp(props),
+    props
+  );
+};
+
+export const callRenderProp = props => {
+  return getRenderPropFunction(props)(props);
+};
+
 
 /**
  * If we have a component, wrap it in a Maybe so we can chain with the props that the component returns.
  * If it's a task chain it with the next task
  * @param {[Task|Object]} list Each is a task that resolves to the Apollo request response or returns an
  * Apollo Component
- * @return {[Task|Object]} The resolution of the final task of list (the first in the list since we're
+ * @param {[Task|Object]} componentOrProps For tasks this is props. For components, this is the child component.
+ * When composed it returns the composed component expecting props.
+ * Apollo Component
+ * @return {Task|Object]} The resolution of the final task of list (the first in the list since we're
  * evaluating bottom to top) or returns the built up component from bottom to top, where the outermost component
  * is the from the bottom of list and the most embedded component is from the top of list. If a task
  * the return value will expect props to start the task evaluation chain. If a component, it will expect
@@ -47,40 +74,73 @@ export const embedComponents = (childComponent, parentComponent) => {
  * top of list). The result of passing the child component is a composed component expecting props.
  */
 export const composeWithComponentMaybeOrTaskChain = list => {
-  return componentOrProps => {
+  return props => {
+    const renderProp = getRenderProp(props);
+
+    // Delay the last item of the list (first evaluated) so we can give it its render function
+    // to render its child. For subsequent items in the list, this is accomplished by embedComponents below
+    // TODO we do all this so we can pass the render function from the top component through the intermediate
+    // down to the lowest component. However it might be better if we can just give the render function to
+    // the lowest component when we create it.
+    const delayedList = R.when(
+      () => renderProp,
+      list => R.over(
+        R.lensIndex(-1),
+        f => {
+          const g = props => {
+            // Delay evaluation by wrapping in a function expecting the children component
+            // so we can link the first called component in list (the last one) to the second (the penultimate)
+            return children => {
+              if (props._testApolloRenderProps) {
+                // Set this on the function/component tests so we can call the mutate functions passed by apollo
+                g._apolloRenderProps = props;
+              }
+              return f(R.merge(props, {[renderProp]: children}));
+            };
+          }
+          return g;
+        },
+        list
+      )
+    )(list);
+
     const composed = R.composeWith(
-      (nextPropsToTaskOrComponent, res) => {
+      (nextPropsToTaskOrComponent, lastTaskOrComponent) => {
         return R.ifElse(
           res => R.both(R.is(Object), res => 'run' in res)(res),
           // Chain task with the next function
           // This gives the props that result from the task to a function that produces a task
           task => R.chain(nextPropsToTaskOrComponent, task),
           // Pass the component to the next function, which produces the child component.
-          // embedComponentsOrPassPropsToTask makes an hoc from the child component and component
-          // so that component can pass props to the child component and get a children render prop
-          // to the child component (the render prop to create the grandchild)
-          component => embedComponents(nextPropsToTaskOrComponent, component)
-        )(res);
+          // embedComponents makes an HOC from component and child component (nextPropsToTaskOrComponent)
+          // so that component can pass props to the child component, including a children render prop
+          // to the child component (the render prop to create the grandchildren).
+          component => {
+            return embedComponents(R.pick(['_testApolloRenderProps'], props), nextPropsToTaskOrComponent, component);
+          }
+        )(lastTaskOrComponent);
       }
-    )(list);
+    )(delayedList);
+
     // For tasks, componentOrPropsOrBoth is always just props
     // For components, componentOrPropsOrBoth is the child component. Since we must pass composed the props
     // first, we pass props below and then component after.
     // We could optional expect props with/ a children props as the child component here,
     // but I think we'll always pass the child component before the props
     return R.ifElse(
-      R.is(Function),
+      props => R.any(prop => R.has(prop, props), ['render', 'children']),
       // Match the form of HOC(component)(props), even though composed expects props first
-      component => {
-        return props => {
-          // For components, pass props first, then the child component. This returns a complete component
-          return composed(props)(component);
-        };
+      props => {
+        // For components, pass props, this produces a function that must be called
+        // to create the correct chaining process between components
+        const composedExpectingRenderProps = composed(props)
+        // Pass the render prop. This passes the render prop from outermost component to innermost
+        return composedExpectingRenderProps(R.prop(renderProp, props));
       },
       props => {
         // For tasks, just pass the props. This returns a task that is ready to execute
         return composed(props);
       }
-    )(componentOrProps);
+    )(props);
   };
 };
