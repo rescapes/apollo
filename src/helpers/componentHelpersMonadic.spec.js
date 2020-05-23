@@ -13,7 +13,7 @@ import * as R from 'ramda';
 import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda';
 import * as Maybe from 'folktale/maybe';
 import {of} from 'folktale/concurrency/task';
-import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
 
 describe('monadHelpersComponent', () => {
   const outerProps = {jello: 'squish', stone: 'squash'};
@@ -369,34 +369,35 @@ describe('monadHelpersComponent', () => {
     const composed = config => {
       return props => {
         return composeWithComponentMaybeOrTaskChain([
-          props => {
+          nameComponent('Bottom Dog', props => {
             return dependentComponentOrTaskConsumingRenderProp(config, props);
-          },
+          }),
           // composeWithComponentMaybeOrTaskChain
-          props => {
+          nameComponent('Middle Dog', props => {
             return dependentComponentOrTaskConsumingRenderProp(config, props);
-          },
+          }),
           // props -> either task or unary function needing the child component from above. The child gets props made here.
-          props => {
+          nameComponent('Top Dog', props => {
             return componentOrTaskConsumingARenderProp(config, props);
-          }
+          })
         ])(props);
       };
     };
     const composedForTask = composed({task: true});
     const composedForComponent = composed({});
 
+    const params = R.merge({_noReact: true}, outerProps);
     // Call composed with the component then the props, which is how we'll do it in the real
     // world when we treat composed as an HOC wrapping component
-    expect(composedForComponent(R.merge(outerProps, {children: simpleComponent}))).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 3"}}'
+    expect(composedForComponent(R.merge(params, {children: simpleComponent}))).toEqual(
+      'I rendered a {"_noReact":true,"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 4"}}'
     );
     const errors = [];
-    composedForTask(outerProps).run().listen(defaultRunConfig({
+    composedForTask(params).run().listen(defaultRunConfig({
       onResolved: value => {
         expect(value).toEqual(
           // The task results don't include the simpleComponent results or the children render prop
-          {"data": {"keyCount": "dynamite dynamite 2"}, "jello": "squish", "stone": "squash"}
+          {"_noReact": true, "data": {"keyCount": "dynamite dynamite 3"}, "jello": "squish", "stone": "squash"}
         );
       }
     }, errors, done));

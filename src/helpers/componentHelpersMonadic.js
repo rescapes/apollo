@@ -10,11 +10,14 @@
  */
 
 import * as R from 'ramda';
+import React from 'react';
+import {e} from 'rescape-helpers-component';
 
+export const nameComponent = (name, component) => {
+  component.displayName = name
+  return component
+};
 
-/**
-
- */
 /**
  * Given a child component and its parent component, returns a function that expects the children
  * render prop for the childComponent (i.e. the render prop that makes grandchildren). Providing the grandchildren
@@ -26,20 +29,40 @@ import * as R from 'ramda';
  */
 export const embedComponents = (config, childComponent, parentComponent) => {
   // Wrap parentComponent in an HOC component that expects a render function, grandchildren
-  return grandchildren => {
-    // Pass a modified version of childComponent that adds a children render prop
-    const f = parentComponent(p => {
-      if (R.prop('_testApolloRenderProps', config)) {
-        f._apolloRenderProps = p
-      }
+  const displayName = `${parentComponent.displayName}(${childComponent.displayName})`;
+  return nameComponent(displayName, grandchildren => {
+    // For tests only
+    if (R.propOr(false, '_noReact', config)) {
+      return parentComponent(
+        nameComponent(displayName, props => {
+          return childComponent(R.merge(props, {
+              children: grandchildren,
+              render: grandchildren
+            }
+          ));
+        })
+      );
+    }
 
-      return childComponent(R.merge(p, {
-        children: grandchildren,
-        render: grandchildren
-      }));
-    });
-    return f
-  };
+    // Use a class so we can set self._apolloRenderProps for tests
+    class HOC extends React.Component {
+      render() {
+        const self = this;
+        // Pass a modified version of childComponent that adds a children render prop
+        return parentComponent(nameComponent(displayName, p => {
+          const x = displayName
+          if (R.prop('_testApolloRenderProps', config)) {
+            self._apolloRenderProps = p;
+          }
+          return childComponent(R.merge(p, {
+            children: self.props.children,
+            render: self.props.children
+          }));
+        }));
+      }
+    }
+    return e(nameComponent(displayName, HOC), {children: grandchildren});
+  });
 };
 
 export const getRenderProp = props => {
@@ -87,18 +110,15 @@ export const composeWithComponentMaybeOrTaskChain = list => {
       list => R.over(
         R.lensIndex(-1),
         f => {
-          const g = props => {
+          return props => {
             // Delay evaluation by wrapping in a function expecting the children component
             // so we can link the first called component in list (the last one) to the second (the penultimate)
-            return children => {
-              if (props._testApolloRenderProps) {
-                // Set this on the function/component tests so we can call the mutate functions passed by apollo
-                g._apolloRenderProps = props;
-              }
+            const compFunc = children => {
               return f(R.merge(props, {[renderProp]: children}));
             };
-          }
-          return g;
+            compFunc.displayName = f.displayName;
+            return compFunc;
+          };
         },
         list
       )
@@ -116,7 +136,7 @@ export const composeWithComponentMaybeOrTaskChain = list => {
           // so that component can pass props to the child component, including a children render prop
           // to the child component (the render prop to create the grandchildren).
           component => {
-            return embedComponents(R.pick(['_testApolloRenderProps'], props), nextPropsToTaskOrComponent, component);
+            return embedComponents(R.pick(['_testApolloRenderProps', '_noReact'], props), nextPropsToTaskOrComponent, component);
           }
         )(lastTaskOrComponent);
       }
@@ -133,7 +153,7 @@ export const composeWithComponentMaybeOrTaskChain = list => {
       props => {
         // For components, pass props, this produces a function that must be called
         // to create the correct chaining process between components
-        const composedExpectingRenderProps = composed(props)
+        const composedExpectingRenderProps = composed(props);
         // Pass the render prop. This passes the render prop from outermost component to innermost
         return composedExpectingRenderProps(R.prop(renderProp, props));
       },

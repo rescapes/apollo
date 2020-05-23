@@ -28,7 +28,7 @@ import * as Maybe from 'folktale/maybe'
  * it a child that is a render prop. This render receives props from the Apollo component request results and
  * instantiates Component with those prosp
  */
-export const apolloHOC = R.curry((ApolloContainer, Component) => {
+export const apolloHOC = R.curry((config, ApolloContainer, Component) => {
   // This is only a class to support _apolloRenderProps
   // this.props are the props passed from the parent component, not the Apollo component request result props
   return class ApolloHOC extends React.Component {
@@ -43,7 +43,7 @@ export const apolloHOC = R.curry((ApolloContainer, Component) => {
         // mutate{name}: mutate}) where query{name}s, mutate{name}s where name is any object and any number of
         // mutation or query components can be composed into AdoptedApolloContainer
         props => {
-          if (self.props._testApolloRenderProps) {
+          if (R.any(obj => R.prop('_testApolloRenderProps', obj), [config, props])) {
             // Set this for tests so we can call the mutate functions passed by apollo
             self._apolloRenderProps = props;
           }
@@ -58,7 +58,7 @@ export const apolloDependentHOC = R.curry((DependentContainers, Component) => {
   return R.compose(
     ...R.map(DependentContainer => {
       return component => {
-        const hoc = apolloHOC(DependentContainer, component);
+        const hoc = apolloHOC({}, DependentContainer, component);
         hoc.displayName = `ApolloHOC(${DependentContainer.displayName})(${component.displayName})`;
         return hoc;
       };

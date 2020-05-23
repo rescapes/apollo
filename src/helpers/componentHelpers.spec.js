@@ -85,7 +85,7 @@ describe('componentHelpers', () => {
             e(
               // Wrap AdoptedApolloContainer in
               // Creates an HOC component whose child is AdoptedApolloContainer whose child is Sample
-              apolloHOC(AdoptedApolloContainer, Sample),
+              apolloHOC({}, AdoptedApolloContainer, Sample),
               {region: {id: 1}, _testApolloRenderProps: true}
             )
           ));

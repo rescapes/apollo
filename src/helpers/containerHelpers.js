@@ -18,19 +18,21 @@ import {callRenderProp, getRenderProp, getRenderPropFunction} from './componentH
  * For components return a component expecting a render prop that is called with obj: children => children(obj)
  * @param {Object} apolloConfig
  * @param {Object} apolloConfig.apolloClient If present then of is returned
- * @param {Object} props The props to wrap in the task or for components the props to merge
- * into whatever is given by the parent. The render prop from the parent or props is called.
+ * @param {Object} responseAndOptionalRender
+ * @param {Function} render The render function to call. Required only for components
+ * @param {Object} the response. This must match the Apollo response format {loading, data, etc.}
  * @returns {Task|Function} a task that resolves to the props or a component that when called
  * finds the render props and calls that with the props
  */
-export const containerForApolloType = R.curry((apolloConfig, props) => {
+export const containerForApolloType = R.curry((apolloConfig, responseAndOptionalRender) => {
   return R.ifElse(
     R.always(R.propOr(false, 'apolloClient', apolloConfig)),
-    props => {
-      return of(props);
+    response => {
+      return of(response);
     },
-    props => {
-      return callRenderProp(props);
+    responseAndOptionalRender => {
+      const {render, response} = responseAndOptionalRender
+      return render(response)
     }
-  )(props);
+  )(responseAndOptionalRender);
 });

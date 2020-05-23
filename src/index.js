@@ -85,12 +85,11 @@ export {
 } from './helpers/queryCacheHelpers';
 export {firstMatchingPathLookup} from './helpers/utilityHelpers';
 export {
-  apolloHOC,
-  apolloDependentHOC,
   componentRenderedWithChildrenRenderProp,
   componentRenderedWithChildrenRenderPropMaybe,
   componentAndChildRenderedWithRenderProp,
   componentAndChildRenderedWithChildrenRenderPropMaybe,
+  apolloHOC
 } from './helpers/componentHelpers';
 
-export {composeWithComponentMaybeOrTaskChain} from './helpers/componentHelpersMonadic'
+export {composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction} from './helpers/componentHelpersMonadic'
