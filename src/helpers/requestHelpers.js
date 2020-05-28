@@ -326,7 +326,7 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
     funcObjOrNull => {
       if (strPathOr(false, 'options.skip', apolloConfig)) {
         // We can winnow the props if the component doesn't have the props it needs, as indicated by options.skip
-        return {}
+        return {};
       }
       return R.ifElse(
         R.is(Function),
@@ -354,7 +354,13 @@ export const _winnowRequestProps = (apolloConfig, props) => {
   const func = strPathOr(R.identity, 'options.variables', apolloConfig);
   const resolvedProps = R.when(R.is(Function), R.applyTo(props))(func);
   // Remove _typename props that might be left from the result of previous Apollo requests
-  return omitDeepBy(R.startsWith('_'), resolvedProps);
+  // Also remove the render and children prop if not done by options.variables. We never want these is our request
+  return omitDeepBy(prop => {
+    return R.either(
+      p => R.includes(p, ['render', 'children']),
+      p => R.startsWith('_', p)
+    )(prop);
+  }, resolvedProps);
 };
 
 /**

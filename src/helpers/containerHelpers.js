@@ -11,7 +11,6 @@
 
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
-import {callRenderProp, getRenderProp, getRenderPropFunction} from './componentHelpersMonadic';
 
 /**
  * Returns a Task.of if we are doing an ApolloClient request.
@@ -27,12 +26,13 @@ import {callRenderProp, getRenderProp, getRenderPropFunction} from './componentH
 export const containerForApolloType = R.curry((apolloConfig, responseAndOptionalRender) => {
   return R.ifElse(
     R.always(R.propOr(false, 'apolloClient', apolloConfig)),
-    response => {
-      return of(response);
+    responseAndOptionalRender => {
+      // If responseAndOptionalRender is {response, render}, extract response
+      return of(R.when(R.has('response'), R.prop('response'))(responseAndOptionalRender))
     },
     responseAndOptionalRender => {
-      const {render, response} = responseAndOptionalRender
-      return render(response)
+      const {render, response} = responseAndOptionalRender;
+      return render(response);
     }
   )(responseAndOptionalRender);
 });
