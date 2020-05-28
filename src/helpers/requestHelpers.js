@@ -325,7 +325,7 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
     R.lensProp('variables'),
     funcObjOrNull => {
       if (strPathOr(false, 'options.skip', apolloConfig)) {
-        // We can winnow the props if the component doesn't have the props it needs, as indicated by options.skip
+        // We can't winnow the props if the component doesn't have the props it needs, as indicated by options.skip
         return {};
       }
       return R.ifElse(

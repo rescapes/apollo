@@ -331,7 +331,10 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
   const task = fromPromised(() => {
     return apolloClient.query(
       R.merge(
-        {query},
+        {
+          query,
+          skip: strPathOr(false, 'options.skip', apolloConfig)
+        },
         // Winnows the props to the apolloConfig.options.variables function
         optionsWithWinnowedProps(apolloConfig, props)
       )
