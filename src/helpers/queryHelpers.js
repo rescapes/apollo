@@ -285,10 +285,7 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
         mapObjToValues(
           (queryContainerExpectingProps, key) => {
             // Create variables for the current graphqlQueryObj by sending props to its configuration
-            // Add a render function that returns null to prevent react from complaining
-            // Normally the render function creates the child components, passing the Apollo request results as props
-            const props = R.merge(mappedProps, {render: props => null});
-            const task = queryContainerExpectingProps(props);
+            const task = queryContainerExpectingProps(mappedProps);
             return R.map(
               response => {
                 return {[key]: response};
