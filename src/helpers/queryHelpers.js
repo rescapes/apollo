@@ -288,7 +288,7 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
             // Add a render function that returns null to prevent react from complaining
             // Normally the render function creates the child components, passing the Apollo request results as props
             const props = R.merge(mappedProps, {render: props => null});
-            const task = queryContainerExpectingProps(R.merge({apolloConfig: {apolloClient}}, props));
+            const task = queryContainerExpectingProps(props);
             return R.map(
               response => {
                 return {[key]: response};

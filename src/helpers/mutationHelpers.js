@@ -27,13 +27,15 @@ import {
   mapObjToValues,
   omitDeepBy,
   retryTask,
-  duplicateKey, reqStrPathThrowing, composeWithChain
+  duplicateKey, reqStrPathThrowing, composeWithChain, mapToMergedResponseAndInputs, mapToNamedResponseAndInputs
 } from 'rescape-ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import {loggers} from 'rescape-log';
+import {createRequestVariables} from './queryHelpers';
+import {waitAll, fromPromised} from 'folktale/concurrency/task'
 
 const log = loggers.get('rescapeDefault');
 
@@ -308,7 +310,7 @@ export const apolloMutationResponsesTask = ({apolloConfigTask, resolvedPropsTask
     ({apolloConfigToMutationTasks, props, apolloClient}) => {
       return waitAll(
         mapObjToValues(
-          mutation => {
+          mutationExpectingProps => {
             // Create variables for the current queryComponent by sending props to its configuration
             const propsWithRender = R.merge(
               props, {
@@ -317,19 +319,18 @@ export const apolloMutationResponsesTask = ({apolloConfigTask, resolvedPropsTask
                 render: props => null
               }
             );
-            const mutationVariables = createRequestVariables(mutation, propsWithRender);
+            const mutationVariables = createRequestVariables(mutationExpectingProps, propsWithRender);
             log.debug(JSON.stringify(mutationVariables));
-            const task = fromPromised(
+            return fromPromised(
               () => {
                 return apolloClient.mutate({
-                  mutation: reqStrPathThrowing('props.mutation', mutation(propsWithRender)),
+                  mutation: reqStrPathThrowing('props.mutation', mutationExpectingProps(propsWithRender)),
                   // queryVariables are called with props to give us the variables for our mutation. This is just like Apollo
                   // does, accepting props to allow the container to form the variables for the mutation
                   variables: mutationVariables
                 });
               }
             )();
-            return task;
           },
           apolloConfigToMutationTasks({apolloClient})
         )
