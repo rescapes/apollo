@@ -27,7 +27,7 @@ import {
   mapObjToValues,
   omitDeepBy,
   retryTask,
-  duplicateKey, reqStrPathThrowing
+  duplicateKey, reqStrPathThrowing, composeWithChain
 } from 'rescape-ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -289,4 +289,63 @@ export const mutationParts = (
   const filteredNamedProps = omitDeepBy(R.startsWith('_'), namedProps);
 
   return {variablesAndTypes, variableName, namedOutputParams, namedProps: filteredNamedProps, crud};
+};
+
+
+/**
+ * Runs the apollo mutations in mutationComponents
+ * @param apolloConfigTask
+ * @param resolvedPropsTask
+ * @param {Function } apolloConfigToMutationTasks Expects an apolloConfig and returns and object keyed by mutation
+ * name and valued by mutation tasks
+ * @return {Task<[Object]>} A task resolving to a list of the mutation responses
+ * @private
+ */
+export const apolloMutationResponsesTask = ({apolloConfigTask, resolvedPropsTask}, apolloConfigToMutationTasks) => {
+  // Task Object -> Task
+  return composeWithChain([
+    // Wait for all the mutations to finish
+    ({apolloConfigToMutationTasks, props, apolloClient}) => {
+      return waitAll(
+        mapObjToValues(
+          mutation => {
+            // Create variables for the current queryComponent by sending props to its configuration
+            const propsWithRender = R.merge(
+              props, {
+                // Normally render is a container's render function that receives the apollo request results
+                // and pass is as props to a child container
+                render: props => null
+              }
+            );
+            const mutationVariables = createRequestVariables(mutation, propsWithRender);
+            log.debug(JSON.stringify(mutationVariables));
+            const task = fromPromised(
+              () => {
+                return apolloClient.mutate({
+                  mutation: reqStrPathThrowing('props.mutation', mutation(propsWithRender)),
+                  // queryVariables are called with props to give us the variables for our mutation. This is just like Apollo
+                  // does, accepting props to allow the container to form the variables for the mutation
+                  variables: mutationVariables
+                });
+              }
+            )();
+            return task;
+          },
+          apolloConfigToMutationTasks({apolloClient})
+        )
+      );
+    },
+    // Resolve the apolloConfigTask
+    mapToMergedResponseAndInputs(
+      ({}) => {
+        return apolloConfigTask;
+      }
+    ),
+    // Resolve the props from the task
+    mapToNamedResponseAndInputs('props',
+      () => {
+        return resolvedPropsTask;
+      }
+    )
+  ])({apolloConfigTask, resolvedPropsTask, apolloConfigToMutationTasks});
 };
