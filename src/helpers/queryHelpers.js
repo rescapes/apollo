@@ -12,12 +12,16 @@
 import {
   capitalize,
   compact,
+  composeWithChain,
   mapObjToValues,
+  mapToMergedResponseAndInputs,
+  mapToNamedResponseAndInputs,
+  memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
-  memoized,
-  composeWithChain,
-  mapToNamedResponseAndInputs, mapToMergedResponseAndInputs, reqStrPathThrowing, traverseReduce, strPathOr
+  reqStrPathThrowing,
+  strPathOr,
+  traverseReduce
 } from 'rescape-ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
@@ -25,11 +29,10 @@ import {v} from 'rescape-validate';
 import {loggers} from 'rescape-log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
-import {of, fromPromised} from 'folktale/concurrency/task'
-import {localTestAuthTask} from './testHelpers';
+import {of} from 'folktale/concurrency/task';
 
 const log = loggers.get('rescapeDefault');
 
@@ -284,12 +287,7 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
             // Add a render function that returns null to prevent react from complaining
             // Normally the render function creates the child components, passing the Apollo request results as props
             const props = R.merge(mappedProps, {render: props => null});
-            const task = composeWithChain([
-              ({apolloConfig, props}) => queryContainerExpectingProps(R.merge(apolloConfig, props)),
-              mapToNamedResponseAndInputs('apolloConfig',
-              () => localTestAuthTask()
-              )
-            ])({props})
+            const task = queryContainerExpectingProps(R.merge({apolloConfig: {apolloClient}}, props));
             return R.map(
               response => {
                 return {[key]: response};

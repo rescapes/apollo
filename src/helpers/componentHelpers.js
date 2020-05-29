@@ -14,57 +14,7 @@ import * as Maybe from 'folktale/maybe'
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * Pass the component that has a render function that expects the two Apollo request results
- * TODO AdoptedApolloContainer expects a render function for its children. Can this be a component class
- * containing a render function?
- * If the HOC receives the prop _testApolloRenderProps, it will store the apollo result props that are
- * passed to Component each time for testing. I feel like this is something Enzyme should do but doesn't seem to,
- * although it has a renderProps function to access the render function
- * _testApolloRenderProps allows tests to namely access the mutate function and call it
- * @param {Object} ApolloContainer An apollo component (Query, Mutation) or a container of adopted apollo components
- * @param {Object} Component The container class to instantiate, which expects the Apollo container request result props
- * @returns {Object} A React Component class whose render method instantiates AdoptedApolloContainer and gives
- * it a child that is a render prop. This render receives props from the Apollo component request results and
- * instantiates Component with those prosp
- */
-export const apolloHOC = R.curry((config, ApolloContainer, Component) => {
-  // This is only a class to support _apolloRenderProps
-  // this.props are the props passed from the parent component, not the Apollo component request result props
-  return class ApolloHOC extends React.Component {
-    render() {
-      const self = this;
-      // this.props are the props passed from the parent component, not the Apollo component request result props
-      return e(ApolloContainer, this.props,
-        // The Adopted apollo container expects a render function at the children prop
-        // This function provides Component with the results of the Apollo component request results
-        // in the form ({
-        // query{name}s: {status:..., data..., props},
-        // mutate{name}: mutate}) where query{name}s, mutate{name}s where name is any object and any number of
-        // mutation or query components can be composed into AdoptedApolloContainer
-        props => {
-          if (R.any(obj => R.prop('_testApolloRenderProps', obj), [config, props])) {
-            // Set this for tests so we can call the mutate functions passed by apollo
-            self._apolloRenderProps = props;
-          }
-          return e(Component, props);
-        }
-      );
-    }
-  };
-});
 
-export const apolloDependentHOC = R.curry((DependentContainers, Component) => {
-  return R.compose(
-    ...R.map(DependentContainer => {
-      return component => {
-        const hoc = apolloHOC({}, DependentContainer, component);
-        hoc.displayName = `ApolloHOC(${DependentContainer.displayName})(${component.displayName})`;
-        return hoc;
-      };
-    }, DependentContainers)
-  )(Component);
-});
 
 /**
  * Given a component and the props passed to it, extract the render prop or children component from the props and create a

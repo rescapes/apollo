@@ -88,8 +88,9 @@ export {
   componentRenderedWithChildrenRenderProp,
   componentRenderedWithChildrenRenderPropMaybe,
   componentAndChildRenderedWithRenderProp,
-  componentAndChildRenderedWithChildrenRenderPropMaybe,
-  apolloHOC
+  componentAndChildRenderedWithChildrenRenderPropMaybe
 } from './helpers/componentHelpers';
 
-export {composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction} from './helpers/componentHelpersMonadic'
+export {
+  composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
+} from './helpers/componentHelpersMonadic';

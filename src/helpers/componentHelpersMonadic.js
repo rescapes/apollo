@@ -50,10 +50,6 @@ export const embedComponents = (config, childComponent, parentComponent) => {
         const self = this;
         // Pass a modified version of childComponent that adds a children render prop
         return parentComponent(nameComponent(displayName, p => {
-          const x = displayName
-          if (R.prop('_testApolloRenderProps', config)) {
-            self._apolloRenderProps = p;
-          }
           return childComponent(R.merge(p, {
             children: self.props.children,
             render: self.props.children
@@ -136,7 +132,7 @@ export const composeWithComponentMaybeOrTaskChain = list => {
           // so that component can pass props to the child component, including a children render prop
           // to the child component (the render prop to create the grandchildren).
           component => {
-            return embedComponents(R.pick(['_testApolloRenderProps', '_noReact'], props), nextPropsToTaskOrComponent, component);
+            return embedComponents(R.pick(['_noReact'], props), nextPropsToTaskOrComponent, component);
           }
         )(lastTaskOrComponent);
       }
