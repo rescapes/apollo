@@ -434,7 +434,8 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
     flattenedOutputParams => {
       return filterWithKeys(
         (v, path) => {
-          return typeof strPathOrNullOk(undefined, path, propsWithScalarizedArrays) !== 'undefined';
+          const pathWithDirectives = R.replace(/@client /g, '', path)
+          return typeof strPathOrNullOk(undefined, pathWithDirectives, propsWithScalarizedArrays) !== 'undefined';
         },
         flattenedOutputParams
       );

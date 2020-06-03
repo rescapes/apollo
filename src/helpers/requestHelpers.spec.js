@@ -203,6 +203,9 @@ describe('requestHelpers', () => {
       name: 1,
       createdAt: 1,
       updatedAt: 1,
+      '@client selection': {
+        isSelected: 1
+      },
       geojson: {
         type: 1,
         features: {
@@ -233,6 +236,9 @@ describe('requestHelpers', () => {
     const props = {
       name: 'Joe',
       key: 'piddlypoe',
+      selection: {
+        isSelected: true
+      },
       geojson: {
         type: 'FeatureCollection',
         features: [
@@ -261,6 +267,9 @@ describe('requestHelpers', () => {
       {
         key: 1,
         name: 1,
+        '@client selection': {
+          isSelected: 1
+        },
         geojson: {
           type: 1,
           features: {

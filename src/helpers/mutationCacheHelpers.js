@@ -9,7 +9,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {inspect} from 'util';
 import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -20,7 +19,7 @@ import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {loggers} from 'rescape-log';
-import {omitClientFields} from './requestHelpers';
+import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers';
 import {mapped} from 'ramda-lens';
 import {firstMatchingPathLookup} from './utilityHelpers';
 
@@ -61,29 +60,37 @@ export const makeCacheMutation = v(R.curry(
      mergeFromCacheFirst
    },
    props) => {
-    const outputParamsWithOmittedClientFields = omitClientFields(outputParams);
-    if (R.equals(outputParams, outputParamsWithOmittedClientFields)) {
-      const error = `makeCacheMutation: Error: outputParams do not contain any @client directives. Found ${
-        JSON.stringify(outputParams)
-      }. @client directives are for writing cache-only values to to cache.`;
-      throw(error);
-    }
+
     const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
     // The id to get use to get the right fragment
     const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
+
+    const minimumOutputParams = omitUnrepresentedOutputParams(props, outputParams);
+    const outputParamsWithOmittedClientFields = omitClientFields(minimumOutputParams);
+    if (R.equals(outputParams, outputParamsWithOmittedClientFields)) {
+      const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
+        JSON.stringify(outputParams)
+      }. No write to the cache will be performed`;
+      log.info(info)
+    }
 
     // Optionally merge the existing cache data into the props before writing.
     // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
     const propsWithPossibleMerge = R.when(
       () => mergeFromCacheFirst,
-      props => mergeExistingFromCache({apolloClient, idPathLookup, outputParamsWithOmittedClientFields, id}, props)
+      props => mergeExistingFromCache({
+        apolloClient,
+        idPathLookup,
+        outputParamsWithOmittedClientFields,
+        id
+      }, props)
     )(props);
 
     // Write the fragment
     const writeFragment = gql`${makeFragmentQuery(
       `${name}WithClientFields`, 
       {}, 
-      outputParams, 
+      minimumOutputParams, 
       R.pick(['__typename'], props))
     }`;
 
