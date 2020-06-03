@@ -106,7 +106,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
             const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
 
             // Mutate the cache to save settings to the database that are not stored on the server
-            makeCacheMutatio(
+            makeCacheMutation(
               apolloConfig,
               {
                 name: 'settings',

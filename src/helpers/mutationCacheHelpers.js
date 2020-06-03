@@ -65,13 +65,14 @@ export const makeCacheMutation = v(R.curry(
     // The id to get use to get the right fragment
     const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
 
-    const minimumOutputParams = omitUnrepresentedOutputParams(props, outputParams);
-    const outputParamsWithOmittedClientFields = omitClientFields(minimumOutputParams);
-    if (R.equals(outputParams, outputParamsWithOmittedClientFields)) {
+    const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
+    const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
+    if (R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
       const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
         JSON.stringify(outputParams)
       }. No write to the cache will be performed`;
       log.info(info)
+      return props
     }
 
     // Optionally merge the existing cache data into the props before writing.
@@ -90,7 +91,7 @@ export const makeCacheMutation = v(R.curry(
     const writeFragment = gql`${makeFragmentQuery(
       `${name}WithClientFields`, 
       {}, 
-      minimumOutputParams, 
+      minimizedOutputParams, 
       R.pick(['__typename'], props))
     }`;
 
