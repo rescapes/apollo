@@ -18,9 +18,7 @@ import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
 import {authClientOrLoginTask} from '../auth/login';
-import {localTestConfig, defaultSettingsOutputParams} from '..';
 import {cacheOptions} from '../helpers/testHelpers';
-import {defaultSettingsCacheIdProps, defaultSettingsCacheOnlyObjs} from '../helpers/defaultSettingsStore';
 
 const http = uri => new HttpLink({
   uri,

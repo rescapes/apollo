@@ -9,9 +9,20 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {mapObjToValues, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk} from 'rescape-ramda';
+import {
+  filterWithKeys,
+  flattenObj,
+  mapObjToValues,
+  omitDeepBy,
+  pickDeepPaths,
+  reqStrPath,
+  strPathOr,
+  strPathOrNullOk,
+  unflattenObj
+} from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
+import {mergeDeepAll} from 'rescape-ramda';
 
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic
@@ -376,3 +387,60 @@ export const omitClientFields = outputParams => {
     outputParams
   );
 };
+
+const func = obj => {
+  return R.when(Array.isArray,
+    R.compose(
+      h => {
+        return R.when(
+          R.is(Object),
+          // Recurse if we have an object
+          hh => R.mergeDeepWith(func, hh, hh)
+        )(h);
+      },
+      items => {
+        // If the first item is an object, they must all be so merge them together deeply
+        // The only reason we don't take R.head here is the off chance that one item has a property
+        // that the others don't. We want to get every possible property that might be in the array item
+        return R.ifElse(
+          items => R.compose(R.is(Object), R.head)(items),
+          items => mergeDeepAll(items),
+          R.head
+        )(items)
+      }
+    )
+  )(obj);
+};
+
+/**
+ * Removes outputParams that are not represented in the given props.
+ * This is used for cache writing as we want to write a fragment using output props that match
+ * the props being written, and nothing more. Since props have arrays and outputParams do not (because
+ * they match graphql syntax). the props are deep converted so that arrays because scalar items
+ * that marge all the props of each array item into a single object. Then these modified props can
+ * be compared
+ * @param {Object} props Props
+ * @param outputParams
+ * @return {*}
+ */
+export const omitUnrepresentedOutputParams = (props, outputParams) => {
+  const propsWithScalarizedArrays = R.mergeDeepWith(
+    func,
+    props,
+    props
+  );
+  return R.compose(
+    flattenedOutputParams => unflattenObj(flattenedOutputParams),
+    flattenedOutputParams => {
+      return filterWithKeys(
+        (v, path) => {
+          return typeof strPathOrNullOk(undefined, path, propsWithScalarizedArrays) !== 'undefined';
+        },
+        flattenedOutputParams
+      );
+    },
+    flattenObj
+  )(outputParams);
+};
+
+

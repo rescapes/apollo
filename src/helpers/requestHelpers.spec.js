@@ -15,7 +15,7 @@ import {
   formatInputParams,
   mapQueryContainerToNamedResultAndInputs,
   pickGraphqlPaths,
-  pickGraphqlPathsOver, omitClientFields
+  pickGraphqlPathsOver, omitClientFields, omitUnrepresentedOutputParams
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
@@ -195,4 +195,84 @@ describe('requestHelpers', () => {
     );
   });
 
+  test('omitNonMatchingOutputParams', () => {
+    const outputParams = {
+      id: 1,
+      deleted: 1,
+      key: 1,
+      name: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      geojson: {
+        type: 1,
+        features: {
+          type: 1,
+          id: 1,
+          geometry: {
+            type: 1,
+            coordinates: 1
+          },
+          properties: 1
+        },
+        generator: 1,
+        copyright: 1
+      },
+      data: {
+        locations: {
+          params: 1
+        },
+        mapbox: {
+          viewport: {
+            latitude: 1,
+            longitude: 1,
+            zoom: 1
+          }
+        }
+      }
+    };
+    const props = {
+      name: 'Joe',
+      key: 'piddlypoe',
+      geojson: {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'circle',
+            geometry: {
+              type: 'point',
+              coordinates: [0, 0]
+            }
+          },
+          {
+            type: 'rotary',
+            geometry: {
+              type: 'point',
+              coordinates: [0, 0]
+            },
+            properties: {whoopy: 'doo'}
+          }
+        ]
+      }
+    };
+
+    const actual = omitUnrepresentedOutputParams(props, outputParams)
+
+    expect(actual).toEqual(
+      {
+        key: 1,
+        name: 1,
+        geojson: {
+          type: 1,
+          features: {
+            type: 1,
+            geometry: {
+              type: 1,
+              coordinates: 1
+            },
+            properties: 1
+          }
+        }
+      }
+    );
+  });
 });
