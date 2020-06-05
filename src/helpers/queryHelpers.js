@@ -267,25 +267,25 @@ export const createRequestVariables = (apolloComponent, props) => {
 
 /**
  * Runs the apollo queries in queryComponents as tasks.
- * @param {Task} apolloConfigTask Task that resolves to the the schema and apolloClient {schema, apolloClient}
  * @param {Task} resolvedPropsTask A task that resolves the props to use
- * @param {Function} apolloConfigToQueryTasks Expects an apolloConfig and returns and object
- * keyed by name and valued by a query task expecting props
+ * @param {Object} queryTasks Keyed by name, valued by a queryTask that expects the props.
+ * Each queryTask resolves to a response. Responses are combined and keyed by the name
+ * The responses are combined
  * @return {Task} The query results keyed by queryComponent keys
  * @private
  */
-export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, apolloConfigToQueryTasks) => {
+export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks) => {
   // Task Object -> Task
   return composeWithChain([
     // Wait for all the queries to finish
-    ({apolloConfigToQueryTasks, mappedProps, apolloClient}) => {
+    ({queryTasks, props}) => {
       return traverseReduce(
         (acc, obj) => R.merge(acc, obj),
         of({}),
         mapObjToValues(
           (queryContainerExpectingProps, key) => {
             // Create variables for the current graphqlQueryObj by sending props to its configuration
-            const task = queryContainerExpectingProps(mappedProps);
+            const task = queryContainerExpectingProps(props);
             return R.map(
               response => {
                 return {[key]: response};
@@ -293,28 +293,15 @@ export const apolloQueryResponsesTask = ({apolloConfigTask, resolvedPropsTask}, 
               task
             );
           },
-          apolloConfigToQueryTasks({apolloClient})
+          queryTasks
         )
       );
     },
-    // Resolve the apolloConfigTask
-    mapToMergedResponseAndInputs(
-      ({}) => {
-        return apolloConfigTask;
-      }
-    ),
-    // Resolve the parent props and map using initialState
-    // TODO this used to be here for Redux
-    mapToNamedResponseAndInputs('mappedProps',
-      ({props}) => {
-        return of(props);
-      }
-    ),
     // Resolve the props from the task
     mapToNamedResponseAndInputs('props',
       () => {
         return resolvedPropsTask;
       }
     )
-  ])({apolloConfigTask, resolvedPropsTask, apolloConfigToQueryTasks});
+  ])({resolvedPropsTask, queryTasks});
 };

@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQuery, makeQueryContainer} from './queryHelpers';
+import {apolloQueryResponsesTask, makeQuery, makeQueryContainer} from './queryHelpers';
 
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -19,6 +19,7 @@ import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
+import {of} from 'folktale/concurrency/task'
 
 describe('queryHelpers', () => {
 
@@ -98,4 +99,22 @@ describe('queryHelpers', () => {
       }, errors, done)
     );
   }, 100000);
+
+  test('apolloQueryResponsesTask', done => {
+
+    const errors = []
+    apolloQueryResponsesTask(of({key: 1, apple: 1, pear: 2, banana: 3}),
+      {
+        pacman: props => of(R.pick(['key', 'apple'], props)),
+        mspacman: props => of(R.omit(['key'], props))
+      }
+    ).run().listen(defaultRunConfig({
+      onResolved: responses => {
+        expect(responses).toEqual({
+          pacman: {key: 1, apple: 1},
+          mspacman: {apple: 1, pear: 2, banana:3},
+        })
+      }
+    }, errors, done))
+  })
 });

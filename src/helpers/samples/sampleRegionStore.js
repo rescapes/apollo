@@ -1,8 +1,8 @@
 import {makeMutationRequestContainer} from '../mutationHelpers';
 import * as R from 'ramda';
-import {makeQuery, makeQueryContainer} from '../queryHelpers';
+import {makeQueryContainer} from '../queryHelpers';
 import {loggers} from 'rescape-log';
-import {mapObjToValues, reqStrPathThrowing, strPathOr} from 'rescape-ramda';
+import {reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 import {adopt} from 'react-adopt';
 
 export const userStateReadInputTypeMapper = {

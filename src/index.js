@@ -34,7 +34,6 @@ export {
   makeMutationRequestContainer,
   mutationParts,
   addMutateKeyToMutationResponse,
-  apolloMutationResponsesTask
 } from './helpers/mutationHelpers';
 export {
   makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable

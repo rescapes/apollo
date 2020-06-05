@@ -32,6 +32,8 @@ import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
 import {persistCache} from 'apollo-cache-persist';
+import {v} from 'rescape-validate';
+import PropTypes from 'prop-types';
 
 const log = loggers.get('rescapeDefault');
 
@@ -356,12 +358,9 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
-export const authApolloComponentMutationContainer = R.curry((apolloConfig, mutation, {render, ...props}) => {
+export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mutation, {render, ...props}) => {
   return R.compose(
-    // Wrap in a Maybe.Just so we can use kestral composition (R.composeK) on the results
-    // TODO in the future we'll use Mutation with the async option and convert its promise to a Task
-    // The async option will make the render method (here the child component) handle promises, working
-    // with React Suspense and whatever else
+    // Wrap in a Maybe.Just so we can chain the results as we would the task result of an ApolloClient mutation
     Just,
     props => {
       return e(
@@ -381,7 +380,13 @@ export const authApolloComponentMutationContainer = R.curry((apolloConfig, mutat
       );
     }
   )(props);
-});
+}), [
+  ['apolloConfig', PropTypes.shape().isRequired],
+  ['mutation', PropTypes.shape().isRequired],
+  ['props', PropTypes.shape({
+    render: PropTypes.func.isRequired
+  }).isRequired],
+], 'authApolloComponentMutationContainer');
 
 /**
  * Wraps a React component in an Apollo component containing the given query with the given options.
