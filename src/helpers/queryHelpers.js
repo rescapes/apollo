@@ -281,7 +281,8 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks) => {
     ({queryTasks, props}) => {
       return traverseReduce(
         (acc, obj) => R.merge(acc, obj),
-        of({}),
+        // Begin with the props, we want to pass these through independent of what the queries return
+        of(props),
         mapObjToValues(
           (queryContainerExpectingProps, key) => {
             // Create variables for the current graphqlQueryObj by sending props to its configuration
@@ -300,7 +301,7 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks) => {
     // Resolve the props from the task
     mapToNamedResponseAndInputs('props',
       () => {
-        return resolvedPropsTask;
+        return resolvedPropsTask.map(x => x);
       }
     )
   ])({resolvedPropsTask, queryTasks});
