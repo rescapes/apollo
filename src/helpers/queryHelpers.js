@@ -12,10 +12,10 @@
 import {
   capitalize,
   compact,
-  composeWithChain,
+  composeWithChain, composeWithChainMDeep,
   mapObjToValues,
   mapToMergedResponseAndInputs,
-  mapToNamedResponseAndInputs,
+  mapToNamedResponseAndInputs, mapToNamedResponseAndInputsMDeep,
   memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
@@ -33,6 +33,7 @@ import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
+import Result from 'folktale/result';
 
 const log = loggers.get('rescapeDefault');
 
@@ -216,7 +217,7 @@ export const makeQueryContainer = v(R.curry(
     }\nArguments:\n${
       R.ifElse(
         () => skip,
-        () => 'Props are not ready', 
+        () => 'Props are not ready',
         (winnowedProps) => JSON.stringify(winnowedProps)
       )(winnowedProps)
     }\n`);
@@ -248,7 +249,7 @@ export const makeQueryContainer = v(R.curry(
       outputParams: PropTypes.oneOfType([
         PropTypes.array,
         PropTypes.shape()
-      ]).isRequired,
+      ]).isRequired
     })],
     ['props', PropTypes.shape().isRequired]
   ], 'makeQueryContainer'
@@ -267,42 +268,45 @@ export const createRequestVariables = (apolloComponent, props) => {
 
 /**
  * Runs the apollo queries in queryComponents as tasks.
- * @param {Task} resolvedPropsTask A task that resolves the props to use
+ * @param {Task} resolvedPropsResultTask A task that resolves the props to use
  * @param {Object} queryTasks Keyed by name, valued by a queryTask that expects the props.
  * Each queryTask resolves to a response. Responses are combined and keyed by the name
  * The responses are combined
  * @return {Task} The query results keyed by queryComponent keys
  * @private
  */
-export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks) => {
+export const apolloQueryResponsesResultTask = (resolvedPropsResultTask, queryTasks) => {
   // Task Object -> Task
-  return composeWithChain([
+  return composeWithChainMDeep(2, [
     // Wait for all the queries to finish
-    ({queryTasks, props}) => {
-      return traverseReduce(
-        (acc, obj) => R.merge(acc, obj),
-        // Begin with the props, we want to pass these through independent of what the queries return
-        of(props),
-        mapObjToValues(
-          (queryContainerExpectingProps, key) => {
-            // Create variables for the current graphqlQueryObj by sending props to its configuration
-            const task = queryContainerExpectingProps(props);
-            return R.map(
-              response => {
-                return {[key]: response};
-              },
-              task
-            );
+    props => {
+      return R.map(
+        resolvedProps => {
+          return Result.Ok(resolvedProps);
+        },
+        traverseReduce(
+          (acc, obj) => {
+            return R.merge(acc, obj);
           },
-          queryTasks
+          // Begin with the props, we want to pass these through independent of what the queries return
+          of(props),
+          mapObjToValues(
+            (queryContainerExpectingProps, key) => {
+              // Create variables for the current graphqlQueryObj by sending props to its configuration
+              const task = queryContainerExpectingProps(props);
+              return R.map(
+                response => {
+                  return {[key]: response};
+                },
+                task
+              );
+            },
+            queryTasks || {}
+          )
         )
       );
     },
     // Resolve the props from the task
-    mapToNamedResponseAndInputs('props',
-      () => {
-        return resolvedPropsTask.map(x => x);
-      }
-    )
-  ])({resolvedPropsTask, queryTasks});
+    resolvedPropsResultTask => resolvedPropsResultTask
+  ])(resolvedPropsResultTask);
 };

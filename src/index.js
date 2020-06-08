@@ -28,7 +28,7 @@ export {
   authApolloQueryContainer,
   getOrCreateApolloClientTask
 } from './client/apolloClient';
-export {makeQuery, makeQueryContainer, apolloQueryResponsesTask, createRequestVariables} from './helpers/queryHelpers';
+export {makeQuery, makeQueryContainer, apolloQueryResponsesResultTask, createRequestVariables} from './helpers/queryHelpers';
 export {
   makeMutation,
   makeMutationRequestContainer,
