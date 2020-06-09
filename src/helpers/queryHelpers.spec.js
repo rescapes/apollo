@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {apolloQueryResponsesResultTask, makeQuery, makeQueryContainer} from './queryHelpers';
+import {apolloQueryResponsesTask, makeQuery, makeQueryContainer} from './queryHelpers';
 
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -102,14 +102,13 @@ describe('queryHelpers', () => {
   }, 100000);
 
   test('apolloQueryResponsesTask', done => {
-
     const errors = []
-    apolloQueryResponsesResultTask(of(Result.Ok({key: 1, apple: 1, pear: 2, banana: 3})),
+    apolloQueryResponsesTask(of({key: 1, apple: 1, pear: 2, banana: 3}),
       {
         pacman: props => of(R.pick(['key', 'apple'], props)),
         mspacman: props => of(R.omit(['key'], props))
       }
-    ).run().listen(defaultRunToResultConfig({
+    ).run().listen(defaultRunConfig({
       onResolved: responses => {
         expect(responses).toEqual({
           key: 1,

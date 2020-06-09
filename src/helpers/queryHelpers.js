@@ -268,23 +268,19 @@ export const createRequestVariables = (apolloComponent, props) => {
 
 /**
  * Runs the apollo queries in queryComponents as tasks.
- * @param {Task} resolvedPropsResultTask A task that resolves the props to use
+ * @param {Task} resolvedPropsTask A task that resolves the props to use
  * @param {Object} queryTasks Keyed by name, valued by a queryTask that expects the props.
  * Each queryTask resolves to a response. Responses are combined and keyed by the name
  * The responses are combined
  * @return {Task} The query results keyed by queryComponent keys
  * @private
  */
-export const apolloQueryResponsesResultTask = (resolvedPropsResultTask, queryTasks) => {
+export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks) => {
   // Task Object -> Task
-  return composeWithChainMDeep(2, [
+  return composeWithChain([
     // Wait for all the queries to finish
     props => {
-      return R.map(
-        resolvedProps => {
-          return Result.Ok(resolvedProps);
-        },
-        traverseReduce(
+      return traverseReduce(
           (acc, obj) => {
             return R.merge(acc, obj);
           },
@@ -303,10 +299,9 @@ export const apolloQueryResponsesResultTask = (resolvedPropsResultTask, queryTas
             },
             queryTasks || {}
           )
-        )
-      );
+        );
     },
     // Resolve the props from the task
-    resolvedPropsResultTask => resolvedPropsResultTask
-  ])(resolvedPropsResultTask);
+    resolvedPropsTask => resolvedPropsTask.map(x => x)
+  ])(resolvedPropsTask);
 };
