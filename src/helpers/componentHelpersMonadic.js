@@ -144,7 +144,7 @@ export const composeWithComponentMaybeOrTaskChain = list => {
     // We could optional expect props with/ a children props as the child component here,
     // but I think we'll always pass the child component before the props
     return R.ifElse(
-      props => R.any(prop => R.has(prop, props), ['render', 'children']),
+      props => R.any(prop => R.propOr(false, prop, props), ['render', 'children']),
       // Match the form of HOC(component)(props), even though composed expects props first
       props => {
         // For components, pass props, this produces a function that must be called

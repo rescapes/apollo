@@ -203,7 +203,7 @@ describe('requestHelpers', () => {
       name: 1,
       createdAt: 1,
       updatedAt: 1,
-      '@client selection': {
+      'selection @client': {
         isSelected: 1
       },
       geojson: {
@@ -267,7 +267,7 @@ describe('requestHelpers', () => {
       {
         key: 1,
         name: 1,
-        '@client selection': {
+        'selection @client': {
           isSelected: 1
         },
         geojson: {
