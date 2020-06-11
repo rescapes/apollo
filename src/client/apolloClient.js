@@ -384,7 +384,6 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
   ['apolloConfig', PropTypes.shape().isRequired],
   ['mutation', PropTypes.shape().isRequired],
   ['props', PropTypes.shape({
-    render: PropTypes.func.isRequired
   }).isRequired],
 ], 'authApolloComponentMutationContainer');
 
