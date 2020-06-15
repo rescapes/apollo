@@ -79,23 +79,48 @@ export const callRenderProp = props => {
   return getRenderPropFunction(props)(props);
 };
 
+/**
+ * Calls _composeWithComponentMaybeOrTaskChain with config.completeWithRenderProp = True
+ * @param list
+ * @return {*}
+ */
+export const composeWithComponentMaybeOrTaskChain = list => {
+  return _composeWithComponentMaybeOrTaskChain({completeWithRenderProp: true}, list)
+}
+/**
+ * Calls _composeWithComponentMaybeOrTaskChain with config.completeWithRenderProp = False
+ * Doing so allows combining multiple calls to _composeWithComponentMaybeOrTaskChain since
+ * the passing of the render prop to the composed components is delayed until the final call
+ * to _composeWithComponentMaybeOrTaskChain
+ * @param list
+ * @return {*}
+ */
+export const composeWithComponentMaybeOrTaskChainIncomplete = list => {
+  return _composeWithComponentMaybeOrTaskChain({completeWithRenderProp: false}, list)
+}
 
 /**
  * If we have a component, wrap it in a Maybe so we can chain with the props that the component returns.
  * If it's a task chain it with the next task
  * @param {[Task|Object]} list Each is a task that resolves to the Apollo request response or returns an
  * Apollo Component
+ * @param {Object} config
+ * @param {Object} [config.completeWithRenderProp] Default true, if false don't pass the render prop as the
+ * children to the component. This allows us to chain multiple _composeWithComponentMaybeOrTaskChain calls
  * @param {[Task|Object]} componentOrProps For tasks this is props. For components, this is the child component.
  * When composed it returns the composed component expecting props.
  * Apollo Component
- * @return {Task|Object]} The resolution of the final task of list (the first in the list since we're
+ * @return {Task|Object|Function]} The resolution of the final task of list (the first in the list since we're
  * evaluating bottom to top) or returns the built up component from bottom to top, where the outermost component
  * is the from the bottom of list and the most embedded component is from the top of list. If a task
  * the return value will expect props to start the task evaluation chain. If a component, it will expect
  * to be given a component that is to be the child component of the innermost component (the one from the
  * top of list). The result of passing the child component is a composed component expecting props.
+ * If config.completeWithRenderProp is false then a function is returned expecting the render prop to be passed to
+ * it. This case is only used to combine multiple _composeWithComponentMaybeOrTaskChain calls
  */
-export const composeWithComponentMaybeOrTaskChain = list => {
+export const _composeWithComponentMaybeOrTaskChain = (config, list) => {
+  const completeWithRenderProp = {completeWithRenderProp: R.propOr(true, config)}
   return props => {
     const renderProp = getRenderProp(props);
 
@@ -153,8 +178,14 @@ export const composeWithComponentMaybeOrTaskChain = list => {
         // For components, pass props, this produces a function that must be called
         // to create the correct chaining process between components
         const composedExpectingRenderProps = composed(props);
-        // Pass the render prop. This passes the render prop from outermost component to innermost
-        return composedExpectingRenderProps(R.prop(renderProp, props));
+        // When completeWithRenderProp,
+        // pass the render prop. This passes the render prop from outermost component to innermost
+        // If completeWithRenderProp is false, don't pass the render prop. This allows us to use
+        // combine this call to _composeWithComponentMaybeOrTaskChain with another
+        return R.when(
+          () => completeWithRenderProp,
+          composedExpectingRenderProps => composedExpectingRenderProps(R.prop(renderProp, props))
+        )(composedExpectingRenderProps)
       },
       props => {
         // For tasks, just pass the props. This returns a task that is ready to execute

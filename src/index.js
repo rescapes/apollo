@@ -93,6 +93,7 @@ export {
 } from './helpers/componentHelpers';
 
 export {
+  composeWithComponentMaybeOrTaskChainIncomplete,
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
 } from './helpers/componentHelpersMonadic';
 
