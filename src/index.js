@@ -33,7 +33,7 @@ export {
   makeMutation,
   makeMutationRequestContainer,
   mutationParts,
-  addMutateKeyToMutationResponse,
+  addMutateKeyToMutationResponse
 } from './helpers/mutationHelpers';
 export {
   makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
@@ -93,10 +93,7 @@ export {
 } from './helpers/componentHelpers';
 
 export {
-  composeWithComponentMaybeOrTaskChainIncomplete,
-  composeWithComponentMaybeOrTaskChainWithOptionalComplete,
-  composeWithComponentMaybeOrTaskChainWithoutDelayingFirst,
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
 } from './helpers/componentHelpersMonadic';
 
-export {apolloResult, apolloResultDataOrNull} from './helpers/apolloMonadHelpers'
+export {apolloResult, apolloResultDataOrNull} from './helpers/apolloMonadHelpers';
