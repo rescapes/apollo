@@ -94,6 +94,8 @@ export {
 
 export {
   composeWithComponentMaybeOrTaskChainIncomplete,
+  composeWithComponentMaybeOrTaskChainWithOptionalComplete,
+  composeWithComponentMaybeOrTaskChainWithoutDelayingFirst,
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
 } from './helpers/componentHelpersMonadic';
 
