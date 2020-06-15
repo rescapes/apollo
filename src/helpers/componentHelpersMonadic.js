@@ -10,13 +10,21 @@
  */
 
 import * as R from 'ramda';
-import React from 'react';
-import {e} from 'rescape-helpers-component';
+import {strPathOr} from 'rescape-ramda';
 
 export const nameComponent = (name, component) => {
   component.displayName = name;
   return component;
 };
+
+/**
+ * For some reason Query and Mutation don't have displayNames, so use their type.name
+ * @param component
+ * @return {*}
+ */
+const getDisplayName = component => {
+  return strPathOr(null, 'displayName', component) || strPathOr('Undefined', 'type.name', component)
+}
 
 /**
  * Given a child component and its parent component, returns a function that expects the children
@@ -29,9 +37,9 @@ export const nameComponent = (name, component) => {
  */
 export const embedComponents = (config, childComponent, parentComponent) => {
   // Wrap parentComponent in an HOC component that expects a render function, grandchildren
-  const displayName = `${parentComponent.displayName}(${childComponent.displayName})`;
+  const displayName = `${getDisplayName(parentComponent)}(${getDisplayName(childComponent)})`;
   return nameComponent(displayName, grandchildren => {
-    // For tests only
+    // Only for tests that aren't using React
     if (R.propOr(false, '_noReact', config)) {
       return parentComponent(
         nameComponent(displayName, props => {

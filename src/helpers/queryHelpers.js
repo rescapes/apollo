@@ -12,10 +12,8 @@
 import {
   capitalize,
   compact,
-  composeWithChain, composeWithChainMDeep,
+  composeWithChain,
   mapObjToValues,
-  mapToMergedResponseAndInputs,
-  mapToNamedResponseAndInputs, mapToNamedResponseAndInputsMDeep,
   memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
@@ -33,7 +31,6 @@ import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
-import Result from 'folktale/result';
 
 const log = loggers.get('rescapeDefault');
 

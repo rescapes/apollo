@@ -1,7 +1,5 @@
-import React from 'react';
-import {e} from 'rescape-helpers-component';
 import * as R from 'ramda';
-import * as Maybe from 'folktale/maybe'
+import * as Maybe from 'folktale/maybe';
 
 /**
  * Created by Andy Likuski on 2020.04.01
