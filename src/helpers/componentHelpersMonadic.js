@@ -14,8 +14,8 @@ import React from 'react';
 import {e} from 'rescape-helpers-component';
 
 export const nameComponent = (name, component) => {
-  component.displayName = name
-  return component
+  component.displayName = name;
+  return component;
 };
 
 /**
@@ -44,20 +44,15 @@ export const embedComponents = (config, childComponent, parentComponent) => {
       );
     }
 
-    // Use a class so we can set self._apolloRenderProps for tests
-    class HOC extends React.Component {
-      render() {
-        const self = this;
-        // Pass a modified version of childComponent that adds a children render prop
-        return parentComponent(nameComponent(displayName, p => {
-          return childComponent(R.merge(p, {
-            children: self.props.children,
-            render: self.props.children
-          }));
+    return nameComponent(displayName, props => {
+      // Pass a modified version of childComponent that adds a children render prop
+      return parentComponent(nameComponent(displayName, p => {
+        return childComponent(R.merge(p, {
+          children: props.children,
+          render: props.children
         }));
-      }
-    }
-    return e(nameComponent(displayName, HOC), {children: grandchildren});
+      }));
+    })({children: grandchildren});
   });
 };
 
