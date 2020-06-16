@@ -13,7 +13,13 @@ import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
+import {
+  capitalize,
+  memoizedWith,
+  mergeDeepWithRecurseArrayItemsByRight, omitDeepPaths,
+  pickDeepPaths,
+  reqStrPathThrowing
+} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import {of} from 'folktale/concurrency/task';
@@ -51,84 +57,96 @@ const log = loggers.get('rescapeDefault');
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
-export const makeCacheMutation = v(R.curry(
-  (apolloConfig,
-   {
-     name,
-     outputParams,
-     idPathLookup,
-     mergeFromCacheFirst
-   },
-   props) => {
+export const makeCacheMutation = memoizedWith((apolloConfig, requestOptions, props) => {
+    return [
+      // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
+      R.compose(
+        omitDeepPaths(['options.variables', 'options.update']),
+        // TODO is there anything we need to cache the apolloClient. The auth is buried in the link function.
+        R.pick(['options'])
+      )(apolloConfig),
+      requestOptions,
+      props
+    ];
+  },
+  v(R.curry(
+    (apolloConfig,
+     {
+       name,
+       outputParams,
+       idPathLookup,
+       mergeFromCacheFirst
+     },
+     props) => {
 
-    const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-    // The id to get use to get the right fragment
-    const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
+      const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+      // The id to get use to get the right fragment
+      const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
 
-    const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
-    const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
-    if (R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
-      const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
-        JSON.stringify(outputParams)
-      }. No write to the cache will be performed`;
-      log.info(info)
-      return props
-    }
+      const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
+      const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
+      if (R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
+        const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
+          JSON.stringify(outputParams)
+        }. No write to the cache will be performed`;
+        log.info(info);
+        return props;
+      }
 
-    // Optionally merge the existing cache data into the props before writing.
-    // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
-    const propsWithPossibleMerge = R.when(
-      () => mergeFromCacheFirst,
-      props => mergeExistingFromCache({
-        apolloClient,
-        idPathLookup,
-        outputParamsWithOmittedClientFields,
-        id
-      }, props)
-    )(props);
+      // Optionally merge the existing cache data into the props before writing.
+      // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
+      const propsWithPossibleMerge = R.when(
+        () => mergeFromCacheFirst,
+        props => mergeExistingFromCache({
+          apolloClient,
+          idPathLookup,
+          outputParamsWithOmittedClientFields,
+          id
+        }, props)
+      )(props);
 
-    // Write the fragment
-    const writeFragment = gql`${makeFragmentQuery(
+      // Write the fragment
+      const writeFragment = gql`${makeFragmentQuery(
       `${name}WithClientFields`, 
       {}, 
       minimizedOutputParams, 
       R.pick(['__typename'], props))
     }`;
 
-    log.debug(`Query write Fragment: ${
-      print(writeFragment)
-    } id: ${id} args: ${
-      JSON.stringify(propsWithPossibleMerge, null, 2)
-    }`);
+      log.debug(`Query write Fragment: ${
+        print(writeFragment)
+      } id: ${id} args: ${
+        JSON.stringify(propsWithPossibleMerge, null, 2)
+      }`);
 
-    apolloClient.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
-    // Read to verify that the write succeeded.
-    // If this throws then we did something wrong
-    try {
-      const test = apolloClient.readFragment({fragment: writeFragment, id});
-    } catch (e) {
-      log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
-      throw e;
-    }
-    return propsWithPossibleMerge;
-  }),
-  [
-    ['apolloConfig', PropTypes.shape().isRequired],
-    ['mutationOptions', PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      outputParams: PropTypes.oneOfType([
-        PropTypes.array,
-        PropTypes.shape()
-      ]).isRequired,
-      // These are only used for simple mutations where there is no complex input type
-      variableNameOverride: PropTypes.string,
-      variableTypeOverride: PropTypes.string,
-      mutationNameOverride: PropTypes.string
-    })],
-    ['props', PropTypes.shape().isRequired]
-  ],
-  'makeCacheMutation'
-);
+      apolloClient.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
+      // Read to verify that the write succeeded.
+      // If this throws then we did something wrong
+      try {
+        const test = apolloClient.readFragment({fragment: writeFragment, id});
+      } catch (e) {
+        log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
+        throw e;
+      }
+      return propsWithPossibleMerge;
+    }),
+    [
+      ['apolloConfig', PropTypes.shape().isRequired],
+      ['mutationOptions', PropTypes.shape({
+        name: PropTypes.string.isRequired,
+        outputParams: PropTypes.oneOfType([
+          PropTypes.array,
+          PropTypes.shape()
+        ]).isRequired,
+        // These are only used for simple mutations where there is no complex input type
+        variableNameOverride: PropTypes.string,
+        variableTypeOverride: PropTypes.string,
+        mutationNameOverride: PropTypes.string
+      })],
+      ['props', PropTypes.shape().isRequired]
+    ],
+    'makeCacheMutation'
+  ));
 
 /**
  * Reads from the cache and merges the results with props. Props values take precendence, and array items

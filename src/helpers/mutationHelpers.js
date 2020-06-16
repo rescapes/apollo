@@ -23,19 +23,19 @@ import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, omitClientFields} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
-  capitalize, composeWithMapMDeep,
-  mapObjToValues,
-  omitDeepBy,
-  retryTask,
-  duplicateKey, reqStrPathThrowing, composeWithChain, mapToMergedResponseAndInputs, mapToNamedResponseAndInputs
+  capitalize,
+  composeWithMapMDeep,
+  duplicateKey,
+  mapObjToValues, memoizedWith, omitDeep,
+  omitDeepBy, omitDeepPaths, pickDeepPaths,
+  reqStrPathThrowing,
+  retryTask
 } from 'rescape-ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import {loggers} from 'rescape-log';
-import {createRequestVariables} from './queryHelpers';
-import {waitAll, fromPromised} from 'folktale/concurrency/task'
 
 const log = loggers.get('rescapeDefault');
 
@@ -93,112 +93,119 @@ ${mutationName}(${variableMappingString}) {
  *  completes. For simplicity the middle key is duplicated to {data: mutate { name: {...obj...}}} sdo the caller
  *  doesn't need to know if the request was a create or update
  */
-export const makeMutationRequestContainer = v(R.curry(
-  (apolloConfig,
-   {
-     name, outputParams,
-     // These are only used for simple mutations where there is no complex input type
-     variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
-   },
-   props) => {
-    // Get the variable definition, arguments and outputParams
-    const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
-      apolloConfig,
-      {name, outputParams: omitClientFields(outputParams), variableTypeOverride, variableNameOverride},
+export const makeMutationRequestContainer = memoizedWith(
+  (apolloConfig, requestOptions, props) => {
+    return [
+      // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
+      R.compose(
+        omitDeepPaths(['options.variables', 'options.update']),
+        // TODO is there anything we need to cache the apolloClient. The auth is buried in the link function.
+        R.pick(['options'])
+      )(apolloConfig),
+      requestOptions,
       props
-    );
+    ];
+  },
+  v(R.curry(
+    (apolloConfig,
+     {
+       name, outputParams,
+       // These are only used for simple mutations where there is no complex input type
+       variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
+     },
+     props) => {
+      // Get the variable definition, arguments and outputParams
+      const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
+        apolloConfig,
+        {name, outputParams: omitClientFields(outputParams), variableTypeOverride, variableNameOverride},
+        props
+      );
 
-    // create|update[Model Name]
-    const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
+      // create|update[Model Name]
+      const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
 
-    let mutation;
-    try {
-      mutation = gql`${makeMutation(
+      let mutation;
+      try {
+        mutation = gql`${makeMutation(
           createOrUpdateName,
           variablesAndTypes ,
           namedOutputParams
         )}`;
-    } catch (e) {
-      log.error(`Unable to create mutation with the following properties: ${JSON.stringify({
-        createOrUpdateName,
-        variablesAndTypes,
-        namedOutputParams
-      })}. Mutation string: ${
-        makeMutation(
+      } catch (e) {
+        log.error(`Unable to create mutation with the following properties: ${JSON.stringify({
           createOrUpdateName,
           variablesAndTypes,
           namedOutputParams
-        )
-      }`);
-      throw e;
-    }
+        })}. Mutation string: ${
+          makeMutation(
+            createOrUpdateName,
+            variablesAndTypes,
+            namedOutputParams
+          )
+        }`);
+        throw e;
+      }
 
-    log.debug(`Creating Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
 
-    return R.cond([
-      // If we have an ApolloClient
-      [apolloConfig => R.has('apolloClient', apolloConfig),
-        apolloConfig => {
-          return composeWithMapMDeep(1, [
-            response => {
-              return addMutateKeyToMutationResponse({name}, response);
-            },
-            () => {
-              return retryTask(
-                authApolloClientMutationRequestContainer(
-                  apolloConfig,
-                  {
-                    mutation,
-                    name,
-                    variableName
-                  },
-                  namedProps
-                ), 3
-              );
-            }
-          ])();
-        }
-      ],
-      // If we have an Apollo Component
-      [R.T,
-        // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
-        // Above we're using an Apollo client so we have a task and leave to the caller to run
-        () => {
-          return R.chain(
-            component => {
-              return component
-              // TODO do we have to do this in the HOC?
-              //return addMutateKeyToMutationResponse({name}, response);
-            },
-            authApolloComponentMutationContainer(
+      return R.cond([
+        // If we have an ApolloClient
+        [apolloConfig => R.has('apolloClient', apolloConfig),
+          apolloConfig => {
+            return composeWithMapMDeep(1, [
+              response => {
+                log.debug(`Ran Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+                return addMutateKeyToMutationResponse({name}, response);
+              },
+              () => {
+                return retryTask(
+                  authApolloClientMutationRequestContainer(
+                    apolloConfig,
+                    {
+                      mutation,
+                      name,
+                      variableName
+                    },
+                    namedProps
+                  ), 3
+                );
+              }
+            ])();
+          }
+        ],
+        // If we have an Apollo Component
+        [R.T,
+          // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
+          // Above we're using an Apollo client so we have a task and leave to the caller to run
+          () => {
+            log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+            return authApolloComponentMutationContainer(
               apolloConfig,
               mutation,
               // Allow render through along with the namedProps
               R.merge(R.pick(['render'], props), namedProps)
-            )
-          );
-        }
-      ]
-    ])(apolloConfig);
-  }),
-  [
-    ['apolloConfig', PropTypes.shape().isRequired],
-    ['mutationOptions', PropTypes.shape({
-      // Required unless variableNameOverride is specified
-      name: PropTypes.string,
-      outputParams: PropTypes.oneOfType([
-        PropTypes.array,
-        PropTypes.shape()
-      ]).isRequired,
-      // These are only used for simple mutations where there is no complex input type
-      variableNameOverride: PropTypes.string,
-      variableTypeOverride: PropTypes.string,
-      mutationNameOverride: PropTypes.string
-    })],
-    ['props', PropTypes.shape().isRequired]
-  ],
-  'makeMutationRequestContainer'
-);
+            );
+          }
+        ]
+      ])(apolloConfig);
+    }),
+    [
+      ['apolloConfig', PropTypes.shape().isRequired],
+      ['mutationOptions', PropTypes.shape({
+        // Required unless variableNameOverride is specified
+        name: PropTypes.string,
+        outputParams: PropTypes.oneOfType([
+          PropTypes.array,
+          PropTypes.shape()
+        ]).isRequired,
+        // These are only used for simple mutations where there is no complex input type
+        variableNameOverride: PropTypes.string,
+        variableTypeOverride: PropTypes.string,
+        mutationNameOverride: PropTypes.string
+      })],
+      ['props', PropTypes.shape().isRequired]
+    ],
+    'makeMutationRequestContainer'
+  ));
 
 /**
  *
