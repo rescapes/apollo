@@ -376,15 +376,17 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
             {variables: props}
           )
         ),
-        render
+        // Pass the tuple as an object to the render function
+        (mutation, result) => {
+          return render({mutation, result});
+        }
       );
     }
   )(props);
 }), [
   ['apolloConfig', PropTypes.shape().isRequired],
   ['mutation', PropTypes.shape().isRequired],
-  ['props', PropTypes.shape({
-  }).isRequired],
+  ['props', PropTypes.shape({}).isRequired]
 ], 'authApolloComponentMutationContainer');
 
 /**
