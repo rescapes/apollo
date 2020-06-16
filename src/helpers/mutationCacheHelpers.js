@@ -57,19 +57,21 @@ const log = loggers.get('rescapeDefault');
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
-export const makeCacheMutation = memoizedWith((apolloConfig, requestOptions, props) => {
-    return [
-      // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
-      R.compose(
-        omitDeepPaths(['options.variables', 'options.update']),
-        // TODO is there anything we need to cache the apolloClient. The auth is buried in the link function.
-        R.pick(['options'])
-      )(apolloConfig),
-      requestOptions,
-      props
-    ];
-  },
-  v(R.curry(
+/*
+memoizedWith((apolloConfig, requestOptions, props) => {
+  return [
+    // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
+    R.compose(
+      omitDeepPaths(['options.variables', 'options.update']),
+      R.pick(['options'])
+    )(apolloConfig),
+    requestOptions,
+    // Omit the render prop function
+    R.omit(['render'], props)
+  ];
+},
+ */
+export const makeCacheMutation = v(R.curry(
     (apolloConfig,
      {
        name,
@@ -146,7 +148,7 @@ export const makeCacheMutation = memoizedWith((apolloConfig, requestOptions, pro
       ['props', PropTypes.shape().isRequired]
     ],
     'makeCacheMutation'
-  ));
+  );
 
 /**
  * Reads from the cache and merges the results with props. Props values take precendence, and array items
