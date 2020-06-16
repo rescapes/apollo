@@ -377,8 +377,20 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
           )
         ),
         // Pass the tuple as an object to the render function
+        // If the apolloConfig.skip is specified, it is our way of indicating the mutation does not have
+        // the variables it needs to run. So we make the mutation an noop and pass the skip param
         (mutation, result) => {
-          return render({mutation, result});
+          const skip = R.propOr(false, 'skip', apolloConfig);
+          return render({
+            mutation: R.when(
+              () => skip,
+              () => {
+                log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
+              }
+            )(mutation),
+            result,
+            skip
+          });
         }
       );
     }

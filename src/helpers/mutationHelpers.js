@@ -61,6 +61,8 @@ ${mutationName}(${variableMappingString}) {
  * Makes a mutation task
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work
+ * @param {Boolean} [apolloConfig.skip] Default false, if true disable the mutation function and return
+ * skip=true with the component render function along with the mutation function and result
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
  * @param {Object} apolloConfig.opts For apollo component
  * @param {Object} mutationOptions
