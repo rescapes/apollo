@@ -56,7 +56,7 @@ export const filterOutReadOnlyVersionProps = props => {
 /**
  * Version output params to add to objects that implement versioning
  */
-export const versionOutputParamsMixin = R.fromPairs(key => [key, 1], R.map(VERSION_PROPS))
+export const versionOutputParamsMixin = R.fromPairs(R.map(key => [key, 1], VERSION_PROPS))
 
 /**
  * Makes the location query based on the queryParams
