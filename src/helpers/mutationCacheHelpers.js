@@ -81,7 +81,8 @@ export const makeCacheMutation = v(R.curry(
      },
      props) => {
 
-      const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+      // Use the apolloClient or store
+      const apolloClientOrStore = R.propOr(R.prop('store', apolloConfig), 'apolloClient', apolloConfig);
       // The id to get use to get the right fragment
       const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
 
@@ -100,7 +101,7 @@ export const makeCacheMutation = v(R.curry(
       const propsWithPossibleMerge = R.when(
         () => mergeFromCacheFirst,
         props => mergeExistingFromCache({
-          apolloClient,
+          apolloClient: apolloClientOrStore,
           idPathLookup,
           outputParamsWithOmittedClientFields,
           id
@@ -121,11 +122,11 @@ export const makeCacheMutation = v(R.curry(
         JSON.stringify(propsWithPossibleMerge, null, 2)
       }`);
 
-      apolloClient.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
+      apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
       // Read to verify that the write succeeded.
       // If this throws then we did something wrong
       try {
-        const test = apolloClient.readFragment({fragment: writeFragment, id});
+        const test = apolloClientOrStore.readFragment({fragment: writeFragment, id});
       } catch (e) {
         log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
         throw e;

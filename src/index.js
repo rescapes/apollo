@@ -33,7 +33,10 @@ export {
   makeMutation,
   makeMutationRequestContainer,
   mutationParts,
-  addMutateKeyToMutationResponse
+  addMutateKeyToMutationResponse,
+  VERSION_PROPS,
+  versionOutputParamsMixin,
+  filterOutReadOnlyVersionProps
 } from './helpers/mutationHelpers';
 export {
   makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
