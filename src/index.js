@@ -51,7 +51,8 @@ export {
   pickGraphqlPathsOver,
   omitClientFields,
   optionsWithWinnowedProps,
-  omitUnrepresentedOutputParams
+  omitUnrepresentedOutputParams,
+  createReadInputTypeMapper
 } from './helpers/requestHelpers';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 

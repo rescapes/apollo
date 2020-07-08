@@ -15,7 +15,7 @@ import {
   formatInputParams,
   mapQueryContainerToNamedResultAndInputs,
   pickGraphqlPaths,
-  pickGraphqlPathsOver, omitClientFields, omitUnrepresentedOutputParams
+  pickGraphqlPathsOver, omitClientFields, omitUnrepresentedOutputParams, createReadInputTypeMapper
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
@@ -261,7 +261,7 @@ describe('requestHelpers', () => {
       }
     };
 
-    const actual = omitUnrepresentedOutputParams(props, outputParams)
+    const actual = omitUnrepresentedOutputParams(props, outputParams);
 
     expect(actual).toEqual(
       {
@@ -284,4 +284,15 @@ describe('requestHelpers', () => {
       }
     );
   });
+
+  test('createReadInputTypeMapper', () => {
+    expect(createReadInputTypeMapper(
+      'location', ['data', 'geojson', 'intersections']
+    )).toEqual({
+      "data": "LocationDataTypeofLocationTypeRelatedReadInputType",
+      "geojson": "LocationGeojsonTypeofLocationTypeRelatedReadInputType",
+      "intersections": "LocationIntersectionsTypeofLocationTypeRelatedReadInputType"
+    });
+  });
 });
+

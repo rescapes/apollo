@@ -10,6 +10,7 @@
  */
 
 import {
+  capitalize,
   filterWithKeys,
   flattenObj,
   mapObjToValues,
@@ -445,3 +446,21 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
 };
 
 
+/**
+ * Generates RelatedReadInputType names for a class based on the given keys
+ * These are needed for querying related types so we know what related graphene types to use for the variable
+ * declaration
+ * @param {String} className Lower case class name, such as 'location'
+ * @param [{String}] keys Related types and json types that the query might need to filtered by
+ * @return {Object} And object with a key matching each of keys and each value in the form
+ * ${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`,
+ * which matches the way rescape-graphene dynamically creates read input types
+ */
+export const createReadInputTypeMapper = (className, keys) => {
+  const capitalizedClassName = capitalize(className);
+  return R.fromPairs(
+    R.map(key => {
+      return [key, `${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`];
+    }, keys)
+  );
+};
