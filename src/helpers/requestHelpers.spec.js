@@ -290,8 +290,8 @@ describe('requestHelpers', () => {
       'location', ['data', 'geojson', 'intersections']
     )).toEqual({
       "data": "LocationDataTypeofLocationTypeRelatedReadInputType",
-      "geojson": "LocationGeojsonTypeofLocationTypeRelatedReadInputType",
-      "intersections": "LocationIntersectionsTypeofLocationTypeRelatedReadInputType"
+      "geojson": "FeatureCollectionDataTypeofLocationTypeRelatedReadInputType",
+      "intersections": "IntersectionTypeofLocationTypeRelatedReadInputType"
     });
   });
 });

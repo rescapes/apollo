@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import * as pluralize from 'pluralize'
 import {
   capitalize,
   filterWithKeys,
@@ -407,7 +408,7 @@ const func = obj => {
           items => R.compose(R.is(Object), R.head)(items),
           items => mergeDeepAll(items),
           R.head
-        )(items)
+        )(items);
       }
     )
   )(obj);
@@ -435,7 +436,7 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
     flattenedOutputParams => {
       return filterWithKeys(
         (v, path) => {
-          const pathWithDirectives = R.replace(/ @client/g, '', path)
+          const pathWithDirectives = R.replace(/ @client/g, '', path);
           return typeof strPathOrNullOk(undefined, pathWithDirectives, propsWithScalarizedArrays) !== 'undefined';
         },
         flattenedOutputParams
@@ -449,18 +450,45 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
 /**
  * Generates RelatedReadInputType names for a class based on the given keys
  * These are needed for querying related types so we know what related graphene types to use for the variable
- * declaration
+ * declaration. These are based on conventions in rescape-graphene.
+ * TODO it would be much better to generate these by reading the remote schema
  * @param {String} className Lower case class name, such as 'location'
  * @param [{String}] keys Related types and json types that the query might need to filtered by
  * @return {Object} And object with a key matching each of keys and each value in the form
  * ${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`,
  * which matches the way rescape-graphene dynamically creates read input types
+ * Exceptions are for geojson keys, which result in `FeatureCollectionDataTypeof${capitalizedClassName}TypeRelatedReadInputType`
  */
 export const createReadInputTypeMapper = (className, keys) => {
   const capitalizedClassName = capitalize(className);
   return R.fromPairs(
     R.map(key => {
-      return [key, `${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`];
+      return [key,
+        R.cond(
+          [
+            [
+              R.equals('geojson'), key => {
+              // Geojson case, key becomes FeatureCollectionData
+              return `FeatureCollectionDataTypeof${capitalizedClassName}TypeRelatedReadInputType`;
+            }
+            ],
+            [
+              R.equals('data'), key => {
+              // Put the class name at the start, since the data's type name is LocationDataType, etc
+              return `${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+            }
+            ],
+            [
+              R.T,
+              key => {
+                // Remove the plural ending for to-manys
+                const depluralizedKey = pluralize.singular(key);
+                return `${capitalize(depluralizedKey)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+              }
+            ]
+          ]
+        )(key)
+      ];
     }, keys)
   );
 };
