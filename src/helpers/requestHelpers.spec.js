@@ -2,11 +2,11 @@
  * Created by Andy Likuski on 2018.04.23
  * Copyright (c) 2018 Andy Likuski
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 import {
@@ -15,7 +15,11 @@ import {
   formatInputParams,
   mapQueryContainerToNamedResultAndInputs,
   pickGraphqlPaths,
-  pickGraphqlPathsOver, omitClientFields, omitUnrepresentedOutputParams, createReadInputTypeMapper
+  pickGraphqlPathsOver,
+  omitClientFields,
+  omitUnrepresentedOutputParams,
+  createReadInputTypeMapper,
+  relatedObjectsToIdForm
 } from './requestHelpers';
 import Result from 'folktale/result';
 import {of} from 'folktale/concurrency/task';
@@ -289,10 +293,40 @@ describe('requestHelpers', () => {
     expect(createReadInputTypeMapper(
       'location', ['data', 'geojson', 'intersections']
     )).toEqual({
-      "data": "LocationDataTypeofLocationTypeRelatedReadInputType",
-      "geojson": "FeatureCollectionDataTypeofLocationTypeRelatedReadInputType",
-      "intersections": "IntersectionTypeofLocationTypeRelatedReadInputType"
+      'data': 'LocationDataTypeofLocationTypeRelatedReadInputType',
+      'geojson': 'FeatureCollectionDataTypeofLocationTypeRelatedReadInputType',
+      'intersections': '[IntersectionTypeofLocationTypeRelatedReadInputType]'
     });
   });
+
+  test('relatedObjectsToIdForm', () => {
+    expect(relatedObjectsToIdForm(['drooling.moose', 'scapegoats'], {
+      drooling: {
+        moose: {
+          type: 'Canadian',
+          id: 1
+        }
+      },
+      scapegoats: [
+        {type: 'shepherd', id: 1},
+        {type: 'collie', id: 2}
+      ],
+      id: 1,
+      name: 'Missoula'
+    })).toEqual({
+      drooling: {
+        moose: {
+          id: 1
+        }
+      },
+      scapegoats: [
+        {id: 1},
+        {id: 2}
+      ],
+      id: 1,
+      name: 'Missoula'
+    })
+  });
 });
+
 
