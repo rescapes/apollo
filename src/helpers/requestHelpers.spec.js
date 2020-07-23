@@ -300,7 +300,13 @@ describe('requestHelpers', () => {
   });
 
   test('relatedObjectsToIdForm', () => {
-    expect(relatedObjectsToIdForm(['drooling.moose', 'scapegoats'], {
+    expect(relatedObjectsToIdForm([
+      'drooling.moose',
+      'scapegoats',
+      'elks.slow',
+      'elks.poke.jams',
+      'billy'
+    ], {
       drooling: {
         moose: {
           type: 'Canadian',
@@ -310,6 +316,10 @@ describe('requestHelpers', () => {
       scapegoats: [
         {type: 'shepherd', id: 1},
         {type: 'collie', id: 2}
+      ],
+      elks: [
+        {slow: {id: 1, type: 'whoah'}, poke: {jams: []}, id: 1},
+        {slow: {id: 2, type: 'begone'}, poke: {jams: [{id: 1, mel: true}, {id: 2, barry: true}]}, id: 2}
       ],
       id: 1,
       name: 'Missoula'
@@ -323,9 +333,13 @@ describe('requestHelpers', () => {
         {id: 1},
         {id: 2}
       ],
+      elks: [
+        {slow: {id: 1}, poke: {jams: []}, id: 1},
+        {slow: {id: 2}, poke: {jams: [{id: 1}, {id: 2}]}, id: 2}
+      ],
       id: 1,
       name: 'Missoula'
-    })
+    });
   });
 });
 

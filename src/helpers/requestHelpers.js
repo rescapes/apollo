@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {over, mapped} from 'ramda-lens';
 import * as pluralize from 'pluralize';
 import {
   capitalize,
@@ -503,29 +504,36 @@ export const createReadInputTypeMapper = (className, keys) => {
  * Converts the objects specified by relatedPropPaths within props to their id form.
  * Works for toOne and toMany relations. This prevents passing values to the API that it neither expects
  * nor needs. The only time this should be used is for dependent objects that can be created at the
- * same time as the main object. For instance, a type Sceanrio might have ScenarioLocations that can
+ * same time as the main object. For instance, a type Scenario might have ScenarioLocations that can
  * be created by specifying {location: {id: ...}} in the ScenarioLocation object. So in that case we wouldn't
  * want to strip out location
  * @param {[String]} relatedPropPaths list of paths toOne and toMany objects. If they aren't at the the top level,
- * use dot syntax: 'foo.bars'
+ * use dot syntax: 'foo.bars'. Note that toMany objects must be detected as plural by pluralize.isPlural
+ * so the correct lens can be created to handle arrays
  * @param {Object} props The props to process
  * @returns {Object} The modified props
  */
 export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
   return R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
-      return R.over(
-        R.lensPath(propsPathList),
-        objs => R.compose(
-          // Back to singular unless objs was originally an array
-          os => {
-            return R.unless(() => Array.isArray(objs), R.head)(os);
-          },
-          os => {
-            return R.map(R.pick(['id']), os);
-          },
-          o => toArrayIfNot(o)
-        )(objs),
+      const lens = R.compose(...R.chain(
+        R.ifElse(
+          // E.g. moose is both plural and singular, so is treated as singular
+          key => !pluralize.isSingular(key),
+          // Array property. Used mapped to create a lens into each item
+          str => [R.lensProp(str), mapped],
+          str => [R.lensProp(str)]
+        ),
+        propsPathList
+      ));
+      return over(
+        lens,
+        obj => {
+          return R.when(
+            R.identity,
+            obj => R.pick(['id'], obj)
+          )(obj);
+        },
         props
       );
     },

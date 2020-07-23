@@ -52,7 +52,8 @@ export {
   omitClientFields,
   optionsWithWinnowedProps,
   omitUnrepresentedOutputParams,
-  createReadInputTypeMapper
+  createReadInputTypeMapper,
+  relatedObjectsToIdForm
 } from './helpers/requestHelpers';
 export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 
