@@ -36,7 +36,8 @@ export {
   addMutateKeyToMutationResponse,
   VERSION_PROPS,
   versionOutputParamsMixin,
-  filterOutReadOnlyVersionProps
+  filterOutReadOnlyVersionProps,
+  filterOutNullDeleteProps
 } from './helpers/mutationHelpers';
 export {
   makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable

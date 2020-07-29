@@ -54,6 +54,17 @@ export const filterOutReadOnlyVersionProps = props => {
 };
 
 /**
+ * Removed deleted prop if it is nil. We only want to pass it when it is set to a date,
+ * indicating a delete is occuring
+ * @param {Object} props The mutation props
+ * @return {Object} Modified props with deleted=null, removed
+ */
+export const filterOutNullDeleteProps = props => {
+  return filterWithKeys((v, k) => R.and(R.equals('deleted', k), R.iNil(v)), props);
+}
+
+
+/**
  * Version output params to add to objects that implement versioning
  */
 export const versionOutputParamsMixin = R.fromPairs(R.map(key => [key, 1], VERSION_PROPS))
