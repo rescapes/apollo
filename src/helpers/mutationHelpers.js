@@ -60,7 +60,10 @@ export const filterOutReadOnlyVersionProps = props => {
  * @return {Object} Modified props with deleted=null, removed
  */
 export const filterOutNullDeleteProps = props => {
-  return filterWithKeys((v, k) => R.and(R.equals('deleted', k), R.isNil(v)), props);
+  return filterWithKeys((v, k) => R.complement(R.and)(
+    R.equals('deleted', k),
+    R.isNil(v)
+  ), props);
 }
 
 
