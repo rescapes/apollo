@@ -176,9 +176,10 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
+          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
           return composeWithMapMDeep(1, [
             response => {
-              log.debug(`Ran Mutation:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+              log.debug(`Successfully ran mutation: ${createOrUpdateName}`)
               return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
