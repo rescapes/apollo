@@ -526,16 +526,27 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
         ),
         propsPathList
       ));
-      return over(
-        lens,
-        obj => {
-          return R.when(
-            R.identity,
-            obj => R.pick(['id'], obj)
-          )(obj);
-        },
-        props
-      );
+      try {
+        return over(
+          lens,
+          obj => {
+            return R.when(
+              R.identity,
+              obj => R.pick(['id'], obj)
+            )(obj);
+          },
+          props
+        );
+      }
+      catch(e) {
+        // ramdaLens' over isn't written correctly, so it throws when props are undefined. Ignore it.
+        if (R.is(TypeError, e)) {
+          return props
+        }
+        else {
+          throw e
+        }
+      }
     },
     props,
     relatedPropPaths
