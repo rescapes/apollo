@@ -206,7 +206,7 @@ export const makeQueryContainer = v(R.curry(
         // Normalize the props if needed. This removes top-level key/values that might be in the object that
         // aren't expected/needed by the API
         props => {
-          return normalizeProps(props);
+          return (normalizeProps || R.identity)(props);
         },
         props => {
           // Use apolloConfig.options.variables function to filter if specified.
