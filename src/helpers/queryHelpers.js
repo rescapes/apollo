@@ -154,6 +154,8 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
  * @param {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @param {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
+ * @param {Function} [normalizeProps] Optional function to normalize props after calling
+ * apolloConfig.options.variables if defined.
  * @param {Array|Object} outputParams output parameters for the query in this style json format:
  *  [
  *    'id',
@@ -182,7 +184,7 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
  */
 export const makeQueryContainer = v(R.curry(
   (apolloConfig,
-   {name, readInputTypeMapper, outputParams},
+   {name, readInputTypeMapper, outputParams, normalizeProps},
    props
   ) => {
     // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
@@ -196,12 +198,22 @@ export const makeQueryContainer = v(R.curry(
 
     // See if the query is ready to run
     const skip = strPathOr(false, 'options.skip', apolloConfig);
-    // If it is winnow the props using the query's options.variables. Else leave the props alone
-    // and the query won't run
+    // If not skip, process the props
     const winnowedProps = R.ifElse(
       () => skip,
       () => ({}),
-      props => _winnowRequestProps(apolloConfig, props)
+      props => R.compose(
+        // Normalize the props if needed. This removes top-level key/values that might be in the object that
+        // aren't expected/needed by the API
+        props => {
+          return normalizeProps(props);
+        },
+        props => {
+          // Use apolloConfig.options.variables function to filter if specified.
+          // This extracts the needed props for the query
+          return _winnowRequestProps(apolloConfig, props);
+        }
+      )(props)
     )(props);
     const query = gql`${makeQuery(
       name, 
