@@ -9,23 +9,23 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {over, mapped} from 'ramda-lens';
+import {mapped, over} from 'ramda-lens';
 import * as pluralize from 'pluralize';
 import {
   capitalize,
   filterWithKeys,
   flattenObj,
   mapObjToValues,
+  mergeDeepAll,
   omitDeepBy,
   pickDeepPaths,
   reqStrPath,
   strPathOr,
-  strPathOrNullOk, toArrayIfNot,
+  strPathOrNullOk,
   unflattenObj
 } from 'rescape-ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result';
-import {mergeDeepAll} from 'rescape-ramda';
 
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic
@@ -519,7 +519,11 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
       const lens = R.compose(...R.chain(
         R.ifElse(
           // E.g. moose is both plural and singular, so is treated as singular
-          key => !pluralize.isSingular(key),
+          // Also don't treat 'data' as plural. This is a special case
+          key => R.complement(R.or)(
+            pluralize.isSingular(key),
+            R.equals('data', key)
+          ),
           // Array property. Used mapped to create a lens into each item
           str => [R.lensProp(str), mapped],
           str => [R.lensProp(str)]
@@ -537,14 +541,12 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
           },
           props
         );
-      }
-      catch(e) {
+      } catch (e) {
         // ramdaLens' over isn't written correctly, so it throws when props are undefined. Ignore it.
         if (R.is(TypeError, e)) {
-          return props
-        }
-        else {
-          throw e
+          return props;
+        } else {
+          throw e;
         }
       }
     },
