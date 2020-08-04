@@ -331,8 +331,6 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => {
  * {other options, variables: props} is returned
  */
 export const optionsWithWinnowedProps = (apolloConfig, props) => {
-
-
   // If options.variables is specified return options with variables set to variables(props) if variables is a function
   // Else return {..., variables: props}
   return R.over(

@@ -10,6 +10,7 @@
  */
 
 import * as R from 'ramda';
+import {inspect} from 'util';
 import {strPathOr} from 'rescape-ramda';
 
 export const nameComponent = (name, component) => {
@@ -146,19 +147,25 @@ export const composeWithComponentMaybeOrTaskChain = list => {
     // first, we pass props below and then component after.
     // We could optional expect props with/ a children props as the child component here,
     // but I think we'll always pass the child component before the props
+    const taskOrComponent = composed(props);
     return R.ifElse(
-      props => R.any(prop => R.propOr(false, prop, props), ['render', 'children']),
+      () => R.hasIn('run', taskOrComponent),
+      () => {
+        // For tasks, just pass the props. This returns a task that is ready to execute
+        if (!R.hasIn('run', taskOrComponent)) {
+          throw new Error('Task expected, but composed did not produce a task. Is this supposed to be a component and you forgot to pass a render function?')
+        }
+        return taskOrComponent
+      },
       // Match the form of HOC(component)(props), even though composed expects props first
       props => {
+        if (!R.any(prop => R.propOr(false, prop, props), ['render', 'children'])) {
+          throw new Error(`Expected a render function in props but did't find one ${inspect(props)}`)
+        }
         // For components, pass props, this produces a function that must be called
         // to create the correct chaining process between components
-        const composedExpectingRenderProps = composed(props);
         // Pass the render prop. This passes the render prop from outermost component to innermost
-        return composedExpectingRenderProps(R.prop(renderProp, props));
-      },
-      props => {
-        // For tasks, just pass the props. This returns a task that is ready to execute
-        return composed(props);
+        return taskOrComponent(R.prop(renderProp, props));
       }
     )(props);
   };
