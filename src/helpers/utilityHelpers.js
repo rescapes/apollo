@@ -45,12 +45,11 @@ export const firstMatchingPathLookup = (idPathLookup, propKey, item) => {
     },
     idPaths
   );
+  // If we don't get an identifier, it's time to give up on merging objects. Return null.
+  // This will cause mergeDeepWithRecurseArrayItemsByRight return right values of two arrays
+  // being merged or the right value of two objects being merged
   if (R.isNil(value)) {
-    throw new Error(`firstMatchingPathLookup: Bad configuration or data. No id-value found in item ${
-      inspect(item)
-    } using for propKey ${propKey} using idPathLookup: ${
-      inspect(idPathLookup)
-    } or using the default 'id' property`);
+    return null;
   }
   return value
 };
