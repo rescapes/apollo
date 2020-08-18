@@ -1,6 +1,6 @@
 {
   "name": "rescape-apollo",
-  "version": "0.1.153",
+  "version": "0.1.154",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "lib/index.js",
   "module": "src/index.js",
@@ -112,7 +112,6 @@
   },
   "peerDependencies": {
     "graphql": ">=14.6.0",
-    "graphql-tools": ">=4.0.7",
     "react": ">=16.10.1",
     "rescape-geospatial-sankey": ">=0.7.17",
     "rescape-helpers": ">=1.1.99",
