@@ -10,7 +10,12 @@
  */
 
 export {
-  loginMutationTask, noLoginToAuthClientTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
+  loginMutationTask,
+  noLoginToAuthClientTask,
+  authClientOrLoginTask,
+  refreshTokenContainer,
+  verifyTokenRequestContainer,
+  loginToAuthClientTask
 } from './auth/login';
 export {
   authApolloClientQueryContainer,
@@ -30,8 +35,14 @@ export {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateApolloClientTaskAndSetDefaults,
   getOrCreateNoAuthApolloClientTask
-} from './client/apolloClientAuthentication'
-export {makeQuery, makeQueryContainer, apolloQueryResponsesTask, createRequestVariables} from './helpers/queryHelpers';
+} from './client/apolloClientAuthentication';
+export {
+  makeQuery,
+  makeQueryContainer,
+  apolloQueryResponsesTask,
+  createRequestVariables,
+  composePropsFilterIntoApolloConfigOptionsVariables
+} from './helpers/queryHelpers';
 export {
   makeMutation,
   makeMutationRequestContainer,
@@ -108,4 +119,6 @@ export {
 
 export {apolloResult, apolloResultDataOrNull} from './helpers/apolloMonadHelpers';
 
-export {makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer} from './stores/userStore'
+export {
+  makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer
+} from './stores/userStore';

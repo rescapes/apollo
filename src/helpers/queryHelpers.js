@@ -317,3 +317,23 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
     resolvedPropsTask => resolvedPropsTask.map(x => x)
   ])(resolvedPropsTask);
 };
+
+/**
+ * Modifies apolloConfig's options.variables function to additionally filter props
+ * with propsFilter. options.variables may or may not already be defined as a filter
+ * @param {Object} apolloConfig The apolloConfig
+ * @param {Function} propsFilter Expects props and returns filtered props
+ * @returns {*}
+ */
+export const composePropsFilterIntoApolloConfigOptionsVariables = (apolloConfig, propsFilter) => {
+  return R.over(
+    R.lensPath(['options', 'variables']),
+    variables => {
+      return props => R.compose(
+        props => propsFilter(props),
+        props => R.when(() => R.is(Function, variables), variables)(props)
+      )(props);
+    },
+    apolloConfig
+  );
+};
