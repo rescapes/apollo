@@ -12,7 +12,6 @@
 import * as R from 'ramda';
 import {
   noAuthApolloClientTask,
-  getOrCreateAuthApolloClientWithTokenTask,
   noAuthApolloClientMutationRequestTask
 } from '../client/apolloClient';
 import {of} from 'folktale/concurrency/task';
@@ -23,11 +22,13 @@ import {v} from 'rescape-validate';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 import {
   composeWithChain,
-  composeWithChainMDeep,
-  composeWithMapMDeep,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs
 } from 'rescape-ramda';
+import {
+  getOrCreateAuthApolloClientWithTokenTask,
+  getOrCreateNoAuthApolloClientTask
+} from '../client/apolloClientAuthentication';
 
 const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
     tokenAuth(username: $username, password: $password) {
@@ -38,20 +39,20 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
 /**
  * loginMutationTask returning a User and token
  * @param {Object} noAuthClient, Client an Apollo Client that doesn't need authentication
- * @param {Object} values
- * @param {String} values.username The username
- * @param {String} values.password The password
+ * @param {Object} props
+ * @param {String} props.username The username
+ * @param {String} props.password The password
  * @return {Task} Returns an object representing a user with a token. This token must
  * be passed to authenticated calls
  */
-export const loginMutationTask = v(R.curry((apolloConfig, variables) => {
+export const loginMutationTask = v(R.curry((apolloConfig, props) => {
   return noAuthApolloClientMutationRequestTask(
     apolloConfig,
-    {mutation: loginMutation, variables}
+    {mutation: loginMutation, variables: props}
   );
 }), [
   ['noAuthClient', PropTypes.shape().isRequired],
-  ['variables', PropTypes.shape({
+  ['props', PropTypes.shape({
     username: PropTypes.string.isRequired,
     password: PropTypes.string.isRequired
   }).isRequired]
@@ -87,8 +88,8 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
       );
     },
     mapToNamedPathAndInputs('loginData', 'data',
-      ({apolloConfig, variables}) => {
-        return loginMutationTask(apolloConfig, variables);
+      ({apolloConfig, props}) => {
+        return loginMutationTask(apolloConfig, props);
       }
     ),
     mapToNamedResponseAndInputs('apolloConfig',
@@ -97,7 +98,30 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
         return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers});
       }
     )
-  ])({uri, stateLinkResolvers, variables: props});
+  ])({uri, stateLinkResolvers, props});
+});
+
+/**
+ * Return an nauthenticated client task
+ * @param {Object} config
+ * @param {Object} config.cacheOptions
+ * @param {String} config.uri graphql uri
+ * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} config.settingsConfig
+ * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
+ * @return {{apolloClient: ApolloClient, token}}
+ */
+export const noLoginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}}) => {
+  return getOrCreateNoAuthApolloClientTask({
+      cacheOptions,
+      uri,
+      stateLinkResolvers,
+      writeDefaults,
+      settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+    }
+  );
 });
 
 /**

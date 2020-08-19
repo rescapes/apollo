@@ -75,42 +75,6 @@ export const regionOutputParams = {
   }
 };
 
-export const userOutputParams = {
-  id: 1,
-  lastLogin: 1,
-  username: 1,
-  firstName: 1,
-  lastName: 1,
-  email: 1,
-  isStaff: 1,
-  isActive: 1,
-  dateJoined: 1
-};
-
-
-/**
- * Creates userState output params
- * @param userScopeFragmentOutputParams Object keyed by 'region', 'project', etc with
- * the output params those should return within userState.data.[userRegions|userProject|...]
- * @return {*} The complete UserState output params
- * @return {*{}}
- */
-export const userStateOutputParams = {
-  id: 1,
-  user: {id: 1},
-  data: {
-    userRegions: {
-      region: {
-        id: 1,
-        deleted: 1,
-        key: 1,
-        name: 1
-      }
-    }
-  }
-};
-
-
 // Each query and mutation expects a container to compose then props
 export const apolloContainers = {
   // Creates a function expecting a component to wrap and props

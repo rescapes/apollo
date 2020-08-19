@@ -14,7 +14,7 @@ import {
   authApolloQueryContainer
 } from '../client/apolloClient';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
-import {gql} from '@apollo/client'
+import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 import {_makeQuery, makeQuery} from './queryHelpers';
@@ -83,27 +83,30 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
 
 
 /**
- * Like makeQueryWithClientDirectiveContainer but only reads from the cache. This is just for testing the read cache. Normally you
- * should always call makeQueryContainer and it will consult the cache before querying externally. Or for
- * data only in the cache, loaded via ApolloLinkState, use makeQueryWithClientDirectiveContainer
+ * Like makeQueryWithClientDirectiveContainer but only reads from the cache.
+ * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work
+ * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
+ * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
+ * @param {Array|Object} [outputParams] output parameters for the query in this style json format. See makeQueryContainer
+ * @param {Object} component The Apollo component for component queries
+ * @param {Function} props The properties to pass to the query.
+ * @returns {Object} Returns the object from cache
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
   const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
   log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
-  return R.map(
-    queryResponse => {
-      log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-      // If we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
-      // If we're using an Apollo client we have a task and leave to the caller to run
-      return R.when(Just.hasInstance, R.prop('value'))(queryResponse);
+  const response = authApolloClientOrComponentQueryCacheContainer(
+    apolloConfig,
+    {
+      query
     },
-    authApolloClientOrComponentQueryCacheContainer(
-      apolloConfig,
-      {
-        query
-      },
-      props
-    )
+    props
   );
+  if (!R.has('isReactComponent', response)) {
+    log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
+  }
+  return response
 });

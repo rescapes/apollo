@@ -8,26 +8,19 @@
  *
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/**
- * Created by Andy Likuski on 2018.05.10
- * Copyright (c) 2018 Andy Likuski
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
+
+import {inspect} from 'util';
 
 import * as R from 'ramda';
-import {_winnowRequestProps, formatOutputParams, omitClientFields} from './requestHelpers';
+import {_winnowRequestProps, formatOutputParams, omitClientFields, VERSION_PROPS} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
   capitalize,
   composeWithMapMDeep,
-  duplicateKey, filterWithKeys,
-  mapObjToValues, memoizedWith, omitDeep,
-  omitDeepBy, omitDeepPaths, pickDeepPaths,
+  duplicateKey,
+  filterWithKeys,
+  mapObjToValues,
+  omitDeepBy,
   reqStrPathThrowing,
   retryTask
 } from 'rescape-ramda';
@@ -39,10 +32,6 @@ import {loggers} from 'rescape-log';
 
 const log = loggers.get('rescapeDefault');
 
-// Many of our graphql classes implement versioning. Make sure these values are never submitted in mutations
-// since they are managed by the server.
-// TODO Such metadata should come by fetching a remote schema from the server and parsing it
-export const VERSION_PROPS = ['createdAt', 'updatedAt', 'versionNumber', 'revisionId'];
 /**
  * Filters put the props whose keys match version props
  * @param props
@@ -64,13 +53,8 @@ export const filterOutNullDeleteProps = props => {
     R.equals('deleted', k),
     R.isNil(v)
   ), props);
-}
+};
 
-
-/**
- * Version output params to add to objects that implement versioning
- */
-export const versionOutputParamsMixin = R.fromPairs(R.map(key => [key, 1], VERSION_PROPS))
 
 /**
  * Makes the location query based on the queryParams
@@ -193,7 +177,7 @@ export const makeMutationRequestContainer = v(R.curry(
           log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
           return composeWithMapMDeep(1, [
             response => {
-              log.debug(`Successfully ran mutation: ${createOrUpdateName}`)
+              log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
               return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
@@ -213,7 +197,7 @@ export const makeMutationRequestContainer = v(R.curry(
         }
       ],
       // If we have an Apollo Component
-      [R.T,
+      [() => R.has('render', props),
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
@@ -231,7 +215,10 @@ export const makeMutationRequestContainer = v(R.curry(
             )
           );
         }
-      ]
+      ],
+      [R.T, () => {
+        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${inspect(props)}`);
+      }]
     ])(apolloConfig);
   }),
   [

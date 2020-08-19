@@ -12,8 +12,9 @@ import {gql} from '@apollo/client';
 import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda';
 import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {of} from 'folktale/concurrency/task';
 
-import * as R from 'ramda'
+import * as R from 'ramda';
 import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';
@@ -56,11 +57,11 @@ describe('apolloClient', () => {
       // Query with direct cache call. This works because the query with the same name was just made and it
       // will match that query by name
       mapToNamedPathAndInputs('region', 'data.regions.0',
-        ({apolloClient, region}) => makeQueryFromCacheContainer(
+        ({apolloClient, region}) => of(makeQueryFromCacheContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
           {key: region.key}
-        )
+        ))
       ),
       // Query so we can cache what we created
       mapToNamedPathAndInputs('region', 'data.regions.0',

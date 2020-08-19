@@ -9,29 +9,10 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {
-  composeWithChain,
-  composeWithChainMDeep,
-  defaultRunConfig,
-  mapMonadByConfig,
-  mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs,
-  pickDeepPaths,
-  reqStrPathThrowing
-} from 'rescape-ramda';
-import {expectKeys, expectKeysAtPath} from 'rescape-ramda';
+import {defaultRunConfig, expectKeysAtPath, mapToNamedPathAndInputs} from 'rescape-ramda';
 import * as R from 'ramda';
-import {
-  makeAdminUserStateQueryContainer,
-  makeCurrentUserStateQueryContainer,
-  makeUserStateMutationContainer,
-  userOutputParams,
-  userStateOutputParamsFull
-} from './userStateStore';
-import {mutateSampleUserStateWithProjectAndRegionTask} from './userStateStore.sample';
-import {testAuthTask} from '../../helpers/testHelpers';
-import {makeCurrentUserQueryContainer} from './userStore';
-
+import {makeCurrentUserQueryContainer, userOutputParams} from './userStore';
+import {localTestAuthTask} from '..';
 
 describe('userStore', () => {
   test('makeCurrentUserQueryContainer', done => {
@@ -40,7 +21,7 @@ describe('userStore', () => {
     R.composeK(
       ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, {}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => testAuthTask
+        () => localTestAuthTask()
       )
     )().run().listen(defaultRunConfig({
       onResolved:

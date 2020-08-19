@@ -27,6 +27,15 @@ import {
 import * as R from 'ramda';
 import Result from 'folktale/result';
 
+// Many of our graphql classes implement versioning. Make sure these values are never submitted in mutations
+// since they are managed by the server.
+// TODO Such metadata should come by fetching a remote schema from the server and parsing it
+export const VERSION_PROPS = ['createdAt', 'updatedAt', 'versionNumber', 'revisionId'];
+/**
+ * Version output params to add to objects that implement versioning
+ */
+export const versionOutputParamsMixin = R.fromPairs(R.map(key => [key, 1], VERSION_PROPS));
+
 /**
  * TOOD Replace the input array format with objects since js objects are deterministic
  * Creates graphql output params from the given object.

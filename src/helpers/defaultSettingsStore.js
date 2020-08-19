@@ -12,6 +12,23 @@ import {writeConfigToServerAndCache} from './settingsStore';
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+export const defaultSettingsTypenames =
+{
+  __typename: 'SettingsType',
+    data: {
+  __typename: 'SettingsDataType',
+    api: {
+    _typename: 'SettingsApiDataType'
+  },
+  overpass: {
+    _typename: 'SettingsOverpassDataType',
+  },
+  mapbox: {
+    _typename: 'MapboxApiDataType',
+  }
+}
+
+}
 // Global settings.
 // omitCacheOnlyFields to true to omit cache only fields from the query
 export const defaultSettingsOutputParams = {
@@ -64,4 +81,4 @@ export const defaultSettingsCacheIdProps = [
 /**
  * Writes or rewrites the default settings to the cache
  */
-export const writeDefaultSettingsToCache = writeConfigToServerAndCache({settings});
+export const writeDefaultSettingsToCache = writeConfigToServerAndCache({settings, defaultSettingsTypenames});

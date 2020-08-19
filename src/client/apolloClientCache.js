@@ -19,7 +19,7 @@ import {loggers} from 'rescape-log';
 const log = loggers.get('rescapeDefault');
 
 /**
- * Only for testing. Reads values loaded from the server that we know are now in the cache
+ * Reads values loaded from the server that we know are now in the cache
  * @param apolloClient The authenticated Apollo Client
  * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
@@ -32,13 +32,12 @@ const log = loggers.get('rescapeDefault');
           }
     }`,
  variables: {key: "earth"}
- * @returns {Task} A task with the query results in {data}. The results are put in data to match the format of
- * non-cached queries
+ * @returns {Object} The cache result
  */
 export const authApolloClientQueryCacheContainer = R.curry((apolloClient, options, props) => {
   // readQuery isn't a promise, just a direct call I guess
   log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(props)}`);
-  return of({data: apolloClient.readQuery({variables: props, ...options})});
+  return {data: apolloClient.readQuery({variables: props, ...options})};
 });
 
 /**
@@ -60,7 +59,7 @@ export const authApolloClientQueryCacheContainer = R.curry((apolloClient, option
  * non-cached queries.
  */
 export const authApolloComponentQueryCacheContainer = R.curry((query, options, props) => {
-  return Just(graphql(query, options)(props));
+  return graphql(query, options)(props);
 });
 
 /**

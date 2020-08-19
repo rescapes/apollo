@@ -13,6 +13,8 @@ import {omitClientFields} from './requestHelpers';
 import {v} from 'rescape-validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
+import {of} from 'folktale/concurrency/task';
+import {isAuthenticatedLocalContainer} from '../stores/userStore';
 
 /**
  * Created by Andy Likuski on 2020.03.20
@@ -97,25 +99,12 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
       {
         options: {
           update: (store, response) => {
-            // Add mutate to response.data so we dont' have to guess if it's a create or udpate
+            // Add mutate to response.data so we dont' have to guess if it's a create or update
             const settings = reqStrPathThrowing(
               'data.mutate.settings',
               addMutateKeyToMutationResponse({silent: true}, response)
             );
-            // Add the cache only values to the persisted settings
-            const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
-
-            // Mutate the cache to save settings to the database that are not stored on the server
-            makeCacheMutation(
-              apolloConfig,
-              {
-                name: 'settings',
-                // output for the read fragment
-                outputParams
-              },
-              propsWithCacheOnlyItems
-              //createCacheOnlyPropsForSettings({cacheOnlyObjs, cacheIdProps}, propsWithCacheOnlyItems)
-            );
+            makeSettingsCacheMutation(apolloConfig, {outputParams}, props, settings);
           }
         }
       }
@@ -141,29 +130,92 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
   ['props', PropTypes.shape().isRequired]
 ], 'makeSettingsMutationContainer');
 
+export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, settings) => {
+
+  // Add the cache only values to the persisted settings
+  const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
+
+  // Mutate the cache to save settings to the database that are not stored on the server
+  makeCacheMutation(
+    apolloConfig,
+    {
+      name: 'settings',
+      // output for the read fragment
+      outputParams
+    },
+    propsWithCacheOnlyItems
+  );
+};
+
 /**
- * Writes or rewrites the default settings to the cache. Other values in the config are ignored
- * and must be added manually
+ * Writes or rewrites the default settings to the cache if needed.
+ * Non-server values in the config are ignored and must be added manually.
+ * If the apollo client isn't authenticated we write straight to cache
  * @param {Object} config
  * @param {Object} config.settings The settings to write. It must match Settings object of the Apollo schema,
  * although cache-only values can be included
+ * @param {Object} config.defaultSettingsTypenames Typenmaes of the settings in the form
+ * {
+ *   __typename: string,
+ *   data: {
+ *     __typename: string
+ *     foo: {...}
+ *   }
+ * }
+ * Only need to write settings to the cache for an unauthed user when no settings are on the server (rare)
  */
 export const writeConfigToServerAndCache = (config) => {
   return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
     // Only the settings are written to the server
-    const settings = R.prop('settings', config);
+    const configuredSettings = R.prop('settings', config);
+    const defaultSettingsTypenames = R.prop('defaultSettingsTypenames', config);
     return composeWithChain([
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
         ({props, apolloConfig, settingsFromServer}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
-          return makeSettingsMutationContainer(
-            apolloConfig,
-            {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
-            R.merge(props, R.pick(['id'], settings))
-          );
+          return R.ifElse(
+            () => {
+              // If we are authenticated and the server settings don't match the config, update
+              // TODO This should only be done by admins
+              return isAuthenticatedLocalContainer(apolloConfig) &&
+                R.not(R.equals(
+                  settings,
+                  omitDeepPaths(cacheOnlyObjs, props)
+                  )
+                );
+            },
+            () => {
+              return makeSettingsMutationContainer(
+                apolloConfig,
+                {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
+                R.merge(props, R.pick(['id'], settings))
+              );
+            },
+            () => {
+              // Write the server or configured values to the cache manually
+              // If we have settings from the server, they will already be in the cache,
+              // but we need to write any non server settings
+              // If we don't have settings from the server and we aren't authenticated, just
+              // cache the configured settings
+              const settingsToCache = settings || R.mergeDeepRight(
+                configuredSettings,
+                // TODO this should come from the remote schema so it can be customized
+                // to the app's settings
+                defaultSettingsTypenames
+              );
+              makeSettingsCacheMutation(
+                apolloConfig,
+                {outputParams: settingsOutputParams},
+                configuredSettings,
+                settingsToCache
+              );
+              return of({data: {mutate: {settings: settingsToCache}}});
+            }
+          )();
         }
       ),
+
       // Fetch the props if they exist on the server
       mapToNamedResponseAndInputs('settingsFromServer',
         ({apolloConfig, props}) => {
@@ -180,7 +232,7 @@ export const writeConfigToServerAndCache = (config) => {
       )
     ])({
         apolloConfig: {apolloClient},
-        props: settings
+        props: configuredSettings
       }
     );
   };

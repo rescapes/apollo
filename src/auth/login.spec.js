@@ -11,7 +11,6 @@
 
 import * as R from 'ramda';
 import {localTestAuthTask, cacheOptions, localTestConfig} from '../helpers/testHelpers';
-import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClient';
 import {
   composeWithChain,
   defaultRunConfig,
@@ -21,7 +20,7 @@ import {
 } from 'rescape-ramda';
 import {
   authClientOrLoginTask,
-  loginToAuthClientTask,
+  noLoginToAuthClientTask,
   refreshTokenContainer,
   verifyTokenRequestContainer
 } from './login';
@@ -33,7 +32,9 @@ import {
   writeDefaultSettingsToCache
 } from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '../client/stateLink';
-import {createAuthTask} from '..';
+import {createAuthTask} from '../helpers/clientHelpers';
+import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication';
+import {createNoAuthTask} from '../helpers/clientHelpers';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -126,8 +127,21 @@ describe('login', () => {
     );
   }, 10000);
 
-  test('loginToAuthClientTask', done => {
+  test('createNoAuthTask', done => {
+    const errors = [];
+    createNoAuthTask(localTestConfig).run().listen(defaultRunConfig(
+      {
+        onResolved:
+          response => {
+            expect(response.apolloClient).not.toBeNull();
+            expect(response.token).toBeNull();
+            done();
+          }
+      }, errors, done)
+    );
+  }, 10000);
 
+  test('loginToAuthClientTask', done => {
     const errors = [];
     createAuthTask(localTestConfig).run().listen(defaultRunConfig(
       {
@@ -135,6 +149,19 @@ describe('login', () => {
           response => {
             expect(response.apolloClient).not.toBeNull();
             expect(response.token).not.toBeNull();
+            done();
+          }
+      }, errors, done)
+    );
+  }, 10000);
+
+  test('noLoginToAuthClientTask', done => {
+    const errors = [];
+    createNoAuthTask(localTestConfig).run().listen(defaultRunConfig({
+        onResolved:
+          response => {
+            expect(response.apolloClient).not.toBeNull();
+            expect(response.token).toBeNull();
             done();
           }
       }, errors, done)

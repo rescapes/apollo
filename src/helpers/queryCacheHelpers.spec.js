@@ -16,6 +16,7 @@ import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
 import {makeQueryFromCacheContainer} from './queryCacheHelpers';
+import {of} from 'folktale/concurrency/task'
 
 describe('queryCacheHelpers', () => {
 
@@ -44,7 +45,7 @@ describe('queryCacheHelpers', () => {
       // Direct cache read as a sanity check
       mapToNamedPathAndInputs(
         'regionFromCache', 'data.regions.0,',
-        ({apolloClient, region}) => makeQueryFromCacheContainer(
+        ({apolloClient, region}) => of(makeQueryFromCacheContainer(
           {apolloClient},
           {
             name: 'regions',
@@ -61,7 +62,7 @@ describe('queryCacheHelpers', () => {
             }
           },
           {key: region.key}
-        )
+        ))
       ),
       // Query to get it in the cache
       mapToNamedPathAndInputs(

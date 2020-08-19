@@ -13,7 +13,8 @@ import {parseApiUrl} from 'rescape-helpers';
 import {HttpLink} from '@apollo/client';
 import fetch from 'node-fetch';
 import {setContext} from '@apollo/link-context';
-import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
+// Can't get this to work with webpack
+//import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import * as R from 'ramda';
 import {fromPromised, of} from 'folktale/concurrency/task';
@@ -52,6 +53,7 @@ const createAuthenticatedLink = (uri, token) => setContext((request, previousCon
  * @returns {Task<Object>} Resolves with an object containing the schema, the authenticated ApolloLink, and
  *
  */
+/*
 export const remoteSchemaTask = config => {
   return R.composeK(
     // Create a link that concats HTTP to Authentication
@@ -87,7 +89,7 @@ export const remoteSchemaTask = config => {
     }
   )(config);
 };
-
+*/
 /**
  * Generates a reolsed schema from the server
  * https://www.apollographql.com/docs/graphql-tools/remote-schemas.html
@@ -95,6 +97,7 @@ export const remoteSchemaTask = config => {
  * @param {Function} config.writeDefaults Function expecting apolloClient that writes defaults to the cache
  * @return {Task<{schema: GraphQLSchema, link: HttpLink}>}
  */
+/*
 export const remoteLinkedSchemaTask = config => {
   return R.composeK(
     ({schema, link}) => of(makeRemoteExecutableSchema({
@@ -104,3 +107,4 @@ export const remoteLinkedSchemaTask = config => {
     config => remoteSchemaTask(config)
   )(config);
 };
+ */

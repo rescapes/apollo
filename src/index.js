@@ -10,15 +10,13 @@
  */
 
 export {
-  loginMutationTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
+  loginMutationTask, noLoginToAuthClientTask, authClientOrLoginTask, refreshTokenContainer, verifyTokenRequestContainer, loginToAuthClientTask
 } from './auth/login';
 export {
   authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
   getApolloClientTask,
   authApolloClientRequestTask,
-  getOrCreateAuthApolloClientWithTokenTask,
-  getOrCreateApolloAuthClientTaskAndSetDefaults,
   noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
@@ -28,14 +26,17 @@ export {
   authApolloQueryContainer,
   getOrCreateApolloClientTask
 } from './client/apolloClient';
+export {
+  getOrCreateAuthApolloClientWithTokenTask,
+  getOrCreateApolloClientTaskAndSetDefaults,
+  getOrCreateNoAuthApolloClientTask
+} from './client/apolloClientAuthentication'
 export {makeQuery, makeQueryContainer, apolloQueryResponsesTask, createRequestVariables} from './helpers/queryHelpers';
 export {
   makeMutation,
   makeMutationRequestContainer,
   mutationParts,
   addMutateKeyToMutationResponse,
-  VERSION_PROPS,
-  versionOutputParamsMixin,
   filterOutReadOnlyVersionProps,
   filterOutNullDeleteProps
 } from './helpers/mutationHelpers';
@@ -54,9 +55,12 @@ export {
   optionsWithWinnowedProps,
   omitUnrepresentedOutputParams,
   createReadInputTypeMapper,
-  relatedObjectsToIdForm
+  relatedObjectsToIdForm,
+  VERSION_PROPS,
+  versionOutputParamsMixin
 } from './helpers/requestHelpers';
-export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
+
+//export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 
 export {
   sampleInputParamTypeMapper,
@@ -103,3 +107,5 @@ export {
 } from './helpers/componentHelpersMonadic';
 
 export {apolloResult, apolloResultDataOrNull} from './helpers/apolloMonadHelpers';
+
+export {makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer} from './stores/userStore'
