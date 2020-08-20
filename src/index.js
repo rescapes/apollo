@@ -117,7 +117,7 @@ export {
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
 } from './helpers/componentHelpersMonadic';
 
-export {apolloResult, resultOkOrNull, apolloResponseSingleValueOrNull, apolloResponseValueOrNull} from './helpers/apolloMonadHelpers';
+export {apolloResult, resultOkOrNull, apolloResponseSingleValueOrNull, apolloResponseValueOrNull, apolloResponseFilterOrEmpty} from './helpers/apolloMonadHelpers';
 
 export {
   makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer

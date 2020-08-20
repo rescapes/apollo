@@ -75,3 +75,21 @@ export const apolloResponseSingleValueOrNull = (responseName, response) => {
     response => apolloResponseValueOrNull(responseName, response)
   )(response);
 };
+
+/**
+ * Like apolloResponseValueOrNull but additionally filters each returned item if not null
+ * @param {String} responseName The string at {data: {[responseName]: [...]}}
+ * @param {Function} filterItem Unary filter to apply to each item
+ * @param {Object} response An Apollo request response
+ * @returns {[Object]} List of matching items or empty for no matches or loading/error case
+ */
+export const apolloResponseFilterOrEmpty = (responseName, filterItem, response) => {
+  return R.compose(
+    list => R.filter(
+      itm => filterItem(itm),
+      list
+    ),
+    R.defaultTo([]),
+    response => apolloResponseValueOrNull(responseName, response)
+  )(response);
+};

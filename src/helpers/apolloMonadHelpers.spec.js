@@ -11,7 +11,13 @@
 
 import * as R from 'ramda';
 import Result from 'folktale/result';
-import {apolloResponseSingleValueOrNull, apolloResponseValueOrNull, apolloResult} from './apolloMonadHelpers';
+import {
+  apolloResponseFilterOrEmpty,
+  apolloResponseSingleValueOrNull,
+  apolloResponseValueOrNull,
+  apolloResult
+} from './apolloMonadHelpers';
+import {ap} from 'ramda/src/index';
 
 describe('apolloMonadHelpers', () => {
   test('apolloResult', () => {
@@ -57,7 +63,7 @@ describe('apolloMonadHelpers', () => {
       loading: true,
       error: false
     };
-    expect(apolloResponseValueOrNull('foos', apolloLoadingResponse)).toEqual(null)
+    expect(apolloResponseValueOrNull('foos', apolloLoadingResponse)).toEqual(null);
   });
 
   test('apolloResponseSingleValueOrNull', () => {
@@ -70,6 +76,20 @@ describe('apolloMonadHelpers', () => {
     expect(apolloResponseSingleValueOrNull('foos', apolloDataResponse)).toEqual(
       {id: 'f'}
     );
+  });
+
+  test('apolloResponseFilterOrEmpty', () => {
+    const apolloDataResponse = {
+      data: {foos: [{id: 'f'}, {id: 'o'}, {id: 'oo'}]},
+      status: 'data',
+      loading: false,
+      error: false
+    };
+    expect(apolloResponseFilterOrEmpty(
+      'foos',
+      foo => R.compose(R.equals(1), R.length, R.prop('id'))(foo),
+      apolloDataResponse
+    )).toEqual([{id: 'f'}, {id: 'o'}]);
   });
 });
 
