@@ -11,6 +11,7 @@
 
 import * as R from 'ramda';
 import Result from 'folktale/result';
+import {reqStrPathThrowing, strPathOr} from 'rescape-ramda';
 
 /**
  * Returns a Result.Ok if data is loaded and a Result.Error if the response is loading or an error.
@@ -20,12 +21,11 @@ import Result from 'folktale/result';
  * @return {*}
  */
 export const apolloResult = apolloResponse => {
-  const props = R.props(['data', 'loading', 'error', 'status'], apolloResponse);
   return R.ifElse(
     R.prop('data'),
     Result.Ok,
     Result.Error
-  )(props);
+  )(apolloResponse);
 };
 
 /**
@@ -33,9 +33,45 @@ export const apolloResult = apolloResponse => {
  * @param apolloResult
  * @return {*}
  */
-export const apolloResultDataOrNull = apolloResult => {
+export const resultOkOrNull = apolloResult => {
   return apolloResult.matchWith({
     Ok: ({value}) => value,
     Error: () => null
   });
+};
+
+/**
+ * Converts the Apollo query response with the given response name at response: {data: [responseName]: {}/[]}}
+ * to the value at responseName or returns null if the response is loading or an error.
+ * This method can be used to give Apollo request response values to components that just need
+ * the value or null, and don't care if the value is loading or error. If the component needs to know,
+ * the response should be given directly to the component so that it can process it
+ * @param {String} responseName The string at {data: {[responseName]: [...]/{...}}
+ * @param {Object} response An Apollo request response
+ * @returns {Object|List<Objectd>} The single object or list of objects at responseName or null
+ * for the loading/error case
+ */
+export const apolloResponseValueOrNull = (responseName, response) => {
+  return R.compose(
+    // Return null if status is loading or error
+    apolloResult => resultOkOrNull(apolloResult),
+    response => R.map(
+      // Map the data response to the data value
+      response => reqStrPathThrowing(`data.${responseName}`, response),
+      apolloResult(response)
+    )
+  )(response);
+};
+/**
+ * Same as apolloResponseValueOrNull, but takes the first item of the resolved value,
+ * which is expected to be an array.
+ * @param {String} responseName The string at {data: {[responseName]: [...]}}
+ * @param {Object} response An Apollo request response
+ * @returns {Object} The single value or null for the loading/error case
+ */
+export const apolloResponseSingleValueOrNull = (responseName, response) => {
+  return R.compose(
+    listOrNull => R.head(listOrNull || []),
+    response => apolloResponseValueOrNull(responseName, response)
+  )(response);
 };
