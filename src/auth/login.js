@@ -29,12 +29,7 @@ import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
 } from '../client/apolloClientAuthentication';
-
-const loginMutation = gql`mutation TokenAuth($username: String!, $password: String!) {
-    tokenAuth(username: $username, password: $password) {
-        token
-    }
-}`;
+import {tokenAuthMutationContainer} from '../stores/tokenAuthStore';
 
 /**
  * loginMutationTask returning a User and token
@@ -46,10 +41,7 @@ const loginMutation = gql`mutation TokenAuth($username: String!, $password: Stri
  * be passed to authenticated calls
  */
 export const loginMutationTask = v(R.curry((apolloConfig, props) => {
-  return noAuthApolloClientMutationRequestTask(
-    apolloConfig,
-    {mutation: loginMutation, variables: props}
-  );
+  return tokenAuthMutationContainer(apolloConfig, {}, props)
 }), [
   ['noAuthClient', PropTypes.shape().isRequired],
   ['props', PropTypes.shape({
@@ -124,43 +116,7 @@ export const noLoginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkRes
   );
 });
 
-/**
- * Verifies an apolloClient auth token.
- * @param {Object} apolloClient
- * @param {Object} props
- * @param {String} props.token The token to verify
- * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
- * token verification
- */
-export const verifyTokenRequestContainer = R.curry((apolloConfig, props) => {
-  return makeMutationRequestContainer(
-    apolloConfig,
-    {
-      outputParams: {payload: 1},
-      variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'verifyToken'
-    },
-    props
-  );
-});
 
-/**
- * Refresh an apolloClient auth token.
- * @param {Object} apolloClient
- * @param {Object} variables
- * @param {String} variables.token The token to verify
- * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
- *
- */
-export const refreshTokenContainer = R.curry((apolloConfig, props) => {
-  return makeMutationRequestContainer(
-    apolloConfig,
-    {
-      outputParams: {payload: 1},
-      variableNameOverride: 'token', variableTypeOverride: 'String', mutationNameOverride: 'refreshToken'
-    },
-    props
-  );
-});
 
 /**
  * Expects a GraphQLClient if already authenticated or login data if not

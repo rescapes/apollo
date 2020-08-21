@@ -2,8 +2,6 @@ import {filterOutReadOnlyVersionProps, makeMutationRequestContainer} from '../mu
 import * as R from 'ramda';
 import {makeQueryContainer} from '../queryHelpers';
 import {loggers} from 'rescape-log';
-import {reqStrPathThrowing, strPathOr} from 'rescape-ramda';
-import {adopt} from 'react-adopt';
 import {relatedObjectsToIdForm} from '../requestHelpers';
 
 export const userStateReadInputTypeMapper = {
@@ -24,6 +22,7 @@ const log = loggers.get('rescapeDefault');
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+const RELATED_PROPS = [];
 
 // Every complex input type needs a type specified in graphql. Our type names are
 // always in the form [GrapheneFieldType]of[GrapheneModeType]RelatedReadInputType

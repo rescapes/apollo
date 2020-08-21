@@ -10,53 +10,74 @@
  */
 
 import * as R from 'ramda';
-import {v} from 'rescape-validate';
-import PropTypes from 'prop-types';
-import {makeQueryContainer} from '../helpers/queryHelpers';
-import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers';
-import {versionOutputParamsMixin} from '../helpers/requestHelpers';
-import {reqStrPathThrowing, strPathOr} from 'rescape-ramda';
-import {makeMutationRequestContainer} from '..';
-import {normalizeSampleRegionPropsForMutating, regionOutputParams} from '../helpers/samples/sampleRegionStore';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 
 export const tokenAuthOutputParams = {
   token: 1,
+  payload: 1
 };
 
-export const tokenAuthReadInputTypeMapper = {
-};
+export const tokenAuthReadInputTypeMapper = {};
 
 /**
- * Queries tokenAuths
- * @params {Object} apolloClient The Apollo Client
- * @params {Object} outputParams OutputParams for the query such as tokenAuthOutputParams
- * @params {Object} props
- * @params {Object} props.login The login props
- * @params {Object} props.login.username Required username
- * @params {Object} props.login.password Required password
- * @returns {Object|Task} A mutation component or task. The mutation component gives the mutate
- * function to the child component. The task resolves to the mutation results
+ * Verifies an apolloClient auth token.
+ * @param {Object} apolloClient
+ * @param {Object} outputParams
+ * @param {Object} props
+ * @param {String} props.token The token to verify
+ * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
+ * token verification
  */
-export const makeTokenAuthMutationContainer = v(R.curry((apolloConfig, outputParams, props) => {
-    return makeMutationRequestContainer(
-      {
-        options: {
-          variables: (props) => {
-            return R.pick(['username', 'password'], reqStrPathThrowing('login', props));
-          },
+export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: outputParams || tokenAuthOutputParams,
+      flattenVariables: true,
+      mutationNameOverride: 'tokenAuth'
+    },
+    props
+  );
+});
 
-          errorPolicy: 'all'
-        }
-      },
-      {
-        name: 'region',
-        outputParams: regionOutputParams
-      },
-      normalizeSampleRegionPropsForMutating(props)
-    )
-  }),
-  [
-    ['apolloConfig', PropTypes.shape().isRequired],
-    ['outputParams', PropTypes.shape().isRequired],
-    ['props', PropTypes.shape()]
-  ], 'makeCurrentUserQueryContainer');
+/**
+ * Verifies an apolloClient auth token.
+ * @param {Object} apolloClient
+ * @param {Object} outputParams
+ * @param {Object} props
+ * @param {String} props.token The token to verify
+ * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
+ * token verification
+ */
+export const verifyTokenRequestContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: outputParams || {payload: 1},
+      flattenVariables: true,
+      mutationNameOverride: 'verifyToken'
+    },
+    props
+  );
+});
+
+/**
+ * Refresh an apolloClient auth token.
+ * @param {Object} apolloClient
+ * @param {Object} outputParams
+ * @param {Object} variables
+ * @param {String} variables.token The token to verify
+ * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
+ *
+ */
+export const refreshTokenContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: outputParams || {payload: 1},
+      flattenVariables: true,
+      mutationNameOverride: 'refreshToken'
+    },
+    props
+  );
+});

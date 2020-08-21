@@ -12,7 +12,13 @@
 import {inspect} from 'util';
 
 import * as R from 'ramda';
-import {_winnowRequestProps, formatOutputParams, omitClientFields, VERSION_PROPS} from './requestHelpers';
+import {
+  _winnowRequestProps,
+  formatOutputParams,
+  omitClientFields,
+  resolveGraphQLType,
+  VERSION_PROPS
+} from './requestHelpers';
 import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
 import {
   capitalize,
@@ -29,6 +35,7 @@ import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import {loggers} from 'rescape-log';
+import {flatten} from 'ramda/src/index';
 
 const log = loggers.get('rescapeDefault');
 
@@ -102,9 +109,9 @@ ${mutationName}(${variableMappingString}) {
  *    }
  *  ]
  *  // The following params are only used for simple mutations where there is no complex input type:
- *  @param {String} mutationOptions.variableNameOverride
- *  @param {String} mutationOptions.variableTypeOverride
- *  @param {String} mutationNameOverride
+ *  @param {Boolean} [mutationOptions.flattenVariables] Default false. Make the props listed variables, not
+ *  a type
+ *  @param {String} [mutationNameOverride]. Default ${crud}${capitalize(name)} Override the mutation name
  *  Creates need all required fields and updates need at minimum the id
  *  @param {Object} props The props for the mutation
  *  @return {Task|Object} A task for Apollo Client mutations or a component for Apollo component mutations
@@ -135,13 +142,13 @@ export const makeMutationRequestContainer = v(R.curry(
    {
      name, outputParams,
      // These are only used for simple mutations where there is no complex input type
-     variableNameOverride = null, variableTypeOverride = null, mutationNameOverride = null
+     mutationNameOverride = null, flattenVariables = false
    },
    props) => {
     // Get the variable definition, arguments and outputParams
-    const {variablesAndTypes, variableName, namedProps, namedOutputParams, crud} = mutationParts(
+    const {variablesAndTypes, variableNames, namedProps, namedOutputParams, crud} = mutationParts(
       apolloConfig,
-      {name, outputParams: omitClientFields(outputParams), variableTypeOverride, variableNameOverride},
+      {name, outputParams: omitClientFields(outputParams), flattenVariables},
       props
     );
 
@@ -187,7 +194,7 @@ export const makeMutationRequestContainer = v(R.curry(
                   {
                     mutation,
                     name,
-                    variableName
+                    //variableNames
                   },
                   namedProps
                 ), 3
@@ -290,18 +297,17 @@ export const addMutateKeyToMutationResponse = ({name, silent}, response) => {
  * that will be used for the mutation. When an object overrides props. When undefined props is used
  * @param {String} name The name of the object type, e.g. region
  * @param {Array|Object} outputParams Output params for the mutation
- * @param {String} variableTypeOverride Used to override the variable type, normally it's (Update|Create){Name}InputType
- * @param {String} variableNameOverride Override the variableName, normally {name}Data
+ * @param {Boolean} [flattenVariables]. Default false, if true flatten the variables, don't put them
+ * in an input object
  * @param {Object} props Just used to determin if an update or create is needed by reading props.id. Passing just {id: true}
  * will force and update
- * @return {{variablesAndTypes: {}, variableName: *, namedOutputParams: *, namedProps: *, crud: *}}
+ * @return {{variablesAndTypes: {}, variableNames: [*], namedOutputParams: *, namedProps: *, crud: *}}
  */
 export const mutationParts = (
   apolloConfig, {
     name,
     outputParams,
-    variableTypeOverride,
-    variableNameOverride
+    flattenVariables = false
   },
   props
 ) => {
@@ -311,24 +317,31 @@ export const mutationParts = (
   // Determine crud type from the presence of the id in the props
   const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(winnowedProps);
   // Create|Update[Model Name]InputType]
-  const variableName = R.when(R.isNil, () => `${name}Data`)(variableNameOverride);
+  // If flattenVariables, then use the prop keys as variables
+  const variableNames = flattenVariables ?
+    R.keys(props) :
+    [`${name}Data`];
+
   // The default variable type is the name of the type given + InputType
   // We only expect mutations to have one input prop, the entire object being created or updated
-  const variableType = R.when(R.isNil, () => `${capitalize(crud)}${capitalize(name)}InputType`)(variableTypeOverride);
-  const variablesAndTypes = {[variableName]: variableType};
+  // If flattenVariables, then use the prop value types
+  const variableTypes = flattenVariables ?
+    mapObjToValues((v, k) => resolveGraphQLType({}, k, v), winnowedProps) :
+    [`${capitalize(crud)}${capitalize(name)}InputType`];
+
+  const variableValues = R.ifElse(() => flattenVariables, R.values, p => [p])(winnowedProps)
+  const variablesAndTypes = R.zipObj(variableNames, variableTypes);
+  const variablesAndValues = R.zipObj(variableNames, variableValues);
+
   // In most cases, our outputParams are {[name]: outputParams} and props are {[variableNames]: props} to match the
   // name of the object class being mutated. If we don't specify name an instead use the overrides,
   // we don't need name here
   const namedOutputParams = R.ifElse(R.isNil, R.always(outputParams), name => ({[name]: outputParams}))(name);
 
-  const namedProps = R.ifElse(
-    R.isNil,
-    R.always(winnowedProps),
-    () => ({[variableName]: winnowedProps})
-  )(name);
+
   // Filter out anything that begins with a _. This can happen if we are mutating with data we got back
   // from a query or other mutation
-  const filteredNamedProps = omitDeepBy(R.startsWith('_'), namedProps);
+  const filteredNamedProps = omitDeepBy(R.startsWith('_'), variablesAndValues);
 
-  return {variablesAndTypes, variableName, namedOutputParams, namedProps: filteredNamedProps, crud};
+  return {variablesAndTypes, variableNames, namedOutputParams, namedProps: filteredNamedProps, crud};
 };
