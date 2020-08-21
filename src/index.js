@@ -13,8 +13,6 @@ export {
   loginMutationTask,
   noLoginToAuthClientTask,
   authClientOrLoginTask,
-  refreshTokenContainer,
-  verifyTokenRequestContainer,
   loginToAuthClientTask
 } from './auth/login';
 export {
@@ -117,8 +115,20 @@ export {
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
 } from './helpers/componentHelpersMonadic';
 
-export {apolloResult, resultOkOrNull, apolloResponseSingleValueOrNull, apolloResponseValueOrNull, apolloResponseFilterOrEmpty} from './helpers/apolloMonadHelpers';
+export {
+  apolloResult,
+  resultOkOrNull,
+  apolloResponseSingleValueOrNull,
+  apolloResponseValueOrNull,
+  apolloResponseFilterOrEmpty
+} from './helpers/apolloMonadHelpers';
 
 export {
   makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer
 } from './stores/userStore';
+
+export {
+  refreshTokenContainer,
+  verifyTokenRequestContainer,
+  tokenAuthMutationContainer
+} from './stores/tokenAuthStore';
