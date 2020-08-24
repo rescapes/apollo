@@ -22,7 +22,12 @@ import {
   writeDefaultSettingsToCache
 } from '../helpers/defaultSettingsStore';
 import {parseApiUrl} from 'rescape-helpers';
-import {refreshTokenContainer, verifyTokenRequestContainer} from './tokenAuthStore';
+import {
+  deleteRefreshTokenCookieMutationRequestContainer,
+  deleteTokenCookieMutationRequestContainer,
+  refreshTokenMutationRequestContainer,
+  verifyTokenMutationRequestContainer
+} from './tokenAuthStore';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication';
 import {defaultStateLinkResolvers} from '../client/stateLink';
 
@@ -35,13 +40,21 @@ describe('tokenAuthStore', () => {
     const errors = [];
     R.composeK(
       mapToNamedPathAndInputs(
+        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookie.deleted',
+        ({apolloClient, verifyToken, token}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
+      ),
+      mapToNamedPathAndInputs(
+        'deleteTokenCookie', 'data.deleteTokenCookie.deleted',
+        ({apolloClient, verifyToken, token}) => deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {})
+      ),
+      mapToNamedPathAndInputs(
         'refreshToken', 'data.refreshToken.payload',
-        ({apolloClient, verifyToken, token}) => refreshTokenContainer({apolloClient}, {}, {token})
+        ({apolloClient, verifyToken, token}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
       ),
       mapToNamedPathAndInputs(
         'verifyToken', 'data.verifyToken.payload',
         ({apolloClient, token}) => {
-          return verifyTokenRequestContainer({apolloClient}, {}, {token});
+          return verifyTokenMutationRequestContainer({apolloClient}, {}, {token});
         }
       ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
@@ -72,6 +85,8 @@ describe('tokenAuthStore', () => {
             expect(response.token).not.toBeNull();
             expect(response.verifyToken).not.toBeNull();
             expect(response.refreshToken).not.toBeNull();
+            expect(response.deleteTokenCookie).not.toBeNull();
+            expect(response.deleteRefreshTokenCookie).not.toBeNull();
           }
       }, errors, done)
     );

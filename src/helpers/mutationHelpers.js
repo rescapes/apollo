@@ -71,10 +71,18 @@ export const filterOutNullDeleteProps = props => {
  * @param {Array|Object} outputParams
  */
 export const makeMutation = R.curry((mutationName, variablesAndTypes, outputParams) => {
-  const variableString = R.join(', ', mapObjToValues((type, name) => `$${name}: ${type}!`, variablesAndTypes));
-  const variableMappingString = R.join(', ', mapObjToValues((type, name) => `${name}: $${name}`, variablesAndTypes));
-  return `mutation ${mutationName}Mutation(${variableString}) { 
-${mutationName}(${variableMappingString}) {
+  const variableString = R.compose(
+    str => R.when(R.length, str => `(${str})`)(str),
+    variableStrings => R.join(', ', variableStrings),
+    variablesAndTypes => mapObjToValues((type, name) => `$${name}: ${type}!`, variablesAndTypes)
+  )(variablesAndTypes);
+  const variableMappingString = R.compose(
+    str => R.when(R.length, str => `(${str})`)(str),
+    variableStrings => R.join(', ', variableStrings),
+    variablesAndTypes => mapObjToValues((type, name) => `${name}: $${name}`, variablesAndTypes)
+  )(variablesAndTypes);
+  return `mutation ${mutationName}Mutation${variableString} { 
+${mutationName}${variableMappingString} {
   ${formatOutputParams(outputParams)}
   }
 }`;
@@ -193,7 +201,7 @@ export const makeMutationRequestContainer = v(R.curry(
                   apolloConfig,
                   {
                     mutation,
-                    name,
+                    name
                     //variableNames
                   },
                   namedProps
@@ -329,7 +337,7 @@ export const mutationParts = (
     mapObjToValues((v, k) => resolveGraphQLType({}, k, v), winnowedProps) :
     [`${capitalize(crud)}${capitalize(name)}InputType`];
 
-  const variableValues = R.ifElse(() => flattenVariables, R.values, p => [p])(winnowedProps)
+  const variableValues = R.ifElse(() => flattenVariables, R.values, p => [p])(winnowedProps);
   const variablesAndTypes = R.zipObj(variableNames, variableTypes);
   const variablesAndValues = R.zipObj(variableNames, variableValues);
 

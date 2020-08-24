@@ -40,7 +40,7 @@ export const tokenAuthReadInputTypeMapper = {};
   }
 }
  */
-export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
     {
@@ -52,6 +52,28 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams=n
   );
 });
 
+export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: outputParams || {deleted: 1},
+      flattenVariables: true,
+      mutationNameOverride: 'deleteTokenCookie'
+    },
+    props
+  );
+});
+export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+  return makeMutationRequestContainer(
+    apolloConfig,
+    {
+      outputParams: outputParams || {deleted: 1},
+      flattenVariables: true,
+      mutationNameOverride: 'deleteRefreshTokenCookie'
+    },
+    props
+  );
+});
 /**
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
@@ -61,7 +83,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams=n
  * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
  * token verification
  */
-export const verifyTokenRequestContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+export const verifyTokenMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
     {
@@ -82,7 +104,7 @@ export const verifyTokenRequestContainer = R.curry((apolloConfig, {outputParams=
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
  *
  */
-export const refreshTokenContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
+export const refreshTokenMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
     {
