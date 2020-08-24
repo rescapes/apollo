@@ -319,7 +319,7 @@ export const mutationParts = (
   // Create|Update[Model Name]InputType]
   // If flattenVariables, then use the prop keys as variables
   const variableNames = flattenVariables ?
-    R.keys(props) :
+    R.keys(winnowedProps) :
     [`${name}Data`];
 
   // The default variable type is the name of the type given + InputType

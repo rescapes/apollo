@@ -24,9 +24,21 @@ export const tokenAuthReadInputTypeMapper = {};
  * @param {Object} apolloClient
  * @param {Object} outputParams
  * @param {Object} props
- * @param {String} props.token The token to verify
- * @return {Function} Unary function expecting props and returning an Apollo Componnet or Task that resolves to the
- * token verification
+ * @param {String} props.username
+ * @param {String} props.password
+ * @return {TasK|Object} Task or Apollo Component resolving to
+ * {
+  "data": {
+    "tokenAuth": {
+      "token": the token
+      "payload": {
+        "username": the username
+        "exp": Expiration time as 1598264561,
+        "origIat": Original login time 1598264261
+      },
+    }
+  }
+}
  */
 export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams=null}, props) => {
   return makeMutationRequestContainer(

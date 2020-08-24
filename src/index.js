@@ -10,7 +10,6 @@
  */
 
 export {
-  loginMutationTask,
   noLoginToAuthClientTask,
   authClientOrLoginTask,
   loginToAuthClientTask

@@ -32,25 +32,6 @@ import {
 import {tokenAuthMutationContainer} from '../stores/tokenAuthStore';
 
 /**
- * loginMutationTask returning a User and token
- * @param {Object} noAuthClient, Client an Apollo Client that doesn't need authentication
- * @param {Object} props
- * @param {String} props.username The username
- * @param {String} props.password The password
- * @return {Task} Returns an object representing a user with a token. This token must
- * be passed to authenticated calls
- */
-export const loginMutationTask = v(R.curry((apolloConfig, props) => {
-  return tokenAuthMutationContainer(apolloConfig, {}, props)
-}), [
-  ['noAuthClient', PropTypes.shape().isRequired],
-  ['props', PropTypes.shape({
-    username: PropTypes.string.isRequired,
-    password: PropTypes.string.isRequired
-  }).isRequired]
-]);
-
-/**
  * Login and return an authenticated client task
  * @param {Object} config
  * @param {Object} config.cacheOptions
@@ -81,7 +62,7 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
     },
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, props}) => {
-        return loginMutationTask(apolloConfig, props);
+        return tokenAuthMutationContainer(apolloConfig, {}, props)
       }
     ),
     mapToNamedResponseAndInputs('apolloConfig',
@@ -115,7 +96,6 @@ export const noLoginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkRes
     }
   );
 });
-
 
 
 /**
@@ -162,7 +142,7 @@ export const authClientOrLoginTask = R.curry((
       },
       mapToNamedResponseAndInputs('loginAuthentication',
         ({apolloConfig, authentication}) => {
-          return loginMutationTask(apolloConfig, authentication);
+          return tokenAuthMutationContainer(apolloConfig, {}, authentication);
         }
       ),
       // map login values to token
