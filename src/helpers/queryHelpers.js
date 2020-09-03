@@ -231,7 +231,14 @@ export const makeQueryContainer = v(R.curry(
       )(winnowedProps)
     }\n`);
     const componentOrTask = authApolloQueryContainer(
-      apolloConfig,
+      // Send the normalizeProps function if defined as composed into function apolloConfig.options.variables
+      R.when(
+        () => normalizeProps,
+        apolloConfig => composePropsFilterIntoApolloConfigOptionsVariables(
+          apolloConfig,
+          normalizeProps
+        )
+      )(apolloConfig),
       query,
       // Non-winnowed props because the component does calls its options.variables function
       props

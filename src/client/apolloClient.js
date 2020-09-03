@@ -381,10 +381,13 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         (mutation, result) => {
           const skip = R.propOr(false, 'skip', apolloConfig);
           return render({
-            mutation: R.when(
+            mutation: (...args) => R.ifElse(
               () => skip,
               () => {
                 log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
+              },
+              mutation => {
+                return mutation(...args)
               }
             )(mutation),
             result,
