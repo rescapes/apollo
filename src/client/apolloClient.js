@@ -380,19 +380,23 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         // the variables it needs to run. So we make the mutation an noop and pass the skip param
         (mutation, result) => {
           const skip = R.propOr(false, 'skip', apolloConfig);
-          return render({
+          const renderedComponent = render({
             mutation: (...args) => R.ifElse(
               () => skip,
               () => {
                 log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
               },
               mutation => {
-                return mutation(...args)
+                return mutation(...args);
               }
             )(mutation),
             result,
             skip
           });
+          if (!renderedComponent) {
+            throw new Error("authApolloComponentMutationContainer: render function did not return a value.");
+          }
+          return renderedComponent;
         }
       );
     }
@@ -430,7 +434,13 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
       optionsWithWinnowedProps(apolloConfig, props)
     ),
     // Render prop
-    responseProps => (render || children)(responseProps)
+    responseProps => {
+      const renderedComponent = (render || children)(responseProps);
+      if (!renderedComponent) {
+        throw new Error("authApolloComponentQueryContainer: render function did not return a value.");
+      }
+      return renderedComponent
+    }
   );
 });
 
@@ -480,7 +490,6 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
     }]
   ])(config);
 });
-
 
 
 /**
@@ -534,7 +543,6 @@ export const noAuthApolloClientRequestTask = (apolloConfig, ...args) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
   return fromPromised(() => apolloClient.request(...args))();
 };
-
 
 
 /***
