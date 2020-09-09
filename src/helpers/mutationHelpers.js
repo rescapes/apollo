@@ -24,9 +24,9 @@ import {
   capitalize,
   composeWithMapMDeep,
   duplicateKey,
-  filterWithKeys,
+  filterWithKeys, findOne,
   mapObjToValues,
-  omitDeepBy,
+  omitDeepBy, onlyOne, onlyOneThrowing, onlyOneValueThrowing,
   reqStrPathThrowing,
   retryTask
 } from 'rescape-ramda';
@@ -193,6 +193,7 @@ export const makeMutationRequestContainer = v(R.curry(
           return composeWithMapMDeep(1, [
             response => {
               log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
+              // name is null if mutationNameOverride is used
               return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
@@ -268,10 +269,12 @@ export const makeMutationRequestContainer = v(R.curry(
  * @private
  */
 export const addMutateKeyToMutationResponse = ({name, silent}, response) => {
+  // Find the response.data.[key] where key starts with update or create.
+  // Otherwise take the one and only key in data.response (e.g. tokenAuth)
   const createOrUpdateKey = R.find(
     key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
     R.keys(R.propOr({}, 'data', response))
-  );
+  )
   return R.ifElse(
     () => {
       return createOrUpdateKey;
@@ -289,7 +292,7 @@ export const addMutateKeyToMutationResponse = ({name, silent}, response) => {
       return updated;
     },
     response => {
-      if (!silent) {
+      if (!silent && !R.length(R.keys(R.propOr({}, 'data', response)))) {
         log.error(`Mutation response is null for mutation ${name}`);
       }
       return response;
