@@ -14,7 +14,7 @@ import {v} from 'rescape-validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import {of} from 'folktale/concurrency/task';
-import {isAuthenticatedLocalContainer} from '../stores/userStore';
+import {isAuthenticatedLocal} from '../stores/userStore';
 
 /**
  * Created by Andy Likuski on 2020.03.20
@@ -178,7 +178,7 @@ export const writeConfigToServerAndCache = (config) => {
             () => {
               // If we are authenticated and the server settings don't match the config, update
               // TODO This should only be done by admins
-              return isAuthenticatedLocalContainer(apolloConfig) &&
+              return isAuthenticatedLocal(apolloConfig) &&
                 R.not(R.equals(
                   settings,
                   omitDeepPaths(cacheOnlyObjs, props)

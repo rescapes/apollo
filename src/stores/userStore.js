@@ -47,12 +47,12 @@ export const userReadInputTypeMapper = {
  * an auth flag on the apolloClient object somewhere
  * @param {Object} apolloConfig
  * @param {Object} apolloConfig.apolloClient The Apollo client
- * @returns {}
+ * @returns {Boolean} true if authenticated or false
  */
-export const isAuthenticatedLocalContainer = apolloConfig => {
+export const isAuthenticatedLocal = apolloConfig => {
   // Unfortunately a cache miss throws
   try {
-    return strPathOr(
+    return !!strPathOr(
       false,
       'data.currentUser',
       makeQueryFromCacheContainer(
@@ -64,6 +64,30 @@ export const isAuthenticatedLocalContainer = apolloConfig => {
   }
   catch {
     return false
+  }
+};
+
+/**
+ * Can be used synchronously instead of makeCurrentUserQueryContainer if the authenticated
+ * user is know to be in the cache
+ * @param apolloConfig
+ * @returns {Object} The authenticated user or null
+ */
+export const authenticatedUserLocal = apolloConfig => {
+  // Unfortunately a cache miss throws
+  try {
+    return strPathOr(
+      null,
+      'data.currentUser',
+      makeQueryFromCacheContainer(
+        apolloConfig,
+        {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+        {}
+      )
+    );
+  }
+  catch {
+    return null
   }
 };
 

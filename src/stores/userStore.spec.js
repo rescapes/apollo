@@ -9,27 +9,77 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {defaultRunConfig, expectKeysAtPath, mapToNamedPathAndInputs} from 'rescape-ramda';
-import * as R from 'ramda';
-import {makeCurrentUserQueryContainer, userOutputParams} from './userStore';
-import {localTestAuthTask} from '..';
+import {composeWithChain, defaultRunConfig, expectKeysAtPath, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {
+  authenticatedUserLocal,
+  isAuthenticatedLocal,
+  makeCurrentUserQueryContainer,
+  userOutputParams
+} from './userStore';
+import {localTestAuthTask, localTestConfig} from '..';
+import {createNoAuthTask} from '../helpers/clientHelpers';
+import {of} from 'folktale/concurrency/task';
 
 describe('userStore', () => {
   test('makeCurrentUserQueryContainer', done => {
     const someUserKeys = ['id', 'email', 'username'];
     const errors = [];
-    R.composeK(
+    composeWithChain([
       ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, {}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask()
       )
-    )().run().listen(defaultRunConfig({
+    ])().run().listen(defaultRunConfig({
       onResolved:
         response => {
           expectKeysAtPath(someUserKeys, 'data.currentUser', response);
           done();
         }
     }, errors, done));
+  });
+
+  test('isAuthenticatedLocalContainer', done => {
+    const errors = [];
+    composeWithChain([
+      ({apolloClient}) => {
+        return of({
+          isAuthenticated: isAuthenticatedLocal({apolloClient}),
+          user: authenticatedUserLocal({apolloClient})
+        });
+      },
+      () => localTestAuthTask()
+    ])().run().listen(defaultRunConfig(
+      {
+        onResolved:
+          ({isAuthenticated, user}) => {
+            expect(isAuthenticated).toBe(true);
+            expect(user.id).toBeGreaterThan(0);
+          }
+      }, errors, done)
+    );
+  });
+
+  test('isAuthenticatedLocalContainerFalse', done => {
+    const errors = [];
+    composeWithChain([
+      ({apolloClient}) => {
+        return of(
+          {
+            isAuthenticated: isAuthenticatedLocal({apolloClient}),
+            user: authenticatedUserLocal({apolloClient})
+          }
+        );
+      },
+      () => createNoAuthTask(localTestConfig)
+    ])().run().listen(defaultRunConfig(
+      {
+        onResolved:
+          ({isAuthenticated, user}) => {
+            expect(isAuthenticated).toBe(false);
+            expect(user).toBeNull();
+          }
+      }, errors, done)
+    );
   });
 });
 

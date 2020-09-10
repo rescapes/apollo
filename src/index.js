@@ -128,7 +128,7 @@ export {
 } from './helpers/apolloMonadHelpers';
 
 export {
-  makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocalContainer
+  makeCurrentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocal, authenticatedUserLocal
 } from './stores/userStore';
 
 export {
