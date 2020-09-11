@@ -9,12 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {graphql} from 'react-apollo';
+import {ApolloConsumer} from 'react-apollo';
 import * as R from 'ramda';
-import {of} from 'folktale/concurrency/task';
-import {Just} from 'folktale/maybe';
 import {print} from 'graphql';
 import {loggers} from 'rescape-log';
+import {e} from 'rescape-helpers-component';
 
 const log = loggers.get('rescapeDefault');
 
@@ -41,29 +40,7 @@ export const authApolloClientQueryCacheContainer = R.curry((apolloClient, option
 });
 
 /**
- * Only for testing. Reads values loaded from the server that we know are now in the cache
- * The given component is wrapped in an ApolloContainer and the props passed to that unary container function
- * @param apolloClient The authenticated Apollo Client
- * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
- * The main arguments for options are QueryOptions with query and variables. Example
- * query: gql`
- query regions($key: String!) {
-          regions(key: $key) {
-              id
-              key
-              name
-          }
-    }`,
- variables: {key: "earth"}
- * @returns {Maybe.Just} A Maybe.Just with the query results in {data}. The results are put in data to match the format of
- * non-cached queries.
- */
-export const authApolloComponentQueryCacheContainer = R.curry((query, options, props) => {
-  return graphql(query, options)(props);
-});
-
-/**
- * Direct read from the cache for testing
+ * Direct read from the cache
  */
 export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloConfig, query, props) => {
   return R.cond([
@@ -75,14 +52,23 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
         props
       )
     ],
+    // Apollo component instance
     [R.T,
-      // Extract the apolloConfig.apolloComponent--the React container, the options for the Apollo component query,
-      // the props function for the Apollo component
-      apolloConfig => authApolloComponentQueryCacheContainer(
-        R.pick(['options', 'props'], apolloConfig),
-        query,
-        props
-      )
+      // Since we aren't using a Query component, use an ApolloConsumer to get access to the
+      // apollo client from the react context
+      apolloConfig => {
+        return e(
+          ApolloConsumer,
+          {},
+          apolloClient => {
+            return authApolloClientQueryCacheContainer(
+              R.merge(apolloConfig, {apolloClient}),
+              query,
+              props
+            );
+          }
+        );
+      }
     ]
   ])(apolloConfig);
 });
