@@ -87,7 +87,7 @@ export {
 } from './helpers/testHelpers';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers';
-export {typePoliciesWithMergeObjects, createAuthTask} from './helpers/clientHelpers';
+export {typePoliciesWithMergeObjects, createAuthTask, createNoAuthTask} from './helpers/clientHelpers';dd
 export {
   writeDefaultSettingsToCache,
   defaultSettingsOutputParams,
