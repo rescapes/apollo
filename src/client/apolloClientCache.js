@@ -14,6 +14,8 @@ import * as R from 'ramda';
 import {print} from 'graphql';
 import {loggers} from 'rescape-log';
 import {e} from 'rescape-helpers-component';
+import {containerForApolloType} from '../helpers/containerHelpers';
+import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
 
 const log = loggers.get('rescapeDefault');
 
@@ -61,10 +63,16 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
           ApolloConsumer,
           {},
           apolloClient => {
-            return authApolloClientQueryCacheContainer(
-              R.merge(apolloConfig, {apolloClient}),
-              query,
-              props
+            return containerForApolloType(
+              apolloConfig,
+              {
+                render: getRenderPropFunction(props),
+                response: authApolloClientQueryCacheContainer(
+                  apolloClient,
+                  query,
+                  props
+                )
+              }
             );
           }
         );
