@@ -53,7 +53,7 @@ describe('userStore', () => {
         onResolved:
           ({isAuthenticated, user}) => {
             expect(isAuthenticated).toBe(true);
-            expect(user.id).toBeGreaterThan(0);
+            expect(user.data.currentUser.id).toBeGreaterThan(0);
           }
       }, errors, done)
     );

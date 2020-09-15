@@ -61,9 +61,8 @@ export const isAuthenticatedLocal = apolloConfig => {
         {}
       )
     );
-  }
-  catch {
-    return false
+  } catch {
+    return false;
   }
 };
 
@@ -76,18 +75,13 @@ export const isAuthenticatedLocal = apolloConfig => {
 export const authenticatedUserLocal = apolloConfig => {
   // Unfortunately a cache miss throws
   try {
-    return strPathOr(
-      null,
-      'data.currentUser',
-      makeQueryFromCacheContainer(
-        apolloConfig,
-        {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-        {}
-      )
+    return makeQueryFromCacheContainer(
+      apolloConfig,
+      {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+      {}
     );
-  }
-  catch {
-    return null
+  } catch {
+    return null;
   }
 };
 
