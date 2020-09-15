@@ -10,16 +10,14 @@
  */
 
 import * as R from 'ramda';
-import {
-  authApolloQueryContainer
-} from '../client/apolloClient';
+import {authApolloQueryContainer} from '../client/apolloClient';
 import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
 import {_makeQuery, makeQuery} from './queryHelpers';
 import {loggers} from 'rescape-log';
-import {Just} from 'folktale/maybe';
+import {_winnowRequestProps} from './requestHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -96,7 +94,12 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
-  const query = gql`${makeQuery(name, readInputTypeMapper, outputParams, props)}`;
+  const query = gql`${makeQuery(
+    name, 
+    readInputTypeMapper, 
+    outputParams, 
+    _winnowRequestProps(apolloConfig, props)
+  )}`;
   log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
   const response = authApolloClientOrComponentQueryCacheContainer(
     apolloConfig,
@@ -108,5 +111,5 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
   if (!R.has('isReactComponent', response)) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
   }
-  return response
+  return response;
 });
