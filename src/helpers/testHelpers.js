@@ -15,7 +15,7 @@ import PropTypes from 'prop-types';
 import {v} from 'rescape-validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
 import {writeConfigToServerAndCache} from './settingsStore';
-import {createAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
+import {createAuthTask, createNoAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
 import {typePoliciesConfig} from '../config';
 import {
   defaultSettingsCacheIdProps,
@@ -56,6 +56,12 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
  * Returns an object {apolloClient:An authorized client}
  */
 export const localTestAuthTask = () => createAuthTask(localTestConfig);
+
+/**
+ * Task to return and authorized client for tests
+ * Returns an object {apolloClient:An unauthorized client}
+ */
+export const localTestNoAuthTask = () => createNoAuthTask(localTestConfig);
 
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency

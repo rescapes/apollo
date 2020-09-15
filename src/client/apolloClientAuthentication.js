@@ -81,7 +81,9 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
               authorization: authToken ? `JWT ${authToken}` : ''
             }
           }
-        );
+        ).map(x => {
+          return x;
+        });
       }
     )
   ])({uri, stateLinkResolvers, authToken, writeDefaults, cacheOnlyObjs, cacheIdProps, settingsOutputParams});

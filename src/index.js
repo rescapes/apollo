@@ -83,7 +83,7 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData';
 export {
-  localTestConfig, localTestAuthTask, cacheOptions, expectKeys
+  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys
 } from './helpers/testHelpers';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
 export {containerForApolloType} from './helpers/containerHelpers';
