@@ -44,7 +44,7 @@ describe('userStore', () => {
       ({apolloClient}) => {
         return of({
           isAuthenticated: isAuthenticatedLocal({apolloClient}),
-          user: authenticatedUserLocal({apolloClient})
+          user: authenticatedUserLocal({apolloClient}, {})
         });
       },
       () => localTestAuthTask()
@@ -66,7 +66,7 @@ describe('userStore', () => {
         return of(
           {
             isAuthenticated: isAuthenticatedLocal({apolloClient}),
-            user: authenticatedUserLocal({apolloClient})
+            user: authenticatedUserLocal({apolloClient},{})
           }
         );
       },

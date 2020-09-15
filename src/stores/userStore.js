@@ -72,13 +72,23 @@ export const isAuthenticatedLocal = apolloConfig => {
  * @param apolloConfig
  * @returns {Object} The authenticated user or null
  */
-export const authenticatedUserLocal = apolloConfig => {
+export const authenticatedUserLocal = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
     return makeQueryFromCacheContainer(
-      apolloConfig,
+      R.merge(apolloConfig,
+        {
+          options: {
+            variables: () => {
+              return {};
+            },
+            // Pass through error so we can handle it in the component
+            errorPolicy: 'all'
+          }
+        }
+      ),
       {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-      {}
+      props
     );
   } catch {
     return null;
