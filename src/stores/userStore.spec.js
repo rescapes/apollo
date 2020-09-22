@@ -9,15 +9,21 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {composeWithChain, defaultRunConfig, expectKeysAtPath, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {
-  authenticatedUserLocal,
+  composeWithChain,
+  defaultRunConfig,
+  expectKeysAtPath,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs
+} from 'rescape-ramda';
+import {
+  authenticatedUserLocalContainer,
   isAuthenticatedLocal,
   makeCurrentUserQueryContainer,
   userOutputParams
 } from './userStore';
-import {localTestAuthTask, localTestConfig} from '..';
-import {createNoAuthTask} from '../helpers/clientHelpers';
+import {localTestAuthTask, localTestConfig} from '../helpers/testHelpers';
+import {createNoAuthTask, createAuthTask} from '../helpers/clientHelpers';
 import {of} from 'folktale/concurrency/task';
 
 describe('userStore', () => {
@@ -41,13 +47,17 @@ describe('userStore', () => {
   test('isAuthenticatedLocalContainer', done => {
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => {
-        return of({
-          isAuthenticated: isAuthenticatedLocal({apolloClient}),
-          user: authenticatedUserLocal({apolloClient}, {})
-        });
-      },
-      () => localTestAuthTask()
+      mapToNamedResponseAndInputs('user',
+        ({apolloClient}) => {
+          return authenticatedUserLocalContainer({apolloClient}, {});
+        }),
+      mapToNamedResponseAndInputs('isAuthenticated',
+        ({apolloClient}) => {
+          return of(
+            isAuthenticatedLocal({apolloClient})
+          );
+        }),
+      () => createAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
@@ -62,14 +72,16 @@ describe('userStore', () => {
   test('isAuthenticatedLocalContainerFalse', done => {
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => {
-        return of(
-          {
-            isAuthenticated: isAuthenticatedLocal({apolloClient}),
-            user: authenticatedUserLocal({apolloClient},{})
-          }
-        );
-      },
+      mapToNamedResponseAndInputs('user',
+        ({apolloClient}) => {
+          return authenticatedUserLocalContainer({apolloClient}, {});
+        }),
+      mapToNamedResponseAndInputs('isAuthenticated',
+        ({apolloClient}) => {
+          return of(
+            isAuthenticatedLocal({apolloClient})
+          );
+        }),
       () => createNoAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {

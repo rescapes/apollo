@@ -16,6 +16,8 @@ import {makeQueryContainer} from '../helpers/queryHelpers';
 import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers';
 import {strPathOr} from 'rescape-ramda';
+import {containerForApolloType} from '../helpers/containerHelpers';
+import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
 
 export const userOutputParams = {
   id: 1,
@@ -67,31 +69,46 @@ export const isAuthenticatedLocal = apolloConfig => {
 };
 
 /**
- * Can be used synchronously instead of makeCurrentUserQueryContainer if the authenticated
- * user is know to be in the cache
+ * Like isAuthenticatedLocal, but matches the style of asynchronous requests,
+ * returning a task or apollo component
+ *
  * @param apolloConfig
- * @returns {Object} The authenticated user or null
+ * @param apolloConfig.apolloClient. If non-null then a task is returned. If null
+ * an apollo component is returned
+ * @returns {Task|Object} The authenticated user as a task or apollo component
  */
-export const authenticatedUserLocal = (apolloConfig, props) => {
+export const authenticatedUserLocalContainer = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
-    return makeQueryFromCacheContainer(
-      R.merge(apolloConfig,
-        {
-          options: {
-            variables: () => {
-              return {};
-            },
-            // Pass through error so we can handle it in the component
-            errorPolicy: 'all'
-          }
-        }
-      ),
-      {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-      props
+    return containerForApolloType(
+      apolloConfig,
+      {
+        render: getRenderPropFunction(props),
+        response: makeQueryFromCacheContainer(
+          R.merge(apolloConfig,
+            {
+              options: {
+                variables: () => {
+                  return {};
+                },
+                // Pass through error so we can handle it in the component
+                errorPolicy: 'all'
+              }
+            }
+          ),
+          {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+          props
+        )
+      }
     );
   } catch {
-    return null;
+    return containerForApolloType(
+      apolloConfig,
+      {
+        render: getRenderPropFunction(props),
+        response: null
+      }
+    );
   }
 };
 
