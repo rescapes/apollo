@@ -300,26 +300,20 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
     // Wait for all the queries to finish
     props => {
       const queryTasksOrNone = runContainerQueries && queryTasks ? queryTasks : {};
-      return traverseReduceWhile(
-        {
-          accumulateAfterPredicateFail: false,
-          predicate: (acc, x) => true,
-          // Chain to chain the results of each task. R.map would embed them within each other
-          mappingFunction: R.chain,
-          monadConstructor: of
-        },
-        (props, {tsk, key}) => {
-          // Run the current task with the props and then merge the props with the
-          // result of the task, keyed by props. Thus we keep passing the original
-          // props and the results of each task keyed by key, just as react-adopt does for us
-          return mapToNamedResponseAndInputs(key,
-            props => tsk(props)
-          )(props);
-        },
-        // Begin with the props
-        of(props),
-        mapObjToValues((tsk, key) => of({tsk, key}), queryTasksOrNone)
-      );
+      // Each query resolves and the values are assigned to the key and merged with the props
+      // This is similar to how react-adopt calls our Apollo request components
+      return composeWithChain(
+        R.reverse(
+          mapObjToValues(
+            (tsk, key) => {
+              return mapToNamedResponseAndInputs(key,
+                props => tsk(props)
+              );
+            },
+            queryTasksOrNone
+          )
+        )
+      )(props);
     },
     // Resolve the props from the task
     resolvedPropsTask => resolvedPropsTask.map(x => x)
