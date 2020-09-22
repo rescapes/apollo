@@ -310,7 +310,8 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
         },
         (props, {tsk, key}) => {
           // Run the current task with the props and then merge the props with the
-          // result of the task, keyed by props
+          // result of the task, keyed by props. Thus we keep passing the original
+          // props and the results of each task keyed by key, just as react-adopt does for us
           return mapToNamedResponseAndInputs(key,
             props => tsk(props)
           )(props);
