@@ -13,7 +13,7 @@ import {
   capitalize,
   compact,
   composeWithChain,
-  mapObjToValues,
+  mapObjToValues, mapToNamedResponseAndInputs,
   memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
@@ -309,12 +309,13 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
           monadConstructor: of
         },
         (props, {tsk, key}) => {
-          return R.map(
-            value => R.merge(props, {[key]: value}),
-            tsk(props)
-          );
+          // Run the current task with the props and then merge the props with the
+          // result of the task, keyed by props
+          return mapToNamedResponseAndInputs(key,
+            props => tsk(props)
+          )(props);
         },
-        // Begin with the props, we want to pass these through independent of what the queries return
+        // Begin with the props
         of(props),
         mapObjToValues((tsk, key) => of({tsk, key}), queryTasksOrNone)
       );
