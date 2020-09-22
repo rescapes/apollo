@@ -302,17 +302,20 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
       const queryTasksOrNone = runContainerQueries && queryTasks ? queryTasks : {};
       // Each query resolves and the values are assigned to the key and merged with the props
       // This is similar to how react-adopt calls our Apollo request components
-      return composeWithChain(
-        R.reverse(
-          mapObjToValues(
-            (tsk, key) => {
-              return mapToNamedResponseAndInputs(key,
-                props => tsk(props)
-              );
-            },
-            queryTasksOrNone
-          )
-        )
+      return composeWithChain([
+          ...R.reverse(
+            mapObjToValues(
+              (tsk, key) => {
+                return mapToNamedResponseAndInputs(key,
+                  props => tsk(props)
+                );
+              },
+              queryTasksOrNone
+            )
+          ),
+          // This is our returned task if there are no queries
+          props => of(props)
+        ]
       )(props);
     },
     // Resolve the props from the task

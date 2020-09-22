@@ -9,7 +9,12 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {apolloQueryResponsesTask, composePropsFilterIntoApolloConfigOptionsVariables, makeQuery, makeQueryContainer} from './queryHelpers';
+import {
+  apolloQueryResponsesTask,
+  composePropsFilterIntoApolloConfigOptionsVariables,
+  makeQuery,
+  makeQueryContainer
+} from './queryHelpers';
 
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -120,6 +125,20 @@ describe('queryHelpers', () => {
         });
       }
     }, errors, done));
+  });
+  test('apolloQueryResponsesTaskEmpty', done => {
+    const errors = [];
+    apolloQueryResponsesTask(of({key: 1, apple: 1, pear: 2, banana: 3}), {}).run().listen(
+      defaultRunConfig({
+        onResolved: responses => {
+          expect(responses).toEqual({
+            key: 1,
+            apple: 1,
+            pear: 2,
+            banana: 3
+          });
+        }
+      }, errors, done));
   });
 
   test('composePropsFilterIntoApolloConfigOptionsVariables', done => {
