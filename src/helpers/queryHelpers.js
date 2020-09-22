@@ -19,7 +19,7 @@ import {
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
   strPathOr,
-  traverseReduce
+  traverseReduce, traverseReduceWhile
 } from 'rescape-ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
@@ -299,25 +299,24 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
   return composeWithChain([
     // Wait for all the queries to finish
     props => {
-      return traverseReduce(
-        (acc, obj) => {
-          return R.merge(acc, obj);
+      const queryTasksOrNone = runContainerQueries && queryTasks ? queryTasks : {};
+      return traverseReduceWhile(
+        {
+          accumulateAfterPredicateFail: false,
+          predicate: (acc, x) => true,
+          // Chain to chain the results of each task. R.map would embed them within each other
+          mappingFunction: R.chain,
+          monadConstructor: of
+        },
+        (props, {tsk, key}) => {
+          return R.map(
+            value => R.merge(props, {[key]: value}),
+            tsk(props)
+          );
         },
         // Begin with the props, we want to pass these through independent of what the queries return
         of(props),
-        mapObjToValues(
-          (queryContainerExpectingProps, key) => {
-            // Create variables for the current graphqlQueryObj by sending props to its configuration
-            const task = queryContainerExpectingProps(props);
-            return R.map(
-              response => {
-                return {[key]: response};
-              },
-              task
-            );
-          },
-          runContainerQueries && queryTasks ? queryTasks : {}
-        )
+        mapObjToValues((tsk, key) => of({tsk, key}), queryTasksOrNone)
       );
     },
     // Resolve the props from the task

@@ -116,7 +116,7 @@ describe('queryHelpers', () => {
           pear: 2,
           banana: 3,
           pacman: {key: 1, apple: 1},
-          mspacman: {apple: 1, pear: 2, banana: 3}
+          mspacman: {apple: 1, pear: 2, banana: 3, pacman: {key: 1, apple: 1}}
         });
       }
     }, errors, done));
