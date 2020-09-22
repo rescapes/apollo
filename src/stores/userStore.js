@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
@@ -80,27 +81,29 @@ export const isAuthenticatedLocal = apolloConfig => {
 export const authenticatedUserLocalContainer = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
-    return containerForApolloType(
-      apolloConfig,
-      {
-        render: getRenderPropFunction(props),
-        response: makeQueryFromCacheContainer(
-          R.merge(apolloConfig,
-            {
-              options: {
-                variables: () => {
-                  return {};
-                },
-                // Pass through error so we can handle it in the component
-                errorPolicy: 'all'
-              }
+    return R.compose(
+      // Wrap in a task when we are doing apolloClient queries, otherwise we already have
+      // a proper apollo container
+      containerOrValue => R.when(
+        () => R.propOr(false, 'apolloClient', apolloConfig),
+        of
+      )(containerOrValue),
+      props => makeQueryFromCacheContainer(
+        R.merge(apolloConfig,
+          {
+            options: {
+              variables: () => {
+                return {};
+              },
+              // Pass through error so we can handle it in the component
+              errorPolicy: 'all'
             }
-          ),
-          {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-          props
-        )
-      }
-    );
+          }
+        ),
+        {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+        props
+      )
+    )(props);
   } catch {
     return containerForApolloType(
       apolloConfig,
