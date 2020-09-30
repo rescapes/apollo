@@ -73,9 +73,10 @@ export const isAuthenticatedLocal = apolloConfig => {
  * Like isAuthenticatedLocal, but matches the style of asynchronous requests,
  * returning a task or apollo component
  *
- * @param apolloConfig
+ * @param {Object} apolloConfig
  * @param apolloConfig.apolloClient. If non-null then a task is returned. If null
  * an apollo component is returned
+ * @param {Object} props
  * @returns {Task|Object} The authenticated user as a task or apollo component
  */
 export const authenticatedUserLocalContainer = (apolloConfig, props) => {

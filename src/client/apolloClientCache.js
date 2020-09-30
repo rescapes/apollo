@@ -16,6 +16,7 @@ import {loggers} from 'rescape-log';
 import {e} from 'rescape-helpers-component';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {MissingFieldError} from '@apollo/client'
 
 const log = loggers.get('rescapeDefault');
 
@@ -38,7 +39,14 @@ const log = loggers.get('rescapeDefault');
 export const authApolloClientQueryCacheContainer = R.curry((apolloClient, options, props) => {
   // readQuery isn't a promise, just a direct call I guess
   log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(props)}`);
-  return {data: apolloClient.readQuery({variables: props, ...options})};
+  try {
+    return {data: apolloClient.readQuery({variables: props, ...options})};
+  }
+  catch(e) {
+    if (!R.is(MissingFieldError, e)) {
+        throw e
+    }
+  }
 });
 
 /**

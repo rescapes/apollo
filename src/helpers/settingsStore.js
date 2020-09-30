@@ -178,12 +178,12 @@ export const writeConfigToServerAndCache = (config) => {
             () => {
               // If we are authenticated and the server settings don't match the config, update
               // TODO This should only be done by admins
-              return isAuthenticatedLocal(apolloConfig) &&
-                R.not(R.equals(
+              return isAuthenticatedLocal(apolloConfig) && R.not(
+                R.equals(
                   settings,
                   omitDeepPaths(cacheOnlyObjs, props)
-                  )
-                );
+                )
+              );
             },
             () => {
               return makeSettingsMutationContainer(
