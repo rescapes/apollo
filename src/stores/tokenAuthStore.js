@@ -23,9 +23,10 @@ export const tokenAuthReadInputTypeMapper = {};
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
  * @param {Object} outputParams
- * @param {Object} props
- * @param {String} props.username
- * @param {String} props.password
+ * @param {Object} props The props are optional. They are typically sent via the mutation
+ * function in {variables: {username, password}}
+ * @param {String} [props.username]
+ * @param {String} [props.password]
  * @return {TasK|Object} Task or Apollo Component resolving to
  * {
   "data": {
@@ -48,10 +49,18 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
       flattenVariables: true,
       mutationNameOverride: 'tokenAuth'
     },
-    props
+    // Defaults are used to tell makeMutationRequestContainer about the expected variable types
+    R.merge({username:'', password:''}, props)
   );
 });
 
+/**
+ * Deletes the token cookie of the current user
+ * @param {Object} apolloClient
+ * @param {Object} [outputParams] Defaults to {deleted: true}
+ * @param {Object} props Should always be empty
+ * @return {TasK|Object} Task or Apollo Component resolving to
+ */
 export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
@@ -63,6 +72,15 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
     props
   );
 });
+
+
+/**
+ * Deletes the token cookie for all users
+ * @param {Object} apolloClient
+ * @param {Object} [outputParams] Defaults to {deleted: true}
+ * @param {Object} props Should always be empty
+ * @return {TasK|Object} Task or Apollo Component resolving to
+ */
 export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
     apolloConfig,
@@ -74,6 +92,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
     props
   );
 });
+
 /**
  * Verifies an apolloClient auth token.
  * @param {Object} apolloClient
@@ -102,7 +121,6 @@ export const verifyTokenMutationRequestContainer = R.curry((apolloConfig, {outpu
  * @param {Object} variables
  * @param {String} variables.token The token to verify
  * @return {Object} Task that resolves to the username, expiration (exp), and origlat (?)
- *
  */
 export const refreshTokenMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(

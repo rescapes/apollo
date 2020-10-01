@@ -88,7 +88,7 @@ describe('userStore', () => {
         onResolved:
           ({isAuthenticated, user}) => {
             expect(isAuthenticated).toBe(false);
-            expect(user).toBeNull();
+            expect(user).toEqual({data: null});
           }
       }, errors, done)
     );

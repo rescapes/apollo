@@ -16,7 +16,7 @@ import {loggers} from 'rescape-log';
 import {e} from 'rescape-helpers-component';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
-import {MissingFieldError} from '@apollo/client'
+import {MissingFieldError} from '@apollo/client';
 
 const log = loggers.get('rescapeDefault');
 
@@ -41,11 +41,11 @@ export const authApolloClientQueryCacheContainer = R.curry((apolloClient, option
   log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(props)}`);
   try {
     return {data: apolloClient.readQuery({variables: props, ...options})};
-  }
-  catch(e) {
+  } catch (e) {
     if (!R.is(MissingFieldError, e)) {
-        throw e
+      throw e;
     }
+    return {data: null};
   }
 });
 
