@@ -19,7 +19,13 @@ import {
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
-import {composeWithChain, defaultRunConfig, defaultRunToResultConfig, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {
+  composeWithChain,
+  defaultRunConfig,
+  defaultRunToResultConfig,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs, strPathOr
+} from 'rescape-ramda';
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -38,9 +44,30 @@ describe('queryHelpers', () => {
   });
 
   test('makeQueryContainer', done => {
-    expect.assertions(1);
+    expect.assertions(2);
     const {settings: {api}} = localTestConfig;
     const task = composeWithChain([
+      // Test Skip
+      mapToNamedResponseAndInputs('skippedResponse',
+        ({apolloClient, createdRegion}) => makeQueryContainer(
+          {
+            apolloClient,
+            options: {
+              skip: true,
+              variables: props => {
+                return R.pick(['key'], props);
+              }
+            },
+            fetchPolicy: 'cache-only'
+          },
+          {
+            name: 'regions',
+            readInputTypeMapper: {},
+            outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
+          },
+          {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
+        )
+      ),
       // See if we can get the value from the cache
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, createdRegion}) => makeQueryContainer(
@@ -99,8 +126,9 @@ describe('queryHelpers', () => {
     const errors = [];
     task.run().listen(defaultRunConfig({
         onResolved:
-          ({region}) => {
+          ({region, skippedResponse}) => {
             expectKeys(['id', 'key', 'name', 'geojson', '__typename'], region);
+            expect(strPathOr(false, 'skipped', skippedResponse)).toBe(true)
           }
       }, errors, done)
     );

@@ -13,7 +13,7 @@ import {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} from '@apollo/c
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
-import {fromPromised} from 'folktale/concurrency/task';
+import {fromPromised, of} from 'folktale/concurrency/task';
 import {Just} from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
@@ -329,12 +329,23 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
 export const authApolloClientQueryContainer = R.curry((apolloConfig, query, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
 
+  const skip = strPathOr(false, 'options.skip', apolloConfig)
+  // Skip seems broken for apolloClient.query
+  // https://github.com/apollographql/apollo-client/issues/6670#issuecomment-663927304
+  // Simulate a skip. apolloClient.query doesn't seem to acknowledge it
+  if (skip) {
+    return of({
+      loading: false,
+      error: false,
+      data: null,
+      skipped: true
+    })
+  }
   const task = fromPromised(() => {
     return apolloClient.query(
       R.merge(
         {
           query,
-          skip: strPathOr(false, 'options.skip', apolloConfig)
         },
         // Winnows the props to the apolloConfig.options.variables function
         optionsWithWinnowedProps(apolloConfig, props)
