@@ -295,6 +295,16 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  */
 export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, options, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  const skip = strPathOr(false, 'options.skip', apolloConfig)
+  // Simulate a skip. apolloClient.mutate doesn't seem to acknowledge it
+  if (skip) {
+    return of({
+      loading: false,
+      error: false,
+      data: null,
+      skipped: true
+    })
+  }
   const mutationOptions = R.propOr({}, ['options'], apolloConfig);
   return fromPromised(() => (
     apolloClient.mutate(
