@@ -128,7 +128,7 @@ describe('queryHelpers', () => {
         onResolved:
           ({region, skippedResponse}) => {
             expectKeys(['id', 'key', 'name', 'geojson', '__typename'], region);
-            expect(strPathOr(false, 'skipped', skippedResponse)).toBe(true)
+            expect(strPathOr(false, 'skip', skippedResponse)).toBe(true)
           }
       }, errors, done)
     );

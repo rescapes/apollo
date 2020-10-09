@@ -295,15 +295,20 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
  */
 export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, options, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-  const skip = strPathOr(false, 'options.skip', apolloConfig)
+  const skip = strPathOr(false, 'options.skip', apolloConfig);
   // Simulate a skip. apolloClient.mutate doesn't seem to acknowledge it
   if (skip) {
     return of({
-      loading: false,
-      error: false,
-      data: null,
-      skipped: true
-    })
+      mutation: () => {
+        log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
+      },
+      result: {
+        loading: false,
+        error: false,
+        data: null
+      },
+      skip: true
+    });
   }
   const mutationOptions = R.propOr({}, ['options'], apolloConfig);
   return fromPromised(() => (
@@ -339,7 +344,7 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
 export const authApolloClientQueryContainer = R.curry((apolloConfig, query, props) => {
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
 
-  const skip = strPathOr(false, 'options.skip', apolloConfig)
+  const skip = strPathOr(false, 'options.skip', apolloConfig);
   // Skip seems broken for apolloClient.query
   // https://github.com/apollographql/apollo-client/issues/6670#issuecomment-663927304
   // Simulate a skip. apolloClient.query doesn't seem to acknowledge it
@@ -348,14 +353,14 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
       loading: false,
       error: false,
       data: null,
-      skipped: true
-    })
+      skip: true
+    });
   }
   const task = fromPromised(() => {
     return apolloClient.query(
       R.merge(
         {
-          query,
+          query
         },
         // Winnows the props to the apolloConfig.options.variables function
         optionsWithWinnowedProps(apolloConfig, props)
@@ -456,11 +461,18 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
     ),
     // Render prop
     responseProps => {
-      const renderedComponent = (render || children)(responseProps);
+      const renderedComponent = (render || children)(
+        R.merge(
+          // Since the response has no good indication of a skipped query, except loading=false and data=undefined,
+          // Put the skip status in.
+          {skip: strPathOr(false, 'options.skip', apolloConfig)},
+          responseProps
+        )
+      );
       if (!renderedComponent) {
         throw new Error("authApolloComponentQueryContainer: render function did not return a value.");
       }
-      return renderedComponent
+      return renderedComponent;
     }
   );
 });
