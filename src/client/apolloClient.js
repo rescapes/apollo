@@ -42,7 +42,6 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} config
  * @param {Object} config.cacheOptions
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
- * @param {Function} config.cacheOptions.dataIdFromObject See createInMemoryCache
  * @param {String} config.uri The uri of the graphql server
  * @param {Object} config.stateLinkResolversConfig The stateLinkResolvers for the schema or
  * An object with resolvers and defaults keys to pass both resolvers and defaults
@@ -64,7 +63,16 @@ const log = loggers.get('rescapeDefault');
  * @return {{apolloClient: ApolloClient}}
  */
 export const getOrCreateApolloClientTask = memoizedWith(
-  obj => R.pick(['uri', 'fixedHeaders'], obj),
+  obj => {
+    return R.merge(
+      R.pick(['uri', 'fixedHeaders'], obj),
+      // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
+      R.map(
+        ({fields}) => R.keys(fields),
+        strPathOr({}, 'cacheOptions.typePolicies', obj)
+      )
+    );
+  },
   ({cacheOptions, uri, stateLinkResolvers, fixedHeaders}) => {
     const httpLink = createHttpLink({
       fetch,
@@ -156,7 +164,6 @@ const createErrorLink = () => {
 
 /**
  * The InMemoryCache is passed to the StateLink and the ApolloClient
- * Place custom dataIdFromObject handling here
  * @param {Object} typePolicies Used to specify how to merge the fields on update.
  * To ensure that non-normalized sub objects are merged on update, and not simply replaced as in now the default behavior,
  * we need to define a merge function for each type and field where this in an issue. For instance, if we have
@@ -183,26 +190,10 @@ const createErrorLink = () => {
  * }, ... (other types) ...
  * ]
  * )
- * @param {Function} dataIdFromObject used to id types. Example:
- * object => {
-      switch (object.__typename) {
-        // Store the default settings with a magic id. Settings are stored in the database but the initial
-        // settings come from code so don't have an id
-        case 'SettingsType':
-          return R.ifElse(
-            R.prop('id'),
-            obj => defaultDataIdFromObject(obj),
-            obj => defaultDataIdFromObject(R.merge({'id': 'default'}, obj))
-          )(object);
-        // Default behavior. Useful for debugging to se how the object's id is determined
-        default:
-          return defaultDataIdFromObject(object);
-      }
-    }
  * @return {InMemoryCache}
  */
-const createInMemoryCache = ({typePolicies, dataIdFromObject}) => {
-  const options = compact({typePolicies, dataIdFromObject});
+const createInMemoryCache = ({typePolicies}) => {
+  const options = compact({typePolicies});
   return new InMemoryCache(options);
 };
 
@@ -240,7 +231,8 @@ const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
     resolvers: stateLinkResolvers,
     defaultOptions: {
       query: {
-        errorPolicy: "all"
+        errorPolicy: "all",
+        partialRefetch: true
       }
     }
   });
@@ -461,16 +453,23 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
     ),
     // Render prop
     responseProps => {
+      const skip = strPathOr(false, 'options.skip', apolloConfig);
       const renderedComponent = (render || children)(
         R.merge(
           // Since the response has no good indication of a skipped query, except loading=false and data=undefined,
           // Put the skip status in.
-          {skip: strPathOr(false, 'options.skip', apolloConfig)},
+          {skip},
           responseProps
         )
       );
       if (!renderedComponent) {
         throw new Error("authApolloComponentQueryContainer: render function did not return a value.");
+      }
+      if (
+        !strPathOr(null, 'data', responseProps) &&
+        !skip &&
+        R.equals(7, strPathOr(-1, 'networkStatus', responseProps))) {
+        throw new Error('authApolloComponentQueryContainer: Unacceptable response. Data is null and skip is false, but the network status is 7 (ready)');
       }
       return renderedComponent;
     }
@@ -530,7 +529,6 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * @param {Object} config
  * @param {Object} config.cacheOptions
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
- * @param {Function} config.cacheOptions.dataIdFromObject See createInMemoryCache
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * Optionally {resolvers: ..., defaults: ...} to include default values
