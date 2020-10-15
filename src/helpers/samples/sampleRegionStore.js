@@ -86,7 +86,8 @@ export const apolloContainers = {
           };
         },
         // Pass through error so we can handle it in the component
-        errorPolicy: 'all'
+        errorPolicy: 'all',
+        partialRefetch: true
       }
     },
     {
@@ -107,7 +108,8 @@ export const apolloContainers = {
             log.debug(response);
           }
         },
-        errorPolicy: 'all'
+        errorPolicy: 'all',
+        partialRefetch: true
       }
     },
     {

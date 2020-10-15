@@ -97,7 +97,8 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
                 return {};
               },
               // Pass through error so we can handle it in the component
-              errorPolicy: 'all'
+              errorPolicy: 'all',
+              partialRefetch: true
             }
           }
         ),
@@ -132,7 +133,8 @@ export const makeCurrentUserQueryContainer = v(R.curry((apolloConfig, outputPara
             // No arguments, the server resolves the current user based on authentication
             return {};
           },
-          errorPolicy: 'all'
+          errorPolicy: 'all',
+          partialRefetch: true
         }
       }),
       {

@@ -52,7 +52,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields, idPathLookup}) => {
+      ({type, fields, idPathLookup, cacheOnlyFieldLookup}) => {
         return {
           [type]: {
             // Each field
@@ -62,7 +62,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                   return {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
-                        return mergeField({mergeObjects, idPathLookup}, field, existing, incoming);
+                        return mergeField({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, existing, incoming);
                       }
                     }
                   };
@@ -82,12 +82,14 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  * @param {Object} config
  * @param {Function} config.mergeObjects InMemoryCache's merge function
  * @param {Object} config.idPathLookup Id path lookup for objects wihtout ids
- * @param {String} field The current field of existint and incoming
+ * @param {Object} config.cacheOnlyFieldLookup For fields that only exist in the cache. Keyed by field name
+ * and valued by true. If a field is only in the cache we
+ * @param {String} field The current field of existent and incoming
  * @param {Object} existing Existing cache item
  * @param {Object} incoming Incoming cache write item
  * @return {Object} The merged cache object
  */
-const mergeField = ({mergeObjects, idPathLookup}, field, existing, incoming) => {
+const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, existing, incoming) => {
   // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
   // Remove incoming keys from existing and clone it to unfreeze it.
   // since it comes from the cache and will be written to the cache
@@ -99,6 +101,11 @@ const mergeField = ({mergeObjects, idPathLookup}, field, existing, incoming) => 
       R.omit(R.keys(incoming || {}))
     )
   )(existing);
+
+  // Don't let queries without cache-only fields wipe out existing cache field values
+  if (!incoming && existing && R.propOr(false, field, cacheOnlyFieldLookup)) {
+    return existing
+  }
 
   // Merge array items by given the configured id path or default to id,
   // but drop existing items that have no match in incoming
