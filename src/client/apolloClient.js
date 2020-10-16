@@ -468,7 +468,16 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
       if (
         !strPathOr(null, 'data', responseProps) &&
         !skip &&
-        R.equals(7, strPathOr(-1, 'networkStatus', responseProps))) {
+        R.equals(7, strPathOr(-1, 'networkStatus', responseProps))
+      ) {
+        // If the query returns null data, we have a missed cache field error
+        // The missed cache field errors are hidden by Apollor, but it's the only reason we get
+        // a loading = false, error = false, null data response
+        log.error(`Null data missed cache error for Query:\n${
+          print(query)
+        }\nArguments:\n${
+          JSON.stringify(props)
+        }\n`);
         throw new Error('authApolloComponentQueryContainer: Unacceptable response. Data is null and skip is false, but the network status is 7 (ready). This indicates a cache miss, which apollo hides. Check your cache only properties');
       }
       return renderedComponent;
