@@ -469,7 +469,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         !strPathOr(null, 'data', responseProps) &&
         !skip &&
         R.equals(7, strPathOr(-1, 'networkStatus', responseProps))) {
-        throw new Error('authApolloComponentQueryContainer: Unacceptable response. Data is null and skip is false, but the network status is 7 (ready)');
+        throw new Error('authApolloComponentQueryContainer: Unacceptable response. Data is null and skip is false, but the network status is 7 (ready). This indicates a cache miss, which apollo hides. Check your cache only properties');
       }
       return renderedComponent;
     }

@@ -62,7 +62,17 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                   return {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
-                        return mergeField({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, existing, incoming);
+                        return mergeField({
+                            mergeObjects,
+                            idPathLookup,
+                            // Get the lookup of child fields that are cache only. This can be child fields
+                            // of the object or of the array item objects
+                            cacheOnlyFieldLookup: R.propOr({}, field, cacheOnlyFieldLookup)
+                          },
+                          field,
+                          existing,
+                          incoming
+                        );
                       }
                     }
                   };
@@ -83,7 +93,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  * @param {Function} config.mergeObjects InMemoryCache's merge function
  * @param {Object} config.idPathLookup Id path lookup for objects wihtout ids
  * @param {Object} config.cacheOnlyFieldLookup For fields that only exist in the cache. Keyed by field name
- * and valued by true. If a field is only in the cache we
+ * and valued with true
  * @param {String} field The current field of existent and incoming
  * @param {Object} existing Existing cache item
  * @param {Object} incoming Incoming cache write item
@@ -102,11 +112,6 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
     )
   )(existing);
 
-  // Don't let queries without cache-only fields wipe out existing cache field values
-  if (!incoming && existing && R.propOr(false, field, cacheOnlyFieldLookup)) {
-    return existing
-  }
-
   // Merge array items by given the configured id path or default to id,
   // but drop existing items that have no match in incoming
   return mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight(
@@ -116,10 +121,28 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
       return firstMatchingPathLookup(idPathLookup, field, item);
     },
     (existing, incoming) => {
+      // Update incoming to have existing cache fields
+      const updatedIncoming = R.reduce(
+        (accIncoming, cacheField) => R.over(
+          R.lensProp(cacheField),
+          value => {
+            return R.when(
+              R.isNil,
+              value => {
+                // Copy the existing value to incoming if incoming lacks it and existing has it
+                return R.propOr(value, cacheField, existing)
+              }
+            )(value)
+          },
+          accIncoming
+        ),
+        incoming,
+        R.keys(cacheOnlyFieldLookup)
+      );
       // Handle objects with mergeObjects
       return mergeObjects(
         clone(existing),
-        incoming
+        updatedIncoming
       );
     },
     existing,
