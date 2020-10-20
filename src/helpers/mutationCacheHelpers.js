@@ -90,7 +90,7 @@ export const makeCacheMutation = v(R.curry(
     const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
     if (R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
       const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
-        JSON.stringify(outputParams)
+        JSON.stringify(minimizedOutputParams)
       }. No write to the cache will be performed`;
       log.info(info);
       return props;

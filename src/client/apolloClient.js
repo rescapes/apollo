@@ -385,13 +385,15 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         R.merge(
           {mutation},
           // Merge options with the variables that have already been limited
-          R.merge(
+          R.mergeAll([
             R.compose(
               options => R.omit(['variables'], options),
               apolloConfig => R.propOr({}, 'options', apolloConfig)
             )(apolloConfig),
-            {variables: props}
-          )
+            {variables: props},
+            // There are always optional
+            R.pick(['onCompleted', 'onError'], apolloConfig)
+          ])
         ),
         // Pass the tuple as an object to the render function
         // If the apolloConfig.skip is specified, it is our way of indicating the mutation does not have
@@ -444,12 +446,13 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
 export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {render, children, ...props}) => {
   // Return the Query element wrapped in a function that expects the children prop.
   // Query's response is sent via a render prop to children
+  // Converts apolloConfig.options.variables function to the variable function called with the props result
+  const winnowedProps = optionsWithWinnowedProps(apolloConfig, props)
   return e(
     Query,
     R.merge(
       {query},
-      // Converts apolloConfig.options.variables function to the variable function called with the props result
-      optionsWithWinnowedProps(apolloConfig, props)
+      winnowedProps
     ),
     // Render prop
     responseProps => {
@@ -476,7 +479,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         log.error(`Null data missed cache error for Query:\n${
           print(query)
         }\nArguments:\n${
-          JSON.stringify(props)
+          inspect(winnowedProps)
         }\n`);
         throw new Error('authApolloComponentQueryContainer: Unacceptable response. Data is null and skip is false, but the network status is 7 (ready). This indicates a cache miss, which apollo hides. Check your cache only properties');
       }
