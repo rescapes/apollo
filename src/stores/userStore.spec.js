@@ -22,7 +22,7 @@ import {
   makeCurrentUserQueryContainer,
   userOutputParams
 } from './userStore';
-import {localTestAuthTask, localTestConfig} from '../helpers/testHelpers';
+import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers';
 import {createNoAuthTask, createAuthTask} from '../helpers/clientHelpers';
 import {of} from 'folktale/concurrency/task';
 
@@ -39,6 +39,22 @@ describe('userStore', () => {
       onResolved:
         response => {
           expectKeysAtPath(someUserKeys, 'data.currentUser', response);
+          done();
+        }
+    }, errors, done));
+  });
+
+  test('makeCurrentUserQueryContainerNotAuthorized', done => {
+    const errors = [];
+    composeWithChain([
+      ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, {}),
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => localTestNoAuthTask()
+      )
+    ])().run().listen(defaultRunConfig({
+      onResolved:
+        response => {
+          expect(response.data).toBeNull();
           done();
         }
     }, errors, done));
