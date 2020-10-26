@@ -56,11 +56,10 @@ const log = loggers.get('rescapeDefault');
     }
   }
  }
- * @param {Object} fixedHeaders an object such as   {
  * headers: {
- *     authorization: authToken
- *   }
- * } used for hard coding the authorization for testing
+ *
+ * }
+ * Add additional headers. Authentication comes from localStorage
  * @return {{apolloClient: ApolloClient}}
  */
 export const getOrCreateApolloClientTask = memoizedWith(
@@ -74,13 +73,13 @@ export const getOrCreateApolloClientTask = memoizedWith(
       )
     );
   },
-  ({cacheData, cacheOptions, uri, stateLinkResolvers, fixedHeaders}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers}) => {
     const httpLink = createHttpLink({
       fetch,
       uri
     });
 
-    const authLink = createAuthLinkContext(fixedHeaders);
+    const authLink = createAuthLinkContext();
     const errorLink = createErrorLink();
     const cache = createInMemoryCache(cacheOptions);
     return composeWithMap([
@@ -117,7 +116,6 @@ export const getOrCreateApolloClientTask = memoizedWith(
 /**
  *  Authorization link
  * This code is adapted from https://www.apollographql.com/docs/react/recipes/authentication.html
- * @param {Object} fixedHeaders Headers that don't change
  * @return {ApolloLink}
  */
 const createAuthLinkContext = (fixedHeaders) => {
@@ -585,9 +583,7 @@ export const getApolloClientTask = (
     cacheOptions,
     uri,
     stateLinkResolvers,
-    fixedHeaders: {
-      authorization: `JWT ${authToken}`
-    }
+    fixedHeaders: {}
   });
 };
 

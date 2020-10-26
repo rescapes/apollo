@@ -21,6 +21,7 @@ import {
 } from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '../client/stateLink';
 import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers';
+import {makeCurrentUserQueryContainer, userOutputParams} from '..';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -88,12 +89,44 @@ describe('login', () => {
 
   test('loginToAuthClientTask', done => {
     const errors = [];
-    createAuthTask(localTestConfig).run().listen(defaultRunConfig(
+    composeWithChain([
+      mapToNamedResponseAndInputs('user',
+        ({apolloConfig}) => {
+          // Make sure we
+          return makeCurrentUserQueryContainer(
+            apolloConfig,
+            userOutputParams,
+            {}
+          );
+        }
+      ),
+      mapToNamedResponseAndInputs('apolloConfig',
+        () => {
+          // Authorize, this puts the auth token in local storage and the apolloClient reads it
+          return createAuthTask(localTestConfig);
+        }
+      ),
+      mapToNamedResponseAndInputs('noAuthUser',
+        apolloConfig => {
+          // Make sure we are not authed
+          return makeCurrentUserQueryContainer(
+            apolloConfig,
+            userOutputParams,
+            {}
+          );
+        }
+      ),
+      () => {
+        return createNoAuthTask(localTestConfig);
+      }
+    ])().run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
-            expect(response.apolloClient).not.toBeNull();
-            expect(response.token).not.toBeNull();
+            expect(response.noAuthUser.data.currentUser).toBeNull();
+            expect(response.user.data.currentUser).not.toBeNull();
+            expect(response.apolloConfig.apolloClient).not.toBeNull();
+            expect(response.apolloConfig.token).not.toBeNull();
             done();
           }
       }, errors, done)

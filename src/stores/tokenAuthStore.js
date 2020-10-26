@@ -99,6 +99,10 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
               response
             );
 
+            // This is what the Apollo Client reads to be authenticated
+            localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth))
+
+            // TODO Don't know if we need this in the cache
             // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
             makeCacheMutation(
               apolloConfig,

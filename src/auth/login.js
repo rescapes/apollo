@@ -53,16 +53,7 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
     ({apolloConfig, uri, stateLinkResolvers, loginData}) => {
-      return getOrCreateAuthApolloClientWithTokenTask({
-          cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
-          cacheOptions,
-          uri,
-          stateLinkResolvers,
-          writeDefaults,
-          settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-        },
-        reqStrPathThrowing('tokenAuthMutation.token', loginData)
-      );
+      return of(R.merge(apolloConfig, R.pick(['token', 'payload'], reqStrPathThrowing('tokenAuthMutation', loginData))))
     },
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, props}) => {
