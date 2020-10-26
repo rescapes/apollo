@@ -136,5 +136,6 @@ export {
   verifyTokenMutationRequestContainer,
   tokenAuthMutationContainer,
   deleteTokenCookieMutationRequestContainer,
-  deleteRefreshTokenCookieMutationRequestContainer
+  deleteRefreshTokenCookieMutationRequestContainer,
+  queryLocalTokenAuthContainer
 } from './stores/tokenAuthStore';

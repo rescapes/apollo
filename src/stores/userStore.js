@@ -19,6 +19,7 @@ import {versionOutputParamsMixin} from '../helpers/requestHelpers';
 import {strPathOr} from 'rescape-ramda';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {makeCacheMutation, mergeCacheable} from '../helpers/mutationCacheHelpers';
 
 export const userOutputParams = {
   id: 1,
@@ -149,3 +150,4 @@ export const makeCurrentUserQueryContainer = v(R.curry((apolloConfig, outputPara
     ['outputParams', PropTypes.shape().isRequired],
     ['props', PropTypes.shape()]
   ], 'makeCurrentUserQueryContainer');
+

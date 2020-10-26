@@ -44,6 +44,7 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
  * @param {String} config.uri The uri of the graphql server
  * @param {Object} config.stateLinkResolversConfig The stateLinkResolvers for the schema or
+ * @param {Object} config.cacheData Existing cache data to copy
  * An object with resolvers and defaults keys to pass both resolvers and defaults
  * Example {
  *  resolvers: { ... see stateLink.defaultStateLinkResolvers for examples
@@ -73,7 +74,7 @@ export const getOrCreateApolloClientTask = memoizedWith(
       )
     );
   },
-  ({cacheOptions, uri, stateLinkResolvers, fixedHeaders}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers, fixedHeaders}) => {
     const httpLink = createHttpLink({
       fetch,
       uri
@@ -84,17 +85,23 @@ export const getOrCreateApolloClientTask = memoizedWith(
     const cache = createInMemoryCache(cacheOptions);
     return composeWithMap([
       ({cache}) => {
+        const apolloClient = _completeApolloClient({
+          stateLinkResolvers,
+          links: [
+            errorLink,
+            authLink,
+            httpLink
+          ],
+          cache
+        });
+        // Use existing cache data if defined. This is only relevant for passing an unauthorized client's
+        // cache values
+        if (cacheData) {
+          apolloClient.cache.restore(cacheData);
+        }
         // Once createPersistedCacheTask we can create the apollo client
         return {
-          apolloClient: _completeApolloClient({
-            stateLinkResolvers,
-            links: [
-              errorLink,
-              authLink,
-              httpLink
-            ],
-            cache
-          })
+          apolloClient
         };
       },
       mapToNamedResponseAndInputs('void',
@@ -363,6 +370,24 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
 });
 
 /**
+ * Reads a fragment
+ */
+export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fragment, id) => {
+
+  log.debug(`Read Fragment: ${
+    print(fragment)
+  } id: ${id}`);
+
+  // If this throws then we did something wrong
+  try {
+    return reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id});
+  } catch (e) {
+    log.error(`Could not read the fragment just written to the cache. Fragment ${print(fragment)}. Id: ${id}`);
+    throw e;
+  }
+});
+
+/**
  * Wraps a React component in an Apollo component containing the given query with the given options.
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
@@ -447,7 +472,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
   // Return the Query element wrapped in a function that expects the children prop.
   // Query's response is sent via a render prop to children
   // Converts apolloConfig.options.variables function to the variable function called with the props result
-  const winnowedProps = optionsWithWinnowedProps(apolloConfig, props)
+  const winnowedProps = optionsWithWinnowedProps(apolloConfig, props);
   return e(
     Query,
     R.merge(
@@ -539,6 +564,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
 /**
  * Given a token returns the cached GraphQL client
  * @param {Object} config
+ * @param {Object} config.cacheData Existing cache data if any
  * @param {Object} config.cacheOptions
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
@@ -550,10 +576,12 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * reset the default values of the cache for logout
  */
 export const getApolloClientTask = (
-  {cacheOptions, uri, stateLinkResolvers},
+  {cacheData, cacheOptions, uri, stateLinkResolvers},
   authToken
 ) => {
   return getOrCreateApolloClientTask({
+    // Existing cache data if any
+    cacheData,
     cacheOptions,
     uri,
     stateLinkResolvers,

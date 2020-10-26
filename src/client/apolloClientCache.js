@@ -17,12 +17,18 @@ import {e} from 'rescape-helpers-component';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
 import {MissingFieldError} from '@apollo/client';
+import {_winnowRequestProps} from '../helpers/requestHelpers';
+import {reqStrPathThrowing} from 'rescape-ramda';
+import {apolloClientReadFragmentCacheContainer} from './apolloClient';
 
 const log = loggers.get('rescapeDefault');
 
 /**
  * Reads values loaded from the server that we know are now in the cache
- * @param apolloClient The authenticated Apollo Client
+ * @param {Object} apolloConfig
+ * @param {Object} apolloConfig.apolloClient The authenticated Apollo Client
+ * @param {Object} apolloConfig.options
+ * @param {Function} apolloConfig.options.variables Optional filter of the props
  * @param {Object} options Query options for the Apollo Client See Apollo's Client.query docs
  * The main arguments for options are QueryOptions with query and variables. Example
  * query: gql`
@@ -36,11 +42,14 @@ const log = loggers.get('rescapeDefault');
  variables: {key: "earth"}
  * @returns {Object} The cache result
  */
-export const authApolloClientQueryCacheContainer = R.curry((apolloClient, options, props) => {
+export const authApolloClientQueryCacheContainer = R.curry((apolloConfig, options, props) => {
+  const winnowedProps = _winnowRequestProps(apolloConfig, props);
   // readQuery isn't a promise, just a direct call I guess
-  log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(props)}`);
+  log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(winnowedProps)}`);
   try {
-    return {data: apolloClient.readQuery({variables: props, ...options})};
+    return {
+      data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({variables: winnowedProps, ...options})
+    };
   } catch (e) {
     if (!R.is(MissingFieldError, e)) {
       throw e;
@@ -57,7 +66,7 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => authApolloClientQueryCacheContainer(
-        R.prop('apolloClient', apolloConfig),
+        apolloConfig,
         query,
         props
       )
@@ -76,9 +85,49 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
               {
                 render: getRenderPropFunction(props),
                 response: authApolloClientQueryCacheContainer(
-                  apolloClient,
+                  apolloConfig,
                   query,
                   props
+                )
+              }
+            );
+          }
+        );
+      }
+    ]
+  ])(apolloConfig);
+});
+
+/**
+ * Direct read fragment from the cache
+ */
+export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((apolloConfig, {fragment}, id) => {
+  return R.cond([
+    // Apollo Client instance
+    [R.has('apolloClient'),
+      apolloConfig => apolloClientReadFragmentCacheContainer(
+        apolloConfig,
+        fragment,
+        id
+      )
+    ],
+    // Apollo component instance
+    [R.T,
+      // Since we aren't using a Query component, use an ApolloConsumer to get access to the
+      // apollo client from the react context
+      apolloConfig => {
+        return e(
+          ApolloConsumer,
+          {},
+          apolloClient => {
+            return containerForApolloType(
+              apolloConfig,
+              {
+                render: getRenderPropFunction(props),
+                response: apolloClientReadFragmentCacheContainer(
+                  apolloConfig,
+                  reafragmentdFragment,
+                  id
                 )
               }
             );

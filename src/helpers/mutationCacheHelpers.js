@@ -38,17 +38,20 @@ const log = loggers.get('rescapeDefault');
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
  * @params {Object} mutationConfig
+ * @params {String|Number} mutationConfig.idField Default 'id', alternative id field
  * @params {String} mutationConfig.name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} mutationConfig.readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
  * @param {Array|Object} mutationConfig.outputParams output parameters for the query in this style json format. See makeQueryContainer.
  * @param {Array|Object} [mutationConfig.idPathLookup] Optional lookup for array items by the array's field key to see how to
  * @param {Boolean} [mutationConfig.mergeFromCacheFirst] Default false. If true do a deep merge with the existing
- * value in cache before writing. This usually isn't needed because the cache is configured with type polcies that
+ * value in cache before writing. This usually isn't needed because the cache is configured with type policies that
  * do the merging.
+ * @param {Boolean} [force] Default false. Write to the cache even without @client fields
  * identify the array item. This is a path to an id, such as 'region.id' for userRegions.region.id
  * outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself
+ * @param {Boolean} [singleton] Default false. When true, don't use an id, but assume only on instance is being cached
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
@@ -57,38 +60,31 @@ const log = loggers.get('rescapeDefault');
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
-/*
-memoizedWith((apolloConfig, requestOptions, props) => {
-  return [
-    // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
-    R.compose(
-      omitDeepPaths(['options.variables', 'options.update']),
-      R.pick(['options'])
-    )(apolloConfig),
-    requestOptions,
-    // Omit the render prop function
-    R.omit(['render'], props)
-  ];
-},
- */
 export const makeCacheMutation = v(R.curry(
   (apolloConfig,
    {
+     idField = 'id',
      name,
      outputParams,
      idPathLookup,
-     mergeFromCacheFirst
+     mergeFromCacheFirst,
+     force = false,
+     singleton = false
    },
    props) => {
 
     // Use the apolloClient or store
     const apolloClientOrStore = R.propOr(R.prop('store', apolloConfig), 'apolloClient', apolloConfig);
     // The id to get use to get the right fragment
-    const id = `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing('id', props)}`;
+    const id = R.ifElse(
+      R.identity,
+      () => reqStrPathThrowing('__typename', props),
+      () => `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing(idField, props)}`
+    )(singleton);
 
     const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
     const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
-    if (R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
+    if (!force && R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
       const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
         JSON.stringify(minimizedOutputParams)
       }. No write to the cache will be performed`;

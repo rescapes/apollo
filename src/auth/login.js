@@ -23,13 +23,15 @@ import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 import {
   composeWithChain,
   mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs
+  mapToNamedResponseAndInputs, reqStrPathThrowing
 } from 'rescape-ramda';
 import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
 } from '../client/apolloClientAuthentication';
-import {tokenAuthMutationContainer} from '../stores/tokenAuthStore';
+import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore';
+import {ap} from 'ramda/src/index';
+import {apolloContainers} from '../helpers/samples/sampleRegionStore';
 
 /**
  * Login and return an authenticated client task
@@ -50,19 +52,25 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
-    ({uri, stateLinkResolvers, loginData}) => {
+    ({apolloConfig, uri, stateLinkResolvers, loginData}) => {
       return getOrCreateAuthApolloClientWithTokenTask({
+          cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
           cacheOptions,
           uri,
           stateLinkResolvers,
           writeDefaults,
           settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-        }, loginData
+        },
+        reqStrPathThrowing('tokenAuthMutation.token', loginData)
       );
     },
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, props}) => {
-        return tokenAuthMutationContainer(apolloConfig, {}, props)
+        return tokenAuthMutationContainer(
+          apolloConfig,
+          {outputParams: tokenAuthOutputParams},
+          props
+        );
       }
     ),
     mapToNamedResponseAndInputs('apolloConfig',
@@ -129,8 +137,9 @@ export const authClientOrLoginTask = R.curry((
     apolloClient => of({apolloClient}),
     composeWithChain([
       // map userLogin to getApolloClientTask and token
-      ({uri, stateLinkResolvers, loginAuthentication}) => {
+      ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
         return getOrCreateAuthApolloClientWithTokenTask({
+            cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
             cacheOptions,
             uri,
             stateLinkResolvers,

@@ -11,6 +11,13 @@
 
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {of} from 'folktale/concurrency/task';
+import {containerForApolloType} from '../helpers/containerHelpers';
+import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {reqStrPathThrowing} from 'rescape-ramda';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
+import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers';
+import {makeQueryFromCacheContainer} from '..';
 
 export const tokenAuthOutputParams = {
   token: 1,
@@ -18,6 +25,45 @@ export const tokenAuthOutputParams = {
 };
 
 export const tokenAuthReadInputTypeMapper = {};
+
+/**
+ * Look for the auth token in the cache so we know if we can get an authenticated client
+ * This doesn't work with a cache query so I'm currently using a fragement read
+ * TokenAuth is a singleton in the cache so it doesn't need any props
+ * @param {Object} apolloConfig
+ * @param {Object} apolloConfig.apolloClient Needed for both component and client queries
+ * @param {Object} props No props needed
+ * @returns {*}
+ */
+export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
+  // Unfortunately a cache miss throws
+  try {
+    return R.compose(
+      // Wrap in a task when we are doing apolloClient queries, otherwise we already have
+      // a proper apollo container
+      containerOrValue => R.when(
+        () => R.propOr(false, 'apolloClient', apolloConfig),
+        of
+      )(containerOrValue),
+      props => {
+        return makeReadFragmentFromCacheContainer(
+          apolloConfig,
+          {name: 'tokenAuthMutation', readInputTypeMapper: tokenAuthReadInputTypeMapper, outputParams: tokenAuthOutputParams},
+          // Singleton so id is just the type
+          {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
+        )
+      }
+    )(props);
+  } catch (e) {
+    return containerForApolloType(
+      apolloConfig,
+      {
+        render: getRenderPropFunction(props),
+        response: null
+      }
+    );
+  }
+};
 
 /**
  * Verifies an apolloClient auth token.
@@ -30,7 +76,7 @@ export const tokenAuthReadInputTypeMapper = {};
  * @return {TasK|Object} Task or Apollo Component resolving to
  * {
   "data": {
-    "tokenAuth": {
+    "tokenAuthMutation": {
       "token": the token
       "payload": {
         "username": the username
@@ -41,16 +87,42 @@ export const tokenAuthReadInputTypeMapper = {};
   }
 }
  */
-export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams = tokenAuthOutputParams}, props) => {
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          update: (store, response) => {
+            const tokenAuth = reqStrPathThrowing(
+              'data.tokenAuthMutation',
+              response
+            );
+
+            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+            makeCacheMutation(
+              apolloConfig,
+              {
+                name: 'tokenAuthMutation',
+                // output for the read fragment
+                outputParams,
+                // Write without @client fields
+                force: true,
+                singleton: true
+              },
+              tokenAuth
+            );
+          }
+        }
+      }
+    ),
     {
       outputParams: outputParams || tokenAuthOutputParams,
       flattenVariables: true,
-      mutationNameOverride: 'tokenAuth'
+      mutationNameOverride: 'tokenAuthMutation'
     },
     // Defaults are used to tell makeMutationRequestContainer about the expected variable types
-    R.merge({username:'', password:''}, props)
+    R.merge({username: '', password: ''}, props)
   );
 });
 
@@ -67,7 +139,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
-      mutationNameOverride: 'deleteTokenCookie'
+      mutationNameOverride: 'deleteTokenCookieMutation'
     },
     props
   );
@@ -87,7 +159,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
-      mutationNameOverride: 'deleteRefreshTokenCookie'
+      mutationNameOverride: 'deleteRefreshTokenCookieMutation'
     },
     props
   );
@@ -108,7 +180,7 @@ export const verifyTokenMutationRequestContainer = R.curry((apolloConfig, {outpu
     {
       outputParams: outputParams || {payload: 1},
       flattenVariables: true,
-      mutationNameOverride: 'verifyToken'
+      mutationNameOverride: 'verifyTokenMutation'
     },
     props
   );
@@ -128,7 +200,7 @@ export const refreshTokenMutationRequestContainer = R.curry((apolloConfig, {outp
     {
       outputParams: outputParams || {payload: 1},
       flattenVariables: true,
-      mutationNameOverride: 'refreshToken'
+      mutationNameOverride: 'refreshTokenMutation'
     },
     props
   );

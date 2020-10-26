@@ -19,7 +19,7 @@ import {
 import {
   authenticatedUserLocalContainer,
   isAuthenticatedLocal,
-  makeCurrentUserQueryContainer,
+  makeCurrentUserQueryContainer, makeUserCacheMutation,
   userOutputParams
 } from './userStore';
 import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers';
@@ -54,7 +54,7 @@ describe('userStore', () => {
     ])().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(response.data).toBeNull();
+          expect(response.data.currentUser).toBeNull();
           done();
         }
     }, errors, done));
@@ -109,5 +109,6 @@ describe('userStore', () => {
       }, errors, done)
     );
   });
+
 });
 

@@ -17,14 +17,13 @@ import {
   strPathOr
 } from 'rescape-ramda';
 import {parseApiUrl} from 'rescape-helpers';
-import {loginToAuthClientTask} from '../auth/login';
+import {loginToAuthClientTask, noLoginToAuthClientTask} from '../auth/login';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
 } from './defaultSettingsStore';
 import {firstMatchingPathLookup} from './utilityHelpers';
-import {noLoginToAuthClientTask} from '..';
 
 /**
  * Create a typePolicies object that merges specified fields. This is needed so that non-normalized types
@@ -52,11 +51,12 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields, idPathLookup, cacheOnlyFieldLookup}) => {
+      ({type, fields, idPathLookup, cacheOnlyFieldLookup, keyFields}) => {
         return {
           [type]: {
+            keyFields,
             // Each field
-            fields: R.mergeAll(
+            fields: fields && R.mergeAll(
               R.map(
                 field => {
                   return {
@@ -76,7 +76,8 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                       }
                     }
                   };
-                }, fields
+                },
+                fields
               )
             )
           }
@@ -130,9 +131,9 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
               R.isNil,
               value => {
                 // Copy the existing value to incoming if incoming lacks it and existing has it
-                return R.propOr(value, cacheField, existing)
+                return R.propOr(value, cacheField, existing);
               }
-            )(value)
+            )(value);
           },
           accIncoming
         ),

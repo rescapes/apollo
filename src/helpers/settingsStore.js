@@ -48,7 +48,7 @@ export const createCacheOnlyPropsForSettings = ({cacheOnlyObjs, cacheIdProps}, p
  * Queries settings
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Array|Object} outputParams OutputParams for the query such as defaultSettingsOutputParams
- * @params {Object} props Arguments for the Settingss query. This can be {} or null to not filter.
+ * @params {Object} props Arguments for the Settings query. This can be {} or null to not filter.
  * @returns {Task} A Task containing the Settingss in an object with obj.data.settings or errors in obj.errors
  */
 export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, props) => {

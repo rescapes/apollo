@@ -9,12 +9,15 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda';
-import * as R from 'ramda';
 import {
-  cacheOptions, localTestConfig, localTestAuthTask
-} from '../helpers/testHelpers';
-import {} from '../client/stateLink';
+  composeWithChain,
+  defaultRunConfig,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing
+} from 'rescape-ramda';
+import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers';
+import {defaultStateLinkResolvers} from '../client/stateLink';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -25,11 +28,12 @@ import {parseApiUrl} from 'rescape-helpers';
 import {
   deleteRefreshTokenCookieMutationRequestContainer,
   deleteTokenCookieMutationRequestContainer,
+  queryLocalTokenAuthContainer,
   refreshTokenMutationRequestContainer,
   verifyTokenMutationRequestContainer
 } from './tokenAuthStore';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication';
-import {defaultStateLinkResolvers} from '../client/stateLink';
+import {makeSettingsQueryContainer} from '../helpers/settingsStore';
 
 const someTokenAuthKeys = ['token'];
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
@@ -38,27 +42,43 @@ const uri = parseApiUrl(api);
 describe('tokenAuthStore', () => {
   test('testLoginCredentials', done => {
     const errors = [];
-    R.composeK(
+    composeWithChain([
       mapToNamedPathAndInputs(
-        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookie.deleted',
-        ({apolloClient, verifyToken, token}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
+        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookieMutation.deleted',
+        ({apolloConfig: {apolloClient}, verifyToken}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
       ),
       mapToNamedPathAndInputs(
-        'deleteTokenCookie', 'data.deleteTokenCookie.deleted',
-        ({apolloClient, verifyToken, token}) => deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {})
+        'deletetokencookie', 'data.deleteTokenCookieMutation.deleted',
+        ({apolloConfig: {apolloClient, token}, verifyToken}) => deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {})
       ),
       mapToNamedPathAndInputs(
-        'refreshToken', 'data.refreshToken.payload',
-        ({apolloClient, verifyToken, token}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
+        'refreshToken', 'data.refreshTokenMutation.payload',
+        ({apolloConfig: {apolloClient, token}, verifyToken}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
       ),
       mapToNamedPathAndInputs(
-        'verifyToken', 'data.verifyToken.payload',
-        ({apolloClient, token}) => {
+        'verifyToken', 'data.verifyTokenMutation.payload',
+        ({apolloConfig: {apolloClient, token}}) => {
           return verifyTokenMutationRequestContainer({apolloClient}, {}, {token});
         }
       ),
-      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        ({token}) => {
+      mapToNamedResponseAndInputs('localTokenAuth',
+        // This was cached by the login
+        ({apolloConfig}) => {
+          return queryLocalTokenAuthContainer(apolloConfig, {});
+        }
+      ),
+      mapToNamedPathAndInputs('settings', 'data.settings.0',
+        ({apolloConfig}) => {
+          return makeSettingsQueryContainer(
+            apolloConfig,
+            {outputParams: defaultSettingsOutputParams}, {
+              key: 'default'
+            }
+          );
+        }
+      ),
+      mapToNamedResponseAndInputs('apolloConfig',
+        ({apolloConfig: {token}}) => {
           return getOrCreateAuthApolloClientWithTokenTask({
               cacheOptions,
               uri,
@@ -70,19 +90,19 @@ describe('tokenAuthStore', () => {
                 settingsOutputParams: defaultSettingsOutputParams
               }
             },
-            {tokenAuth: {token}}
+            token
           );
         }
       ),
-      mapToNamedPathAndInputs('token', 'token',
+      mapToNamedResponseAndInputs('apolloConfig',
         () => localTestAuthTask()
       )
-    )({}).run().listen(defaultRunConfig(
+    ])({}).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
-            expect(response.apolloClient).not.toBeNull();
-            expect(response.token).not.toBeNull();
+            expect(response.apolloConfig).not.toBeNull();
+            expect(response.localTokenAuth).not.toBeNull();
             expect(response.verifyToken).not.toBeNull();
             expect(response.refreshToken).not.toBeNull();
             expect(response.deleteTokenCookie).not.toBeNull();
@@ -90,7 +110,7 @@ describe('tokenAuthStore', () => {
           }
       }, errors, done)
     );
-  }, 10000);
+  }, 10000000);
 
 });
 

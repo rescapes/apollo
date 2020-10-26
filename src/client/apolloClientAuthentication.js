@@ -29,12 +29,15 @@ const log = loggers.get('rescapeDefault');
  * @param {Array|Object} config.settingsConfig.settingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
+ * @param {[String]} config.cacheData Existing client cache data if going from unauthorized to authorized
  * @param {String} authToken: If non-null, authenticates the client. Otherwise a non-auth Apollo Client
  * is created
  * @return {{apolloClient: ApolloClient}}
  */
 export const getOrCreateApolloClientTaskAndSetDefaults = (
   {
+    // Existing client cache data if going from unauthorized to authorized
+    cacheData,
     cacheOptions,
     uri,
     stateLinkResolvers,
@@ -71,9 +74,12 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
       }
     ),
     mapToNamedResponseAndInputs('apolloConfig',
-      ({uri, stateLinkResolvers, authToken}) => {
+      ({cacheData, uri, stateLinkResolvers, authToken}) => {
         // Memoized call
         return getOrCreateApolloClientTask({
+            // Existing apolloClient to add auth to
+            // If we have an unauthorized client we want to authorize it so we can maintain its cache
+            cacheData,
             cacheOptions,
             uri,
             stateLinkResolvers,
@@ -81,27 +87,32 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
               authorization: authToken ? `JWT ${authToken}` : ''
             }
           }
-        ).map(x => {
-          return x;
-        });
+        );
       }
     )
-  ])({uri, stateLinkResolvers, authToken, writeDefaults, cacheOnlyObjs, cacheIdProps, settingsOutputParams});
+  ])({
+    cacheData,
+    uri,
+    stateLinkResolvers,
+    authToken,
+    writeDefaults,
+    cacheOnlyObjs,
+    cacheIdProps,
+    settingsOutputParams
+  });
 };
 
 /**
- * Given a userLogin with a tokenAuth.token create the getApolloClientTask and return it and the token
+ * Given a userLogin with a tokenAuthMutation.token create the getApolloClientTask and return it and the token
  * This method is synchronous but returns a Task to be used in API chains
  * @param {Object} config
+ * @param {Object} [config.cacheData] Existing cache data from a no auth apolloClient
  * @param {Object} config.cacheOptions
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaults
  * @param {Array|Object} config.outputParams Teh settings outputParams
- * @param {Object} userLogin Return value from loginMutationTask() api call
- * @param {Object} userLogin.tokenAuth
- * @param {String} userLogin.tokenAuth.token The user token
- * @param {Object} config.settingsConfig
+ * @param {Object} token Return value from loginMutationTask() api call
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
@@ -109,13 +120,12 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
  */
 export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
   {
-    cacheOptions, uri, stateLinkResolvers, writeDefaults,
+    cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaults,
     settingsConfig
   },
-  userLogin
+  token,
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
-  const token = reqStrPathThrowing('tokenAuth.token', userLogin);
   return R.map(
     obj => {
       return R.merge(
@@ -124,6 +134,7 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
       );
     },
     getOrCreateApolloClientTaskAndSetDefaults({
+      cacheData,
       cacheOptions,
       uri,
       stateLinkResolvers,

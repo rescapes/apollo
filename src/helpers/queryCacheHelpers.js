@@ -11,13 +11,16 @@
 
 import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient';
-import {replaceValuesWithCountAtDepthAndStringify} from 'rescape-ramda';
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
-import {authApolloClientOrComponentQueryCacheContainer} from '../client/apolloClientCache';
-import {_makeQuery, makeQuery} from './queryHelpers';
+import {
+  authApolloClientOrComponentQueryCacheContainer,
+  authApolloClientOrComponentReadFragmentCacheContainer
+} from '../client/apolloClientCache';
+import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers';
 import {loggers} from 'rescape-log';
-import {_winnowRequestProps} from './requestHelpers';
+import {_winnowRequestProps, omitUnrepresentedOutputParams} from './requestHelpers';
 
 const log = loggers.get('rescapeDefault');
 
@@ -107,6 +110,33 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
       query
     },
     props
+  );
+  if (!R.has('isReactComponent', response)) {
+    log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
+  }
+  return response;
+});
+
+/**
+ * Read a fragment from the cache and return a task or apollo client
+ */
+export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
+
+  // Write the fragment
+  const fragment = gql`${makeFragmentQuery(
+    name,
+    readInputTypeMapper,
+    outputParams, 
+    R.pick(['__typename'], props)
+  )}`;
+
+  log.debug(`Cache Query:\n\n${print(fragment)}\nArguments:\n${JSON.stringify(props)}\n`);
+  const response = authApolloClientOrComponentReadFragmentCacheContainer(
+    apolloConfig,
+    {
+      fragment
+    },
+    reqStrPathThrowing('id', props)
   );
   if (!R.has('isReactComponent', response)) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
