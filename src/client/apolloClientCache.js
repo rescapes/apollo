@@ -100,8 +100,12 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
 
 /**
  * Direct read fragment from the cache
+ * @param {Object} apolloConfig
+ * @param {Object} fragment The fragment query
+ * @param {Object} props Not used in the fragment, but passed to the render prop for components
+ * @param {Number|String} id The id for the fragment query
  */
-export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((apolloConfig, {fragment}, id) => {
+export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((apolloConfig, {fragment}, props, id) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
@@ -126,7 +130,7 @@ export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((ap
                 render: getRenderPropFunction(props),
                 response: apolloClientReadFragmentCacheContainer(
                   apolloConfig,
-                  reafragmentdFragment,
+                  fragment,
                   id
                 )
               }

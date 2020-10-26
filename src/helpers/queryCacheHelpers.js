@@ -136,6 +136,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     {
       fragment
     },
+    props,
     reqStrPathThrowing('id', props)
   );
   if (!R.has('isReactComponent', response)) {
