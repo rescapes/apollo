@@ -81,11 +81,11 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
           {},
           apolloClient => {
             return containerForApolloType(
-              apolloConfig,
+              apolloClient,
               {
                 render: getRenderPropFunction(props),
                 response: authApolloClientQueryCacheContainer(
-                  apolloConfig,
+                  R.merge(apolloConfig, {apolloClient}),
                   query,
                   props
                 )
@@ -129,7 +129,7 @@ export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((ap
               {
                 render: getRenderPropFunction(props),
                 response: apolloClientReadFragmentCacheContainer(
-                  apolloConfig,
+                  R.merge(apolloConfig, {apolloClient}),
                   fragment,
                   id
                 )

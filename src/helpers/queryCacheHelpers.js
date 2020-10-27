@@ -119,6 +119,15 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
 
 /**
  * Read a fragment from the cache and return a task or apollo client
+ * @param {Object} apolloConfig
+ * @param {Object} config
+ * @param {String} config.name The fragment name. This should match the mutation name that wrote the fragment
+ * @param {Object} config.readInputMapper. Probably never needed
+ * @param {Object} config.outputParams. The fragment query outputParams. Must be a subset of what was put in the cache
+ * @param {Object} props All props (including the render prop for components). All props are passed to the render
+ * function except id and __typename
+ * @param {String} props.__typename Required. The typename for the fragment query
+ * @param {Number|String} props.id Required. The id for the fragment query
  */
 export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
 
@@ -136,7 +145,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     {
       fragment
     },
-    props,
+    R.omit(['__typename', 'id'], props),
     reqStrPathThrowing('id', props)
   );
   if (!R.has('isReactComponent', response)) {

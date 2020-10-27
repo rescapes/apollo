@@ -49,8 +49,11 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
         return makeReadFragmentFromCacheContainer(
           apolloConfig,
           {name: 'tokenAuthMutation', readInputTypeMapper: tokenAuthReadInputTypeMapper, outputParams: tokenAuthOutputParams},
-          // Singleton so id is just the type
-          {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
+          // Pass all the props including the render function. Only __typenmae and id are needed by the fragment read
+          R.merge(props,
+            // Singleton so id is just the type
+            {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
+          ),
         )
       }
     )(props);
