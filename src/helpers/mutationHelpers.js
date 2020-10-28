@@ -127,24 +127,6 @@ ${mutationName}${variableMappingString} {
  *  completes. For simplicity the middle key is duplicated to {data: mutate { name: {...obj...}}} sdo the caller
  *  doesn't need to know if the request was a create or update
  */
-/*
-memoizedWith(
-(apolloConfig, requestOptions, props) => {
-  return [
-    // From apolloConfig only take non-functional options. Assume the rest of the apolloConfig is the same
-    R.compose(
-      // Indicate if the apolloClient is defined, making it a task function, not a component function
-      R.over(R.lensProp('apolloClient'), apolloClient => !!apolloClient),
-      omitDeepPaths(['options.variables', 'options.update']),
-      // TODO is there anything we need to cache in the apolloClient? The auth is buried in the link function.
-      R.pick(['options'])
-    )(apolloConfig),
-    requestOptions,
-    // Note the render function presence
-    R.over(R.lensProp('render'), render => !!render, props)
-  ];
-},
- */
 export const makeMutationRequestContainer = v(R.curry(
   (apolloConfig,
    {

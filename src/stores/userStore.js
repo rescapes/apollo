@@ -126,7 +126,7 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
  * @returns {Task<Result>} A Task containing the Result.Ok with a User in an object with Result.Ok({data: currentUser: {}})
  * or errors in Result.Error({errors: [...]})
  */
-export const makeCurrentUserQueryContainer = v(R.curry((apolloConfig, outputParams, props) => {
+export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, props) => {
     return makeQueryContainer(
       R.merge(apolloConfig, {
         options: {
@@ -149,5 +149,5 @@ export const makeCurrentUserQueryContainer = v(R.curry((apolloConfig, outputPara
     ['apolloConfig', PropTypes.shape().isRequired],
     ['outputParams', PropTypes.shape().isRequired],
     ['props', PropTypes.shape()]
-  ], 'makeCurrentUserQueryContainer');
+  ], 'currentUserQueryContainer');
 

@@ -32,6 +32,7 @@ import {
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore';
 import {ap} from 'ramda/src/index';
 import {apolloContainers} from '../helpers/samples/sampleRegionStore';
+import {currentUserQueryContainer, userOutputParams} from '..';
 
 /**
  * Login and return an authenticated client task
@@ -52,9 +53,25 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
-    ({apolloConfig, uri, stateLinkResolvers, loginData}) => {
-      return of(R.merge(apolloConfig, R.pick(['token', 'payload'], reqStrPathThrowing('tokenAuthMutation', loginData))))
+    ({apolloConfig, user, loginData}) => {
+      return of(
+        R.mergeAll([
+          apolloConfig,
+          {user: reqStrPathThrowing('data.currentUser', user)},
+          R.pick(
+            ['token', 'payload'],
+            reqStrPathThrowing('tokenAuth', loginData)
+          )
+        ])
+      );
     },
+
+    mapToNamedResponseAndInputs('user',
+      ({apolloConfig}) => {
+        return currentUserQueryContainer(apolloConfig, userOutputParams, {});
+      }
+    ),
+
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, props}) => {
         return tokenAuthMutationContainer(

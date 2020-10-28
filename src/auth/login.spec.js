@@ -21,7 +21,7 @@ import {
 } from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '../client/stateLink';
 import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers';
-import {makeCurrentUserQueryContainer, userOutputParams} from '..';
+import {currentUserQueryContainer, userOutputParams} from '..';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -93,7 +93,7 @@ describe('login', () => {
       mapToNamedResponseAndInputs('user',
         ({apolloConfig}) => {
           // Make sure we
-          return makeCurrentUserQueryContainer(
+          return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,
             {}
@@ -109,7 +109,7 @@ describe('login', () => {
       mapToNamedResponseAndInputs('noAuthUser',
         apolloConfig => {
           // Make sure we are not authed
-          return makeCurrentUserQueryContainer(
+          return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,
             {}

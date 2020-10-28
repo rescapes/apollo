@@ -19,7 +19,7 @@ import {
 import {
   authenticatedUserLocalContainer,
   isAuthenticatedLocal,
-  makeCurrentUserQueryContainer, makeUserCacheMutation,
+  currentUserQueryContainer, makeUserCacheMutation,
   userOutputParams
 } from './userStore';
 import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers';
@@ -31,7 +31,7 @@ describe('userStore', () => {
     const someUserKeys = ['id', 'email', 'username'];
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, {}),
+      ({apolloClient}) => currentUserQueryContainer({apolloClient}, userOutputParams, {}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask()
       )
@@ -47,7 +47,7 @@ describe('userStore', () => {
   test('makeCurrentUserQueryContainerNotAuthorized', done => {
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => makeCurrentUserQueryContainer({apolloClient}, userOutputParams, {}),
+      ({apolloClient}) => currentUserQueryContainer({apolloClient}, userOutputParams, {}),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestNoAuthTask()
       )

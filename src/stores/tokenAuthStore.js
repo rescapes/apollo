@@ -98,7 +98,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
         options: {
           update: (store, response) => {
             const tokenAuth = reqStrPathThrowing(
-              'data.tokenAuthMutation',
+              'data.tokenAuth',
               response
             );
 
@@ -110,7 +110,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
             makeCacheMutation(
               apolloConfig,
               {
-                name: 'tokenAuthMutation',
+                name: 'tokenAuth',
                 // output for the read fragment
                 outputParams,
                 // Write without @client fields
@@ -124,9 +124,11 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
       }
     ),
     {
+      // Use this instead of name so that 'create' is prepended
+      mutationNameOverride: 'tokenAuth',
       outputParams: outputParams || tokenAuthOutputParams,
-      flattenVariables: true,
-      mutationNameOverride: 'tokenAuthMutation'
+      // Use username and password as flat variables, not as an ObtainJSONWebToken input type
+      flattenVariables: true
     },
     // Defaults are used to tell makeMutationRequestContainer about the expected variable types
     R.merge({username: '', password: ''}, props)
@@ -146,7 +148,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
-      mutationNameOverride: 'deleteTokenCookieMutation'
+      mutationNameOverride: 'deleteTokenCookie'
     },
     props
   );
@@ -166,7 +168,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
-      mutationNameOverride: 'deleteRefreshTokenCookieMutation'
+      mutationNameOverride: 'deleteRefreshTokenCookie'
     },
     props
   );
@@ -187,7 +189,7 @@ export const verifyTokenMutationRequestContainer = R.curry((apolloConfig, {outpu
     {
       outputParams: outputParams || {payload: 1},
       flattenVariables: true,
-      mutationNameOverride: 'verifyTokenMutation'
+      mutationNameOverride: 'verifyToken'
     },
     props
   );
@@ -207,7 +209,7 @@ export const refreshTokenMutationRequestContainer = R.curry((apolloConfig, {outp
     {
       outputParams: outputParams || {payload: 1},
       flattenVariables: true,
-      mutationNameOverride: 'refreshTokenMutation'
+      mutationNameOverride: 'refreshToken'
     },
     props
   );

@@ -56,7 +56,7 @@ describe('tokenAuthStore', () => {
         ({apolloConfig: {apolloClient, token}, verifyToken}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
       ),
       mapToNamedPathAndInputs(
-        'verifyToken', 'data.verifyTokenMutation.payload',
+        'verifyToken', 'data.verifyToken.payload',
         ({apolloConfig: {apolloClient, token}}) => {
           return verifyTokenMutationRequestContainer({apolloClient}, {}, {token});
         }

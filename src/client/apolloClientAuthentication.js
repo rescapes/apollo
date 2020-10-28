@@ -10,7 +10,7 @@
  */
 import {composeWithChain, mapToNamedResponseAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {getOrCreateApolloClientTask} from './apolloClient';
-import {makeCurrentUserQueryContainer, userOutputParams} from '../stores/userStore';
+import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
 import {ApolloClient} from '@apollo/client';
 import * as R from 'ramda';
 import {of} from 'folktale/concurrency/task';
@@ -68,7 +68,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
         // Fetch the user to get it into the cache so we know we are authenticated
         return R.ifElse(
           R.identity,
-          () => makeCurrentUserQueryContainer(apolloConfig, userOutputParams, {}),
+          () => currentUserQueryContainer(apolloConfig, userOutputParams, {}),
           () => of(null)
         )(authToken);
       }
