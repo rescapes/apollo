@@ -27,7 +27,7 @@ import {createNoAuthTask, createAuthTask} from '../helpers/clientHelpers';
 import {of} from 'folktale/concurrency/task';
 
 describe('userStore', () => {
-  test('makeCurrentUserQueryContainer', done => {
+  test('currentUserQueryContainer', done => {
     const someUserKeys = ['id', 'email', 'username'];
     const errors = [];
     composeWithChain([
@@ -44,7 +44,7 @@ describe('userStore', () => {
     }, errors, done));
   });
 
-  test('makeCurrentUserQueryContainerNotAuthorized', done => {
+  test('currentUserQueryContainerNotAuthorized', done => {
     const errors = [];
     composeWithChain([
       ({apolloClient}) => currentUserQueryContainer({apolloClient}, userOutputParams, {}),

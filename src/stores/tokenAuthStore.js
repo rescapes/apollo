@@ -48,13 +48,17 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
       props => {
         return makeReadFragmentFromCacheContainer(
           apolloConfig,
-          {name: 'tokenAuthMutation', readInputTypeMapper: tokenAuthReadInputTypeMapper, outputParams: tokenAuthOutputParams},
+          {
+            name: 'tokenAuthMutation',
+            readInputTypeMapper: tokenAuthReadInputTypeMapper,
+            outputParams: tokenAuthOutputParams
+          },
           // Pass all the props including the render function. Only __typenmae and id are needed by the fragment read
           R.merge(props,
             // Singleton so id is just the type
             {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
-          ),
-        )
+          )
+        );
       }
     )(props);
   } catch (e) {
@@ -96,6 +100,9 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
       apolloConfig,
       {
         options: {
+          variables: props => {
+            return R.pick(['username', 'password'], props);
+          },
           update: (store, response) => {
             const tokenAuth = reqStrPathThrowing(
               'data.tokenAuth',
@@ -103,12 +110,13 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
             );
 
             // This is what the Apollo Client reads to be authenticated
-            localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth))
+            localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
 
             // TODO Don't know if we need this in the cache
             // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
             makeCacheMutation(
-              apolloConfig,
+              // Use the store for writing if we don't have an apolloClient
+              R.merge({store}, apolloConfig),
               {
                 name: 'tokenAuth',
                 // output for the read fragment
