@@ -65,6 +65,15 @@ export const embedComponents = (config, childComponent, parentComponent) => {
   });
 };
 
+/**
+ * Returns the props that are possible render props
+ * @param props
+ * @returns {*}
+ */
+export const pickRenderProps = props => {
+  return R.pick(['render', 'children'], props)
+}
+
 export const getRenderProp = props => {
   return R.find(prop => R.propOr(null, prop, props), ['render', 'children']);
 };

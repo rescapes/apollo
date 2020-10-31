@@ -66,11 +66,13 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
-      apolloConfig => authApolloClientQueryCacheContainer(
-        apolloConfig,
-        query,
-        props
-      )
+      apolloConfig => {
+        return authApolloClientQueryCacheContainer(
+          apolloConfig,
+          query,
+          props
+        );
+      }
     ],
     // Apollo component instance
     [R.T,

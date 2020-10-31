@@ -22,6 +22,7 @@ import {
 import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers';
 import {loggers} from 'rescape-log';
 import {_winnowRequestProps, omitUnrepresentedOutputParams} from './requestHelpers';
+import {getRenderProp, pickRenderProps} from './componentHelpersMonadic';
 
 const log = loggers.get('rescapeDefault');
 
@@ -98,21 +99,26 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
+  const winnowedProps = _winnowRequestProps(apolloConfig, props);
   const query = gql`${makeQuery(
     name, 
     readInputTypeMapper, 
     outputParams, 
-    _winnowRequestProps(apolloConfig, props)
+    winnowedProps
   )}`;
-  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(props)}\n`);
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps)}\n`);
   const response = authApolloClientOrComponentQueryCacheContainer(
     apolloConfig,
     {
       query
     },
-    props
+    R.merge(
+      winnowedProps,
+      pickRenderProps(props)
+    )
   );
-  if (!R.has('isReactComponent', response)) {
+  // If it's not a component response
+  if (R.has('data', response)) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
   }
   return response;
