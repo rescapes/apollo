@@ -12,7 +12,7 @@
 
 // Makes localStorage available in node to Apollo
 import enzyme from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
 import 'localstorage-polyfill'
 import 'regenerator-runtime'
 import {rescapeDefaultTransports} from 'rescape-log'

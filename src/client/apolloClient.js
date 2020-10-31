@@ -151,7 +151,7 @@ const createErrorLink = () => {
           } Message: ${
             R.propOr('undefined', 'message', error)
           }, Trace: ${
-            JSON.stringify(strPathOr('undefined', 'params.trace', error), null, 2)}
+            inspect(strPathOr('undefined', 'params.trace', error), null, 2)}
             Operation: ${dumpOperation(operation)
           }}`
         );
@@ -239,7 +239,8 @@ const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
         errorPolicy: "all",
         partialRefetch: true
       }
-    }
+    },
+    connectToDevTools: true
   });
 };
 
@@ -253,7 +254,7 @@ const dumpOperation = operation => {
   if (!operation) {
     return '';
   }
-  return (`Query:\n\n${print(operation.query)}\nArguments:\n${JSON.stringify(operation.variables, null, 2)}\n`);
+  return (`Query:\n\n${print(operation.query)}\nArguments:\n${inspect(operation.variables, null, 2)}\n`);
 };
 
 /**
@@ -279,7 +280,7 @@ export const noAuthApolloClientQueryRequestTask = (apolloConfig, args) => {
  */
 export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => {
   const mutationOptions = R.omit(['apolloClient'], apolloConfig);
-  log.debug(`noAuthApolloClientMutationRequestTask: ${print(options.mutation)} props: ${JSON.stringify(options.variables)}`);
+  log.debug(`noAuthApolloClientMutationRequestTask: ${print(options.mutation)} props: ${inspect(options.variables)}`);
   return fromPromised(
     () => reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options))
   )();

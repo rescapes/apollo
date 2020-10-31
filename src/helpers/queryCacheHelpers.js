@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {inspect} from 'util';
 import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient';
 import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
@@ -59,7 +60,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props)}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries
   const componentOrTask = authApolloQueryContainer(
@@ -103,7 +104,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
     outputParams, 
     _winnowRequestProps(apolloConfig, props)
   )}`;
-  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${JSON.stringify(props)}\n`);
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(props)}\n`);
   const response = authApolloClientOrComponentQueryCacheContainer(
     apolloConfig,
     {
@@ -139,7 +140,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.pick(['__typename'], props)
   )}`;
 
-  log.debug(`Cache Query:\n\n${print(fragment)}\nArguments:\n${JSON.stringify(props)}\n`);
+  log.debug(`Cache Query:\n\n${print(fragment)}\nArguments:\n${inspect(props)}\n`);
   const response = authApolloClientOrComponentReadFragmentCacheContainer(
     apolloConfig,
     {

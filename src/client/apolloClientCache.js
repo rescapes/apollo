@@ -10,6 +10,7 @@
  */
 
 import {ApolloConsumer} from 'react-apollo';
+import {inspect} from 'util';
 import * as R from 'ramda';
 import {print} from 'graphql';
 import {loggers} from 'rescape-log';
@@ -45,7 +46,7 @@ const log = loggers.get('rescapeDefault');
 export const authApolloClientQueryCacheContainer = R.curry((apolloConfig, options, props) => {
   const winnowedProps = _winnowRequestProps(apolloConfig, props);
   // readQuery isn't a promise, just a direct call I guess
-  log.debug(`Query cache: ${print(options.query)} props: ${JSON.stringify(winnowedProps)}`);
+  log.debug(`Query cache: ${print(options.query)} props: ${inspect(winnowedProps)}`);
   try {
     return {
       data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({variables: winnowedProps, ...options})

@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {inspect} from 'util';
 import {mapped, over} from 'ramda-lens';
 import * as pluralize from 'pluralize';
 import {
@@ -272,7 +273,7 @@ export const mapQueryContainerToNamedResultAndInputs = (
               error => {
                 return {
                   errors: [
-                    new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${JSON.stringify(response)}`)
+                    new Error(`Only resolved ${R.join('.', error.resolved)} of ${R.join('.', error.path)} for response ${inspect(response)}`)
                   ]
                 };
               }
@@ -322,7 +323,7 @@ export const pickGraphqlPathsOver = (lens, paths, graphqlListStructure) => {
     data => {
       const minimumData = pickDeepPaths(paths, data);
       if (R.compose(R.equals(0), R.length, R.keys)(minimumData)) {
-        throw new Error(`dataPaths: ${JSON.stringify(paths)} didn't match anything`);
+        throw new Error(`dataPaths: ${inspect(paths)} didn't match anything`);
       }
       return minimumData;
     }

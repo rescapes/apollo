@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {inspect} from 'util';
 import * as R from 'ramda';
 import {gql} from '@apollo/client';
 import {print} from 'graphql';
@@ -85,8 +86,8 @@ export const makeCacheMutation = v(R.curry(
     const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
     const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
     if (!force && R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
-      const info = `makeCacheMutation: outputParams do not contain any @client directives. Found ${
-        JSON.stringify(minimizedOutputParams)
+      const info = `makeCacheMutation: For ${name}, outputParams do not contain any @client directives. Found ${
+        inspect(minimizedOutputParams)
       }. No write to the cache will be performed`;
       log.info(info);
       return props;
@@ -115,7 +116,7 @@ export const makeCacheMutation = v(R.curry(
     log.debug(`Query write Fragment: ${
       print(writeFragment)
     } id: ${id} args: ${
-      JSON.stringify(propsWithPossibleMerge, null, 2)
+      inspect(propsWithPossibleMerge, null, 2)
     }`);
 
     apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
@@ -124,7 +125,7 @@ export const makeCacheMutation = v(R.curry(
     try {
       const test = apolloClientOrStore.readFragment({fragment: writeFragment, id});
     } catch (e) {
-      log.error(`Could not read the fragment just written to the cache. Props ${JSON.stringify(props)}`);
+      log.error(`Could not read the fragment just written to the cache. Props ${inspect(props)}`);
       throw e;
     }
     return propsWithPossibleMerge;

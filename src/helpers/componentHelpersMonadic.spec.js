@@ -14,13 +14,14 @@ import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 
 import * as Maybe from 'folktale/maybe';
 import {of} from 'folktale/concurrency/task';
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+import {inspect} from 'util';
 
 describe('monadHelpersComponent', () => {
   const outerProps = {jello: 'squish', stone: 'squash'};
   // Simple component
   const simpleComponent = prop => R.cond([
-    [strPathOr(false, 'data.loading'), p => `I rendered a ${JSON.stringify(prop)}`],
-    [R.identity, p => `I rendered a ${JSON.stringify(p)}`]
+    [strPathOr(false, 'data.loading'), p => `I rendered a ${inspect(prop)}`],
+    [R.identity, p => `I rendered a ${inspect(p)}`]
   ])(prop);
 
   // Render function component that does something and renders the children function that is given to it

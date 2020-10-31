@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {MissingFieldError} from '@apollo/client';
 import {of} from 'folktale/concurrency/task';
 import * as R from 'ramda';
 import {v} from 'rescape-validate';
@@ -65,8 +66,11 @@ export const isAuthenticatedLocal = apolloConfig => {
         {}
       )
     );
-  } catch {
-    return false;
+  } catch (e) {
+    if (R.is(MissingFieldError)) {
+      return false;
+    }
+    throw e
   }
 };
 
@@ -107,14 +111,17 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
         props
       )
     )(props);
-  } catch {
-    return containerForApolloType(
-      apolloConfig,
-      {
-        render: getRenderPropFunction(props),
-        response: null
-      }
-    );
+  } catch (e) {
+    if (R.is(MissingFieldError)) {
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response: null
+        }
+      );
+    }
+    throw e
   }
 };
 

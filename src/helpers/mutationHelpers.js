@@ -153,7 +153,7 @@ export const makeMutationRequestContainer = v(R.curry(
           namedOutputParams
         )}`;
     } catch (e) {
-      log.error(`Unable to create mutation with the following properties: ${JSON.stringify({
+      log.error(`Unable to create mutation with the following properties: ${inspect({
         createOrUpdateName,
         variablesAndTypes,
         namedOutputParams
@@ -171,7 +171,7 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps)}\n\n`);
           return composeWithMapMDeep(1, [
             response => {
               log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
@@ -199,7 +199,7 @@ export const makeMutationRequestContainer = v(R.curry(
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
-          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${JSON.stringify(namedProps)}\n\n`);
+          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps)}\n\n`);
           return R.chain(
             component => {
               // Remove the Just
