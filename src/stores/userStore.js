@@ -112,7 +112,7 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
       )
     )(props);
   } catch (e) {
-    if (R.is(MissingFieldError)) {
+    if (R.is(MissingFieldError, e)) {
       return containerForApolloType(
         apolloConfig,
         {

@@ -24,6 +24,9 @@ import {
   defaultSettingsOutputParams
 } from './defaultSettingsStore';
 import {firstMatchingPathLookup} from './utilityHelpers';
+import {loggers} from 'rescape-log';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Create a typePolicies object that merges specified fields. This is needed so that non-normalized types
@@ -62,6 +65,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                   return {
                     [field]: {
                       merge(existing, incoming, {mergeObjects}) {
+                        log.debug(`Merge field for type ${type}, field ${field}`);
                         return mergeField({
                             mergeObjects,
                             idPathLookup,
@@ -115,6 +119,41 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
 
   // Merge array items by given the configured id path or default to id,
   // but drop existing items that have no match in incoming
+  const getUpdatedIncoming = function (existing, incoming) {
+    return R.reduce(
+      (accIncoming, cacheField) => R.over(
+        R.lensProp(cacheField),
+        value => {
+          return R.when(
+            R.isNil,
+            value => {
+              // Copy the existing value to incoming if incoming lacks it and existing has it
+              return R.propOr(value, cacheField, existing);
+            }
+            // Or null to write null as a default
+          )(value || null);
+        },
+        accIncoming
+      ),
+      incoming,
+      R.keys(cacheOnlyFieldLookup)
+    );
+  };
+
+  // If we are entering incoming data for the first time, we need to seed the cache only
+  // values with null to prevent the Apollo inMemory cache from erring on MissingField
+  if (!existing) {
+    if (Array.isArray(incoming)) {
+      return R.map(
+        incomingItem => getUpdatedIncoming(null, incomingItem),
+        incoming
+      );
+    }
+    else {
+      return getUpdatedIncoming(null, incoming)
+    }
+  }
+
   return mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight(
     item => {
       // Use idPathLookup to identify an id for item[propKey]. idPathLookup is only needed if
@@ -122,24 +161,9 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
       return firstMatchingPathLookup(idPathLookup, field, item);
     },
     (existing, incoming) => {
-      // Update incoming to have existing cache fields
-      const updatedIncoming = R.reduce(
-        (accIncoming, cacheField) => R.over(
-          R.lensProp(cacheField),
-          value => {
-            return R.when(
-              R.isNil,
-              value => {
-                // Copy the existing value to incoming if incoming lacks it and existing has it
-                return R.propOr(value, cacheField, existing);
-              }
-            )(value);
-          },
-          accIncoming
-        ),
-        incoming,
-        R.keys(cacheOnlyFieldLookup)
-      );
+      // Update incoming to have existing cache fields. Default to null so there is always
+      // a value in the cache. Otherwise Apollo freaks out and keeps getting missing field errors
+      const updatedIncoming = getUpdatedIncoming(existing, incoming);
       // Handle objects with mergeObjects
       return mergeObjects(
         clone(existing),
