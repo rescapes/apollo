@@ -20,8 +20,8 @@ describe('monadHelpersComponent', () => {
   const outerProps = {jello: 'squish', stone: 'squash'};
   // Simple component
   const simpleComponent = prop => R.cond([
-    [strPathOr(false, 'data.loading'), p => `I rendered a ${inspect(prop)}`],
-    [R.identity, p => `I rendered a ${inspect(p)}`]
+    [strPathOr(false, 'data.loading'), p => `I rendered a ${inspect(R.omit(['render'], prop))}`],
+    [R.identity, p => `I rendered a ${inspect(R.omit(['render'], p))}`]
   ])(prop);
 
   // Render function component that does something and renders the children function that is given to it
@@ -179,7 +179,7 @@ describe('monadHelpersComponent', () => {
 
   test('Basic', () => {
     expect(higherOrderComponent(componentConsumingARenderProp)(simpleComponent)(outerProps)).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":2}}'
+      `I rendered a ${inspect({jello:'squish',stone:'squash',data:{keyCount:2}})}`
     );
   });
 
@@ -189,7 +189,7 @@ describe('monadHelpersComponent', () => {
       higherOrderComponent(componentConsumingARenderProp),
       higherOrderComponent(dependentComponentConsumingARenderProp)
     )(simpleComponent)(outerProps)).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite 2"}})}`
     );
   });
 
@@ -202,7 +202,7 @@ describe('monadHelpersComponent', () => {
         higherOrderComponent(dependentComponentConsumingARenderProp)
       ])(simpleComponent)(outerProps)
     ).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
 
@@ -216,7 +216,7 @@ describe('monadHelpersComponent', () => {
       // We always have to create the monad on the first call
       higherOrderComponent(dependentComponentConsumingARenderProp)
     ])(simpleComponent)(outerProps)).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"loading":true}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"loading":true}})}`
     );
   });
 
@@ -230,7 +230,7 @@ describe('monadHelpersComponent', () => {
       higherOrderComponentMaybe(dependentComponentConsumingARenderProp),
       higherOrderComponentMaybe(dependentComponentConsumingARenderProp)
     ])(simpleComponent)(outerProps)).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
 
@@ -282,7 +282,7 @@ describe('monadHelpersComponent', () => {
     )();
 
     expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
 
@@ -342,7 +342,7 @@ describe('monadHelpersComponent', () => {
     )();
 
     expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
 
@@ -360,7 +360,7 @@ describe('monadHelpersComponent', () => {
     ])();
 
     expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
-      'I rendered a {"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}}'
+      `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
 
@@ -391,7 +391,7 @@ describe('monadHelpersComponent', () => {
     // Call composed with the component then the props, which is how we'll do it in the real
     // world when we treat composed as an HOC wrapping component
     expect(composedForComponent(R.merge(params, {children: simpleComponent}))).toEqual(
-      'I rendered a {"_noReact":true,"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 4"}}'
+      `I rendered a ${inspect({"_noReact":true,"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 4"}})}`
     );
     const errors = [];
     composedForTask(params).run().listen(defaultRunConfig({

@@ -140,6 +140,8 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
     apolloConfig,
     {
       name: 'settings',
+      // Use key instead of id in the case of the unauthenticated user needs to cache default settings
+      idField: props => R.propOr(R.prop('key'), 'id', props),
       // output for the read fragment
       outputParams
     },
@@ -198,7 +200,7 @@ export const writeConfigToServerAndCache = (config) => {
               // but we need to write any non server settings
               // If we don't have settings from the server and we aren't authenticated, just
               // cache the configured settings
-              const settingsToCache = settings || R.mergeDeepRight(
+              const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepRight(
                 configuredSettings,
                 // TODO this should come from the remote schema so it can be customized
                 // to the app's settings
@@ -222,6 +224,7 @@ export const writeConfigToServerAndCache = (config) => {
           return makeSettingsQueryContainer(
             R.merge(apolloConfig, {
               options: {
+                skip: localStorage.getItem('token') !== 'null',
                 fetchPolicy: 'network-only'
               }
             }),

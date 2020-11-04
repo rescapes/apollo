@@ -44,15 +44,15 @@ describe('tokenAuthStore', () => {
     const errors = [];
     composeWithChain([
       mapToNamedPathAndInputs(
-        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookieMutation.deleted',
+        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookie.deleted',
         ({apolloConfig: {apolloClient}, verifyToken}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
       ),
       mapToNamedPathAndInputs(
-        'deletetokencookie', 'data.deleteTokenCookieMutation.deleted',
+        'deleteTokenCookie', 'data.deleteTokenCookie.deleted',
         ({apolloConfig: {apolloClient, token}, verifyToken}) => deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {})
       ),
       mapToNamedPathAndInputs(
-        'refreshToken', 'data.refreshTokenMutation.payload',
+        'refreshToken', 'data.refreshToken.payload',
         ({apolloConfig: {apolloClient, token}, verifyToken}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
       ),
       mapToNamedPathAndInputs(
@@ -78,8 +78,9 @@ describe('tokenAuthStore', () => {
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',
-        ({apolloConfig: {token}}) => {
+        ({apolloConfig: {apolloClient, token}}) => {
           return getOrCreateAuthApolloClientWithTokenTask({
+              cacheData: apolloClient.cache.data.data,
               cacheOptions,
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,

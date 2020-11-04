@@ -254,7 +254,7 @@ const dumpOperation = operation => {
   if (!operation) {
     return '';
   }
-  return (`Query:\n\n${print(operation.query)}\nArguments:\n${inspect(operation.variables, null, 2)}\n`);
+  return (`Query:\n\n${print(operation.query)}\nArguments:\n${inspect(operation.variables, {depth: 10}, 2)}\n`);
 };
 
 /**
@@ -502,9 +502,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         // a loading = false, error = false, null data response
         const error = new Error(`Null data missed cache error for Query:\n${
           print(query)
-        }\nArguments:\n${
-          inspect(winnowedProps)
-        }\n`);
+        }\nArguments:\n${inspect(winnowedProps, {depth: 10})}\n`);
         const cache = apolloConfig.cache
 
         log.error(error)

@@ -39,7 +39,8 @@ const log = loggers.get('rescapeDefault');
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
  * @params {Object} mutationConfig
- * @params {String|Number} mutationConfig.idField Default 'id', alternative id field
+ * @params {String|Number|Function} mutationConfig.idField Default 'id', alternative id field
+ * If a function pass props to get the value
  * @params {String} mutationConfig.name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} mutationConfig.readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
@@ -80,7 +81,12 @@ export const makeCacheMutation = v(R.curry(
     const id = R.ifElse(
       R.identity,
       () => reqStrPathThrowing('__typename', props),
-      () => `${reqStrPathThrowing('__typename', props)}:${reqStrPathThrowing(idField, props)}`
+      () => `${reqStrPathThrowing('__typename', props)}:${
+        R.ifElse(
+          R.is(Function), 
+          idField => idField(props), 
+          idField => reqStrPathThrowing(idField, props)
+        )(idField)}`
     )(singleton);
 
     const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
@@ -113,7 +119,7 @@ export const makeCacheMutation = v(R.curry(
       R.pick(['__typename'], props))
     }`;
 
-    log.debug(`Query write Fragment: ${
+    log.debug(`Write Cache Fragment: ${
       print(writeFragment)
     } id: ${id} args: ${
       inspect(propsWithPossibleMerge, null, 2)

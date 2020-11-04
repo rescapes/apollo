@@ -20,7 +20,7 @@ import {typePoliciesConfig} from '../config';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams
+  defaultSettingsOutputParams, defaultSettingsTypenames
 } from './defaultSettingsStore';
 
 /**
@@ -39,6 +39,7 @@ export const cacheOptions = {
  */
 export const localTestConfig = mergeLocalTestValuesIntoConfig({
   settings,
+  defaultSettingsTypenames,
   settingsConfig: {
     settingsOutputParams: defaultSettingsOutputParams,
     cacheOnlyObjs: defaultSettingsCacheOnlyObjs,

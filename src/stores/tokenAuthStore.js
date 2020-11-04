@@ -49,7 +49,7 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
         return makeReadFragmentFromCacheContainer(
           apolloConfig,
           {
-            name: 'tokenAuthMutation',
+            name: 'tokenAuth',
             readInputTypeMapper: tokenAuthReadInputTypeMapper,
             outputParams: tokenAuthOutputParams
           },

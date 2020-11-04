@@ -61,7 +61,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props)}\n`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props, {depth: 10})}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries
   const componentOrTask = authApolloQueryContainer(
@@ -106,7 +106,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
     outputParams, 
     winnowedProps
   )}`;
-  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps)}\n`);
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, {depth: 10})}\n`);
   const response = authApolloClientOrComponentQueryCacheContainer(
     apolloConfig,
     {
@@ -137,16 +137,15 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
  * @param {Number|String} props.id Required. The id for the fragment query
  */
 export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
-
   // Write the fragment
   const fragment = gql`${makeFragmentQuery(
-    name,
-    readInputTypeMapper,
+  `${name}WithClientFields`,
+   readInputTypeMapper,
     outputParams, 
     R.pick(['__typename'], props)
   )}`;
 
-  log.debug(`Cache Query:\n\n${print(fragment)}\nArguments:\n${inspect(props)}\n`);
+  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(props, {depth: 10})}\n`);
   const response = authApolloClientOrComponentReadFragmentCacheContainer(
     apolloConfig,
     {
@@ -155,7 +154,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.omit(['__typename', 'id'], props),
     reqStrPathThrowing('id', props)
   );
-  if (!R.has('isReactComponent', response)) {
+  if (R.has('data', response || {})) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
   }
   return response;
