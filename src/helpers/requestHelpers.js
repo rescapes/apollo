@@ -522,7 +522,7 @@ export const createReadInputTypeMapper = (className, keys) => {
  * @returns {Object} The modified props
  */
 export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
-  return R.reduce((props, propPath) => {
+  const updatedProps = R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
       const lens = R.compose(...R.chain(
         R.ifElse(
@@ -561,4 +561,6 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
     props,
     relatedPropPaths
   );
+  // Omit anything that didn't exist
+  return omitDeepBy((k, v) => typeof(v) === 'undefined', updatedProps)
 };

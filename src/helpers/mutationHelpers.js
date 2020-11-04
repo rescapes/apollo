@@ -10,7 +10,7 @@
  */
 
 import {inspect} from 'util';
-
+import safeJsonStringify from 'safe-json-stringify'
 import * as R from 'ramda';
 import {
   _winnowRequestProps,
@@ -171,7 +171,7 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, {depth: 10})}\n\n`);
+          log.debug(`Running Mutation Task:\n\n${print(mutation)}\nArguments:\n${safeJsonStringify(namedProps)}\n\n`);
           return composeWithMapMDeep(1, [
             response => {
               log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
@@ -199,7 +199,7 @@ export const makeMutationRequestContainer = v(R.curry(
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
-          log.debug(`Creating Mutation Component:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, {depth: 10})}\n\n`);
+          log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${safeJsonStringify(namedProps)}\n\n`);
           return R.chain(
             component => {
               // Remove the Just
@@ -215,7 +215,7 @@ export const makeMutationRequestContainer = v(R.curry(
         }
       ],
       [R.T, () => {
-        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${inspect(props)}`);
+        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${safeJsonStringify(props)}`);
       }]
     ])(apolloConfig);
   }),

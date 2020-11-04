@@ -305,7 +305,8 @@ describe('requestHelpers', () => {
       'scapegoats',
       'elks.slow',
       'elks.poke.jams',
-      'billy'
+      'billy',
+      'smacky'
     ], {
       drooling: {
         moose: {
