@@ -92,7 +92,8 @@ export {
   writeDefaultSettingsToCache,
   defaultSettingsOutputParams,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsCacheIdProps
+  defaultSettingsCacheIdProps,
+  defaultSettingsTypenames
 } from './helpers/defaultSettingsStore';
 export {
   makeSettingsMutationContainer,

@@ -39,11 +39,13 @@ export const cacheOptions = {
  */
 export const localTestConfig = mergeLocalTestValuesIntoConfig({
   settings,
-  defaultSettingsTypenames,
   settingsConfig: {
     settingsOutputParams: defaultSettingsOutputParams,
     cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-    cacheIdProps: defaultSettingsCacheIdProps
+    cacheIdProps: defaultSettingsCacheIdProps,
+    // These are only used to store settings for a non-auth user. Not needed if
+    // we allow no auth querying of the default settings
+    defaultSettingsTypenames,
   },
   apollo: {
     writeDefaultsCreator: writeConfigToServerAndCache,

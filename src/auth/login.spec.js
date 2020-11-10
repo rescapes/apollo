@@ -42,7 +42,8 @@ describe('login', () => {
           settingsConfig: {
             cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
             cacheIdProps: defaultSettingsCacheIdProps,
-            settingsOutputParams: defaultSettingsOutputParams
+            settingsOutputParams: defaultSettingsOutputParams,
+
           }
         }, apolloClient)
       ),

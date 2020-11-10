@@ -170,7 +170,7 @@ export const writeConfigToServerAndCache = (config) => {
   return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
     // Only the settings are written to the server
     const configuredSettings = R.prop('settings', config);
-    const defaultSettingsTypenames = R.prop('defaultSettingsTypenames', config);
+    const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithChain([
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',

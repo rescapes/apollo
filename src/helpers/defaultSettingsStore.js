@@ -1,5 +1,6 @@
 import settings from './privateSettings';
 import {writeConfigToServerAndCache} from './settingsStore';
+import {mergeDeep} from 'rescape-ramda';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -13,22 +14,22 @@ import {writeConfigToServerAndCache} from './settingsStore';
  */
 
 export const defaultSettingsTypenames =
-{
-  __typename: 'SettingsType',
+  {
+    __typename: 'SettingsType',
     data: {
-  __typename: 'SettingsDataType',
-    api: {
-    _typename: 'SettingsApiDataType'
-  },
-  overpass: {
-    _typename: 'SettingsOverpassDataType',
-  },
-  mapbox: {
-    _typename: 'MapboxApiDataType',
-  }
-}
+      __typename: 'SettingsDataType',
+      api: {
+        _typename: 'SettingsApiDataType'
+      },
+      overpass: {
+        _typename: 'SettingsOverpassDataType'
+      },
+      mapbox: {
+        _typename: 'MapboxApiDataType'
+      }
+    }
 
-}
+  };
 // Global settings.
 // omitCacheOnlyFields to true to omit cache only fields from the query
 export const defaultSettingsOutputParams = {
@@ -74,11 +75,13 @@ export const defaultSettingsCacheIdProps = [
   'id',
   '__typename',
   'data.__typename',
-  'data.mapbox.__typename',
+  'data.mapbox.__typename'
 ];
-
 
 /**
  * Writes or rewrites the default settings to the cache
  */
-export const writeDefaultSettingsToCache = writeConfigToServerAndCache({settings, defaultSettingsTypenames});
+export const writeDefaultSettingsToCache = writeConfigToServerAndCache(mergeDeep(
+  settings,
+  {settingsConfig: {defaultSettingsTypenames}}
+));

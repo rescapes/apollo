@@ -228,7 +228,7 @@ export const makeQueryContainer = v(R.curry(
       R.ifElse(
         () => skip,
         () => 'Props are not ready',
-        (winnowedProps) => inspect(winnowedProps)
+        (winnowedProps) => inspect(winnowedProps, {depth: 10}, 2)
       )(winnowedProps)
     }\n`);
     const componentOrTask = authApolloQueryContainer(

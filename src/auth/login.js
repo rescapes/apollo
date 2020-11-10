@@ -32,7 +32,7 @@ import {
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore';
 import {ap} from 'ramda/src/index';
 import {apolloContainers} from '../helpers/samples/sampleRegionStore';
-import {currentUserQueryContainer, userOutputParams} from '..';
+import {currentUserQueryContainer, defaultSettingsTypenames, userOutputParams} from '..';
 
 /**
  * Login and return an authenticated client task
@@ -152,7 +152,9 @@ export const authClientOrLoginTask = R.curry((
             uri,
             stateLinkResolvers,
             writeDefaults,
-            settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+            settingsConfig: {
+              cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames
+            }
           },
           R.prop('data', loginAuthentication)
         );
