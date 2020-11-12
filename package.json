@@ -1,11 +1,10 @@
 {
   "name": "rescape-apollo",
-  "version": "0.1.244",
+  "version": "0.1.245",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./lib/index.js",
   "exports": "./src/index.js",
-  "module": "./src/index.js",
-  "type": "module",
+  "module": "./src/index.mjs",
   "repository": {
     "type": "git",
     "url": "git@github.com:calocan/rescape-apollo.git"
