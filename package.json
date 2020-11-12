@@ -13,7 +13,8 @@
   "author": "calocan <andy@likuski.org>",
   "license": "MIT",
   "files": [
-    "src"
+    "src",
+    "lib"
   ],
   "scripts": {
     "clean": "rimraf lib esm coverage",
