@@ -10,25 +10,23 @@
  */
 
 import {inspect} from 'util';
-import * as R from 'ramda';
-import {gql} from '@apollo/client';
+import R from 'ramda';
+import AC from '@apollo/client';
+const {gql} = AC
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {
-  capitalize,
-  memoizedWith,
-  mergeDeepWithRecurseArrayItemsByRight, omitDeepPaths,
-  pickDeepPaths,
-  reqStrPathThrowing
-} from 'rescape-ramda';
+import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
-import {of} from 'folktale/concurrency/task';
-import {Just} from 'folktale/maybe';
+import T from 'folktale/concurrency/task'
+const {of} = T;
+import maybe from 'folktale/maybe';
 import {loggers} from 'rescape-log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers';
-import {mapped} from 'ramda-lens';
 import {firstMatchingPathLookup} from './utilityHelpers';
+
+const {Just} = maybe;
+
 
 const log = loggers.get('rescapeDefault');
 
@@ -83,8 +81,8 @@ export const makeCacheMutation = v(R.curry(
       () => reqStrPathThrowing('__typename', props),
       () => `${reqStrPathThrowing('__typename', props)}:${
         R.ifElse(
-          R.is(Function), 
-          idField => idField(props), 
+          R.is(Function),
+          idField => idField(props),
           idField => reqStrPathThrowing(idField, props)
         )(idField)}`
     )(singleton);

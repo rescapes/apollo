@@ -73,7 +73,6 @@ export {
   versionOutputParamsMixin
 } from './helpers/requestHelpers';
 
-//export {remoteLinkedSchemaTask, remoteSchemaTask} from './schema/remoteSchema';
 
 export {
   sampleInputParamTypeMapper,

@@ -81,7 +81,8 @@ export const defaultSettingsCacheIdProps = [
 /**
  * Writes or rewrites the default settings to the cache
  */
-export const writeDefaultSettingsToCache = writeConfigToServerAndCache(mergeDeep(
-  settings,
-  {settingsConfig: {defaultSettingsTypenames}}
-));
+export const writeDefaultSettingsToCache = writeConfigToServerAndCache({
+    settings,
+    settingsConfig: {defaultSettingsTypenames}
+  }
+);

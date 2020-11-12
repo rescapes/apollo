@@ -8,13 +8,14 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {inspect} from 'util';
-import {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} from '@apollo/client';
+import {formatWithOptions, inspect} from 'util';
+import AC from '@apollo/client';
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
-import * as R from 'ramda';
-import {fromPromised, of} from 'folktale/concurrency/task';
-import {Just} from 'folktale/maybe';
+import R from 'ramda';
+import T from 'folktale/concurrency/task'
+const {fromPromised, of} = T;
+import maybe from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
 import {e} from 'rescape-helpers-component';
 import {print} from 'graphql';
@@ -34,6 +35,9 @@ import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
 import {persistCache} from 'apollo-cache-persist';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
+
+const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = AC
+const {Just} = maybe
 
 const log = loggers.get('rescapeDefault');
 
@@ -254,7 +258,7 @@ const dumpOperation = operation => {
   if (!operation) {
     return '';
   }
-  return (`Query:\n\n${print(operation.query)}\nArguments:\n${inspect(operation.variables, {depth: 10}, 2)}\n`);
+  return (`Query:\n\n${print(operation.query)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', operation.variables)}\n`);
 };
 
 /**
@@ -502,7 +506,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         // a loading = false, error = false, null data response
         const error = new Error(`Null data missed cache error for Query:\n${
           print(query)
-        }\nArguments:\n${inspect(winnowedProps, {depth: 10})}\n`);
+        }\nArguments:\n${formatWithOptions({depth: 10}, '%j', winnowedProps)}\n`);
         const cache = apolloConfig.cache
 
         log.error(error)

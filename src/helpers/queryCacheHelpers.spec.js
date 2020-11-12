@@ -12,11 +12,12 @@
 import {makeQueryContainer} from './queryHelpers';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
 import {expectKeys, localTestAuthTask} from './testHelpers';
-import * as R from 'ramda';
+import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
 import {makeQueryFromCacheContainer} from './queryCacheHelpers';
-import {of} from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task'
+const {of} = T
 
 describe('queryCacheHelpers', () => {
 

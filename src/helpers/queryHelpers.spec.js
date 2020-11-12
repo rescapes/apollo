@@ -16,22 +16,24 @@ import {
   makeQueryContainer
 } from './queryHelpers';
 
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
 import {
   composeWithChain,
   defaultRunConfig,
-  defaultRunToResultConfig,
   mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs, strPathOr
+  mapToNamedResponseAndInputs,
+  strPathOr
 } from 'rescape-ramda';
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
-import * as R from 'ramda';
+import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import moment from 'moment';
-import {of} from 'folktale/concurrency/task';
-import Result from 'folktale/result';
+import T from 'folktale/concurrency/task';
+
+const {gql} = AC
+const {of} = T;
 
 describe('queryHelpers', () => {
 

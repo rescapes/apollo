@@ -21,7 +21,7 @@ import {
 } from '../helpers/defaultSettingsStore';
 import {defaultStateLinkResolvers} from '../client/stateLink';
 import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers';
-import {currentUserQueryContainer, userOutputParams} from '..';
+import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);

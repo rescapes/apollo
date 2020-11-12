@@ -11,9 +11,11 @@
 import {composeWithChain, mapToNamedResponseAndInputs, reqStrPathThrowing} from 'rescape-ramda';
 import {getOrCreateApolloClientTask} from './apolloClient';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
-import {ApolloClient} from '@apollo/client';
-import * as R from 'ramda';
-import {of} from 'folktale/concurrency/task';
+import AC from '@apollo/client';
+const {ApolloClient} = AC
+import R from 'ramda';
+import T from 'folktale/concurrency/task'
+const {of} = T;
 import {loggers} from 'rescape-log';
 
 const log = loggers.get('rescapeDefault');

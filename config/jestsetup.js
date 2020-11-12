@@ -12,13 +12,15 @@
 
 // Makes localStorage available in node to Apollo
 import enzyme from 'enzyme';
-import Adapter from '@wojtekmaj/enzyme-adapter-react-17'
-import 'localstorage-polyfill'
-import 'regenerator-runtime'
-import {rescapeDefaultTransports} from 'rescape-log'
+import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
+import 'localstorage-polyfill';
+import 'regenerator-runtime';
+import {rescapeDefaultTransports} from 'rescape-log';
 
 import 'jest-enzyme';
-require('jsdom-global')();
+import global from 'jsdom-global';
+
+global();
 enzyme.configure({adapter: new Adapter()});
 
 // Set the loggers to debug level

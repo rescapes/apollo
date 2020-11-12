@@ -11,9 +11,10 @@ import {
 } from 'rescape-ramda';
 import {omitClientFields} from './requestHelpers';
 import {v} from 'rescape-validate';
-import * as R from 'ramda';
+import R from 'ramda';
 import PropTypes from 'prop-types';
-import {of} from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task'
+const {of} = T;
 import {isAuthenticatedLocal} from '../stores/userStore';
 
 /**

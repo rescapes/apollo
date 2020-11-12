@@ -18,13 +18,15 @@ import {
 } from 'rescape-ramda';
 import {
   authenticatedUserLocalContainer,
+  currentUserQueryContainer,
   isAuthenticatedLocal,
-  currentUserQueryContainer, makeUserCacheMutation,
   userOutputParams
 } from './userStore';
 import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers';
-import {createNoAuthTask, createAuthTask} from '../helpers/clientHelpers';
-import {of} from 'folktale/concurrency/task';
+import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers';
+import T from 'folktale/concurrency/task';
+
+const {of} = T;
 
 describe('userStore', () => {
   test('currentUserQueryContainer', done => {

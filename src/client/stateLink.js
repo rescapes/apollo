@@ -1,7 +1,8 @@
-import * as R from 'ramda';
+import R from 'ramda';
 import {overDeep} from 'rescape-ramda';
 import {v} from 'rescape-validate';
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
+const {gql} = AC
 
 /**
  * Created by Andy Likuski on 2019.04.16

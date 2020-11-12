@@ -22,12 +22,14 @@ import {
   relatedObjectsToIdForm
 } from './requestHelpers';
 import Result from 'folktale/result';
-import {of} from 'folktale/concurrency/task';
-import * as R from 'ramda';
+import T from 'folktale/concurrency/task'
+const {of} = T;
+import R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
 import {defaultSettingsOutputParams} from './defaultSettingsStore';
 import {print} from 'graphql';
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
+const {gql} = AC
 
 describe('requestHelpers', () => {
 

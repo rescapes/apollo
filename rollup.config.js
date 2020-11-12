@@ -4,7 +4,7 @@ import replace from 'rollup-plugin-replace';
 import {terser} from 'rollup-plugin-terser';
 import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
-import * as R from 'ramda';
+import R from 'ramda';
 
 const config = {
   input: [

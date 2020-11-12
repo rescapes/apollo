@@ -1,5 +1,5 @@
 import {filterOutReadOnlyVersionProps, makeMutationRequestContainer} from '../mutationHelpers';
-import * as R from 'ramda';
+import R from 'ramda';
 import {makeQueryContainer} from '../queryHelpers';
 import {loggers} from 'rescape-log';
 import {relatedObjectsToIdForm} from '../requestHelpers';

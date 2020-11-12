@@ -1,5 +1,5 @@
-import * as R from 'ramda';
-import * as Maybe from 'folktale/maybe';
+import R from 'ramda';
+import Maybe from 'folktale/maybe';
 
 /**
  * Created by Andy Likuski on 2020.04.01

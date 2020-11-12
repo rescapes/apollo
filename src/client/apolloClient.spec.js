@@ -8,13 +8,15 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
+const {gql} = AC
 import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda';
 import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
-import {of} from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task'
+const {of} = T;
 
-import * as R from 'ramda';
+import R from 'ramda';
 import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';

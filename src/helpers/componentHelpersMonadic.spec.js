@@ -9,10 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as R from 'ramda';
+import R from 'ramda';
 import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda';
-import * as Maybe from 'folktale/maybe';
-import {of} from 'folktale/concurrency/task';
+import Maybe from 'folktale/maybe';
+import T from 'folktale/concurrency/task'
+const {of} = T;
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
 import {inspect} from 'util';
 

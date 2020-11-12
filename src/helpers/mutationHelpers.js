@@ -9,9 +9,9 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {inspect} from 'util';
+import {inspect, formatWithOptions} from 'util';
 import safeJsonStringify from 'safe-json-stringify'
-import * as R from 'ramda';
+import R from 'ramda';
 import {
   _winnowRequestProps,
   formatOutputParams,
@@ -30,7 +30,8 @@ import {
   reqStrPathThrowing,
   retryTask
 } from 'rescape-ramda';
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
+const {gql} = AC
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
@@ -171,7 +172,7 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          log.debug(`Running Mutation Task:\n\n${print(mutation)}\nArguments:\n${safeJsonStringify(namedProps)}\n\n`);
+          log.debug(`Running Mutation Task:\n\n${print(mutation)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', namedProps)}\n\n`);
           return composeWithMapMDeep(1, [
             response => {
               log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
@@ -199,7 +200,7 @@ export const makeMutationRequestContainer = v(R.curry(
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
-          log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${safeJsonStringify(namedProps)}\n\n`);
+          log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', namedProps)}\n\n`);
           return R.chain(
             component => {
               // Remove the Just
@@ -215,7 +216,7 @@ export const makeMutationRequestContainer = v(R.curry(
         }
       ],
       [R.T, () => {
-        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${safeJsonStringify(props)}`);
+        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${formatWithOptions({depth: 10}, '%j', props)}`);
       }]
     ])(apolloConfig);
   }),

@@ -9,30 +9,26 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as R from 'ramda';
-import {
-  noAuthApolloClientTask,
-  noAuthApolloClientMutationRequestTask
-} from '../client/apolloClient';
-import {of} from 'folktale/concurrency/task';
-import {gql} from '@apollo/client';
-import {ApolloClient} from '@apollo/client';
-import {PropTypes} from 'prop-types';
-import {v} from 'rescape-validate';
-import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import R from 'ramda';
+import {noAuthApolloClientTask} from '../client/apolloClient';
+import T from 'folktale/concurrency/task';
+import AC from '@apollo/client';
 import {
   composeWithChain,
   mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs, reqStrPathThrowing
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing
 } from 'rescape-ramda';
 import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
 } from '../client/apolloClientAuthentication';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore';
-import {ap} from 'ramda/src/index';
-import {apolloContainers} from '../helpers/samples/sampleRegionStore';
-import {currentUserQueryContainer, defaultSettingsTypenames, userOutputParams} from '..';
+import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
+import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore';
+
+const {of} = T;
+const {ApolloClient} = AC;
 
 /**
  * Login and return an authenticated client task

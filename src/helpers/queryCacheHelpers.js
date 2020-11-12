@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {inspect} from 'util';
-import * as R from 'ramda';
+import {formatWithOptions} from 'util';
+import R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient';
 import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda';
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
 import {print} from 'graphql';
 import {
   authApolloClientOrComponentQueryCacheContainer,
@@ -21,8 +21,10 @@ import {
 } from '../client/apolloClientCache';
 import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers';
 import {loggers} from 'rescape-log';
-import {_winnowRequestProps, omitUnrepresentedOutputParams} from './requestHelpers';
-import {getRenderProp, pickRenderProps} from './componentHelpersMonadic';
+import {_winnowRequestProps} from './requestHelpers';
+import {pickRenderProps} from './componentHelpersMonadic';
+
+const {gql} = AC
 
 const log = loggers.get('rescapeDefault');
 
@@ -61,7 +63,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props, {depth: 10})}\n`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', props)}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries
   const componentOrTask = authApolloQueryContainer(
@@ -106,7 +108,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
     outputParams, 
     winnowedProps
   )}`;
-  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, {depth: 10})}\n`);
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', winnowedProps)}\n`);
   const response = authApolloClientOrComponentQueryCacheContainer(
     apolloConfig,
     {
@@ -145,7 +147,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.pick(['__typename'], props)
   )}`;
 
-  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(props, {depth: 10})}\n`);
+  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${formatWithOptions({depth: 10}, '%j', props)}\n`);
   const response = authApolloClientOrComponentReadFragmentCacheContainer(
     apolloConfig,
     {

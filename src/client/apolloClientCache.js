@@ -11,13 +11,14 @@
 
 import {ApolloConsumer} from 'react-apollo';
 import {inspect} from 'util';
-import * as R from 'ramda';
+import R from 'ramda';
 import {print} from 'graphql';
 import {loggers} from 'rescape-log';
 import {e} from 'rescape-helpers-component';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
-import {MissingFieldError} from '@apollo/client';
+import AC from '@apollo/client';
+const {MissingFieldError} = AC
 import {_winnowRequestProps} from '../helpers/requestHelpers';
 import {reqStrPathThrowing} from 'rescape-ramda';
 import {apolloClientReadFragmentCacheContainer} from './apolloClient';

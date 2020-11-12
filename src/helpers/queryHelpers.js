@@ -9,29 +9,31 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {inspect} from 'util';
+import {formatWithOptions} from 'util';
 import {
   capitalize,
   compact,
   composeWithChain,
-  mapObjToValues, mapToNamedResponseAndInputs,
+  mapObjToValues,
+  mapToNamedResponseAndInputs,
   memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
-  strPathOr,
-  traverseReduce, traverseReduceWhile
+  strPathOr
 } from 'rescape-ramda';
-import * as R from 'ramda';
+import R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
 import {v} from 'rescape-validate';
 import {loggers} from 'rescape-log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
-import {gql} from '@apollo/client';
+import AC from '@apollo/client';
+const {gql} = AC
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient';
-import {of} from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task'
+const {of} = T;
 
 const log = loggers.get('rescapeDefault');
 
@@ -228,7 +230,7 @@ export const makeQueryContainer = v(R.curry(
       R.ifElse(
         () => skip,
         () => 'Props are not ready',
-        (winnowedProps) => inspect(winnowedProps, {depth: 10}, 2)
+        (winnowedProps) => formatWithOptions({depth: 10}, '%j', winnowedProps)
       )(winnowedProps)
     }\n`);
     const componentOrTask = authApolloQueryContainer(

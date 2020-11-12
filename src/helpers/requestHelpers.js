@@ -10,8 +10,8 @@
  */
 
 import {inspect} from 'util';
-import {mapped, over} from 'ramda-lens';
-import * as pluralize from 'pluralize';
+import ramdaLens from 'ramda-lens';
+import pluralize from 'pluralize';
 import {
   capitalize,
   filterWithKeys,
@@ -25,8 +25,9 @@ import {
   strPathOrNullOk,
   unflattenObj
 } from 'rescape-ramda';
-import * as R from 'ramda';
+import R from 'ramda';
 import Result from 'folktale/result';
+const {mapped, over} = ramdaLens
 
 // Many of our graphql classes implement versioning. Make sure these values are never submitted in mutations
 // since they are managed by the server.
