@@ -8,7 +8,7 @@ import R from 'ramda';
 
 const config = {
   input: [
-    'src/index.js',
+    'src/index.mjs',
     'src/auth/login.js',
     'src/client/apolloClient.js',
     'src/client/apolloClientCache.js',
