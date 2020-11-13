@@ -25,7 +25,7 @@ import Result from 'folktale/result';
 import T from 'folktale/concurrency/task'
 const {of} = T;
 import R from 'ramda';
-import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda';
+import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from 'rescape-ramda'
 import {defaultSettingsOutputParams} from './defaultSettingsStore';
 import {print} from 'graphql';
 import AC from '@apollo/client';

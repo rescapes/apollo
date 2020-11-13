@@ -10,7 +10,7 @@
  */
 
 import {makeQueryContainer} from './queryHelpers';
-import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda';
+import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from 'rescape-ramda'
 import {expectKeys, localTestAuthTask} from './testHelpers';
 import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';

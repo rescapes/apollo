@@ -15,7 +15,7 @@ import AC from '@apollo/client';
 const {gql} = AC
 import {print} from 'graphql';
 import {v} from 'rescape-validate';
-import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda';
+import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda'
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import T from 'folktale/concurrency/task'

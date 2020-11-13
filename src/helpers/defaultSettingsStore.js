@@ -1,6 +1,6 @@
 import settings from './privateSettings';
 import {writeConfigToServerAndCache} from './settingsStore';
-import {mergeDeep} from 'rescape-ramda';
+import {mergeDeep} from 'rescape-ramda'
 
 /**
  * Created by Andy Likuski on 2018.12.31

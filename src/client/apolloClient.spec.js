@@ -10,7 +10,7 @@
  */
 import AC from '@apollo/client';
 const {gql} = AC
-import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda';
+import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from 'rescape-ramda'
 import {localTestAuthTask} from '../helpers/testHelpers';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
 import T from 'folktale/concurrency/task'

@@ -21,7 +21,7 @@ import {
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
   strPathOr
-} from 'rescape-ramda';
+} from 'rescape-ramda'
 import R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
 import {v} from 'rescape-validate';

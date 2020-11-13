@@ -10,10 +10,7 @@
  */
 
 import AC from '@apollo/client';
-const {MissingFieldError} = AC
-import T from 'folktale/concurrency/task'
-const {of} = T;
-import R from 'ramda';
+import T from 'folktale/concurrency/task';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers';
@@ -21,8 +18,12 @@ import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers';
 import {strPathOr} from 'rescape-ramda';
 import {containerForApolloType} from '../helpers/containerHelpers';
+import R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
-import {makeCacheMutation, mergeCacheable} from '../helpers/mutationCacheHelpers';
+
+const {MissingFieldError} = AC
+const {of} = T;
+
 
 export const userOutputParams = {
   id: 1,

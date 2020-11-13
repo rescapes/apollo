@@ -15,7 +15,7 @@ import {
   expectKeysAtPath,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs
-} from 'rescape-ramda';
+} from 'rescape-ramda'
 import {
   authenticatedUserLocalContainer,
   currentUserQueryContainer,

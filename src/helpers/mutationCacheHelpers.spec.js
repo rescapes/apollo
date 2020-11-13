@@ -16,7 +16,7 @@ import {
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
   strPathOr
-} from 'rescape-ramda';
+} from 'rescape-ramda'
 import R from 'ramda';
 import {makeCacheMutation} from './mutationCacheHelpers';
 import {

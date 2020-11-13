@@ -1,5 +1,5 @@
 import R from 'ramda';
-import {overDeep} from 'rescape-ramda';
+import {overDeep} from 'rescape-ramda'
 import {v} from 'rescape-validate';
 import AC from '@apollo/client';
 const {gql} = AC

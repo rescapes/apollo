@@ -13,11 +13,14 @@ import AC from '@apollo/client';
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import R from 'ramda';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task';
+
 const {fromPromised, of} = T;
 import maybe from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
-import {e} from 'rescape-helpers-component';
+import rescapeHelpersComponent from 'rescape-helpers-component';
+
+const {e} = rescapeHelpersComponent;
 import {print} from 'graphql';
 import {
   compact,
@@ -28,7 +31,7 @@ import {
   reqStrPathThrowing,
   retryTask,
   strPathOr
-} from 'rescape-ramda';
+} from 'rescape-ramda'
 import fetch from 'node-fetch';
 import {loggers} from 'rescape-log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
@@ -36,8 +39,8 @@ import {persistCache} from 'apollo-cache-persist';
 import {v} from 'rescape-validate';
 import PropTypes from 'prop-types';
 
-const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = AC
-const {Just} = maybe
+const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = AC;
+const {Just} = maybe;
 
 const log = loggers.get('rescapeDefault');
 
@@ -507,10 +510,10 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         const error = new Error(`Null data missed cache error for Query:\n${
           print(query)
         }\nArguments:\n${formatWithOptions({depth: 10}, '%j', winnowedProps)}\n`);
-        const cache = apolloConfig.cache
+        const cache = apolloConfig.cache;
 
-        log.error(error)
-        throw error
+        log.error(error);
+        throw error;
       }
       return renderedComponent;
     }

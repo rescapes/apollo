@@ -2,13 +2,9 @@
   "name": "rescape-apollo",
   "version": "0.1.247",
   "description": "Apollo Helpers for Rescape Projects",
-  "main": "./lib/index.js",
+  "main": "./src/index.mjs",
   "module": "./src/index.mjs",
   "type": "module",
-  "exports": {
-    "require": "./lib/index.js",
-    "import": "./src/index.mjs"
-  },
   "repository": {
     "type": "git",
     "url": "git@github.com:calocan/rescape-apollo.git"
@@ -26,7 +22,7 @@
     "test:watch": "yarn test -- --watch",
     "test:cov": "yarn test -- --coverage",
     "build": "rollup -c",
-    "prepare": "cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run lint && yarn run build",
+    "prepare": "cross-env ENABLE_INTEGRATION_TESTS=false yarn run clean && yarn run build",
     "docs:clean": "rimraf _book",
     "docs:prepare": "gitbook install",
     "docs:build": "yarn run docs:prepare && gitbook build -g reactjs/redux && cp logo/apple-touch-icon.png _book/gitbook/images/apple-touch-icon-precomposed-152.png && cp logo/favicon.ico _book/gitbook/images",
@@ -63,7 +59,6 @@
     "react-adopt": "^0.6.0",
     "react-apollo": "^3.0.1",
     "react-async-component": "^2.0.0",
-    "react-dom": "^17.0.1",
     "react-emotion": "^10.0.0",
     "regenerator-runtime": "^0.13.3",
     "request": "^2.88.0",
@@ -71,54 +66,47 @@
     "unfetch": "^4.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/plugin-proposal-object-rest-spread": "^7.12.1",
-    "@babel/plugin-transform-runtime": "^7.12.1",
-    "@babel/polyfill": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
-    "@babel/runtime": "^7.12.5",
     "@types/jest": "^26.0.15",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.3.1",
-    "babel-core": "^7.0.0-bridge.0",
-    "babel-eslint": "^10.0.2",
-    "babel-jest": "^26.6.3",
-    "babel-plugin-transform-es2015-modules-commonjs-simple": "^6.7.4",
     "babelrc-rollup": "^3.0.0",
     "cross-env": "^7.0.2",
-    "dotenv": "8.2.0",
+    "dotenv": "^8.2.0",
     "enzyme": "^3.10.0",
     "enzyme-wait": "^1.0.9",
-    "eslint": "7.13.0",
-    "eslint-loader": "4.0.2",
+    "eslint": "^7.13.0",
+    "eslint-loader": "^4.0.2",
     "eslint-plugin-import": "2.22.1",
     "eslint-plugin-react": "^7.21.5",
     "file-loader": "6.2.0",
     "fs-extra": "9.0.1",
-    "install-peers-cli": "^2.1.1",
+    "graphql": "^15.4.0",
     "jest": "26.6.3",
     "jest-cli": "^26.6.3",
-    "jsdoc-babel": "^0.5.0",
     "jsdom": "^16.4.0",
     "localstorage-polyfill": "^1.0.1",
     "longjohn": "^0.2.12",
     "moment": "^2.29.1",
-    "promise": "8.1.0",
-    "rescape-sample-data": "^1.2.60",
+    "promise": "^8.1.0",
+    "react": ">=17.0.1",
+    "react-dom": ">=17.0.1",
+    "rescape-geospatial-sankey": ">=0.7.17",
+    "rescape-helpers": ">=1.1.99",
+    "rescape-helpers-component": ">=1.5.38",
+    "rescape-log": ">=0.1.11",
+    "rescape-ramda": ">=1.5.78",
+    "rescape-validate": ">=1.2.23",
     "rimraf": "^3.0.0",
     "rollup": "^2.33.1",
     "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-commonjs": "10.1.0",
+    "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "1.4.0",
+    "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-terser": "^7.0.2"
   },
   "peerDependencies": {
-    "graphql": ">=14.6.0",
-    "react": ">=17.0.1",
-    "react-dom": ">=17.0.1",
     "rescape-geospatial-sankey": ">=0.7.17",
     "rescape-helpers": ">=1.1.99",
     "rescape-helpers-component": ">=1.5.38",
@@ -153,33 +141,5 @@
       "node",
       "mjs"
     ]
-  },
-  "babel": {
-    "sourceMaps": true,
-    "presets": [
-      "@babel/preset-env"
-    ],
-    "env": {
-      "test": {
-        "plugins": [
-          [
-            "transform-es2015-modules-commonjs-simple",
-            {
-              "noMangle": true
-            }
-          ],
-          [
-            "@babel/plugin-transform-runtime",
-            {
-              "helpers": true,
-              "regenerator": true
-            }
-          ]
-        ]
-      }
-    }
-  },
-  "eslintConfig": {
-    "parser": "babel-eslint"
   }
 }

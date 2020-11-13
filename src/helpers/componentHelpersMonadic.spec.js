@@ -10,7 +10,7 @@
  */
 
 import R from 'ramda';
-import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda';
+import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 'rescape-ramda'
 import Maybe from 'folktale/maybe';
 import T from 'folktale/concurrency/task'
 const {of} = T;

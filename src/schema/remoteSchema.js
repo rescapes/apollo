@@ -16,7 +16,7 @@ import fetch from 'node-fetch';
 import {setContext} from '@apollo/link-context';
 // Can't get this to work with webpack
 //import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
-import {reqStrPathThrowing} from 'rescape-ramda';
+import {reqStrPathThrowing} from 'rescape-ramda'
 import R from 'ramda';
 import T from 'folktale/concurrency/task'
 const {fromPromised, of} = T;

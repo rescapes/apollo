@@ -12,22 +12,11 @@
 import {inspect} from 'util';
 import ramdaLens from 'ramda-lens';
 import pluralize from 'pluralize';
-import {
-  capitalize,
-  filterWithKeys,
-  flattenObj,
-  mapObjToValues,
-  mergeDeepAll,
-  omitDeepBy,
-  pickDeepPaths,
-  reqStrPath,
-  strPathOr,
-  strPathOrNullOk,
-  unflattenObj
-} from 'rescape-ramda';
+import { capitalize, filterWithKeys, flattenObj, mapObjToValues, mergeDeepAll, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk, unflattenObj } from 'rescape-ramda'
 import R from 'ramda';
 import Result from 'folktale/result';
-const {mapped, over} = ramdaLens
+
+const {mapped, over} = ramdaLens;
 
 // Many of our graphql classes implement versioning. Make sure these values are never submitted in mutations
 // since they are managed by the server.
@@ -563,5 +552,5 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
     relatedPropPaths
   );
   // Omit anything that didn't exist
-  return omitDeepBy((k, v) => typeof(v) === 'undefined', updatedProps)
+  return omitDeepBy((k, v) => typeof (v) === 'undefined', updatedProps);
 };
