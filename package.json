@@ -1,10 +1,14 @@
 {
   "name": "rescape-apollo",
-  "version": "0.1.246",
+  "version": "0.1.247",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./lib/index.js",
   "module": "./src/index.mjs",
   "type": "module",
+  "exports": {
+    "require": "./lib/index.js",
+    "import": "./src/index.mjs"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:calocan/rescape-apollo.git"
@@ -56,7 +60,6 @@
     "prop-types": "^15.7.2",
     "ramda": "^0.27.1",
     "ramda-lens": "^0.1.2",
-    "react": "^17.0.1",
     "react-adopt": "^0.6.0",
     "react-apollo": "^3.0.1",
     "react-async-component": "^2.0.0",
@@ -114,6 +117,8 @@
   },
   "peerDependencies": {
     "graphql": ">=14.6.0",
+    "react": ">=17.0.1",
+    "react-dom": ">=17.0.1",
     "rescape-geospatial-sankey": ">=0.7.17",
     "rescape-helpers": ">=1.1.99",
     "rescape-helpers-component": ">=1.5.38",
