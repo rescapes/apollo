@@ -18,9 +18,8 @@ import T from 'folktale/concurrency/task';
 const {fromPromised, of} = T;
 import maybe from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
-import rescapeHelpersComponent from 'rescape-helpers-component';
+import {e} from 'rescape-helpers-component';
 
-const {e} = rescapeHelpersComponent;
 import {print} from 'graphql';
 import {
   compact,
