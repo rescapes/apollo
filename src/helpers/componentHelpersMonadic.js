@@ -11,7 +11,7 @@
 
 import R from 'ramda';
 import {inspect} from 'util';
-import {strPathOr} from 'rescape-ramda'
+import {strPathOr} from '@rescapes/ramda'
 
 export const nameComponent = (name, component) => {
   component.displayName = name;

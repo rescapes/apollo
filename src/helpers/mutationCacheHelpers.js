@@ -14,14 +14,14 @@ import R from 'ramda';
 import AC from '@apollo/client';
 const {gql} = AC
 import {print} from 'graphql';
-import {v} from 'rescape-validate';
-import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from 'rescape-ramda'
+import {v} from '@rescapes/validate';
+import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from '@rescapes/ramda'
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers';
 import T from 'folktale/concurrency/task'
 const {of} = T;
 import maybe from 'folktale/maybe';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers';
 import {firstMatchingPathLookup} from './utilityHelpers';
 

@@ -18,7 +18,7 @@ import T from 'folktale/concurrency/task';
 const {fromPromised, of} = T;
 import maybe from 'folktale/maybe';
 import {Mutation, Query} from "react-apollo";
-import {e} from 'rescape-helpers-component';
+import {e} from '@rescapes/helpers-component';
 
 import {print} from 'graphql';
 import {
@@ -30,12 +30,12 @@ import {
   reqStrPathThrowing,
   retryTask,
   strPathOr
-} from 'rescape-ramda'
+} from '@rescapes/ramda'
 import fetch from 'node-fetch';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
 import {persistCache} from 'apollo-cache-persist';
-import {v} from 'rescape-validate';
+import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = AC;

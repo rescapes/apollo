@@ -11,7 +11,7 @@
 
 import R from 'ramda';
 import settings from './privateSettings';
-import {mapToNamedPathAndInputs} from 'rescape-ramda'
+import {mapToNamedPathAndInputs} from '@rescapes/ramda'
 import moment from 'moment';
 import {omitClientFields} from './requestHelpers';
 import {

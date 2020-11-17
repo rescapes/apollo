@@ -15,7 +15,7 @@ import T from 'folktale/concurrency/task'
 const {of} = T;
 import {containerForApolloType} from '../helpers/containerHelpers';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
-import {reqStrPathThrowing} from 'rescape-ramda'
+import {reqStrPathThrowing} from '@rescapes/ramda'
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers';
 

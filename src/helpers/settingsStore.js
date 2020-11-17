@@ -8,9 +8,9 @@ import {
   omitDeepPaths,
   reqStrPathThrowing,
   strPathOr
-} from 'rescape-ramda';
+} from '@rescapes/ramda';
 import {omitClientFields} from './requestHelpers';
-import {v} from 'rescape-validate';
+import {v} from '@rescapes/validate';
 import R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task'

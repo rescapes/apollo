@@ -15,7 +15,7 @@ import enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import 'localstorage-polyfill';
 import 'regenerator-runtime';
-import {rescapeDefaultTransports} from 'rescape-log';
+import {rescapeDefaultTransports} from '@rescapes/log';
 
 import 'jest-enzyme';
 import global from 'jsdom-global';

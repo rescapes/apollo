@@ -25,7 +25,7 @@ import {
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
   strPathOr
-} from 'rescape-ramda'
+} from '@rescapes/ramda'
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
 import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers';

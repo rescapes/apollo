@@ -29,13 +29,13 @@ import {
   omitDeepBy, onlyOne, onlyOneThrowing, onlyOneValueThrowing,
   reqStrPathThrowing,
   retryTask
-} from 'rescape-ramda';
+} from '@rescapes/ramda';
 import AC from '@apollo/client';
 const {gql} = AC
 import {print} from 'graphql';
-import {v} from 'rescape-validate';
+import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 import {flatten} from 'ramda/src/index';
 
 const log = loggers.get('rescapeDefault');

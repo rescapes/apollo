@@ -12,7 +12,7 @@
 import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData';
 import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
 import {localTestAuthTask} from './testHelpers';
-import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from 'rescape-ramda'
+import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
 import R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';

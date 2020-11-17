@@ -12,7 +12,7 @@
 import {formatWithOptions} from 'util';
 import R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from 'rescape-ramda'
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from '@rescapes/ramda'
 import AC from '@apollo/client';
 import {print} from 'graphql';
 import {
@@ -20,7 +20,7 @@ import {
   authApolloClientOrComponentReadFragmentCacheContainer
 } from '../client/apolloClientCache';
 import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 import {_winnowRequestProps} from './requestHelpers';
 import {pickRenderProps} from './componentHelpersMonadic';
 

@@ -9,10 +9,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import R from 'ramda';
-import {keyStringToLensPath, reqStrPathThrowing} from 'rescape-ramda'
+import {keyStringToLensPath, reqStrPathThrowing} from '@rescapes/ramda'
 import settings from './privateSettings';
 import PropTypes from 'prop-types';
-import {v} from 'rescape-validate';
+import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
 import {writeConfigToServerAndCache} from './settingsStore';
 import {createAuthTask, createNoAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';

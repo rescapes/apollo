@@ -21,11 +21,11 @@ import {
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
   strPathOr
-} from 'rescape-ramda'
+} from '@rescapes/ramda'
 import R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
-import {v} from 'rescape-validate';
-import {loggers} from 'rescape-log';
+import {v} from '@rescapes/validate';
+import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
 import AC from '@apollo/client';

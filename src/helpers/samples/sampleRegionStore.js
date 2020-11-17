@@ -1,7 +1,7 @@
 import {filterOutReadOnlyVersionProps, makeMutationRequestContainer} from '../mutationHelpers';
 import R from 'ramda';
 import {makeQueryContainer} from '../queryHelpers';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 import {relatedObjectsToIdForm} from '../requestHelpers';
 
 export const userStateReadInputTypeMapper = {

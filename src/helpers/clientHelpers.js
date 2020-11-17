@@ -15,8 +15,8 @@ import {
   omitDeep,
   reqStrPathThrowing,
   strPathOr
-} from 'rescape-ramda';
-import {parseApiUrl} from 'rescape-helpers';
+} from '@rescapes/ramda';
+import {parseApiUrl} from '@rescapes/helpers';
 import {loginToAuthClientTask, noLoginToAuthClientTask} from '../auth/login';
 import {
   defaultSettingsCacheIdProps,
@@ -24,7 +24,7 @@ import {
   defaultSettingsOutputParams
 } from './defaultSettingsStore';
 import {firstMatchingPathLookup} from './utilityHelpers';
-import {loggers} from 'rescape-log';
+import {loggers} from '@rescapes/log';
 
 const log = loggers.get('rescapeDefault');
 

@@ -10,9 +10,9 @@
  */
 
 import {cacheOptions, localTestConfig} from '../helpers/testHelpers';
-import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from 'rescape-ramda'
+import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
 import {authClientOrLoginTask, noLoginToAuthClientTask} from './login';
-import {parseApiUrl} from 'rescape-helpers';
+import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,

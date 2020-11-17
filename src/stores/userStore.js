@@ -11,12 +11,12 @@
 
 import AC from '@apollo/client';
 import T from 'folktale/concurrency/task';
-import {v} from 'rescape-validate';
+import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers';
 import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers';
-import {strPathOr} from 'rescape-ramda';
+import {strPathOr} from '@rescapes/ramda';
 import {containerForApolloType} from '../helpers/containerHelpers';
 import R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';

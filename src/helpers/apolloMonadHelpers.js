@@ -11,7 +11,7 @@
 
 import R from 'ramda';
 import Result from 'folktale/result';
-import {reqStrPathThrowing, strPathOr} from 'rescape-ramda'
+import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda'
 
 /**
  * Returns a Result.Ok if data is loaded and a Result.Error if the response is loading or an error.

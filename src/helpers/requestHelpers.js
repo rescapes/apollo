@@ -12,7 +12,7 @@
 import {inspect} from 'util';
 import ramdaLens from 'ramda-lens';
 import pluralize from 'pluralize';
-import { capitalize, filterWithKeys, flattenObj, mapObjToValues, mergeDeepAll, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk, unflattenObj } from 'rescape-ramda'
+import { capitalize, filterWithKeys, flattenObj, mapObjToValues, mergeDeepAll, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk, unflattenObj } from '@rescapes/ramda'
 import R from 'ramda';
 import Result from 'folktale/result';
 

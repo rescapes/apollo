@@ -15,7 +15,7 @@ import {
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
   reqStrPathThrowing
-} from 'rescape-ramda';
+} from '@rescapes/ramda';
 import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers';
 import {defaultStateLinkResolvers} from '../client/stateLink';
 import {
@@ -24,7 +24,7 @@ import {
   defaultSettingsOutputParams,
   writeDefaultSettingsToCache
 } from '../helpers/defaultSettingsStore';
-import {parseApiUrl} from 'rescape-helpers';
+import {parseApiUrl} from '@rescapes/helpers';
 import {
   deleteRefreshTokenCookieMutationRequestContainer,
   deleteTokenCookieMutationRequestContainer,
