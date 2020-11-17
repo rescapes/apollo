@@ -1,13 +1,13 @@
 {
   "name": "@rescapes/apollo",
-  "version": "0.1.250",
+  "version": "0.1.251",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git@github.com:calocan/rescape-apollo.git"
+    "url": "git@github.com:/rescapes/apollo.git"
   },
   "author": "calocan <andy@likuski.org>",
   "license": "MIT",
