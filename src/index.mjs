@@ -12,13 +12,13 @@
 import {
   deleteRefreshTokenCookieMutationRequestContainer,
   deleteTokenCookieMutationRequestContainer
-} from './stores/tokenAuthStore';
+} from './stores/tokenAuthStore.js';
 
 export {
   noLoginToAuthClientTask,
   authClientOrLoginTask,
   loginToAuthClientTask
-} from './auth/login';
+} from './auth/login.js';
 export {
   authApolloClientQueryContainer,
   authApolloClientMutationRequestContainer,
@@ -32,19 +32,19 @@ export {
   authApolloComponentQueryContainer,
   authApolloQueryContainer,
   getOrCreateApolloClientTask
-} from './client/apolloClient';
+} from './client/apolloClient.js';
 export {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateApolloClientTaskAndSetDefaults,
   getOrCreateNoAuthApolloClientTask
-} from './client/apolloClientAuthentication';
+} from './client/apolloClientAuthentication.js';
 export {
   makeQuery,
   makeQueryContainer,
   apolloQueryResponsesTask,
   createRequestVariables,
   composePropsFilterIntoApolloConfigOptionsVariables
-} from './helpers/queryHelpers';
+} from './helpers/queryHelpers.js';
 export {
   makeMutation,
   makeMutationRequestContainer,
@@ -52,10 +52,10 @@ export {
   addMutateKeyToMutationResponse,
   filterOutReadOnlyVersionProps,
   filterOutNullDeleteProps
-} from './helpers/mutationHelpers';
+} from './helpers/mutationHelpers.js';
 export {
   makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
-} from './helpers/mutationCacheHelpers';
+} from './helpers/mutationCacheHelpers.js';
 export {
   formatOutputParams,
   resolveGraphQLType,
@@ -71,7 +71,7 @@ export {
   relatedObjectsToIdForm,
   VERSION_PROPS,
   versionOutputParamsMixin
-} from './helpers/requestHelpers';
+} from './helpers/requestHelpers.js';
 
 
 export {
@@ -80,44 +80,44 @@ export {
   sampleResourceMutationOutputParams,
   sampleResourceOutputParams,
   sampleResourceProps
-} from './helpers/samples/sampleData';
+} from './helpers/samples/sampleData.js';
 export {
   localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys
-} from './helpers/testHelpers';
-export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink';
-export {containerForApolloType} from './helpers/containerHelpers';
-export {typePoliciesWithMergeObjects, createAuthTask, createNoAuthTask} from './helpers/clientHelpers';
+} from './helpers/testHelpers.js';
+export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
+export {containerForApolloType} from './helpers/containerHelpers.js';
+export {typePoliciesWithMergeObjects, createAuthTask, createNoAuthTask} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCache,
   defaultSettingsOutputParams,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsCacheIdProps,
   defaultSettingsTypenames
-} from './helpers/defaultSettingsStore';
+} from './helpers/defaultSettingsStore.js';
 export {
   makeSettingsMutationContainer,
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   makeSettingsQueryContainer,
   writeConfigToServerAndCache
-} from './helpers/settingsStore';
+} from './helpers/settingsStore.js';
 export {
   typePoliciesConfig
-} from './config';
+} from './config.js';
 export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
-} from './helpers/queryCacheHelpers';
-export {firstMatchingPathLookup} from './helpers/utilityHelpers';
+} from './helpers/queryCacheHelpers.js';
+export {firstMatchingPathLookup} from './helpers/utilityHelpers.js';
 export {
   componentRenderedWithChildrenRenderProp,
   componentRenderedWithChildrenRenderPropMaybe,
   componentAndChildRenderedWithRenderProp,
   componentAndChildRenderedWithChildrenRenderPropMaybe
-} from './helpers/componentHelpers';
+} from './helpers/componentHelpers.js';
 
 export {
   composeWithComponentMaybeOrTaskChain, nameComponent, getRenderProp, getRenderPropFunction
-} from './helpers/componentHelpersMonadic';
+} from './helpers/componentHelpersMonadic.js';
 
 export {
   apolloResult,
@@ -125,11 +125,11 @@ export {
   apolloResponseSingleValueOrNull,
   apolloResponseValueOrNull,
   apolloResponseFilterOrEmpty
-} from './helpers/apolloMonadHelpers';
+} from './helpers/apolloMonadHelpers.js';
 
 export {
   currentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocal, authenticatedUserLocalContainer
-} from './stores/userStore';
+} from './stores/userStore.js';
 
 export {
   refreshTokenMutationRequestContainer,
@@ -138,4 +138,4 @@ export {
   deleteTokenCookieMutationRequestContainer,
   deleteRefreshTokenCookieMutationRequestContainer,
   queryLocalTokenAuthContainer
-} from './stores/tokenAuthStore';
+} from './stores/tokenAuthStore.js';
