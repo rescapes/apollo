@@ -33,7 +33,7 @@ import {
 } from '@rescapes/ramda'
 import fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
-import {optionsWithWinnowedProps} from '../helpers/requestHelpers';
+import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {persistCache} from 'apollo-cache-persist';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';

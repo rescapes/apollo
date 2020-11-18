@@ -16,14 +16,14 @@ import {
   mapToNamedResponseAndInputs,
   reqStrPathThrowing
 } from '@rescapes/ramda';
-import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers';
-import {defaultStateLinkResolvers} from '../client/stateLink';
+import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
+import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams,
   writeDefaultSettingsToCache
-} from '../helpers/defaultSettingsStore';
+} from '../helpers/defaultSettingsStore.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
   deleteRefreshTokenCookieMutationRequestContainer,
@@ -31,9 +31,9 @@ import {
   queryLocalTokenAuthContainer,
   refreshTokenMutationRequestContainer,
   verifyTokenMutationRequestContainer
-} from './tokenAuthStore';
-import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication';
-import {makeSettingsQueryContainer} from '../helpers/settingsStore';
+} from './tokenAuthStore.js';
+import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication.js';
+import {makeSettingsQueryContainer} from '../helpers/settingsStore.js';
 
 const someTokenAuthKeys = ['token'];
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);

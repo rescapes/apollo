@@ -9,9 +9,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData';
-import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers';
-import {localTestAuthTask} from './testHelpers';
+import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData.js';
+import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers.js';
+import {localTestAuthTask} from './testHelpers.js';
 import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
 import R from 'ramda';
 import moment from 'moment';

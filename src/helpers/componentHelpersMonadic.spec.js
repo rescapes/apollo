@@ -14,7 +14,7 @@ import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from 
 import Maybe from 'folktale/maybe';
 import T from 'folktale/concurrency/task'
 const {of} = T;
-import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic.js';
 import {inspect} from 'util';
 
 describe('monadHelpersComponent', () => {

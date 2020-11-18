@@ -10,16 +10,16 @@
  */
 
 import R from 'ramda';
-import settings from './privateSettings';
+import settings from './privateSettings.js';
 import {mapToNamedPathAndInputs} from '@rescapes/ramda'
 import moment from 'moment';
-import {omitClientFields} from './requestHelpers';
+import {omitClientFields} from './requestHelpers.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
-} from './defaultSettingsStore';
-import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingsStore';
+} from './defaultSettingsStore.js';
+import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingsStore.js';
 
 /**
  * Created by Andy Likuski on 2019.01.22

@@ -10,7 +10,7 @@
  */
 
 import {defaultRunConfig} from '@rescapes/ramda'
-import {localTestConfig} from '../helpers/testHelpers';
+import {localTestConfig} from '../helpers/testHelpers.js';
 
 describe('schema', () => {
   test('noop', () => {})

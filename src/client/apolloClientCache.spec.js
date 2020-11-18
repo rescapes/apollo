@@ -11,11 +11,11 @@
 import AC from '@apollo/client';
 const {gql} = AC
 import {reqStrPathThrowing, taskToPromise, mapToNamedPathAndInputs, mapToNamedResponseAndInputs} from '@rescapes/ramda'
-import {localTestAuthTask} from '../helpers/testHelpers';
-import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {localTestAuthTask} from '../helpers/testHelpers.js';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 
 import R from 'ramda';
-import {regionOutputParams} from '../helpers/samples/sampleRegionStore';
+import {regionOutputParams} from '../helpers/samples/sampleRegionStore.js';
 
 const initializeCache = async apolloClient => {
   const queryCache = gql`

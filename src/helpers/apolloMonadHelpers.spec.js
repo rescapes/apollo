@@ -16,7 +16,7 @@ import {
   apolloResponseSingleValueOrNull,
   apolloResponseValueOrNull,
   apolloResult
-} from './apolloMonadHelpers';
+} from './apolloMonadHelpers.js';
 import {ap} from 'ramda/src/index';
 
 describe('apolloMonadHelpers', () => {

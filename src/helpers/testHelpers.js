@@ -10,18 +10,18 @@
  */
 import R from 'ramda';
 import {keyStringToLensPath, reqStrPathThrowing} from '@rescapes/ramda'
-import settings from './privateSettings';
+import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
-import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink';
-import {writeConfigToServerAndCache} from './settingsStore';
-import {createAuthTask, createNoAuthTask, typePoliciesWithMergeObjects} from './clientHelpers';
-import {typePoliciesConfig} from '../config';
+import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink.js';
+import {writeConfigToServerAndCache} from './settingsStore.js';
+import {createAuthTask, createNoAuthTask, typePoliciesWithMergeObjects} from './clientHelpers.js';
+import {typePoliciesConfig} from '../config.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams, defaultSettingsTypenames
-} from './defaultSettingsStore';
+} from './defaultSettingsStore.js';
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming

@@ -1,6 +1,6 @@
-import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers';
-import {makeQueryContainer} from './queryHelpers';
-import {addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers';
+import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
+import {makeQueryContainer} from './queryHelpers.js';
+import {addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers.js';
 import {
   composeWithChain,
   mapToNamedPathAndInputs,
@@ -9,13 +9,13 @@ import {
   reqStrPathThrowing,
   strPathOr
 } from '@rescapes/ramda';
-import {omitClientFields} from './requestHelpers';
+import {omitClientFields} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task'
 const {of} = T;
-import {isAuthenticatedLocal} from '../stores/userStore';
+import {isAuthenticatedLocal} from '../stores/userStore.js';
 
 /**
  * Created by Andy Likuski on 2020.03.20

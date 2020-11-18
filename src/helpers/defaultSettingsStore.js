@@ -1,5 +1,5 @@
-import settings from './privateSettings';
-import {writeConfigToServerAndCache} from './settingsStore';
+import settings from './privateSettings.js';
+import {writeConfigToServerAndCache} from './settingsStore.js';
 import {mergeDeep} from '@rescapes/ramda'
 
 /**

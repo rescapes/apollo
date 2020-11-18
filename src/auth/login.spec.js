@@ -9,19 +9,19 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {cacheOptions, localTestConfig} from '../helpers/testHelpers';
+import {cacheOptions, localTestConfig} from '../helpers/testHelpers.js';
 import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
-import {authClientOrLoginTask, noLoginToAuthClientTask} from './login';
+import {authClientOrLoginTask, noLoginToAuthClientTask} from './login.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams,
   writeDefaultSettingsToCache
-} from '../helpers/defaultSettingsStore';
-import {defaultStateLinkResolvers} from '../client/stateLink';
-import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers';
-import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
+} from '../helpers/defaultSettingsStore.js';
+import {defaultStateLinkResolvers} from '../client/stateLink.js';
+import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers.js';
+import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);

@@ -10,14 +10,14 @@
  */
 
 import R from 'ramda';
-import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task'
 const {of} = T;
-import {containerForApolloType} from '../helpers/containerHelpers';
-import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {containerForApolloType} from '../helpers/containerHelpers.js';
+import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import {reqStrPathThrowing} from '@rescapes/ramda'
-import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
-import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
+import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 
 export const tokenAuthOutputParams = {
   token: 1,

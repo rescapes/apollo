@@ -20,13 +20,13 @@ import {
   omitUnrepresentedOutputParams,
   createReadInputTypeMapper,
   relatedObjectsToIdForm
-} from './requestHelpers';
+} from './requestHelpers.js';
 import Result from 'folktale/result';
 import T from 'folktale/concurrency/task'
 const {of} = T;
 import R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from '@rescapes/ramda'
-import {defaultSettingsOutputParams} from './defaultSettingsStore';
+import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 import {print} from 'graphql';
 import AC from '@apollo/client';
 const {gql} = AC

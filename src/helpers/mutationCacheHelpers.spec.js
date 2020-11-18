@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {expectKeys, localTestAuthTask} from './testHelpers';
+import {expectKeys, localTestAuthTask} from './testHelpers.js';
 import {
   composeWithChain,
   defaultRunConfig,
@@ -18,16 +18,16 @@ import {
   strPathOr
 } from '@rescapes/ramda'
 import R from 'ramda';
-import {makeCacheMutation} from './mutationCacheHelpers';
+import {makeCacheMutation} from './mutationCacheHelpers.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
-} from './defaultSettingsStore';
+} from './defaultSettingsStore.js';
 import T from 'folktale/concurrency/task'
 const {of} = T;
-import {createSampleSettingsTask} from './defaultSettingsStore.sample';
-import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore';
+import {createSampleSettingsTask} from './defaultSettingsStore.sample.js';
+import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore.js';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',

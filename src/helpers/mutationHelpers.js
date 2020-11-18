@@ -18,8 +18,8 @@ import {
   omitClientFields,
   resolveGraphQLType,
   VERSION_PROPS
-} from './requestHelpers';
-import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient';
+} from './requestHelpers.js';
+import {authApolloClientMutationRequestContainer, authApolloComponentMutationContainer} from '../client/apolloClient.js';
 import {
   capitalize,
   composeWithMapMDeep,

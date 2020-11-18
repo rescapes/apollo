@@ -9,13 +9,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {makeQueryContainer} from './queryHelpers';
+import {makeQueryContainer} from './queryHelpers.js';
 import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from '@rescapes/ramda'
-import {expectKeys, localTestAuthTask} from './testHelpers';
+import {expectKeys, localTestAuthTask} from './testHelpers.js';
 import R from 'ramda';
-import {makeMutationRequestContainer} from './mutationHelpers';
+import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
-import {makeQueryFromCacheContainer} from './queryCacheHelpers';
+import {makeQueryFromCacheContainer} from './queryCacheHelpers.js';
 import T from 'folktale/concurrency/task'
 const {of} = T
 

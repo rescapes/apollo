@@ -17,13 +17,13 @@ import {
   strPathOr
 } from '@rescapes/ramda';
 import {parseApiUrl} from '@rescapes/helpers';
-import {loginToAuthClientTask, noLoginToAuthClientTask} from '../auth/login';
+import {loginToAuthClientTask, noLoginToAuthClientTask} from '../auth/login.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
-} from './defaultSettingsStore';
-import {firstMatchingPathLookup} from './utilityHelpers';
+} from './defaultSettingsStore.js';
+import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
 
 const log = loggers.get('rescapeDefault');

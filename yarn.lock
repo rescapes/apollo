@@ -2058,6 +2058,110 @@
   dependencies:
     tslib "^2.0.0"
 
+"@rescapes/geospatial-sankey@>=0.7.17":
+  version "0.7.61"
+  resolved "https://npm.pkg.github.com/download/@rescapes/geospatial-sankey/0.7.61/88ca4b4cbdf76acbfaf45dc1a38b633224696a050da4985ca41f28322e70e93d#6b40eaa8ff1f47acd1e6163706173ba0b1fbf92b"
+  integrity sha512-w35l6XbXavaV9699Wto2n1GH8QBxylRrNt5eQgCJZZADq4ErzYeWPfCH/LbkZ9AC9PxNN2oYaPSpyU+JrdDx5A==
+  dependencies:
+    "@turf/bbox" "^6.0.1"
+    "@turf/bbox-polygon" "^6.0.1"
+    "@turf/center" "^6.0.1"
+    "@turf/rhumb-bearing" "^6.0.1"
+    "@turf/rhumb-distance" "^6.0.1"
+    "@turf/transform-translate" "^5.1.5"
+    d3-array "2.8.0"
+    d3-collection "1"
+    d3-scale "^3.0.1"
+    d3-shape "^2.0.0"
+    ramda "^0.27.1"
+
+"@rescapes/helpers-component@>=1.5.38":
+  version "1.5.132"
+  resolved "https://npm.pkg.github.com/download/@rescapes/helpers-component/1.5.132/60b55e61a7167e16586a1722e8519ff65e0af566d1381e60b8dd77b979b24a05#02e406983d07e8e8ee57520ca7657b5a2891f4ac"
+  integrity sha512-6RZjhEYtmDOlMrU8jKZ3K2Z1EGgp3nFjg0ndmFPux54eBC6Iz7rcWmx9ybAE9orMrzDk8KBb/GdpNUoB2i8cXQ==
+  dependencies:
+    "@chakra-ui/core" "1.0.0-rc.8"
+    "@emotion/react" "^11.0.0"
+    "@emotion/styled" "^11.0.0"
+    apollo-client "^2.6.4"
+    decamelize "4.0.0"
+    folktale "^2.1.0"
+    framer-motion "^2.9.4"
+    graphql-tag "^2.10.0"
+    graphql-tools "^7.0.1"
+    prop-types "^15.6.2"
+    ramda "^0.27.1"
+    react-adopt "^0.6.0"
+    react-apollo "^3.0.1"
+    react-router-dom "^5.2.0"
+    util "^0.12.1"
+
+"@rescapes/helpers@>=1.1.99":
+  version "1.1.113"
+  resolved "https://npm.pkg.github.com/download/@rescapes/helpers/1.1.113/229faa4f742d81cc6f3d0a3d6fdd14f699101ad08b2d877f386c3df01a581929#19f12e7036afcc5f7e892310671952deeb457b18"
+  integrity sha512-NLo/sUqjw/p9w1HqU8vpTTcHaDqlKOsRClm3OvNXhFrS6J/nrRKKQM/pLEz68uc6VqwBmnq5c2JgppEmoz1nsA==
+  dependencies:
+    "@turf/area" "^6.0.1"
+    "@turf/bbox" "^6.0.1"
+    "@turf/bbox-polygon" "^6.0.1"
+    "@turf/helpers" "^6.1.4"
+    "@turf/meta" "^6.0.2"
+    "@turf/rhumb-bearing" "^6.0.1"
+    "@turf/rhumb-distance" "^6.0.1"
+    "@turf/square-grid" "^6.0.2"
+    "@turf/transform-translate" "^5.1.5"
+    apollo-client-preset "^1.0.8"
+    d3-scale "^3.2.3"
+    folktale "^2.3.0"
+    graphql "^15.4.0"
+    graphql-geojson "^1.0.0"
+    graphql-tools "^7.0.1"
+    immutable "^4.0.0-rc.9"
+    jsdom "^16.4.0"
+    longjohn "^0.2.12"
+    moment "^2.29.1"
+    moment-duration-format "^2.3.2"
+    numeral "^2.0.6"
+    parse-decimal-number "^1.0.0"
+    prop-types "^15.6.2"
+    ramda "^0.27.1"
+    redux "^4.0.5"
+    redux-debounced "^0.5.0"
+    redux-logger "^3.0.6"
+    redux-thunk "^2.3.0"
+    reselect "^4.0.0"
+
+"@rescapes/log@>=0.1.11":
+  version "0.1.24"
+  resolved "https://npm.pkg.github.com/download/@rescapes/log/0.1.24/78dc3955d20d77996c54e41cfa0665895a52dfb21191a82a9d3a138216f5c40e#d0511a249cbd2d5435230db21e46d12a7f88e432"
+  integrity sha512-31s5v9B1hysxODSSZPQ3J61k45XJA4poT7VJamSM+4eeUEg2mF9MI6m/EyBWhwrA3zrP/9NjH+YgkZOXt5GBIg==
+  dependencies:
+    winston "^3.3.3"
+    winston-transport-browserconsole "^1.0.5"
+
+"@rescapes/ramda@>=1.5.78":
+  version "1.6.164"
+  resolved "https://npm.pkg.github.com/download/@rescapes/ramda/1.6.164/2cc897100ed0d102f6862d036b39ac3ed846267012db1984f67a7ab967ce71d8#7400db599ee929fd1a9221c845d2f1a61c666065"
+  integrity sha512-lfB1eb9JshRWxbn9PdKjLVjHqPWoVTkEVhSUu9AB263zvhrSrhi+S7cM1xsetoIyFjlz+qmECFHrB7I7ci5cIg==
+  dependencies:
+    folktale "^2.3.2"
+    fs-extra "^9.0.1"
+    namedtuplemap "^1.0.0"
+    ramda-fantasy "^0.8.0"
+    ramda-maybe "^0.18.0"
+    util "^0.12.3"
+
+"@rescapes/validate@>=1.2.23":
+  version "1.3.23"
+  resolved "https://npm.pkg.github.com/download/@rescapes/validate/1.3.23/68f2f6264fb1204266fcfac1053c7bec084b7d7662d59cf14d7820e2819e5bf3#d0b54a6499fba439a5af91971e198e50e3c548bd"
+  integrity sha512-/LOURX4GCIDsqmhnyV39xkOOb5SEKE78ATbrmsbmhn5fjoq1mNjNkg21pc0NgzAtqIjml1gxl/IiqOARiGftzQ==
+  dependencies:
+    folktale "^2.3.2"
+    prop-types "^15.6.2"
+    ramda "^0.27.1"
+    ramda-fantasy "^0.8.0"
+    ramda-fantasy-validation "^0.2.0"
+
 "@sinonjs/commons@^1.7.0":
   version "1.8.1"
   resolved "https://registry.npmjs.org/@sinonjs/commons/-/commons-1.8.1.tgz"
@@ -2094,7 +2198,7 @@
   dependencies:
     "@turf/helpers" "6.x"
 
-"@turf/bbox@*", "@turf/bbox@^6.0.1":
+"@turf/bbox@*", "@turf/bbox@6.x", "@turf/bbox@^6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@turf/bbox/-/bbox-6.0.1.tgz"
   integrity sha512-EGgaRLettBG25Iyx7VyUINsPpVj1x3nFQFiGS3ER8KCI1MximzNLsam3eXRabqQDjyAKyAE1bJ4EZEpGvspQxw==
@@ -2129,6 +2233,14 @@
   dependencies:
     "@turf/helpers" "6.x"
     "@turf/invariant" "6.x"
+
+"@turf/center@^6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@turf/center/-/center-6.0.1.tgz#40a17d0a170df5bba09ad93e133b904d8eb14601"
+  integrity sha512-bh/SLBwRC2QYcbVOxMFBtiARuMzMzfh4YuVtguYAjyBEIA4HXnnEZT+yZlzfcG3oikG7XgV8vg9eegcmwQe+MQ==
+  dependencies:
+    "@turf/bbox" "6.x"
+    "@turf/helpers" "6.x"
 
 "@turf/clone@^5.1.5":
   version "5.1.5"
@@ -8331,106 +8443,6 @@ require-main-filename@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/require-main-filename/-/require-main-filename-2.0.0.tgz"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
-
-rescape-geospatial-sankey@>=0.7.17:
-  version "0.7.56"
-  resolved "https://registry.npmjs.org/rescape-geospatial-sankey/-/rescape-geospatial-sankey-0.7.56.tgz#aab71bb603fe305a0e8e39f701bcc6d17d184d3a"
-  integrity sha512-Smog0kJnsJd1fCOGnNXObGcMO8SK3e8/0WgCOPP0O8YNo5Q09lMeqEAb/oo8ORw9kkVRxNb1P65CPzXqyFapcA==
-  dependencies:
-    "@turf/transform-translate" "^5.1.5"
-    d3-array "2.8.0"
-    d3-collection "1"
-    d3-scale "^3.0.1"
-    d3-shape "^2.0.0"
-    ramda "^0.27.1"
-
-rescape-helpers-component@>=1.5.38:
-  version "1.5.129"
-  resolved "https://registry.npmjs.org/rescape-helpers-component/-/rescape-helpers-component-1.5.129.tgz#951a55cdec7b0b7d2e954273c5a4af8c36406d97"
-  integrity sha512-1MkiBCshz5k3Tt1nOrUrlrpYkojwtfQehDFLaVenOeVZSAePFQq1MdnyhoyVOw4WfyP/EfWPWxcQRYUemtr+FA==
-  dependencies:
-    "@chakra-ui/core" "1.0.0-rc.8"
-    "@emotion/react" "^11.0.0"
-    "@emotion/styled" "^11.0.0"
-    apollo-client "^2.6.4"
-    decamelize "4.0.0"
-    folktale "^2.1.0"
-    framer-motion "^2.9.4"
-    graphql-tag "^2.10.0"
-    graphql-tools "^7.0.1"
-    prop-types "^15.6.2"
-    ramda "^0.27.1"
-    react-adopt "^0.6.0"
-    react-apollo "^3.0.1"
-    react-router-dom "^5.2.0"
-    util "^0.12.1"
-
-rescape-helpers@>=1.1.99:
-  version "1.1.111"
-  resolved "https://registry.npmjs.org/rescape-helpers/-/rescape-helpers-1.1.111.tgz#f5a1975c06f329448480ce22bc88264a16eaac4d"
-  integrity sha512-ei3u4r2R2OXxw/r33jxVQVpKvu9weZPGWMKUO5YxnE/73AH+sAykU79g8vxquojf1003vtdSNXt+TY0mn+4B9Q==
-  dependencies:
-    "@turf/area" "^6.0.1"
-    "@turf/bbox" "^6.0.1"
-    "@turf/bbox-polygon" "^6.0.1"
-    "@turf/helpers" "^6.1.4"
-    "@turf/meta" "^6.0.2"
-    "@turf/rhumb-bearing" "^6.0.1"
-    "@turf/rhumb-distance" "^6.0.1"
-    "@turf/square-grid" "^6.0.2"
-    "@turf/transform-translate" "^5.1.5"
-    apollo-client-preset "^1.0.8"
-    d3-scale "^3.2.3"
-    folktale "^2.3.0"
-    graphql "^15.4.0"
-    graphql-geojson "^1.0.0"
-    graphql-tools "^7.0.1"
-    immutable "^4.0.0-rc.9"
-    jsdom "^16.4.0"
-    longjohn "^0.2.12"
-    moment "^2.29.1"
-    moment-duration-format "^2.3.2"
-    numeral "^2.0.6"
-    parse-decimal-number "^1.0.0"
-    prop-types "^15.6.2"
-    ramda "^0.27.1"
-    redux "^4.0.5"
-    redux-debounced "^0.5.0"
-    redux-logger "^3.0.6"
-    redux-thunk "^2.3.0"
-    reselect "^4.0.0"
-
-rescape-log@>=0.1.11:
-  version "0.1.21"
-  resolved "https://registry.npmjs.org/rescape-log/-/rescape-log-0.1.21.tgz#38bd611001d4e9671eb7b50290962913a2584c43"
-  integrity sha512-oSx0o6ORHtB4M5Y7Q6CeX+dsMshSsMdnGzONUNbeXJNncSrCAW+bUgd8I+Yr8RwfGDWPo6ewzaZPQR5psvtgUw==
-  dependencies:
-    winston "^3.3.3"
-    winston-transport-browserconsole "^1.0.5"
-
-rescape-ramda@>=1.5.78, rescape-ramda@^1.6.161:
-  version "1.6.161"
-  resolved "https://registry.npmjs.org/rescape-ramda/-/rescape-ramda-1.6.161.tgz#b595713d40966829149be047f69e013283a91869"
-  integrity sha512-Prg3FsOr2fqifkzPUAg4B1lQNbbsJO416ztYrnm0T+Fwwy62nnCXz5mFkkYPrAjVqAF7nkyvE3EJ/E/pRUofFQ==
-  dependencies:
-    folktale "^2.3.2"
-    fs-extra "^9.0.1"
-    namedtuplemap "^1.0.0"
-    ramda-fantasy "^0.8.0"
-    ramda-maybe "^0.18.0"
-    util "^0.12.3"
-
-rescape-validate@>=1.2.23:
-  version "1.3.19"
-  resolved "https://registry.npmjs.org/rescape-validate/-/rescape-validate-1.3.19.tgz#d7daf0abb38d1be9798043a8fd66354a554b663c"
-  integrity sha512-TmugDXhliRwF2HPbCXYXjzfvhFgMFZ7wg6TPvlQoStTrFrywMD3swhVYjJbpLWfBac6koG+pNxsACjsmXXtT+w==
-  dependencies:
-    folktale "^2.3.2"
-    prop-types "^15.6.2"
-    ramda "^0.27.1"
-    ramda-fantasy "^0.8.0"
-    ramda-fantasy-validation "^0.2.0"
-    rescape-ramda "^1.6.161"
 
 reselect@^4.0.0:
   version "4.0.0"

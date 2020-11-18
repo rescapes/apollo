@@ -20,8 +20,8 @@ import {reqStrPathThrowing} from '@rescapes/ramda'
 import R from 'ramda';
 import T from 'folktale/concurrency/task'
 const {fromPromised, of} = T;
-import {authClientOrLoginTask} from '../auth/login';
-import {cacheOptions} from '../helpers/testHelpers';
+import {authClientOrLoginTask} from '../auth/login.js';
+import {cacheOptions} from '../helpers/testHelpers.js';
 
 const http = uri => new HttpLink({
   uri,

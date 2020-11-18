@@ -10,17 +10,17 @@
  */
 
 import R from 'ramda';
-import {noAuthApolloClientTask} from '../client/apolloClient';
+import {noAuthApolloClientTask} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task';
 import AC from '@apollo/client';
 import { composeWithChain, mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing } from '@rescapes/ramda'
 import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
-} from '../client/apolloClientAuthentication';
-import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore';
-import {currentUserQueryContainer, userOutputParams} from '../stores/userStore';
-import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore';
+} from '../client/apolloClientAuthentication.js';
+import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
+import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
+import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
 
 const {of} = T;
 const {ApolloClient} = AC;

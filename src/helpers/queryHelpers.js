@@ -23,7 +23,7 @@ import {
   strPathOr
 } from '@rescapes/ramda'
 import R from 'ramda';
-import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers';
+import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
@@ -31,7 +31,7 @@ import PropTypes from 'prop-types';
 import AC from '@apollo/client';
 const {gql} = AC
 import {print} from 'graphql';
-import {authApolloQueryContainer} from '../client/apolloClient';
+import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task'
 const {of} = T;
 

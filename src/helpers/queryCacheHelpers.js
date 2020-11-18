@@ -11,18 +11,18 @@
 
 import {formatWithOptions} from 'util';
 import R from 'ramda';
-import {authApolloQueryContainer} from '../client/apolloClient';
+import {authApolloQueryContainer} from '../client/apolloClient.js';
 import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from '@rescapes/ramda'
 import AC from '@apollo/client';
 import {print} from 'graphql';
 import {
   authApolloClientOrComponentQueryCacheContainer,
   authApolloClientOrComponentReadFragmentCacheContainer
-} from '../client/apolloClientCache';
-import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers';
+} from '../client/apolloClientCache.js';
+import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers.js';
 import {loggers} from '@rescapes/log';
-import {_winnowRequestProps} from './requestHelpers';
-import {pickRenderProps} from './componentHelpersMonadic';
+import {_winnowRequestProps} from './requestHelpers.js';
+import {pickRenderProps} from './componentHelpersMonadic.js';
 
 const {gql} = AC
 

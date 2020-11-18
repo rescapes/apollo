@@ -11,15 +11,15 @@
 import AC from '@apollo/client';
 const {gql} = AC
 import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from '@rescapes/ramda'
-import {localTestAuthTask} from '../helpers/testHelpers';
-import {makeMutationRequestContainer} from '../helpers/mutationHelpers';
+import {localTestAuthTask} from '../helpers/testHelpers.js';
+import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task'
 const {of} = T;
 
 import R from 'ramda';
-import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore';
-import {makeQueryContainer} from '../helpers/queryHelpers';
-import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers';
+import {readInputTypeMapper, regionOutputParams} from '../helpers/samples/sampleRegionStore.js';
+import {makeQueryContainer} from '../helpers/queryHelpers.js';
+import {makeQueryFromCacheContainer, makeQueryWithClientDirectiveContainer} from '../helpers/queryCacheHelpers.js';
 
 /**
  * Requires a running graphql server at uri

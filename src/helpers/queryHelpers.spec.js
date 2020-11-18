@@ -14,11 +14,11 @@ import {
   composePropsFilterIntoApolloConfigOptionsVariables,
   makeQuery,
   makeQueryContainer
-} from './queryHelpers';
+} from './queryHelpers.js';
 
 import AC from '@apollo/client';
 import {print} from 'graphql';
-import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData';
+import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData.js';
 import {
   composeWithChain,
   defaultRunConfig,
@@ -26,9 +26,9 @@ import {
   mapToNamedResponseAndInputs,
   strPathOr
 } from '@rescapes/ramda'
-import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers';
+import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers.js';
 import R from 'ramda';
-import {makeMutationRequestContainer} from './mutationHelpers';
+import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
 import T from 'folktale/concurrency/task';
 

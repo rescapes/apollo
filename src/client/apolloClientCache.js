@@ -14,12 +14,12 @@ import {inspect} from 'util';
 import {print} from 'graphql';
 import {loggers} from '@rescapes/log';
 import {e} from '@rescapes/helpers-component';
-import {containerForApolloType} from '../helpers/containerHelpers';
-import {getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {containerForApolloType} from '../helpers/containerHelpers.js';
+import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import AC from '@apollo/client';
-import {_winnowRequestProps} from '../helpers/requestHelpers';
+import {_winnowRequestProps} from '../helpers/requestHelpers.js';
 import R from 'ramda';
-import {apolloClientReadFragmentCacheContainer} from './apolloClient';
+import {apolloClientReadFragmentCacheContainer} from './apolloClient.js';
 import {reqStrPathThrowing} from '@rescapes/ramda';
 
 
