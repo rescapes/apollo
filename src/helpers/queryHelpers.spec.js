@@ -30,7 +30,7 @@ import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers.js';
 import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
-import T from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task/index.js';
 
 const {gql} = AC
 const {of} = T;

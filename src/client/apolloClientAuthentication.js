@@ -14,7 +14,7 @@ import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.j
 import AC from '@apollo/client';
 const {ApolloClient} = AC
 import R from 'ramda';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {loggers} from '@rescapes/log';
 

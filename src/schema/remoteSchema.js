@@ -18,7 +18,7 @@ import {setContext} from '@apollo/link-context';
 //import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
 import {reqStrPathThrowing} from '@rescapes/ramda'
 import R from 'ramda';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {fromPromised, of} = T;
 import {authClientOrLoginTask} from '../auth/login.js';
 import {cacheOptions} from '../helpers/testHelpers.js';

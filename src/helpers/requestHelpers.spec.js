@@ -21,8 +21,8 @@ import {
   createReadInputTypeMapper,
   relatedObjectsToIdForm
 } from './requestHelpers.js';
-import Result from 'folktale/result';
-import T from 'folktale/concurrency/task'
+import Result from 'folktale/result/index.js';
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import R from 'ramda';
 import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from '@rescapes/ramda'

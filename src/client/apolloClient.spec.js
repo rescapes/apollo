@@ -13,7 +13,7 @@ const {gql} = AC
 import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise} from '@rescapes/ramda'
 import {localTestAuthTask} from '../helpers/testHelpers.js';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 
 import R from 'ramda';

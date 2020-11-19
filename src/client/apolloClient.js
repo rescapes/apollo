@@ -13,10 +13,10 @@ import AC from '@apollo/client';
 import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import R from 'ramda';
-import T from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task/index.js';
 
 const {fromPromised, of} = T;
-import maybe from 'folktale/maybe';
+import maybe from 'folktale/maybe/index.js';
 import {Mutation, Query} from "react-apollo";
 import {e} from '@rescapes/helpers-component';
 

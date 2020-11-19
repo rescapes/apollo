@@ -18,9 +18,9 @@ import {v} from '@rescapes/validate';
 import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from '@rescapes/ramda'
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
-import maybe from 'folktale/maybe';
+import maybe from 'folktale/maybe/index.js';
 import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';

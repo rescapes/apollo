@@ -11,7 +11,7 @@
 
 import R from 'ramda';
 import {noAuthApolloClientTask} from '../client/apolloClient.js';
-import T from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task/index.js';
 import AC from '@apollo/client';
 import { composeWithChain, mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing } from '@rescapes/ramda'
 import {

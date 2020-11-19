@@ -32,7 +32,7 @@ import AC from '@apollo/client';
 const {gql} = AC
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');

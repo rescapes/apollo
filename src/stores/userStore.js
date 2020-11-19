@@ -10,7 +10,7 @@
  */
 
 import AC from '@apollo/client';
-import T from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task/index.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers.js';

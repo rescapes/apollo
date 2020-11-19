@@ -1,5 +1,5 @@
 import R from 'ramda';
-import Maybe from 'folktale/maybe';
+import Maybe from 'folktale/maybe/index.js';
 
 /**
  * Created by Andy Likuski on 2020.04.01

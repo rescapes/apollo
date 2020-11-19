@@ -24,7 +24,7 @@ import {
 } from './userStore.js';
 import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers.js';
 import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers.js';
-import T from 'folktale/concurrency/task';
+import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
 

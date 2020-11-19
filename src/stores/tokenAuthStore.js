@@ -11,7 +11,7 @@
 
 import R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';

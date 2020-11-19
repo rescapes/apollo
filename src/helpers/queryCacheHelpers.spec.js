@@ -16,7 +16,7 @@ import R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
 import {makeQueryFromCacheContainer} from './queryCacheHelpers.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T
 
 describe('queryCacheHelpers', () => {

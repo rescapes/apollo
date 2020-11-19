@@ -11,8 +11,8 @@
 
 import R from 'ramda';
 import {strPathOr, reqStrPathThrowing, composeWithChain, defaultRunConfig} from '@rescapes/ramda'
-import Maybe from 'folktale/maybe';
-import T from 'folktale/concurrency/task'
+import Maybe from 'folktale/maybe/index.js';
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic.js';
 import {inspect} from 'util';

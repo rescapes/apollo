@@ -10,7 +10,7 @@
  */
 
 import R from 'ramda';
-import Result from 'folktale/result';
+import Result from 'folktale/result/index.js';
 import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda'
 
 /**

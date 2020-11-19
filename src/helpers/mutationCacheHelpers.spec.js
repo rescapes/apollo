@@ -24,7 +24,7 @@ import {
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
 } from './defaultSettingsStore.js';
-import T from 'folktale/concurrency/task'
+import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {createSampleSettingsTask} from './defaultSettingsStore.sample.js';
 import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore.js';
