@@ -1,4 +1,4 @@
-import R from 'ramda';
+import * as R from 'ramda';
 import Maybe from 'folktale/maybe/index.js';
 
 /**

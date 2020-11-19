@@ -10,9 +10,10 @@
  */
 
 import {inspect} from 'util';
-import R from 'ramda';
-import AC from '@apollo/client';
-const {gql} = AC
+import * as R from 'ramda';
+import * as AC from '@apollo/client';
+import {defaultNode} from './utilityHelpers.js'
+const {gql} = defaultNode(AC)
 import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing} from '@rescapes/ramda'

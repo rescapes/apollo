@@ -1,5 +1,5 @@
 import {filterOutReadOnlyVersionProps, makeMutationRequestContainer} from '../mutationHelpers.js';
-import R from 'ramda';
+import * as R from 'ramda';
 import {makeQueryContainer} from '../queryHelpers.js';
 import {loggers} from '@rescapes/log';
 import {relatedObjectsToIdForm} from '../requestHelpers.js';

@@ -8,9 +8,9 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {findMapped, strPathOr, toArrayIfNot} from '@rescapes/ramda'
-import R from 'ramda';
-import {inspect} from 'util';
+import {findMapped, strPathOr, toArrayIfNot} from '@rescapes/ramda';
+import * as R from 'ramda';
+import {isNode} from "browser-or-node";
 
 /**
  * Used to give an id to an item based on the id of a child object in that item. Example
@@ -51,5 +51,9 @@ export const firstMatchingPathLookup = (idPathLookup, propKey, item) => {
   if (R.isNil(value)) {
     return null;
   }
-  return value
+  return value;
+};
+
+export const defaultNode = module => {
+  return isNode ? module.default : module;
 };

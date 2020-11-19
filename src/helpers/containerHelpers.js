@@ -11,7 +11,7 @@
 
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
-import R from 'ramda';
+import * as R from 'ramda';
 
 /**
  * Returns a Task.of if we are doing an ApolloClient request.

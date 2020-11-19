@@ -10,14 +10,15 @@
  */
 
 import {parseApiUrl} from '@rescapes/helpers';
-import AC from '@apollo/client';
-const {HttpLink} = AC
+import * as AC from '@apollo/client';
+import {defaultNode} from '../helpers/utilityHelpers.js'
+const {HttpLink} = defaultNode(AC)
 import fetch from 'node-fetch';
 import {setContext} from '@apollo/link-context';
 // Can't get this to work with webpack
 //import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
 import {reqStrPathThrowing} from '@rescapes/ramda'
-import R from 'ramda';
+import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js'
 const {fromPromised, of} = T;
 import {authClientOrLoginTask} from '../auth/login.js';

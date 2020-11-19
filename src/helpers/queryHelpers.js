@@ -22,14 +22,15 @@ import {
   reqStrPathThrowing,
   strPathOr
 } from '@rescapes/ramda'
-import R from 'ramda';
+import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
-import AC from '@apollo/client';
-const {gql} = AC
+import * as AC from '@apollo/client';
+import {defaultNode} from './utilityHelpers.js'
+const {gql} = defaultNode(AC)
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js'

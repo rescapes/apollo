@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import AC from '@apollo/client';
+import * as AC from '@apollo/client';
 import T from 'folktale/concurrency/task/index.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
@@ -18,10 +18,11 @@ import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers.js';
 import {strPathOr} from '@rescapes/ramda';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
-import R from 'ramda';
+import * as R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 
-const {MissingFieldError} = AC
+import {defaultNode} from '../helpers/utilityHelpers.js'
+const {MissingFieldError} = defaultNode(AC)
 const {of} = T;
 
 

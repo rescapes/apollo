@@ -17,7 +17,7 @@ import {
   mapToNamedResponseAndInputs,
   strPathOr
 } from '@rescapes/ramda'
-import R from 'ramda';
+import * as R from 'ramda';
 import {makeCacheMutation} from './mutationCacheHelpers.js';
 import {
   defaultSettingsCacheIdProps,

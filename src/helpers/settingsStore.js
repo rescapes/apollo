@@ -11,7 +11,7 @@ import {
 } from '@rescapes/ramda';
 import {omitClientFields} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
-import R from 'ramda';
+import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;

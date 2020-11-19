@@ -11,7 +11,7 @@
 
 import {inspect, formatWithOptions} from 'util';
 import safeJsonStringify from 'safe-json-stringify'
-import R from 'ramda';
+import * as R from 'ramda';
 import {
   _winnowRequestProps,
   formatOutputParams,
@@ -30,8 +30,9 @@ import {
   reqStrPathThrowing,
   retryTask
 } from '@rescapes/ramda';
-import AC from '@apollo/client';
-const {gql} = AC
+import * as AC from '@apollo/client';
+import {defaultNode} from './utilityHelpers.js'
+const {gql} = defaultNode(AC)
 import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';

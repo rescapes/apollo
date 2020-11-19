@@ -16,7 +16,7 @@ import {
   makeQueryContainer
 } from './queryHelpers.js';
 
-import AC from '@apollo/client';
+import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {sampleInputParamTypeMapper, sampleResourceOutputParams} from './samples/sampleData.js';
 import {
@@ -27,12 +27,13 @@ import {
   strPathOr
 } from '@rescapes/ramda'
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers.js';
-import R from 'ramda';
+import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
 import T from 'folktale/concurrency/task/index.js';
 
-const {gql} = AC
+import {defaultNode} from './utilityHelpers.js'
+const {gql} = defaultNode(AC)
 const {of} = T;
 
 describe('queryHelpers', () => {

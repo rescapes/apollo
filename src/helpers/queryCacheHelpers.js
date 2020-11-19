@@ -10,10 +10,10 @@
  */
 
 import {formatWithOptions} from 'util';
-import R from 'ramda';
+import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from '@rescapes/ramda'
-import AC from '@apollo/client';
+import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {
   authApolloClientOrComponentQueryCacheContainer,
@@ -24,7 +24,8 @@ import {loggers} from '@rescapes/log';
 import {_winnowRequestProps} from './requestHelpers.js';
 import {pickRenderProps} from './componentHelpersMonadic.js';
 
-const {gql} = AC
+import {defaultNode} from './utilityHelpers.js'
+const {gql} = defaultNode(AC)
 
 const log = loggers.get('rescapeDefault');
 

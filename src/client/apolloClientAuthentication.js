@@ -11,9 +11,10 @@
 import {composeWithChain, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
 import {getOrCreateApolloClientTask} from './apolloClient.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import AC from '@apollo/client';
-const {ApolloClient} = AC
-import R from 'ramda';
+import * as AC from '@apollo/client';
+import {defaultNode} from '../helpers/utilityHelpers.js'
+const {ApolloClient} = defaultNode(AC)
+import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {loggers} from '@rescapes/log';
