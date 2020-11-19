@@ -36,7 +36,6 @@ import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {loggers} from '@rescapes/log';
-import {flatten} from 'ramda/src/index';
 
 const log = loggers.get('rescapeDefault');
 
