@@ -24,7 +24,8 @@ import {
   defaultRunConfig,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  strPathOr
+  strPathOr,
+  defaultNode,
 } from '@rescapes/ramda'
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers.js';
 import * as R from 'ramda';
@@ -32,7 +33,6 @@ import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
 import T from 'folktale/concurrency/task/index.js';
 
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 const {of} = T;
 

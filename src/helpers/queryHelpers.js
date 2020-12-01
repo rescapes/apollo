@@ -20,7 +20,8 @@ import {
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
-  strPathOr
+  strPathOr,
+  defaultNode
 } from '@rescapes/ramda'
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
@@ -29,7 +30,6 @@ import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
 import * as AC from '@apollo/client';
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';

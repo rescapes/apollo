@@ -13,7 +13,7 @@ import * as R from 'ramda';
 import {noAuthApolloClientTask} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
 import * as AC from '@apollo/client';
-import { composeWithChain, mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing } from '@rescapes/ramda'
+import { composeWithChain, mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing, defaultNode } from '@rescapes/ramda'
 import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
@@ -23,7 +23,6 @@ import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.j
 import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
 
 const {of} = T;
-import {defaultNode} from '../helpers/utilityHelpers.js'
 const {ApolloClient} = defaultNode(AC);
 
 /**

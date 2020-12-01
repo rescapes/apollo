@@ -38,7 +38,7 @@ import {persistCache} from 'apollo-cache-persist';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 
-import {defaultNode} from '../helpers/utilityHelpers.js'
+import {defaultNode} from '@rescapes/ramda'
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
 const {Just} = maybe;
 

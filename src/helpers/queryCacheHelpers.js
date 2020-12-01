@@ -12,7 +12,7 @@
 import {inspect} from 'util';
 import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from '@rescapes/ramda'
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
 import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {
@@ -24,7 +24,6 @@ import {loggers} from '@rescapes/log';
 import {_winnowRequestProps} from './requestHelpers.js';
 import {pickRenderProps} from './componentHelpersMonadic.js';
 
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 
 const log = loggers.get('rescapeDefault');

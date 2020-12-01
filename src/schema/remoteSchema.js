@@ -11,7 +11,7 @@
 
 import {parseApiUrl} from '@rescapes/helpers';
 import * as AC from '@apollo/client';
-import {defaultNode} from '../helpers/utilityHelpers.js'
+import {defaultNode} from '@rescapes/ramda'
 const {HttpLink} = defaultNode(AC)
 import fetch from 'node-fetch';
 import {setContext} from '@apollo/link-context';

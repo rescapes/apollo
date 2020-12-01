@@ -16,12 +16,10 @@ import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers.js';
 import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers.js';
-import {strPathOr} from '@rescapes/ramda';
+import {strPathOr, defaultNode} from '@rescapes/ramda';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import * as R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-
-import {defaultNode} from '../helpers/utilityHelpers.js'
 const {MissingFieldError} = defaultNode(AC)
 const {of} = T;
 
