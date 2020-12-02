@@ -152,7 +152,33 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
  */
 export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          update: (store, response) => {
+            // Clear the token so apolloClient is no longer authenticated
+            localStorage.setItem('token', null);
+
+            // TODO Don't know if we need this in the cache
+            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+            makeCacheMutation(
+              // Use the store for writing if we don't have an apolloClient
+              R.merge({store}, apolloConfig),
+              {
+                name: 'tokenAuth',
+                // output for the read fragment
+                outputParams,
+                // Write without @client fields
+                force: true,
+                singleton: true
+              },
+              null
+            );
+          }
+        }
+      }
+    ),
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
@@ -172,7 +198,33 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
  */
 export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          update: (store, response) => {
+            // Clear the token so apolloClient is no longer authenticated
+            localStorage.setItem('token', null);
+
+            // TODO Don't know if we need this in the cache
+            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+            makeCacheMutation(
+              // Use the store for writing if we don't have an apolloClient
+              R.merge({store}, apolloConfig),
+              {
+                name: 'tokenAuth',
+                // output for the read fragment
+                outputParams,
+                // Write without @client fields
+                force: true,
+                singleton: true
+              },
+              null
+            );
+          }
+        }
+      }
+    ),
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,

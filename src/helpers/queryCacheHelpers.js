@@ -156,6 +156,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.omit(['__typename', 'id'], props),
     reqStrPathThrowing('id', props)
   );
+
   if (R.has('data', response || {})) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
   }
