@@ -11,11 +11,12 @@
 
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
-import T from 'folktale/concurrency/task/index.js'
+import T from 'folktale/concurrency/task/index.js';
+
 const {of} = T;
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-import {reqStrPathThrowing} from '@rescapes/ramda'
+import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 
@@ -106,31 +107,38 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
           variables: props => {
             return R.pick(['username', 'password'], props);
           },
-          update: (store, response) => {
-            const tokenAuth = reqStrPathThrowing(
-              'data.tokenAuth',
-              response
-            );
+          update: (store, response) => R.compose(
+            // Accept an update method from apolloConfig.options so that queries can be refetched
+            ({store, response}) => {
+              return strPathOr(R.identity, 'options.update', apolloConfig)(store, response);
+            },
+            ({store, response}) => {
+              const tokenAuth = reqStrPathThrowing(
+                'data.tokenAuth',
+                response
+              );
 
-            // This is what the Apollo Client reads to be authenticated
-            localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
+              // This is what the Apollo Client reads to be authenticated
+              localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
 
-            // TODO Don't know if we need this in the cache
-            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
-            makeCacheMutation(
-              // Use the store for writing if we don't have an apolloClient
-              R.merge({store}, apolloConfig),
-              {
-                name: 'tokenAuth',
-                // output for the read fragment
-                outputParams,
-                // Write without @client fields
-                force: true,
-                singleton: true
-              },
-              tokenAuth
-            );
-          }
+              // TODO Don't know if we need this in the cache
+              // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+              makeCacheMutation(
+                // Use the store for writing if we don't have an apolloClient
+                R.merge({store}, apolloConfig),
+                {
+                  name: 'tokenAuth',
+                  // output for the read fragment
+                  outputParams,
+                  // Write without @client fields
+                  force: true,
+                  singleton: true
+                },
+                tokenAuth
+              );
+              return ({store, response});
+            }
+          )({store, response})
         }
       }
     ),
@@ -160,12 +168,12 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
       {
         options: {
           variables: props => {
-            return {}
+            return {};
           },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
-            localStorage.removeItem('token')
+            localStorage.removeItem('token');
           }
         }
       }
@@ -196,12 +204,12 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
       {
         options: {
           variables: props => {
-            return {}
+            return {};
           },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
-            localStorage.removeItem('token')
+            localStorage.removeItem('token');
           }
         }
       }
