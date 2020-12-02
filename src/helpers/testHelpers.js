@@ -66,7 +66,7 @@ export const localTestAuthTask = () => createAuthTask(localTestConfig);
  */
 export const localTestNoAuthTask = () => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
-  localStorage.setItem('token', null);
+  localStorage.removeItem('token')
   return createNoAuthTask(localTestConfig);
 };
 

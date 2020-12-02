@@ -165,7 +165,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
-            localStorage.setItem('token', null);
+            localStorage.removeItem('token')
           }
         }
       }
@@ -201,7 +201,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
-            localStorage.setItem('token', null);
+            localStorage.removeItem('token')
           }
         }
       }
