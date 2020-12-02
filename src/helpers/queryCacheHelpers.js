@@ -147,7 +147,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.pick(['__typename'], props)
   )}`;
 
-  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(props, false, 10)}\n`);
+  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick(['id'], props), false, 2)}\n`);
   const response = authApolloClientOrComponentReadFragmentCacheContainer(
     apolloConfig,
     {
