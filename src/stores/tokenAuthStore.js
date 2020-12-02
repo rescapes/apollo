@@ -156,6 +156,9 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
       apolloConfig,
       {
         options: {
+          variables: props => {
+            return {}
+          },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             localStorage.setItem('token', null);
@@ -202,6 +205,9 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
       apolloConfig,
       {
         options: {
+          variables: props => {
+            return {}
+          },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
             localStorage.setItem('token', null);
