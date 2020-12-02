@@ -63,7 +63,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${insepct(props, false, 10)}\n`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props, false, 10)}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries
   const componentOrTask = authApolloQueryContainer(

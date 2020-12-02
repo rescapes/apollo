@@ -23,6 +23,9 @@ export const tokenAuthOutputParams = {
   token: 1,
   payload: 1
 };
+export const deleteTokenCookieOutputParams = {
+  deleted: 1
+};
 
 export const tokenAuthReadInputTypeMapper = {};
 
@@ -150,7 +153,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
  * @param {Object} props Should always be empty
  * @return {TasK|Object} Task or Apollo Component resolving to
  */
-export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = deleteTokenCookieOutputParams}, props) => {
   return makeMutationRequestContainer(
     R.merge(
       apolloConfig,
@@ -161,23 +164,8 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
           },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
+            // This will reset the apolloClient to unauthenticated and clear the cache
             localStorage.setItem('token', null);
-
-            // TODO Don't know if we need this in the cache
-            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
-            makeCacheMutation(
-              // Use the store for writing if we don't have an apolloClient
-              R.merge({store}, apolloConfig),
-              {
-                name: 'tokenAuth',
-                // output for the read fragment
-                outputParams,
-                // Write without @client fields
-                force: true,
-                singleton: true
-              },
-              null
-            );
           }
         }
       }
@@ -199,7 +187,9 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
  * @param {Object} props Should always be empty
  * @return {TasK|Object} Task or Apollo Component resolving to
  */
-export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = deleteTokenCookieOutputParams}, props) => {
+  // TODO the server is currently complaining graphql.error.located_error.GraphQLLocatedError: Error decoding signature
+  // I don't currently use this API method anyway
   return makeMutationRequestContainer(
     R.merge(
       apolloConfig,
@@ -210,23 +200,8 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
           },
           update: (store, response) => {
             // Clear the token so apolloClient is no longer authenticated
+            // This will reset the apolloClient to unauthenticated and clear the cache
             localStorage.setItem('token', null);
-
-            // TODO Don't know if we need this in the cache
-            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
-            makeCacheMutation(
-              // Use the store for writing if we don't have an apolloClient
-              R.merge({store}, apolloConfig),
-              {
-                name: 'tokenAuth',
-                // output for the read fragment
-                outputParams,
-                // Write without @client fields
-                force: true,
-                singleton: true
-              },
-              null
-            );
           }
         }
       }

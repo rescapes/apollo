@@ -15,7 +15,6 @@ import enzyme from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 import 'localstorage-polyfill';
 import 'regenerator-runtime';
-import {rescapeDefaultTransports} from '@rescapes/log';
 
 import 'jest-enzyme';
 import global from 'jsdom-global';
@@ -23,9 +22,6 @@ import global from 'jsdom-global';
 global();
 enzyme.configure({adapter: new Adapter()});
 
-// Set the loggers to debug level
-rescapeDefaultTransports.fileCombined.level = 'debug';
-rescapeDefaultTransports.console.level = 'debug';
 Error.stackTraceLimit = Infinity;
 
 //enzyme.configure({adapter: new Adapter()});
