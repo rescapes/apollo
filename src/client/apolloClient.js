@@ -20,11 +20,12 @@ import {e} from '@rescapes/helpers-component';
 
 import {print} from 'graphql';
 import {
+  applyDeepWithKeyWithRecurseArraysAndMapObjs,
   compact,
   composeWithMap,
   defaultNode,
   mapToNamedResponseAndInputs,
-  memoizedWith,
+  memoizedWith, pickDeepPaths,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
@@ -211,22 +212,29 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
   const inMemoryCache = new InMemoryCache(options);
   R.forEachObjIndexed(
     (typePolicy, typeName) => {
-      R.forEachObjIndexed(keyField => {
+      // keyfields indicates a singleton that we need to initialize to a null query result
+      if (strPathOr(false, 'keyFields', typePolicy)) {
+        const outputParams = reqStrPathThrowing('outputParams', typePolicy);
         makeCacheMutation(
           // Use the store for writing if we don't have an apolloClient
           {store: inMemoryCache},
           {
             name: reqStrPathThrowing('name', typePolicy),
             // output for the read fragment
-            outputParams: reqStrPathThrowing('outputParams', typePolicy),
+            outputParams: outputParams,
             // Write without @client fields
             force: true,
             singleton: true
           },
-          {__typename: typeName, [keyField]: null}
+          R.merge(
+            {__typename: typeName},
+            // Set all outputParams to null for our initial query values
+            applyDeepWithKeyWithRecurseArraysAndMapObjs((l, r, key) => null, (k, v) => v, outputParams)
+          )
         );
-      }, R.propOr([], 'keyFields', typePolicy));
+      }
     },
+
     typePolicies
   );
   return inMemoryCache;
