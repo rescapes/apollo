@@ -21,6 +21,7 @@ import {
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
 
 const {of} = T;
 const {ApolloClient} = defaultNode(AC);
@@ -75,7 +76,7 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
     mapToNamedResponseAndInputs('apolloConfig',
       ({uri, stateLinkResolvers}) => {
         // Use unauthenticated ApolloClient for login
-        return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers});
+        return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
       }
     )
   ])({uri, stateLinkResolvers, props});
@@ -158,7 +159,7 @@ export const authClientOrLoginTask = R.curry((
       // map login values to token
       mapToNamedResponseAndInputs('apolloConfig',
         ({uri, stateLinkResolvers}) => {
-          return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers});
+          return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
         }
       )
     ])

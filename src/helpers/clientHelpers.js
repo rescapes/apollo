@@ -54,10 +54,14 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields, idPathLookup, cacheOnlyFieldLookup, keyFields}) => {
+      ({type, fields, idPathLookup, cacheOnlyFieldLookup, keyFields, name, outputParams}) => {
         return {
           [type]: {
             keyFields,
+            // name and outputParams are only for singletons that need to be initialized to null in the cache
+            // so that observing queries can respond to the first write (namely for ObtainJSONWebToken)
+            name,
+            outputParams,
             // Each field
             fields: fields && R.mergeAll(
               R.map(

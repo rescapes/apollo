@@ -14,8 +14,6 @@ import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
-
-const {fromPromised, of} = T;
 import maybe from 'folktale/maybe/index.js';
 import {Mutation, Query} from "react-apollo";
 import {e} from '@rescapes/helpers-component';
@@ -24,13 +22,14 @@ import {print} from 'graphql';
 import {
   compact,
   composeWithMap,
+  defaultNode,
   mapToNamedResponseAndInputs,
   memoizedWith,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
   strPathOr
-} from '@rescapes/ramda'
+} from '@rescapes/ramda';
 import fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
@@ -38,7 +37,8 @@ import {persistCache} from 'apollo-cache-persist';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 
-import {defaultNode} from '@rescapes/ramda'
+const {fromPromised, of} = T;
+
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
 const {Just} = maybe;
 
@@ -80,7 +80,7 @@ export const getOrCreateApolloClientTask = memoizedWith(
       )
     );
   },
-  ({cacheData, cacheOptions, uri, stateLinkResolvers}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
     const httpLink = createHttpLink({
       fetch,
       uri
@@ -88,7 +88,7 @@ export const getOrCreateApolloClientTask = memoizedWith(
 
     const authLink = createAuthLinkContext();
     const errorLink = createErrorLink();
-    const cache = createInMemoryCache(cacheOptions);
+    const cache = createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation}));
     return composeWithMap([
       ({cache}) => {
         const apolloClient = _completeApolloClient({
@@ -202,11 +202,34 @@ const createErrorLink = () => {
  * }, ... (other types) ...
  * ]
  * )
+ * NOTE typePolicies also ensures that singletons, namely ObtainJSONWebToken, get set with an initial value of null.
+ * This ensures that subsequent updates to the value will trigger observing queries to re-fire
  * @return {InMemoryCache}
  */
-const createInMemoryCache = ({typePolicies}) => {
+const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
   const options = compact({typePolicies});
-  return new InMemoryCache(options);
+  const inMemoryCache = new InMemoryCache(options);
+  R.forEachObjIndexed(
+    (typePolicy, typeName) => {
+      R.forEachObjIndexed(keyField => {
+        makeCacheMutation(
+          // Use the store for writing if we don't have an apolloClient
+          {store: inMemoryCache},
+          {
+            name: reqStrPathThrowing('name', typePolicy),
+            // output for the read fragment
+            outputParams: reqStrPathThrowing('outputParams', typePolicy),
+            // Write without @client fields
+            force: true,
+            singleton: true
+          },
+          {__typename: typeName, [keyField]: null}
+        );
+      }, R.propOr([], 'keyFields', typePolicy));
+    },
+    typePolicies
+  );
+  return inMemoryCache;
 };
 
 /**
@@ -586,7 +609,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * reset the default values of the cache for logout
  */
 export const getApolloClientTask = (
-  {cacheData, cacheOptions, uri, stateLinkResolvers},
+  {cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation},
   authToken
 ) => {
   return getOrCreateApolloClientTask({
@@ -595,7 +618,8 @@ export const getApolloClientTask = (
     cacheOptions,
     uri,
     stateLinkResolvers,
-    fixedHeaders: {}
+    fixedHeaders: {},
+    makeCacheMutation
   });
 };
 
@@ -607,8 +631,8 @@ export const getApolloClientTask = (
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @return {{apolloClient: ApolloClient}}
  */
-export const noAuthApolloClientTask = ({cacheOptions, uri, stateLinkResolvers}) => {
-  return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, fixedHeaders: {}});
+export const noAuthApolloClientTask = ({cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
+  return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, fixedHeaders: {}, makeCacheMutation});
 };
 
 /**

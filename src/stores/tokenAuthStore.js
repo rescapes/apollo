@@ -12,13 +12,13 @@
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
-
-const {of} = T;
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
+
+const {of} = T;
 
 export const tokenAuthOutputParams = {
   token: 1,
@@ -119,10 +119,13 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
               );
 
               // This is what the Apollo Client reads to be authenticated
+              // This updates the Apollo Client to authorized which gives all components access to an authorized
+              // Apollo Client in their context
               localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
 
-              // TODO Don't know if we need this in the cache
               // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+              // This is what Apollo Container queries react to. Note that this singleton cache value is initializing
+              // to null when the cache is created by searching the TypePolicies for singletons.
               makeCacheMutation(
                 // Use the store for writing if we don't have an apolloClient
                 R.merge({store}, apolloConfig),
