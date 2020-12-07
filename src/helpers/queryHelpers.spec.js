@@ -11,7 +11,7 @@
 
 import {
   apolloQueryResponsesTask,
-  composePropsFilterIntoApolloConfigOptionsVariables,
+  composeFuncAtPathIntoApolloConfig,
   makeQuery,
   makeQueryContainer
 } from './queryHelpers.js';
@@ -25,15 +25,15 @@ import {
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
   strPathOr,
-  defaultNode,
-} from '@rescapes/ramda'
+  defaultNode
+} from '@rescapes/ramda';
 import {expectKeys, localTestAuthTask, localTestConfig} from './testHelpers.js';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
 import moment from 'moment';
 import T from 'folktale/concurrency/task/index.js';
 
-const {gql} = defaultNode(AC)
+const {gql} = defaultNode(AC);
 const {of} = T;
 
 describe('queryHelpers', () => {
@@ -52,44 +52,48 @@ describe('queryHelpers', () => {
     const task = composeWithChain([
       // Test Skip
       mapToNamedResponseAndInputs('skippedResponse',
-        ({apolloClient, createdRegion}) => makeQueryContainer(
-          {
-            apolloClient,
-            options: {
-              skip: true,
-              variables: props => {
-                return R.pick(['key'], props);
-              }
+        ({apolloClient, createdRegion}) => {
+          return makeQueryContainer(
+            {
+              apolloClient,
+              options: {
+                skip: true,
+                variables: props => {
+                  return R.pick(['key'], props);
+                }
+              },
+              fetchPolicy: 'cache-only'
             },
-            fetchPolicy: 'cache-only'
-          },
-          {
-            name: 'regions',
-            readInputTypeMapper: {},
-            outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
-          },
-          {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
-        )
+            {
+              name: 'regions',
+              readInputTypeMapper: {},
+              outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
+            },
+            {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
+          );
+        }
       ),
       // See if we can get the value from the cache
       mapToNamedPathAndInputs('region', 'data.regions.0',
-        ({apolloClient, createdRegion}) => makeQueryContainer(
-          {
-            apolloClient,
-            options: {
-              variables: props => {
-                return R.pick(['key'], props);
-              }
+        ({apolloClient, createdRegion}) => {
+          return makeQueryContainer(
+            {
+              apolloClient,
+              options: {
+                variables: props => {
+                  return R.pick(['key'], props);
+                }
+              },
+              fetchPolicy: 'cache-only'
             },
-            fetchPolicy: 'cache-only'
-          },
-          {
-            name: 'regions',
-            readInputTypeMapper: {},
-            outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
-          },
-          {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
-        )
+            {
+              name: 'regions',
+              readInputTypeMapper: {},
+              outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
+            },
+            {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
+          );
+        }
       ),
       mapToNamedPathAndInputs('region1', 'data.regions.0',
         ({apolloClient, createdRegion}) => makeQueryContainer(
@@ -131,7 +135,7 @@ describe('queryHelpers', () => {
         onResolved:
           ({region, skippedResponse}) => {
             expectKeys(['id', 'key', 'name', 'geojson', '__typename'], region);
-            expect(strPathOr(false, 'skip', skippedResponse)).toBe(true)
+            expect(strPathOr(false, 'skip', skippedResponse)).toBe(true);
           }
       }, errors, done)
     );
@@ -187,8 +191,9 @@ describe('queryHelpers', () => {
             }
           );
           return makeQueryContainer(
-            composePropsFilterIntoApolloConfigOptionsVariables(
+            composeFuncAtPathIntoApolloConfig(
               apolloConfig,
+              'options.variables',
               props => {
                 return R.pick(['key'], props);
               }

@@ -43,7 +43,7 @@ export {
   makeQueryContainer,
   apolloQueryResponsesTask,
   createRequestVariables,
-  composePropsFilterIntoApolloConfigOptionsVariables
+  composeFuncAtPathIntoApolloConfig
 } from './helpers/queryHelpers.js';
 export {
   makeMutation,
