@@ -122,23 +122,9 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
               // This updates the Apollo Client to authorized which gives all components access to an authorized
               // Apollo Client in their context
               localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
+              // Use the store for writing if we don't have an apolloClient
+              mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth)
 
-              // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
-              // This is what Apollo Container queries react to. Note that this singleton cache value is initializing
-              // to null when the cache is created by searching the TypePolicies for singletons.
-              makeCacheMutation(
-                // Use the store for writing if we don't have an apolloClient
-                R.merge({store}, apolloConfig),
-                {
-                  name: 'tokenAuth',
-                  // output for the read fragment
-                  outputParams,
-                  // Write without @client fields
-                  force: true,
-                  singleton: true
-                },
-                tokenAuth
-              );
               return ({store, response});
             }
           )({store, response})
@@ -156,6 +142,30 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
     R.merge({username: '', password: ''}, props)
   );
 });
+
+/**
+ * Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+ * This is what Apollo Container queries react to. Note that this singleton cache value is initializing
+ * to null when the cache is created by searching the TypePolicies for singletons.
+ * @param apolloConfig
+ * @param outputParams
+ * @param tokenAuth
+ * @returns {any}
+ */
+export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) => {
+  return makeCacheMutation(
+    apolloConfig,
+    {
+      name: 'tokenAuth',
+      // output for the read fragment
+      outputParams,
+      // Write without @client fields
+      force: true,
+      singleton: true
+    },
+    tokenAuth
+  );
+}
 
 /**
  * Deletes the token cookie of the current user

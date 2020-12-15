@@ -17,7 +17,7 @@ import T from 'folktale/concurrency/task/index.js';
 import maybe from 'folktale/maybe/index.js';
 import {Mutation, Query} from "react-apollo";
 import {e} from '@rescapes/helpers-component';
-
+import * as ACP from 'apollo3-cache-persist';
 import {print} from 'graphql';
 import {
   applyDeepWithKeyWithRecurseArraysAndMapObjs,
@@ -25,7 +25,7 @@ import {
   composeWithMap,
   defaultNode,
   mapToNamedResponseAndInputs,
-  memoizedWith, pickDeepPaths,
+  memoizedWith,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
@@ -34,9 +34,10 @@ import {
 import fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
-import {persistCache} from 'apollo-cache-persist';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
+
+const { persistCache, LocalStorageWrapper } = defaultNode(ACP)
 
 const {fromPromised, of} = T;
 
@@ -234,7 +235,6 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
         );
       }
     },
-
     typePolicies
   );
   return inMemoryCache;
@@ -249,7 +249,7 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
 const createPersistedCacheTask = (cache) => {
   return fromPromised(() => persistCache({
     cache,
-    storage: localStorage
+    storage: new LocalStorageWrapper(localStorage),
   }))();
 };
 
