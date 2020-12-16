@@ -74,7 +74,7 @@ const log = loggers.get('rescapeDefault');
 export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
     return R.merge(
-      R.pick(['uri', 'fixedHeaders'], obj),
+      R.pick(['uri'], obj),
       // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
       R.map(
         ({fields}) => R.keys(fields),
@@ -82,7 +82,7 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
       )
     );
   },
-  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation, fixedHeaders}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
     const httpLink = createHttpLink({
       fetch,
       uri

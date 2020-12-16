@@ -87,10 +87,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
             cacheOptions,
             uri,
             stateLinkResolvers,
-            makeCacheMutation,
-            fixedHeaders: {
-              authorization: authToken ? `JWT ${authToken}` : null
-            }
+            makeCacheMutation
           }
         );
       }
