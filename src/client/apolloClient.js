@@ -24,7 +24,7 @@ import {
   compact,
   composeWithMap,
   defaultNode,
-  mapToNamedResponseAndInputs,
+  mapToNamedResponseAndInputs, memoizedTaskWith,
   memoizedWith,
   promiseToTask,
   reqStrPathThrowing,
@@ -37,7 +37,7 @@ import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 
-const { persistCache, LocalStorageWrapper } = defaultNode(ACP)
+const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
 
@@ -71,7 +71,7 @@ const log = loggers.get('rescapeDefault');
  * Add additional headers. Authentication comes from localStorage
  * @return {{apolloClient: ApolloClient}}
  */
-export const getOrCreateApolloClientTask = memoizedWith(
+export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
     return R.merge(
       R.pick(['uri', 'fixedHeaders'], obj),
@@ -82,14 +82,15 @@ export const getOrCreateApolloClientTask = memoizedWith(
       )
     );
   },
-  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation, fixedHeaders}) => {
     const httpLink = createHttpLink({
       fetch,
       uri
     });
 
-    const authLink = createAuthLinkContext();
-    const errorLink = createErrorLink();
+    const authLink = createAuthLink();
+    //const errorLink = createErrorLink();
+    const errorLink = reportErrors(log.error);
     const cache = createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation}));
     return composeWithMap([
       ({cache}) => {
@@ -98,6 +99,7 @@ export const getOrCreateApolloClientTask = memoizedWith(
           links: [
             errorLink,
             authLink,
+            // Terminal link, has to be last
             httpLink
           ],
           cache
@@ -122,29 +124,27 @@ export const getOrCreateApolloClientTask = memoizedWith(
   }
 );
 
-/**
- *  Authorization link
- * This code is adapted from https://www.apollographql.com/docs/react/recipes/authentication.html
- * @return {ApolloLink}
- */
-const createAuthLinkContext = (fixedHeaders) => {
-
-  return setContext((_, {headers}) => {
+const createAuthLink = () => new ApolloLink((operation, forward) => {
+  operation.setContext(({headers}) => {
     // get the authentication token from local storage if it exists
     const token = localStorage.getItem('token');
-    // return the headers to the context so httpLink can read them
     return {
-      headers: R.merge(
-        {
-          // Using JWT instead of Bearer here for Django JWT
-          authorization: token ? `JWT ${token}` : ""
-        },
-        fixedHeaders
-      )
+      headers: {
+        // Using JWT instead of Bearer here for Django JWT
+        authorization: token ? `JWT ${token}` : "",
+        ...headers
+      }
     };
   });
-};
+  return forward(operation);
+});
 
+const reportErrors = (errorCallback) => new ApolloLink((operation, forward) => {
+  const observer = forward(operation);
+  // errors will be sent to the errorCallback
+  observer.subscribe({ error: errorCallback })
+  return observer;
+});
 /**
  *
  * Error handling link so errors don't get swallowed, which Apollo seems to like doing
@@ -249,7 +249,7 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
 const createPersistedCacheTask = (cache) => {
   return fromPromised(() => persistCache({
     cache,
-    storage: new LocalStorageWrapper(localStorage),
+    storage: new LocalStorageWrapper(localStorage)
   }))();
 };
 
@@ -629,18 +629,6 @@ export const getApolloClientTask = (
     fixedHeaders: {},
     makeCacheMutation
   });
-};
-
-/**
- * Non auth client for logging in. Returns a client that can only be used for logging in
- * @param {Object} config The config
- * @param {Object} config.cacheOptions
- * @param {string} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
- * @return {{apolloClient: ApolloClient}}
- */
-export const noAuthApolloClientTask = ({cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
-  return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, fixedHeaders: {}, makeCacheMutation});
 };
 
 /**

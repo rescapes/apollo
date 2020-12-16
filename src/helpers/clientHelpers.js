@@ -17,7 +17,7 @@ import {
   strPathOr
 } from '@rescapes/ramda';
 import {parseApiUrl} from '@rescapes/helpers';
-import {loginToAuthClientTask, noLoginToAuthClientTask} from '../auth/login.js';
+import {loginToAuthClientTask} from '../auth/login.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -25,6 +25,7 @@ import {
 } from './defaultSettingsStore.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
+import {getOrCreateNoAuthApolloClientTask} from '../client/apolloClientAuthentication';
 
 const log = loggers.get('rescapeDefault');
 
@@ -152,9 +153,8 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
         incomingItem => getUpdatedIncoming(null, incomingItem),
         incoming
       );
-    }
-    else {
-      return getUpdatedIncoming(null, incoming)
+    } else {
+      return getUpdatedIncoming(null, incoming);
     }
   }
 
@@ -243,7 +243,7 @@ export const createAuthTask = config => loginToAuthClientTask({
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createNoAuthTask = config => noLoginToAuthClientTask({
+export const createNoAuthTask = config => getOrCreateNoAuthApolloClientTask({
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),

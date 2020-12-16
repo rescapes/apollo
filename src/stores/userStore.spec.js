@@ -56,7 +56,7 @@ describe('userStore', () => {
     ])().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(response.data.currentUser).toBeNull();
+          expect(response.data).toBeNull();
           done();
         }
     }, errors, done));

@@ -139,6 +139,9 @@ export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, 
     return makeQueryContainer(
       R.merge(apolloConfig, {
         options: {
+          // Skip if the user isn't authenticated. If we allow unauthenticated requests, it seems to cache
+          // the response and not query again
+          skip: !localStorage.getItem('token'),
           variables: props => {
             // No arguments, the server resolves the current user based on authentication
             return {};

@@ -10,10 +10,15 @@
  */
 
 import * as R from 'ramda';
-import {noAuthApolloClientTask} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
 import * as AC from '@apollo/client';
-import { composeWithChain, mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing, defaultNode } from '@rescapes/ramda'
+import {
+  composeWithChain,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing,
+  defaultNode
+} from '@rescapes/ramda';
 import {
   getOrCreateAuthApolloClientWithTokenTask,
   getOrCreateNoAuthApolloClientTask
@@ -22,6 +27,7 @@ import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/token
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
+import {getOrCreateApolloClientTask} from '../client/apolloClient';
 
 const {of} = T;
 const {ApolloClient} = defaultNode(AC);
@@ -76,7 +82,9 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
     mapToNamedResponseAndInputs('apolloConfig',
       ({uri, stateLinkResolvers}) => {
         // Use unauthenticated ApolloClient for login
-        return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
+        return getOrCreateApolloClientTask({
+          cacheOptions, uri, stateLinkResolvers, makeCacheMutation, fixedHeaders: {authorization: null}
+        });
       }
     )
   ])({uri, stateLinkResolvers, props});
@@ -94,16 +102,6 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {{apolloClient: ApolloClient, token}}
  */
-export const noLoginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}}) => {
-  return getOrCreateNoAuthApolloClientTask({
-      cacheOptions,
-      uri,
-      stateLinkResolvers,
-      writeDefaults,
-      settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-    }
-  );
-});
 
 
 /**
@@ -159,7 +157,7 @@ export const authClientOrLoginTask = R.curry((
       // map login values to token
       mapToNamedResponseAndInputs('apolloConfig',
         ({uri, stateLinkResolvers}) => {
-          return noAuthApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
+          return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
         }
       )
     ])

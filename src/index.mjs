@@ -15,7 +15,6 @@ import {
 } from './stores/tokenAuthStore.js';
 
 export {
-  noLoginToAuthClientTask,
   authClientOrLoginTask,
   loginToAuthClientTask
 } from './auth/login.js';
@@ -24,7 +23,6 @@ export {
   authApolloClientMutationRequestContainer,
   getApolloClientTask,
   authApolloClientRequestTask,
-  noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
   noAuthApolloClientRequestTask,

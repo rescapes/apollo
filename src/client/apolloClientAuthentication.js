@@ -89,7 +89,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
             stateLinkResolvers,
             makeCacheMutation,
             fixedHeaders: {
-              authorization: authToken ? `JWT ${authToken}` : ''
+              authorization: authToken ? `JWT ${authToken}` : null
             }
           }
         );

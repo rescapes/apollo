@@ -11,7 +11,7 @@
 
 import {cacheOptions, localTestConfig} from '../helpers/testHelpers.js';
 import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
-import {authClientOrLoginTask, noLoginToAuthClientTask} from './login.js';
+import {authClientOrLoginTask} from './login.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
@@ -124,7 +124,7 @@ describe('login', () => {
       {
         onResolved:
           response => {
-            expect(response.noAuthUser.data.currentUser).toBeNull();
+            expect(response.noAuthUser.data).toBeNull();
             expect(response.user.data.currentUser).not.toBeNull();
             expect(response.apolloConfig.apolloClient).not.toBeNull();
             expect(response.apolloConfig.token).not.toBeNull();
@@ -132,7 +132,7 @@ describe('login', () => {
           }
       }, errors, done)
     );
-  }, 10000);
+  }, 100000);
 
   test('noLoginToAuthClientTask', done => {
     const errors = [];
