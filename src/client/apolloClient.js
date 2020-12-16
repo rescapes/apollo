@@ -90,7 +90,7 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
 
     const authLink = createAuthLink();
     //const errorLink = createErrorLink();
-    const errorLink = reportErrors(log.error);
+    const errorLink = reportErrors(log.error.bind(log));
     const cache = createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation}));
     return composeWithMap([
       ({cache}) => {

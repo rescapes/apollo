@@ -15,15 +15,20 @@ import {
   expectKeysAtPath,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs
-} from '@rescapes/ramda'
+} from '@rescapes/ramda';
 import {
   authenticatedUserLocalContainer,
   currentUserQueryContainer,
   isAuthenticatedLocal,
   userOutputParams
 } from './userStore.js';
-import {localTestAuthTask, localTestConfig, localTestNoAuthTask, createAuthTask} from '../helpers/testHelpers.js';
-import {createTestNoAuthTask} from '../helpers/clientHelpers.js';
+import {
+  localTestAuthTask,
+  localTestConfig,
+  localTestNoAuthTask,
+  createTestAuthTask,
+  createTestNoAuthTask
+} from '../helpers/testHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
@@ -75,7 +80,7 @@ describe('userStore', () => {
             isAuthenticatedLocal({apolloClient})
           );
         }),
-      () => createAuthTask(localTestConfig)
+      () => createTestAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
