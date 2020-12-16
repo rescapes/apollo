@@ -22,8 +22,8 @@ import {
   isAuthenticatedLocal,
   userOutputParams
 } from './userStore.js';
-import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers.js';
-import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers.js';
+import {localTestAuthTask, localTestConfig, localTestNoAuthTask, createAuthTask} from '../helpers/testHelpers.js';
+import {createTestNoAuthTask} from '../helpers/clientHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
@@ -100,7 +100,7 @@ describe('userStore', () => {
             isAuthenticatedLocal({apolloClient})
           );
         }),
-      () => createNoAuthTask(localTestConfig)
+      () => createTestNoAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:

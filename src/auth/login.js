@@ -14,15 +14,12 @@ import T from 'folktale/concurrency/task/index.js';
 import * as AC from '@apollo/client';
 import {
   composeWithChain,
+  defaultNode,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing,
-  defaultNode
+  reqStrPathThrowing
 } from '@rescapes/ramda';
-import {
-  getOrCreateAuthApolloClientWithTokenTask,
-  getOrCreateNoAuthApolloClientTask
-} from '../client/apolloClientAuthentication.js';
+import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
@@ -47,7 +44,10 @@ const {ApolloClient} = defaultNode(AC);
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
  * @return {{apolloClient: ApolloClient, token}}
  */
-export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}}, props) => {
+export const loginToAuthClientTask = R.curry((
+  {cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}},
+  props
+) => {
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
@@ -70,6 +70,7 @@ export const loginToAuthClientTask = R.curry(({cacheOptions, uri, stateLinkResol
       }
     ),
 
+    // Login in to the server to get the auth token
     mapToNamedPathAndInputs('loginData', 'data',
       ({apolloConfig, props}) => {
         return tokenAuthMutationContainer(

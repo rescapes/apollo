@@ -80,11 +80,12 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData.js';
 export {
-  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys
+  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys,
+  createTestAuthTask, createTestNoAuthTask
 } from './helpers/testHelpers.js';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
 export {containerForApolloType} from './helpers/containerHelpers.js';
-export {typePoliciesWithMergeObjects, createAuthTask, createNoAuthTask} from './helpers/clientHelpers.js';
+export {typePoliciesWithMergeObjects, createLocalStorageAuthTask} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCache,
   defaultSettingsOutputParams,
