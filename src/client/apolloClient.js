@@ -10,7 +10,6 @@
  */
 import {inspect} from 'util';
 import * as AC from '@apollo/client';
-import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
@@ -24,8 +23,8 @@ import {
   compact,
   composeWithMap,
   defaultNode,
-  mapToNamedResponseAndInputs, memoizedTaskWith,
-  memoizedWith,
+  mapToNamedResponseAndInputs,
+  memoizedTaskWith,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
@@ -74,7 +73,7 @@ const log = loggers.get('rescapeDefault');
 export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
     return R.merge(
-      R.pick(['uri'], obj),
+      R.pick(['uri', 'cacheData'], obj),
       // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
       R.map(
         ({fields}) => R.keys(fields),

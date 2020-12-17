@@ -137,6 +137,9 @@ export const authClientOrLoginTask = R.curry((
     composeWithChain([
       // map userLogin to getApolloClientTask and token
       ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
+        // Since we have a token we can call this getOrCreateAuthApolloClientWithTokenTask,
+        // although the token will also be stored in localStorage.getItem('token'),
+        // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
         return getOrCreateAuthApolloClientWithTokenTask({
             cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
             cacheOptions,
