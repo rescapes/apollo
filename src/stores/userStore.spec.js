@@ -15,15 +15,20 @@ import {
   expectKeysAtPath,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs
-} from '@rescapes/ramda'
+} from '@rescapes/ramda';
 import {
   authenticatedUserLocalContainer,
   currentUserQueryContainer,
   isAuthenticatedLocal,
   userOutputParams
 } from './userStore.js';
-import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers.js';
-import {createAuthTask, createNoAuthTask} from '../helpers/clientHelpers.js';
+import {
+  localTestAuthTask,
+  localTestConfig,
+  localTestNoAuthTask,
+  createTestAuthTask,
+  createTestNoAuthTask
+} from '../helpers/testHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
@@ -56,7 +61,7 @@ describe('userStore', () => {
     ])().run().listen(defaultRunConfig({
       onResolved:
         response => {
-          expect(response.data.currentUser).toBeNull();
+          expect(response.data).toBeNull();
           done();
         }
     }, errors, done));
@@ -75,7 +80,7 @@ describe('userStore', () => {
             isAuthenticatedLocal({apolloClient})
           );
         }),
-      () => createAuthTask(localTestConfig)
+      () => createTestAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
@@ -100,7 +105,7 @@ describe('userStore', () => {
             isAuthenticatedLocal({apolloClient})
           );
         }),
-      () => createNoAuthTask(localTestConfig)
+      () => createTestNoAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:

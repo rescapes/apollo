@@ -14,31 +14,33 @@ import {setContext} from '@apollo/link-context';
 import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
-
-const {fromPromised, of} = T;
 import maybe from 'folktale/maybe/index.js';
 import {Mutation, Query} from "react-apollo";
 import {e} from '@rescapes/helpers-component';
-
+import * as ACP from 'apollo3-cache-persist';
 import {print} from 'graphql';
 import {
+  applyDeepWithKeyWithRecurseArraysAndMapObjs,
   compact,
   composeWithMap,
-  mapToNamedResponseAndInputs,
+  defaultNode,
+  mapToNamedResponseAndInputs, memoizedTaskWith,
   memoizedWith,
   promiseToTask,
   reqStrPathThrowing,
   retryTask,
   strPathOr
-} from '@rescapes/ramda'
+} from '@rescapes/ramda';
 import fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
-import {persistCache} from 'apollo-cache-persist';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 
-import {defaultNode} from '../helpers/utilityHelpers.js'
+const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
+
+const {fromPromised, of} = T;
+
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
 const {Just} = maybe;
 
@@ -69,10 +71,10 @@ const log = loggers.get('rescapeDefault');
  * Add additional headers. Authentication comes from localStorage
  * @return {{apolloClient: ApolloClient}}
  */
-export const getOrCreateApolloClientTask = memoizedWith(
+export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
     return R.merge(
-      R.pick(['uri', 'fixedHeaders'], obj),
+      R.pick(['uri'], obj),
       // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
       R.map(
         ({fields}) => R.keys(fields),
@@ -80,15 +82,16 @@ export const getOrCreateApolloClientTask = memoizedWith(
       )
     );
   },
-  ({cacheData, cacheOptions, uri, stateLinkResolvers}) => {
+  ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
     const httpLink = createHttpLink({
       fetch,
       uri
     });
 
-    const authLink = createAuthLinkContext();
-    const errorLink = createErrorLink();
-    const cache = createInMemoryCache(cacheOptions);
+    const authLink = createAuthLink();
+    //const errorLink = createErrorLink();
+    const errorLink = reportErrors(log.error.bind(log));
+    const cache = createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation}));
     return composeWithMap([
       ({cache}) => {
         const apolloClient = _completeApolloClient({
@@ -96,6 +99,7 @@ export const getOrCreateApolloClientTask = memoizedWith(
           links: [
             errorLink,
             authLink,
+            // Terminal link, has to be last
             httpLink
           ],
           cache
@@ -120,29 +124,27 @@ export const getOrCreateApolloClientTask = memoizedWith(
   }
 );
 
-/**
- *  Authorization link
- * This code is adapted from https://www.apollographql.com/docs/react/recipes/authentication.html
- * @return {ApolloLink}
- */
-const createAuthLinkContext = (fixedHeaders) => {
-
-  return setContext((_, {headers}) => {
+const createAuthLink = () => new ApolloLink((operation, forward) => {
+  operation.setContext(({headers}) => {
     // get the authentication token from local storage if it exists
     const token = localStorage.getItem('token');
-    // return the headers to the context so httpLink can read them
     return {
-      headers: R.merge(
-        {
-          // Using JWT instead of Bearer here for Django JWT
-          authorization: token ? `JWT ${token}` : ""
-        },
-        fixedHeaders
-      )
+      headers: {
+        // Using JWT instead of Bearer here for Django JWT
+        authorization: token ? `JWT ${token}` : "",
+        ...headers
+      }
     };
   });
-};
+  return forward(operation);
+});
 
+const reportErrors = (errorCallback) => new ApolloLink((operation, forward) => {
+  const observer = forward(operation);
+  // errors will be sent to the errorCallback
+  observer.subscribe({ error: errorCallback })
+  return observer;
+});
 /**
  *
  * Error handling link so errors don't get swallowed, which Apollo seems to like doing
@@ -202,11 +204,40 @@ const createErrorLink = () => {
  * }, ... (other types) ...
  * ]
  * )
+ * NOTE typePolicies also ensures that singletons, namely ObtainJSONWebToken, get set with an initial value of null.
+ * This ensures that subsequent updates to the value will trigger observing queries to re-fire
  * @return {InMemoryCache}
  */
-const createInMemoryCache = ({typePolicies}) => {
+const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
   const options = compact({typePolicies});
-  return new InMemoryCache(options);
+  const inMemoryCache = new InMemoryCache(options);
+  R.forEachObjIndexed(
+    (typePolicy, typeName) => {
+      // keyfields indicates a singleton that we need to initialize to a null query result
+      if (strPathOr(false, 'keyFields', typePolicy)) {
+        const outputParams = reqStrPathThrowing('outputParams', typePolicy);
+        makeCacheMutation(
+          // Use the store for writing if we don't have an apolloClient
+          {store: inMemoryCache},
+          {
+            name: reqStrPathThrowing('name', typePolicy),
+            // output for the read fragment
+            outputParams: outputParams,
+            // Write without @client fields
+            force: true,
+            singleton: true
+          },
+          R.merge(
+            {__typename: typeName},
+            // Set all outputParams to null for our initial query values
+            applyDeepWithKeyWithRecurseArraysAndMapObjs((l, r, key) => null, (k, v) => v, outputParams)
+          )
+        );
+      }
+    },
+    typePolicies
+  );
+  return inMemoryCache;
 };
 
 /**
@@ -218,7 +249,7 @@ const createInMemoryCache = ({typePolicies}) => {
 const createPersistedCacheTask = (cache) => {
   return fromPromised(() => persistCache({
     cache,
-    storage: localStorage
+    storage: new LocalStorageWrapper(localStorage)
   }))();
 };
 
@@ -386,7 +417,10 @@ export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fra
 
   // If this throws then we did something wrong
   try {
-    return reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id});
+    // Put in data to match the return structure of normal queries
+    return {
+      data: reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id})
+    };
   } catch (e) {
     log.error(`Could not read the fragment just written to the cache. Fragment ${print(fragment)}. Id: ${id}`);
     throw e;
@@ -583,7 +617,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * reset the default values of the cache for logout
  */
 export const getApolloClientTask = (
-  {cacheData, cacheOptions, uri, stateLinkResolvers},
+  {cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation},
   authToken
 ) => {
   return getOrCreateApolloClientTask({
@@ -592,20 +626,9 @@ export const getApolloClientTask = (
     cacheOptions,
     uri,
     stateLinkResolvers,
-    fixedHeaders: {}
+    fixedHeaders: {},
+    makeCacheMutation
   });
-};
-
-/**
- * Non auth client for logging in. Returns a client that can only be used for logging in
- * @param {Object} config The config
- * @param {Object} config.cacheOptions
- * @param {string} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
- * @return {{apolloClient: ApolloClient}}
- */
-export const noAuthApolloClientTask = ({cacheOptions, uri, stateLinkResolvers}) => {
-  return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, fixedHeaders: {}});
 };
 
 /**

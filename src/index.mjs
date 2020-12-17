@@ -15,7 +15,6 @@ import {
 } from './stores/tokenAuthStore.js';
 
 export {
-  noLoginToAuthClientTask,
   authClientOrLoginTask,
   loginToAuthClientTask
 } from './auth/login.js';
@@ -24,7 +23,6 @@ export {
   authApolloClientMutationRequestContainer,
   getApolloClientTask,
   authApolloClientRequestTask,
-  noAuthApolloClientTask,
   noAuthApolloClientMutationRequestTask,
   noAuthApolloClientQueryRequestTask,
   noAuthApolloClientRequestTask,
@@ -43,7 +41,7 @@ export {
   makeQueryContainer,
   apolloQueryResponsesTask,
   createRequestVariables,
-  composePropsFilterIntoApolloConfigOptionsVariables
+  composeFuncAtPathIntoApolloConfig
 } from './helpers/queryHelpers.js';
 export {
   makeMutation,
@@ -82,11 +80,12 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData.js';
 export {
-  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys
+  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys,
+  createTestAuthTask, createTestNoAuthTask
 } from './helpers/testHelpers.js';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
 export {containerForApolloType} from './helpers/containerHelpers.js';
-export {typePoliciesWithMergeObjects, createAuthTask, createNoAuthTask} from './helpers/clientHelpers.js';
+export {typePoliciesWithMergeObjects, createLocalStorageAuthTask} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCache,
   defaultSettingsOutputParams,

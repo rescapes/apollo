@@ -142,7 +142,7 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
     {
       name: 'settings',
       // Use key instead of id in the case of the unauthenticated user needs to cache default settings
-      idField: props => R.propOr(R.prop('key'), 'id', props),
+      idField: props => R.propOr(R.prop('key', props), 'id', props),
       // output for the read fragment
       outputParams
     },

@@ -20,10 +20,8 @@ import * as AC from '@apollo/client';
 import {_winnowRequestProps} from '../helpers/requestHelpers.js';
 import * as R from 'ramda';
 import {apolloClientReadFragmentCacheContainer} from './apolloClient.js';
-import {reqStrPathThrowing} from '@rescapes/ramda';
+import {reqStrPathThrowing, defaultNode} from '@rescapes/ramda';
 
-
-import {defaultNode} from '../helpers/utilityHelpers.js'
 const {MissingFieldError} = defaultNode(AC);
 
 const log = loggers.get('rescapeDefault');

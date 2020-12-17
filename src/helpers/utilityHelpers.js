@@ -10,7 +10,6 @@
  */
 import {findMapped, strPathOr, toArrayIfNot} from '@rescapes/ramda';
 import * as R from 'ramda';
-import {isNode} from "browser-or-node";
 
 /**
  * Used to give an id to an item based on the id of a child object in that item. Example
@@ -52,8 +51,4 @@ export const firstMatchingPathLookup = (idPathLookup, propKey, item) => {
     return null;
   }
   return value;
-};
-
-export const defaultNode = module => {
-  return isNode ? module.default : module;
 };

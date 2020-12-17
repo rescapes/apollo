@@ -30,10 +30,10 @@ import {
   mapObjToValues,
   omitDeepBy, onlyOne, onlyOneThrowing, onlyOneValueThrowing,
   reqStrPathThrowing,
-  retryTask
+  retryTask,
+  defaultNode
 } from '@rescapes/ramda';
 import * as AC from '@apollo/client';
-import {defaultNode} from './utilityHelpers.js';
 
 const {gql} = defaultNode(AC);
 import {print} from 'graphql';

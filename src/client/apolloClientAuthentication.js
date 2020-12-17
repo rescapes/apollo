@@ -8,16 +8,17 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {composeWithChain, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
+import {composeWithChain, defaultNode, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda';
 import {getOrCreateApolloClientTask} from './apolloClient.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import * as AC from '@apollo/client';
-import {defaultNode} from '../helpers/utilityHelpers.js'
-const {ApolloClient} = defaultNode(AC)
 import * as R from 'ramda';
-import T from 'folktale/concurrency/task/index.js'
-const {of} = T;
+import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
+
+const {ApolloClient} = defaultNode(AC);
+const {of} = T;
 
 const log = loggers.get('rescapeDefault');
 
@@ -86,9 +87,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = (
             cacheOptions,
             uri,
             stateLinkResolvers,
-            fixedHeaders: {
-              authorization: authToken ? `JWT ${authToken}` : ''
-            }
+            makeCacheMutation
           }
         );
       }
@@ -126,7 +125,7 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
     cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaults,
     settingsConfig
   },
-  token,
+  token
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   return R.map(

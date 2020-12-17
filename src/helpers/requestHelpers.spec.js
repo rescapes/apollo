@@ -25,11 +25,10 @@ import Result from 'folktale/result/index.js';
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import * as R from 'ramda';
-import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths} from '@rescapes/ramda'
+import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths, defaultNode} from '@rescapes/ramda'
 import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 import {print} from 'graphql';
 import * as AC from '@apollo/client';
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 
 describe('requestHelpers', () => {

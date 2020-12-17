@@ -1,8 +1,7 @@
 import * as R from 'ramda';
-import {overDeep} from '@rescapes/ramda'
+import {overDeep, defaultNode} from '@rescapes/ramda'
 import {v} from '@rescapes/validate';
 import * as AC from '@apollo/client';
-import {defaultNode} from '../helpers/utilityHelpers.js'
 const {gql} = defaultNode(AC)
 
 /**

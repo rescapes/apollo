@@ -20,8 +20,9 @@ import {
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
-  strPathOr
-} from '@rescapes/ramda'
+  strPathOr,
+  defaultNode
+} from '@rescapes/ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
@@ -29,11 +30,12 @@ import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
 import * as AC from '@apollo/client';
-import {defaultNode} from './utilityHelpers.js'
-const {gql} = defaultNode(AC)
+
+const {gql} = defaultNode(AC);
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
-import T from 'folktale/concurrency/task/index.js'
+import T from 'folktale/concurrency/task/index.js';
+
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');
@@ -145,6 +147,71 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
 });
 
 /**
+ * Composes normalizeProps onto options.variables function if already defined by the caller.
+ * For components only, composes onSuccess and onError debug messages on to any such function defined by the caller
+ * @param {Object} apolloConfig
+ * @param {Object} config
+ * @param {Function} config.normalizeProps Normalizes props produced by the callers options.variables function
+ * @param {Object} query The graphql query object
+ * @param {Boolean} skip A flag to aid the debugging messages if the query is being skipped
+ * @param {Object} winnowedProps Used for the debugger messages to show what variables are being passed by the query
+ * these props have been bootstrapped by passing through options.variables ahead of time
+ * @returns {*}
+ */
+const modifyApolloConfigFuncsForQuery = (apolloConfig, {normalizeProps, query, skip, winnowedProps}) => {
+  return R.compose(
+    // Merge the caller's optional  'onSuccess' function with the debug info
+    apolloConfig => {
+      return composeFuncAtPathIntoApolloConfig(
+        apolloConfig,
+        'onError',
+        error => {
+          log.warning(`Query Erred: ${inspect(error, false, 10)}\n${
+            print(query)
+          }\nArguments:\n${
+            R.ifElse(
+              () => skip,
+              () => 'Props are not ready',
+              (winnowedProps) => inspect(winnowedProps, false, 10)
+            )(winnowedProps)
+          }\n`);
+        }
+      );
+    },
+    // For component queries merge the caller's optional  'onSuccess' function with the debug info
+    apolloConfig => {
+      return composeFuncAtPathIntoApolloConfig(
+        apolloConfig,
+        'onSuccess',
+        data => {
+          log.debug(`Queried Responded: \n${
+            print(query)
+          }\nArguments:\n${
+            R.ifElse(
+              () => skip,
+              () => 'Props are not ready',
+              (winnowedProps) => inspect(winnowedProps, false, 10)
+            )(winnowedProps)
+          }\nWith Data:${replaceValuesWithCountAtDepthAndStringify(2, data)}}`);
+        }
+      );
+    },
+    // Merge the caller's optional  'options.variables' function with normalizeProps
+    apolloConfig => {
+      return R.when(
+        () => normalizeProps,
+        apolloConfig => {
+          return composeFuncAtPathIntoApolloConfig(
+            apolloConfig,
+            'options.variables',
+            normalizeProps
+          );
+        }
+      )(apolloConfig);
+    }
+  )(apolloConfig);
+};
+/**
  * Creates a query task for any type
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work
@@ -225,24 +292,15 @@ export const makeQueryContainer = v(R.curry(
       outputParams, 
       winnowedProps
     )}`;
-    log.debug(`Creating Query:\n${
-      print(query)
-    }\nArguments:\n${
-      R.ifElse(
-        () => skip,
-        () => 'Props are not ready',
-        (winnowedProps) => inspect(winnowedProps, false, 10)
-      )(winnowedProps)
-    }\n`);
+    // Compose in options.variables: normalizeProps and compose in a debug onSuccess and onError log message
+    const modifiedApolloConfig = modifyApolloConfigFuncsForQuery(apolloConfig, {
+      normalizeProps,
+      query,
+      skip,
+      winnowedProps
+    });
     const componentOrTask = authApolloQueryContainer(
-      // Send the normalizeProps function if defined as composed into function apolloConfig.options.variables
-      R.when(
-        () => normalizeProps,
-        apolloConfig => composePropsFilterIntoApolloConfigOptionsVariables(
-          apolloConfig,
-          normalizeProps
-        )
-      )(apolloConfig),
+      modifiedApolloConfig,
       query,
       // Non-winnowed props because the component does calls its options.variables function
       props
@@ -328,21 +386,24 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
 };
 
 /**
- * Modifies apolloConfig's options.variables function to additionally filter props
- * with propsFilter. options.variables may or may not already be defined as a filter
+ * Modifies apolloConfig's 'options.variables', 'onComplete', 'onError', or other function, composing the given
+ * func with any existing one. Useful when a caller and the underlying call each have a function that need to be
+ * composed.
  * @param {Object} apolloConfig The apolloConfig
- * @param {Function} propsFilter Expects props and returns filtered props
+ * @param {String} strPath dot-separated path relative to apolloConfig
+ * @param {Function} func Expects props and returns filtered props
  * @returns {*}
  */
-export const composePropsFilterIntoApolloConfigOptionsVariables = (apolloConfig, propsFilter) => {
+export const composeFuncAtPathIntoApolloConfig = (apolloConfig, strPath, func) => {
   return R.over(
-    R.lensPath(['options', 'variables']),
+    R.lensPath(R.split('.', strPath)),
     variables => {
       return props => R.compose(
-        props => propsFilter(props),
+        props => func(props),
         props => R.when(() => R.is(Function, variables), variables)(props)
       )(props);
     },
     apolloConfig
   );
 };
+

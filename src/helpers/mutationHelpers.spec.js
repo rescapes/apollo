@@ -12,12 +12,11 @@
 import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData.js';
 import {makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers.js';
 import {localTestAuthTask} from './testHelpers.js';
-import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
+import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';
 import * as AC from '@apollo/client';
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 
 describe('mutationHelpers', () => {

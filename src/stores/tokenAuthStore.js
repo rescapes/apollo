@@ -11,17 +11,21 @@
 
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
-import T from 'folktale/concurrency/task/index.js'
-const {of} = T;
+import T from 'folktale/concurrency/task/index.js';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-import {reqStrPathThrowing} from '@rescapes/ramda'
+import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
+
+const {of} = T;
 
 export const tokenAuthOutputParams = {
   token: 1,
   payload: 1
+};
+export const deleteTokenCookieOutputParams = {
+  deleted: 1
 };
 
 export const tokenAuthReadInputTypeMapper = {};
@@ -103,31 +107,27 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
           variables: props => {
             return R.pick(['username', 'password'], props);
           },
-          update: (store, response) => {
-            const tokenAuth = reqStrPathThrowing(
-              'data.tokenAuth',
-              response
-            );
+          update: (store, response) => R.compose(
+            // Accept an update method from apolloConfig.options so that queries can be refetched
+            ({store, response}) => {
+              return strPathOr(R.identity, 'options.update', apolloConfig)(store, response);
+            },
+            ({store, response}) => {
+              const tokenAuth = reqStrPathThrowing(
+                'data.tokenAuth',
+                response
+              );
 
-            // This is what the Apollo Client reads to be authenticated
-            localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
-
-            // TODO Don't know if we need this in the cache
-            // Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
-            makeCacheMutation(
+              // This is what the Apollo Client reads to be authenticated
+              // This updates the Apollo Client to authorized which gives all components access to an authorized
+              // Apollo Client in their context
+              localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
               // Use the store for writing if we don't have an apolloClient
-              R.merge({store}, apolloConfig),
-              {
-                name: 'tokenAuth',
-                // output for the read fragment
-                outputParams,
-                // Write without @client fields
-                force: true,
-                singleton: true
-              },
-              tokenAuth
-            );
-          }
+              mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth)
+
+              return ({store, response});
+            }
+          )({store, response})
         }
       }
     ),
@@ -144,15 +144,53 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
 });
 
 /**
+ * Mutate the cache with a singleton tokenAuth since we don't query for the tokenAuth
+ * This is what Apollo Container queries react to. Note that this singleton cache value is initializing
+ * to null when the cache is created by searching the TypePolicies for singletons.
+ * @param apolloConfig
+ * @param outputParams
+ * @param tokenAuth
+ * @returns {any}
+ */
+export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) => {
+  return makeCacheMutation(
+    apolloConfig,
+    {
+      name: 'tokenAuth',
+      // output for the read fragment
+      outputParams,
+      // Write without @client fields
+      force: true,
+      singleton: true
+    },
+    tokenAuth
+  );
+}
+
+/**
  * Deletes the token cookie of the current user
  * @param {Object} apolloClient
  * @param {Object} [outputParams] Defaults to {deleted: true}
  * @param {Object} props Should always be empty
  * @return {TasK|Object} Task or Apollo Component resolving to
  */
-export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = deleteTokenCookieOutputParams}, props) => {
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          variables: props => {
+            return {};
+          },
+          update: (store, response) => {
+            // Clear the token so apolloClient is no longer authenticated
+            // This will reset the apolloClient to unauthenticated and clear the cache
+            localStorage.removeItem('token');
+          }
+        }
+      }
+    ),
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,
@@ -170,9 +208,25 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
  * @param {Object} props Should always be empty
  * @return {TasK|Object} Task or Apollo Component resolving to
  */
-export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = null}, props) => {
+export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = deleteTokenCookieOutputParams}, props) => {
+  // TODO the server is currently complaining graphql.error.located_error.GraphQLLocatedError: Error decoding signature
+  // I don't currently use this API method anyway
   return makeMutationRequestContainer(
-    apolloConfig,
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          variables: props => {
+            return {};
+          },
+          update: (store, response) => {
+            // Clear the token so apolloClient is no longer authenticated
+            // This will reset the apolloClient to unauthenticated and clear the cache
+            localStorage.removeItem('token');
+          }
+        }
+      }
+    ),
     {
       outputParams: outputParams || {deleted: 1},
       flattenVariables: true,

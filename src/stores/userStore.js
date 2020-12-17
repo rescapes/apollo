@@ -16,12 +16,10 @@ import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers.js';
 import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers.js';
-import {strPathOr} from '@rescapes/ramda';
+import {strPathOr, defaultNode} from '@rescapes/ramda';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import * as R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-
-import {defaultNode} from '../helpers/utilityHelpers.js'
 const {MissingFieldError} = defaultNode(AC)
 const {of} = T;
 
@@ -141,6 +139,9 @@ export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, 
     return makeQueryContainer(
       R.merge(apolloConfig, {
         options: {
+          // Skip if the user isn't authenticated. If we allow unauthenticated requests, it seems to cache
+          // the response and not query again
+          skip: !localStorage.getItem('token'),
           variables: props => {
             // No arguments, the server resolves the current user based on authentication
             return {};

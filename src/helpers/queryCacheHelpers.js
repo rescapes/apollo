@@ -12,7 +12,7 @@
 import {inspect} from 'util';
 import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing} from '@rescapes/ramda'
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
 import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {
@@ -24,7 +24,6 @@ import {loggers} from '@rescapes/log';
 import {_winnowRequestProps} from './requestHelpers.js';
 import {pickRenderProps} from './componentHelpersMonadic.js';
 
-import {defaultNode} from './utilityHelpers.js'
 const {gql} = defaultNode(AC)
 
 const log = loggers.get('rescapeDefault');
@@ -64,7 +63,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
   props
 ) => {
   const query = gql`${makeClientQuery(name, readInputTypeMapper, outputParams, props)}`;
-  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${insepct(props, false, 10)}\n`);
+  log.debug(`Client Directive Query:\n\n${print(query)}\nArguments:\n${inspect(props, false, 10)}\n`);
   // With the client directive on the query we can use the normal authApolloQueryContainer that's used
   // for non-client directive queries
   const componentOrTask = authApolloQueryContainer(
@@ -148,7 +147,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.pick(['__typename'], props)
   )}`;
 
-  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(props, false, 10)}\n`);
+  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick(['id'], props), false, 2)}\n`);
   const response = authApolloClientOrComponentReadFragmentCacheContainer(
     apolloConfig,
     {
@@ -157,6 +156,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
     R.omit(['__typename', 'id'], props),
     reqStrPathThrowing('id', props)
   );
+
   if (R.has('data', response || {})) {
     log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
   }
