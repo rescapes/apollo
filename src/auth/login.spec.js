@@ -22,6 +22,7 @@ import {
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {createTestAuthTask, createTestNoAuthTask} from '../helpers/testHelpers.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
+import {typePoliciesConfig} from '../config';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -35,7 +36,7 @@ describe('login', () => {
       // Try it with an auth client
       mapToNamedResponseAndInputs('apolloConfig',
         ({apolloClient}) => authClientOrLoginTask({
-          cacheOptions,
+          cacheOptions: cacheOptions(typePoliciesConfig),
           uri,
           stateLinkResolvers: defaultStateLinkResolvers,
           writeDefaults: writeDefaultSettingsToCache,
@@ -48,7 +49,7 @@ describe('login', () => {
         }, apolloClient)
       ),
       () => authClientOrLoginTask({
-          cacheOptions,
+          cacheOptions: cacheOptions(typePoliciesConfig),
           uri,
           stateLinkResolvers: defaultStateLinkResolvers,
           writeDefaults: writeDefaultSettingsToCache,

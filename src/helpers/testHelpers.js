@@ -29,12 +29,15 @@ import {loginToAuthClientTask} from '../auth/login';
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
  * when updating the cache
+ * @params {[Object]} typePoliciesConfig List of TypePolicy objects
  * @type {any}
  */
-export const cacheOptions = {
-  typePolicies: typePoliciesWithMergeObjects(
-    typePoliciesConfig
-  )
+export const cacheOptions = typePoliciesConfig => {
+  return {
+    typePolicies: typePoliciesWithMergeObjects(
+      typePoliciesConfig
+    )
+  };
 };
 
 /**
@@ -48,12 +51,12 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
     cacheIdProps: defaultSettingsCacheIdProps,
     // These are only used to store settings for a non-auth user. Not needed if
     // we allow no auth querying of the default settings
-    defaultSettingsTypenames,
+    defaultSettingsTypenames
   },
   apollo: {
     writeDefaultsCreator: writeConfigToServerAndCache,
     stateLinkResolvers: defaultStateLinkResolvers,
-    cacheOptions
+    cacheOptions: cacheOptions(typePoliciesConfig)
   }
 });
 
@@ -145,7 +148,7 @@ export const localTestAuthTask = () => createTestAuthTask(localTestConfig);
  */
 export const localTestNoAuthTask = () => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
-  localStorage.removeItem('token')
+  localStorage.removeItem('token');
   return createTestNoAuthTask(localTestConfig);
 };
 

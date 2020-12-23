@@ -30,6 +30,19 @@ export const deleteTokenCookieOutputParams = {
 
 export const tokenAuthReadInputTypeMapper = {};
 
+export const tokenAuthTypePolicy = {
+  type: 'ObtainJSONWebToken',
+  // Indicates Singleton. Only one exists in the cache. This also means that the value will be written to the cache
+  // as null initially so that updates to the cache trigger observing queries to re-fire
+  keyFields: [],
+  // This is for the singleton initial null write
+  name: 'tokenAuthStore',
+  outputParams: {
+    token: 1,
+    payload: 1
+  }
+};
+
 /**
  * Look for the auth token in the cache so we know if we can get an authenticated client
  * This doesn't work with a cache query so I'm currently using a fragement read
@@ -123,7 +136,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
               // Apollo Client in their context
               localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
               // Use the store for writing if we don't have an apolloClient
-              mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth)
+              mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth);
 
               return ({store, response});
             }
@@ -165,7 +178,7 @@ export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) =>
     },
     tokenAuth
   );
-}
+};
 
 /**
  * Deletes the token cookie of the current user

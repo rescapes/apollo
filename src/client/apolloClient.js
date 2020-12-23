@@ -212,8 +212,8 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
   const inMemoryCache = new InMemoryCache(options);
   R.forEachObjIndexed(
     (typePolicy, typeName) => {
-      // keyfields indicates a singleton that we need to initialize to a null query result
-      if (strPathOr(false, 'keyFields', typePolicy)) {
+      // keyFields empty indicates a singleton that we need to initialize to a null query result
+      if (!R.length(strPathOr([true], 'keyFields', typePolicy))) {
         const outputParams = reqStrPathThrowing('outputParams', typePolicy);
         makeCacheMutation(
           // Use the store for writing if we don't have an apolloClient

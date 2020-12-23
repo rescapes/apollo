@@ -9,20 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+import {tokenAuthTypePolicy} from './stores/tokenAuthStore';
+import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/settingsStore';
+import * as R from 'ramda';
+
+/**
+ * Combines the given config of the calling library with rescape-apollo's type policies
+ * @returns {[Object]} List of type policies
+ */
 export const typePoliciesConfig = [
-  {type: 'SettingsType', fields: ['data']},
-  {type: 'SettingsDataType', fields: ['mapbox']},
-  {type: 'RegionType', fields: ['data']},
-  {
-    type: 'ObtainJSONWebToken',
-    // Indicates Singleton. Only one exists in the cache. This also means that the value will be written to the cache
-    // as null initially so that updates to the cache trigger observing queries to re-fire
-    keyFields: ['token'],
-    // This is for the singleton initial null write
-    name: 'tokenAuthStore',
-    outputParams: {
-      token: 1,
-      payload: 1
-    }
-  }
+  settingsTypePolicy,
+  settingsDataTypePolicy,
+  tokenAuthTypePolicy
 ];

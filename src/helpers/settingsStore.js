@@ -13,9 +13,13 @@ import {omitClientFields} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
-import T from 'folktale/concurrency/task/index.js'
+import T from 'folktale/concurrency/task/index.js';
+
 const {of} = T;
 import {isAuthenticatedLocal} from '../stores/userStore.js';
+
+export const settingsTypePolicy = {type: 'SettingsType', fields: ['data']};
+export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};
 
 /**
  * Created by Andy Likuski on 2020.03.20

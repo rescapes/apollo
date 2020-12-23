@@ -34,8 +34,8 @@ import {
 } from './tokenAuthStore.js';
 import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication.js';
 import {makeSettingsQueryContainer} from '../helpers/settingsStore.js';
+import {typePoliciesConfig} from '../config';
 
-const someTokenAuthKeys = ['token'];
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
 
@@ -84,7 +84,7 @@ describe('tokenAuthStore', () => {
         ({apolloConfig: {apolloClient, token}}) => {
           return getOrCreateAuthApolloClientWithTokenTask({
               cacheData: apolloClient.cache.data.data,
-              cacheOptions,
+              cacheOptions: cacheOptions(typePoliciesConfig),
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,
               writeDefaults: writeDefaultSettingsToCache,
