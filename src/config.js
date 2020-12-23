@@ -11,7 +11,6 @@
  */
 import {tokenAuthTypePolicy} from './stores/tokenAuthStore';
 import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/settingsStore';
-import * as R from 'ramda';
 
 /**
  * Combines the given config of the calling library with rescape-apollo's type policies
