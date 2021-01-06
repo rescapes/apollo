@@ -45,8 +45,6 @@ const log = loggers.get('rescapeDefault');
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
  * @param {[String]} config.cacheData
  * Existing client cache data if restoring from some externally stored values
- * @param {String} authToken: If non-null, authenticates the client. Otherwise a non-auth Apollo Client
- * is created
  * @return {{apolloClient: ApolloClient}}
  */
 export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
@@ -67,8 +65,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
       stateLinkResolvers,
       writeDefaults,
       settingsConfig
-    },
-    authToken
+    }
   ) => {
     const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
     return composeWithChain([
@@ -92,13 +89,13 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
         );
       },
       mapToNamedResponseAndInputs('user',
-        ({apolloConfig, authToken}) => {
+        ({apolloConfig, tokenAuth}) => {
           // Fetch the user to get it into the cache so we know we are authenticated
           return R.ifElse(
             R.identity,
             () => currentUserQueryContainer(apolloConfig, userOutputParams, {}),
             () => of(null)
-          )(authToken);
+          )(strPathOr(null, 'data.token', tokenAuth));
         }
       ),
 
@@ -186,7 +183,7 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
       stateLinkResolvers,
       writeDefaults,
       settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-    }, token)
+    })
   );
 });
 
@@ -227,9 +224,7 @@ export const getOrCreateNoAuthApolloClientTask = R.curry((
         stateLinkResolvers,
         writeDefaults,
         settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-      },
-      // null authToken
-      null
+      }
     )
   );
 });
