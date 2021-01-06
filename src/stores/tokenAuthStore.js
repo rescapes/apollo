@@ -120,27 +120,29 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
           variables: props => {
             return R.pick(['username', 'password'], props);
           },
-          update: (store, response) => R.compose(
-            // Accept an update method from apolloConfig.options so that queries can be refetched
-            ({store, response}) => {
-              return strPathOr(R.identity, 'options.update', apolloConfig)(store, response);
-            },
-            ({store, response}) => {
-              const tokenAuth = reqStrPathThrowing(
-                'data.tokenAuth',
-                response
-              );
+          update: (store, response) => {
+            return R.compose(
+              // Accept an update method from apolloConfig.options so that queries can be refetched
+              ({store, response}) => {
+                return strPathOr(R.identity, 'options.update', apolloConfig)(store, response);
+              },
+              ({store, response}) => {
+                const tokenAuth = reqStrPathThrowing(
+                  'data.tokenAuth',
+                  response
+                );
 
-              // This is what the Apollo Client reads to be authenticated
-              // This updates the Apollo Client to authorized which gives all components access to an authorized
-              // Apollo Client in their context
-              localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
-              // Use the store for writing if we don't have an apolloClient
-              mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth);
+                // This is what the Apollo Client reads to be authenticated
+                // This updates the Apollo Client to authorized which gives all components access to an authorized
+                // Apollo Client in their context
+                localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
+                // Use the store for writing if we don't have an apolloClient
+                mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth);
 
-              return ({store, response});
-            }
-          )({store, response})
+                return ({store, response});
+              }
+            )({store, response});
+          }
         }
       }
     ),

@@ -8,7 +8,14 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {composeWithChain, defaultNode, mapToNamedResponseAndInputs, reqStrPathThrowing, memoizedTaskWith, strPathOr} from '@rescapes/ramda';
+import {
+  composeWithChain,
+  defaultNode,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing,
+  memoizedTaskWith,
+  strPathOr
+} from '@rescapes/ramda';
 import {getOrCreateApolloClientTask} from './apolloClient.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import * as AC from '@apollo/client';
@@ -16,6 +23,7 @@ import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const {ApolloClient} = defaultNode(AC);
 const {of} = T;
@@ -93,8 +101,27 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
           )(authToken);
         }
       ),
+
+      mapToNamedResponseAndInputs('tokenAuth',
+        ({apolloConfig}) => {
+          // Once we have the Apollo client, sync localStorage.getItem('token') with
+          // what is in the Apollo Cache from previous session. We use localStorage as
+          // a mirror of the cache value when the cache isn't in scope
+          return R.map(tokenAuth => {
+              const token = strPathOr(null, 'data.token', tokenAuth);
+              if (token) {
+                localStorage.setItem('token', token);
+              } else {
+                localStorage.removeItem('token');
+              }
+              return tokenAuth
+            },
+            queryLocalTokenAuthContainer(apolloConfig, {})
+          );
+        }
+      ),
       mapToNamedResponseAndInputs('apolloConfig',
-        ({cacheData, uri, stateLinkResolvers, authToken}) => {
+        ({cacheData, uri, stateLinkResolvers}) => {
           // Memoized call
           return getOrCreateApolloClientTask({
               // Existing apolloClient to add auth to

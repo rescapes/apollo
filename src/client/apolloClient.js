@@ -18,10 +18,11 @@ import {Mutation, Query} from "react-apollo";
 import {e} from '@rescapes/helpers-component';
 import * as ACP from 'apollo3-cache-persist';
 import {print} from 'graphql';
+import moment from 'moment';
 import {
   applyDeepWithKeyWithRecurseArraysAndMapObjs,
   compact,
-  composeWithMap,
+  composeWithChain,
   defaultNode,
   mapToNamedResponseAndInputs,
   memoizedTaskWith,
@@ -82,44 +83,60 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
     );
   },
   ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
-    const httpLink = createHttpLink({
-      fetch,
-      uri
-    });
 
-    const authLink = createAuthLink();
-    //const errorLink = createErrorLink();
-    const errorLink = reportErrors(log.error.bind(log));
-    const cache = createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation}));
-    return composeWithMap([
-      ({cache}) => {
+    return composeWithChain([
+      ({cache, cacheData, links}) => {
         const apolloClient = _completeApolloClient({
           stateLinkResolvers,
-          links: [
-            errorLink,
-            authLink,
-            // Terminal link, has to be last
-            httpLink
-          ],
+          links,
           cache
         });
         // Use existing cache data if defined. This is only relevant for passing an unauthorized client's
         // cache values
+        // TODO restore no longer expects an argument
         if (cacheData) {
           apolloClient.cache.restore(cacheData);
         }
         // Once createPersistedCacheTask we can create the apollo client
-        return {
+        return of({
           apolloClient
-        };
+        });
       },
       mapToNamedResponseAndInputs('void',
-        cache => {
-          // Create the persisted cache and resolves to void
+        ({cache}) => {
+          // Create the persisted cache and resolves nothing
           return createPersistedCacheTask(cache);
         }
+      ),
+      mapToNamedResponseAndInputs('cache',
+        ({cacheOptions, makeCacheMutation}) => {
+          return of(createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation})));
+        }
+      ),
+      mapToNamedResponseAndInputs('links',
+        () => {
+          const httpLink = createHttpLink({
+            fetch,
+            uri
+          });
+
+          const authLink = createAuthLink();
+          // TODO I think our error link is out of data
+          //const errorLink = createErrorLink();
+          const errorLink = reportErrors(log.error.bind(log));
+          return of([
+            errorLink,
+            authLink,
+            // Terminal link, has to be last
+            httpLink
+          ]);
+        }
+      ),
+      // This keeps any above composition from happening if memoizedTaskWith finds and existing client
+      mapToNamedResponseAndInputs('void',
+        () => of(null)
       )
-    ])({cache});
+    ])({cacheOptions, makeCacheMutation, cacheData});
   }
 );
 
@@ -141,7 +158,7 @@ const createAuthLink = () => new ApolloLink((operation, forward) => {
 const reportErrors = (errorCallback) => new ApolloLink((operation, forward) => {
   const observer = forward(operation);
   // errors will be sent to the errorCallback
-  observer.subscribe({ error: errorCallback })
+  observer.subscribe({error: errorCallback});
   return observer;
 });
 /**
@@ -262,7 +279,7 @@ const createPersistedCacheTask = (cache) => {
  */
 const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
   // Create the ApolloClient using the following ApolloClientOptions
-  return new ApolloClient({
+  const apolloClient = new ApolloClient({
     // This is just a guess at link order.
     // I know stateLink goes after errorLink and before httpLink
     // (https://www.apollographql.com/docs/link/links/state.html)
@@ -279,6 +296,8 @@ const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
     },
     connectToDevTools: true
   });
+  apolloClient.__CREATED__ = moment().format('HH-mm-SS');
+  return apolloClient;
 };
 
 

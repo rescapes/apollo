@@ -20,7 +20,8 @@ import {strPathOr, defaultNode} from '@rescapes/ramda';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import * as R from 'ramda';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-const {MissingFieldError} = defaultNode(AC)
+
+const {MissingFieldError} = defaultNode(AC);
 const {of} = T;
 
 
@@ -72,7 +73,7 @@ export const isAuthenticatedLocal = apolloConfig => {
     if (R.is(MissingFieldError)) {
       return false;
     }
-    throw e
+    throw e;
   }
 };
 
@@ -92,26 +93,30 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
     return R.compose(
       // Wrap in a task when we are doing apolloClient queries, otherwise we already have
       // a proper apollo container
-      containerOrValue => R.when(
-        () => R.propOr(false, 'apolloClient', apolloConfig),
-        of
-      )(containerOrValue),
-      props => makeQueryFromCacheContainer(
-        R.merge(apolloConfig,
-          {
-            options: {
-              variables: () => {
-                return {};
-              },
-              // Pass through error so we can handle it in the component
-              errorPolicy: 'all',
-              partialRefetch: true
+      containerOrValue => {
+        return R.when(
+          () => R.propOr(false, 'apolloClient', apolloConfig),
+          of
+        )(containerOrValue);
+      },
+      props => {
+        return makeQueryFromCacheContainer(
+          R.merge(apolloConfig,
+            {
+              options: {
+                variables: () => {
+                  return {};
+                },
+                // Pass through error so we can handle it in the component
+                errorPolicy: 'all',
+                partialRefetch: true
+              }
             }
-          }
-        ),
-        {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-        props
-      )
+          ),
+          {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+          props
+        );
+      }
     )(props);
   } catch (e) {
     if (R.is(MissingFieldError, e)) {
@@ -123,7 +128,7 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
         }
       );
     }
-    throw e
+    throw e;
   }
 };
 
