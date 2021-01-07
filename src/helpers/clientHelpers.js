@@ -11,13 +11,11 @@
 import * as R from 'ramda';
 import {
   mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight,
-  mergeDeepWithRecurseArrayItemsByRight,
   omitDeep,
   reqStrPathThrowing,
   strPathOr
 } from '@rescapes/ramda';
 import {parseApiUrl} from '@rescapes/helpers';
-import {loginToAuthClientTask} from '../auth/login.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -25,7 +23,7 @@ import {
 } from './defaultSettingsStore.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
-import {getOrCreateNoAuthApolloClientTask} from '../client/apolloClientAuthentication';
+import {getOrCreateApolloClientTaskAndSetDefaults} from '../client/apolloClientAuthentication';
 
 const log = loggers.get('rescapeDefault');
 
@@ -180,7 +178,6 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
 };
 
 
-
 /**
  * Creates an Apollo Client with authorization based on the presence of localStorage.get('token') having a
  * valid API token stored in it. This function should be used to create an ApolloClient when localStorage is
@@ -209,7 +206,8 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createLocalStorageAuthTask = config => getOrCreateNoAuthApolloClientTask({
+export const createLocalStorageAuthContainer = config => getOrCreateApolloClientTaskAndSetDefaults({
+    apolloConfig: reqStrPathThrowing({}, 'apolloConfig', config),
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),

@@ -30,6 +30,7 @@ import {
   createTestNoAuthTask
 } from '../helpers/testHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
+import {queryLocalTokenAuthContainer} from './tokenAuthStore';
 
 const {of} = T;
 
@@ -38,7 +39,14 @@ describe('userStore', () => {
     const someUserKeys = ['id', 'email', 'username'];
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => currentUserQueryContainer({apolloClient}, userOutputParams, {}),
+      ({apolloClient}) => {
+        return currentUserQueryContainer({apolloClient}, userOutputParams, tokenAuth);
+      },
+      mapToNamedResponseAndInputs('tokenAuth',
+        ({apolloConfig}) => {
+          return queryLocalTokenAuthContainer(apolloConfig, {});
+        }
+      ),
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask()
       )
@@ -54,7 +62,10 @@ describe('userStore', () => {
   test('currentUserQueryContainerNotAuthorized', done => {
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => currentUserQueryContainer({apolloClient}, userOutputParams, {}),
+      ({apolloClient}) => {
+        // This will skip because we have no tokenAuth to pass
+        return currentUserQueryContainer({apolloClient}, userOutputParams, {});
+      },
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestNoAuthTask()
       )

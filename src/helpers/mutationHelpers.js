@@ -24,22 +24,21 @@ import {
 } from '../client/apolloClient.js';
 import {
   capitalize,
-  composeWithMapMDeep,
+  composeWithMap,
+  defaultNode,
   duplicateKey,
-  filterWithKeys, findOne,
+  filterWithKeys,
   mapObjToValues,
-  omitDeepBy, onlyOne, onlyOneThrowing, onlyOneValueThrowing,
-  reqStrPathThrowing,
-  retryTask,
-  defaultNode
+  omitDeepBy,
+  reqStrPathThrowing
 } from '@rescapes/ramda';
 import * as AC from '@apollo/client';
-
-const {gql} = defaultNode(AC);
 import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {loggers} from '@rescapes/log';
+
+const {gql} = defaultNode(AC);
 
 const log = loggers.get('rescapeDefault');
 
@@ -176,7 +175,7 @@ export const makeMutationRequestContainer = v(R.curry(
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
           log.debug(`Running Mutation Task:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)}\n\n`);
-          return composeWithMapMDeep(1, [
+          return composeWithMap( [
             response => {
               log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
               // name is null if mutationNameOverride is used
@@ -188,7 +187,6 @@ export const makeMutationRequestContainer = v(R.curry(
                 {
                   mutation,
                   name
-                  //variableNames
                 },
                 namedProps
               );

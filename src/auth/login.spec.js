@@ -10,19 +10,20 @@
  */
 
 import {cacheOptions, localTestConfig} from '../helpers/testHelpers.js';
-import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda'
+import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda';
 import {authClientOrLoginTask} from './login.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams,
-  writeDefaultSettingsToCache
+  writeDefaultSettingsToCacheContainer
 } from '../helpers/defaultSettingsStore.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {createTestAuthTask, createTestNoAuthTask} from '../helpers/testHelpers.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {typePoliciesConfig} from '../config';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -39,11 +40,11 @@ describe('login', () => {
           cacheOptions: cacheOptions(typePoliciesConfig),
           uri,
           stateLinkResolvers: defaultStateLinkResolvers,
-          writeDefaults: writeDefaultSettingsToCache,
+          writeDefaults: writeDefaultSettingsToCacheContainer,
           settingsConfig: {
             cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
             cacheIdProps: defaultSettingsCacheIdProps,
-            settingsOutputParams: defaultSettingsOutputParams,
+            settingsOutputParams: defaultSettingsOutputParams
 
           }
         }, apolloClient)
@@ -52,7 +53,7 @@ describe('login', () => {
           cacheOptions: cacheOptions(typePoliciesConfig),
           uri,
           stateLinkResolvers: defaultStateLinkResolvers,
-          writeDefaults: writeDefaultSettingsToCache,
+          writeDefaults: writeDefaultSettingsToCacheContainer,
           settingsConfig: {
             cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
             cacheIdProps: defaultSettingsCacheIdProps,
@@ -93,13 +94,18 @@ describe('login', () => {
     const errors = [];
     composeWithChain([
       mapToNamedResponseAndInputs('user',
-        ({apolloConfig}) => {
+        ({apolloConfig, tokenAuth}) => {
           // Make sure we
           return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,
-            {}
+            {tokenAuth}
           );
+        }
+      ),
+      mapToNamedResponseAndInputs('tokenAuth',
+        ({apolloConfig}) => {
+          return queryLocalTokenAuthContainer(apolloConfig, {});
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',
@@ -110,7 +116,7 @@ describe('login', () => {
       ),
       mapToNamedResponseAndInputs('noAuthUser',
         apolloConfig => {
-          // Make sure we are not authed
+          // This will skip because we have no auth token to pass
           return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,

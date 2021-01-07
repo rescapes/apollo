@@ -14,7 +14,7 @@ import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink.js';
-import {writeConfigToServerAndCache} from './settingsStore.js';
+import {writeConfigToServerAndCacheContainer} from './settingsStore.js';
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
 import {typePoliciesConfig} from '../config.js';
 import {
@@ -22,7 +22,7 @@ import {
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams, defaultSettingsTypenames
 } from './defaultSettingsStore.js';
-import {getOrCreateNoAuthApolloClientTask} from '../client/apolloClientAuthentication';
+import {getOrCreateNoAuthApolloClientContainer} from '../client/apolloClientAuthentication';
 import {parseApiUrl} from '@rescapes/helpers';
 import {loginToAuthClientTask} from '../auth/login';
 
@@ -54,7 +54,7 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
     defaultSettingsTypenames
   },
   apollo: {
-    writeDefaultsCreator: writeConfigToServerAndCache,
+    writeDefaultsCreator: writeConfigToServerAndCacheContainer,
     stateLinkResolvers: defaultStateLinkResolvers,
     cacheOptions: cacheOptions(typePoliciesConfig)
   }
@@ -86,7 +86,7 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createTestNoAuthTask = config => getOrCreateNoAuthApolloClientTask({
+export const createTestNoAuthTask = config => getOrCreateNoAuthApolloClientContainer({
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),

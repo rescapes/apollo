@@ -35,6 +35,8 @@ const log = loggers.get('rescapeDefault');
  * Even without a token we might have a token in localStorage.getItem('token'),
  * but this tells us to try load the current user as if we are logged in.
  * @param {Object} config
+ * @param {Object} config.apolloConfig Created by
+ getOrCreateApolloClientTask({ cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation } ); or similar
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * local storage to store are auth token
@@ -59,6 +61,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
     );
   }, (
     {
+      apolloConfig,
       cacheData,
       cacheOptions,
       uri,
@@ -118,23 +121,9 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
             queryLocalTokenAuthContainer(apolloConfig, {})
           );
         }
-      ),
-      mapToNamedResponseAndInputs('apolloConfig',
-        ({cacheData, uri, stateLinkResolvers}) => {
-          // Memoized call
-          return getOrCreateApolloClientTask({
-              // Existing apolloClient to add auth to
-              // If we have an unauthorized client we want to authorize it so we can maintain its cache
-              cacheData,
-              cacheOptions,
-              uri,
-              stateLinkResolvers,
-              makeCacheMutation
-            }
-          );
-        }
       )
     ])({
+      apolloConfig,
       cacheData,
       uri,
       stateLinkResolvers,
@@ -170,62 +159,32 @@ export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
   token
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
-  return R.map(
-    obj => {
-      return R.merge(
-        {token},
-        obj
-      );
-    },
-    getOrCreateApolloClientTaskAndSetDefaults({
-      cacheData,
-      cacheOptions,
-      uri,
-      stateLinkResolvers,
-      writeDefaults,
-      settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-    })
-  );
-});
-
-
-/**
- * Given a userLogin with a tokenAuth.token create the getApolloClientTask and return it and the token
- * This method is synchronous but returns a Task to be used in API chains
- * @param {Object} config
- * @param {Object} config.cacheOptions
- * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
- * @param {Function} config.writeDefaults
- * @param {Array|Object} config.outputParams Teh settings outputParams
- * @param {Object} config.settingsConfig
- * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
- * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
- * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
- * @return {Task<Object>} Task resolving to an object containing and object with a no auth apolloClient and null token.
- */
-export const getOrCreateNoAuthApolloClientTask = R.curry((
-  {
-    cacheOptions, uri, stateLinkResolvers, writeDefaults,
-    settingsConfig
-  }
-) => {
-  const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
-  return R.map(
-    obj => {
-      // Matches resolved value of getOrCreateAuthApolloClientWithTokenTask
-      return R.merge(
-        {token: null},
-        obj
-      );
-    },
-    getOrCreateApolloClientTaskAndSetDefaults({
+  return composeWithChain([
+    apolloConfig => {
+      return getOrCreateApolloClientTaskAndSetDefaults({
+        apolloConfig,
+        cacheData,
         cacheOptions,
         uri,
         stateLinkResolvers,
         writeDefaults,
         settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-      }
-    )
-  );
+      });
+    },
+    () => {
+      // Memoized call
+      return getOrCreateApolloClientTask({
+          // Existing apolloClient to add auth to
+          // If we have an unauthorized client we want to authorize it so we can maintain its cache
+          cacheData,
+          cacheOptions,
+          uri,
+          stateLinkResolvers,
+          makeCacheMutation
+        }
+      );
+    }
+  ])();
 });
+
+

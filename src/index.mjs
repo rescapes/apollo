@@ -32,11 +32,6 @@ export {
   getOrCreateApolloClientTask
 } from './client/apolloClient.js';
 export {
-  getOrCreateAuthApolloClientWithTokenTask,
-  getOrCreateApolloClientTaskAndSetDefaults,
-  getOrCreateNoAuthApolloClientTask
-} from './client/apolloClientAuthentication.js';
-export {
   makeQuery,
   makeQueryContainer,
   apolloQueryResponsesTask,
@@ -85,9 +80,9 @@ export {
 } from './helpers/testHelpers.js';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
 export {containerForApolloType} from './helpers/containerHelpers.js';
-export {typePoliciesWithMergeObjects, createLocalStorageAuthTask} from './helpers/clientHelpers.js';
+export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
-  writeDefaultSettingsToCache,
+  writeDefaultSettingsToCacheContainer,
   defaultSettingsOutputParams,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsCacheIdProps,
@@ -98,7 +93,7 @@ export {
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   makeSettingsQueryContainer,
-  writeConfigToServerAndCache
+  writeConfigToServerAndCacheContainer
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig

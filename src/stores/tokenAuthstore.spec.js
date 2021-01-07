@@ -22,7 +22,7 @@ import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams,
-  writeDefaultSettingsToCache
+  writeDefaultSettingsToCacheContainer
 } from '../helpers/defaultSettingsStore.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
@@ -32,9 +32,9 @@ import {
   refreshTokenMutationRequestContainer,
   verifyTokenMutationRequestContainer
 } from './tokenAuthStore.js';
-import {getOrCreateAuthApolloClientWithTokenTask} from '../client/apolloClientAuthentication.js';
 import {makeSettingsQueryContainer} from '../helpers/settingsStore.js';
 import {typePoliciesConfig} from '../config';
+import {getOrCreateApolloClientTaskAndSetDefaults} from '../client/apolloClientAuthentication';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -82,12 +82,13 @@ describe('tokenAuthStore', () => {
       ),
       mapToNamedResponseAndInputs('apolloConfig',
         ({apolloConfig: {apolloClient, token}}) => {
-          return getOrCreateAuthApolloClientWithTokenTask({
+          return getOrCreateApolloClientTaskAndSetDefaults({
+              apolloConfig: {apolloClient},
               cacheData: apolloClient.cache.data.data,
               cacheOptions: cacheOptions(typePoliciesConfig),
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,
-              writeDefaults: writeDefaultSettingsToCache,
+              writeDefaults: writeDefaultSettingsToCacheContainer,
               settingsConfig: {
                 cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
                 cacheIdProps: defaultSettingsCacheIdProps,

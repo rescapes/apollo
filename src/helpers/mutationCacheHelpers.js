@@ -247,18 +247,26 @@ export const mergeCacheable = ({idPathLookup}, existing, incoming) => {
 export const makeCacheMutationContainer = v(R.curry(
   (apolloConfig,
    {
+     idField = 'id',
      name,
      outputParams,
-     idPathLookup
+     idPathLookup,
+     mergeFromCacheFirst,
+     force = false,
+     singleton = false
    },
    props) => {
 
     const data = makeCacheMutation(
       apolloConfig,
       {
+        idField,
         name,
         outputParams,
-        idPathLookup
+        idPathLookup,
+        mergeFromCacheFirst,
+        force,
+        singleton
       },
       props
     );

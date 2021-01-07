@@ -1,6 +1,5 @@
 import settings from './privateSettings.js';
-import {writeConfigToServerAndCache} from './settingsStore.js';
-import {mergeDeep} from '@rescapes/ramda'
+import {writeConfigToServerAndCacheContainer} from './settingsStore.js';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -81,7 +80,7 @@ export const defaultSettingsCacheIdProps = [
 /**
  * Writes or rewrites the default settings to the cache
  */
-export const writeDefaultSettingsToCache = writeConfigToServerAndCache({
+export const writeDefaultSettingsToCacheContainer = writeConfigToServerAndCacheContainer({
     settings,
     settingsConfig: {defaultSettingsTypenames}
   }

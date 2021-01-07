@@ -17,6 +17,8 @@ import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
 import {isAuthenticatedLocal} from '../stores/userStore.js';
+import {makeCacheMutationContainer} from './mutationCacheHelpers';
+import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
 
 export const settingsTypePolicy = {type: 'SettingsType', fields: ['data']};
 export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};
@@ -154,6 +156,25 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
   );
 };
 
+export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams}, props, settings) => {
+
+  // Add the cache only values to the persisted settings
+  const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
+
+  // Mutate the cache to save settings to the database that are not stored on the server
+  makeCacheMutationContainer(
+    apolloConfig,
+    {
+      name: 'settings',
+      // Use key instead of id in the case of the unauthenticated user needs to cache default settings
+      idField: props => R.propOr(R.prop('key', props), 'id', props),
+      // output for the read fragment
+      outputParams
+    },
+    propsWithCacheOnlyItems
+  );
+};
+
 /**
  * Writes or rewrites the default settings to the cache if needed.
  * Non-server values in the config are ignored and must be added manually.
@@ -171,21 +192,18 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
  * }
  * Only need to write settings to the cache for an unauthed user when no settings are on the server (rare)
  */
-export const writeConfigToServerAndCache = (config) => {
+export const writeConfigToServerAndCacheContainer = (config) => {
   return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
+    const apolloConfig = {apolloClient};
     // Only the settings are written to the server
-    const configuredSettings = R.prop('settings', config);
+    const props = R.prop('settings', config);
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
-    return composeWithChain([
-      obj => {
-        // Just a void check in the web environment to make sure the apollo stuff completes
-        return of(obj)
-      },
+    return composeWithComponentMaybeOrTaskChain([
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedResponseAndInputs('settingsWithoutCacheValues',
-        ({props, apolloConfig, settingsFromServer}) => {
+        settingsFromServer => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
-          return R.ifElse(
+          return nameComponent('settingsMutation', R.ifElse(
             () => {
               // If we are authenticated and the server settings don't match the config, update
               // TODO This should only be done by admins
@@ -210,27 +228,26 @@ export const writeConfigToServerAndCache = (config) => {
               // If we don't have settings from the server and we aren't authenticated, just
               // cache the configured settings
               const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepRight(
-                configuredSettings,
+                props,
                 // TODO this should come from the remote schema so it can be customized
                 // to the app's settings
                 defaultSettingsTypenames
               );
-              makeSettingsCacheMutation(
+              return makeSettingsCacheMutationContainer(
                 apolloConfig,
                 {outputParams: settingsOutputParams},
-                configuredSettings,
+                props,
                 settingsToCache
               );
-              return of({data: {mutate: {settings: settingsToCache}}});
             }
-          )();
+          ))();
         }
       ),
 
       // Fetch the props if they exist on the server
       mapToNamedResponseAndInputs('settingsFromServer',
-        ({apolloConfig, props}) => {
-          return makeSettingsQueryContainer(
+        (props) => {
+          return nameComponent('settingsQuery', makeSettingsQueryContainer(
             R.merge(apolloConfig, {
               options: {
                 skip: !localStorage.getItem('token'),
@@ -239,13 +256,9 @@ export const writeConfigToServerAndCache = (config) => {
             }),
             {outputParams: omitClientFields(settingsOutputParams)},
             R.pick(['key'], props)
-          );
+          ));
         }
       )
-    ])({
-        apolloConfig: {apolloClient},
-        props: configuredSettings
-      }
-    );
+    ])(props)
   };
 };
