@@ -84,7 +84,9 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
         // The initial write sets reset: false in case we need to go to the server the first time to get the values
         // or the structure of the values
         return R.map(
-          () => ({apolloClient}),
+          () => {
+            return {apolloClient};
+          },
           taskIfNotTask(writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}))
         );
       },
@@ -111,7 +113,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
               } else {
                 localStorage.removeItem('token');
               }
-              return tokenAuth
+              return tokenAuth;
             },
             queryLocalTokenAuthContainer(apolloConfig, {})
           );
@@ -136,7 +138,6 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
       cacheData,
       uri,
       stateLinkResolvers,
-      authToken,
       writeDefaults,
       cacheOnlyObjs,
       cacheIdProps,

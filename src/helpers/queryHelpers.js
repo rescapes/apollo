@@ -309,9 +309,14 @@ export const makeQueryContainer = v(R.curry(
       componentOrTask => 'run' in componentOrTask,
       // If it's a task report the result. Components have to run their query
       componentOrTask => {
+        log.debug(`makeQueryContainer Attempting query task:\n${
+          print(query)
+        }\nArguments:\n${
+          inspect(winnowedProps, false, 10)
+        }\n`);
         return R.map(
           queryResponse => {
-            log.debug(`makeQueryTask for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+            log.debug(`makeQueryContainer for ${name} succeeded with response: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
             return queryResponse;
           },
           componentOrTask

@@ -59,7 +59,9 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
       // Wrap in a task when we are doing apolloClient queries, otherwise we already have
       // a proper apollo container
       containerOrValue => R.when(
-        () => R.propOr(false, 'apolloClient', apolloConfig),
+        () => {
+          return R.propOr(false, 'apolloClient', apolloConfig);
+        },
         of
       )(containerOrValue),
       props => {

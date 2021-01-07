@@ -183,16 +183,14 @@ export const makeMutationRequestContainer = v(R.curry(
               return addMutateKeyToMutationResponse({name}, response);
             },
             () => {
-              return retryTask(
-                authApolloClientMutationRequestContainer(
-                  apolloConfig,
-                  {
-                    mutation,
-                    name
-                    //variableNames
-                  },
-                  namedProps
-                ), 3
+              return authApolloClientMutationRequestContainer(
+                apolloConfig,
+                {
+                  mutation,
+                  name
+                  //variableNames
+                },
+                namedProps
               );
             }
           ])();

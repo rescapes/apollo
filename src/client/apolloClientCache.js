@@ -45,7 +45,7 @@ const log = loggers.get('rescapeDefault');
  variables: {key: "earth"}
  * @returns {Object} The cache result
  */
-export const authApolloClientQueryCacheContainer = R.curry((apolloConfig, options, props) => {
+export const authApolloClientQueryCache = R.curry((apolloConfig, options, props) => {
   const winnowedProps = _winnowRequestProps(apolloConfig, props);
   // readQuery isn't a promise, just a direct call I guess
   log.debug(`Query cache: ${print(options.query)} props: ${inspect(winnowedProps)}`);
@@ -69,7 +69,7 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => {
-        return authApolloClientQueryCacheContainer(
+        return authApolloClientQueryCache(
           apolloConfig,
           query,
           props
@@ -89,7 +89,7 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
               apolloClient,
               {
                 render: getRenderPropFunction(props),
-                response: authApolloClientQueryCacheContainer(
+                response: authApolloClientQueryCache(
                   R.merge(apolloConfig, {apolloClient}),
                   query,
                   props

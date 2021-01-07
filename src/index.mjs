@@ -52,7 +52,7 @@ export {
   filterOutNullDeleteProps
 } from './helpers/mutationHelpers.js';
 export {
-  makeMutationWithClientDirectiveContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
+  makeCacheMutationContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable
 } from './helpers/mutationCacheHelpers.js';
 export {
   formatOutputParams,

@@ -8,25 +8,35 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+import {ApolloConsumer} from 'react-apollo';
 import {inspect} from 'util';
 import * as R from 'ramda';
 import * as AC from '@apollo/client';
-const {gql} = defaultNode(AC)
 import {print} from 'graphql';
 import {v} from '@rescapes/validate';
-import {capitalize, mergeDeepWithRecurseArrayItemsByRight, pickDeepPaths, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
+import {
+  capitalize,
+  defaultNode,
+  mergeDeepWithRecurseArrayItemsByRight,
+  pickDeepPaths,
+  reqStrPathThrowing
+} from '@rescapes/ramda';
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers.js';
-import T from 'folktale/concurrency/task/index.js'
-const {of} = T;
+import T from 'folktale/concurrency/task/index.js';
+
 import maybe from 'folktale/maybe/index.js';
 import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
+import {containerForApolloType} from './containerHelpers';
+import {getRenderPropFunction} from './componentHelpersMonadic';
+import {authApolloClientQueryCache} from '../client/apolloClientCache';
+import {e} from '@rescapes/helpers-component';
 
-const {Just} = maybe;
+const {gql} = defaultNode(AC);
 
+const {of} = T;
 
 const log = loggers.get('rescapeDefault');
 
@@ -234,7 +244,7 @@ export const mergeCacheable = ({idPathLookup}, existing, incoming) => {
  * of different could be merged together into the data field. This also matches what Apollo components expect.
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
-export const makeMutationWithClientDirectiveContainer = v(R.curry(
+export const makeCacheMutationContainer = v(R.curry(
   (apolloConfig,
    {
      name,
@@ -261,7 +271,27 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
       ],
       // If we have an Apollo Component
       [R.T,
-        () => Just(data)
+        // Since we aren't using a Query component, use an ApolloConsumer to get access to the
+        // apollo client from the react context
+        apolloConfig => {
+          return e(
+            ApolloConsumer,
+            {},
+            apolloClient => {
+              return containerForApolloType(
+                apolloClient,
+                {
+                  render: getRenderPropFunction(props),
+                  response: authApolloClientQueryCache(
+                    R.merge(apolloConfig, {apolloClient}),
+                    data,
+                    props
+                  )
+                }
+              );
+            }
+          );
+        }
       ]
     ])(apolloConfig);
   }),
@@ -280,7 +310,7 @@ export const makeMutationWithClientDirectiveContainer = v(R.curry(
     })],
     ['props', PropTypes.shape().isRequired]
   ],
-  'makeMutationWithClientDirectiveContainer'
+  'makeCacheMutationContainer'
 );
 
 /**

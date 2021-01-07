@@ -177,8 +177,12 @@ export const writeConfigToServerAndCache = (config) => {
     const configuredSettings = R.prop('settings', config);
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithChain([
+      obj => {
+        // Just a void check in the web environment to make sure the apollo stuff completes
+        return of(obj)
+      },
       // Update/Create the default settings to the database. This puts them in the cache
-      mapToNamedPathAndInputs('settingsWithoutCacheValues', 'data.mutate.settings',
+      mapToNamedResponseAndInputs('settingsWithoutCacheValues',
         ({props, apolloConfig, settingsFromServer}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return R.ifElse(
@@ -229,7 +233,7 @@ export const writeConfigToServerAndCache = (config) => {
           return makeSettingsQueryContainer(
             R.merge(apolloConfig, {
               options: {
-                skip: localStorage.getItem('token') !== 'null',
+                skip: !localStorage.getItem('token'),
                 fetchPolicy: 'network-only'
               }
             }),
