@@ -20,7 +20,7 @@ import {
   reqStrPathThrowing, strPathOr
 } from '@rescapes/ramda';
 import {
-  getOrSetDefaultsTask
+  getOrSetDefaultsContainer
 } from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
@@ -137,12 +137,13 @@ export const authClientOrLoginTask = R.curry((
     // Just wrap it in a task to match the other option
     apolloClient => of({apolloClient}),
     composeWithChain([
+      mapToNamedResponseAndInputs('user',
       // map userLogin to getApolloClientTask and token
       ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
         // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
         // although the token will also be stored in localStorage.getItem('token'),
         // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
-        return getOrSetDefaultsTask({
+        return getOrSetDefaultsContainer({
             apolloConfig,
             cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
             cacheOptions,
@@ -155,7 +156,7 @@ export const authClientOrLoginTask = R.curry((
           },
           R.prop('data', loginAuthentication)
         );
-      },
+      }),
       mapToNamedResponseAndInputs('loginAuthentication',
         ({apolloConfig, authentication}) => {
           return tokenAuthMutationContainer(apolloConfig, {}, authentication);

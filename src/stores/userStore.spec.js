@@ -57,12 +57,14 @@ describe('userStore', () => {
   test('currentUserQueryContainerNotAuthorized', done => {
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => {
+      ({apolloConfig}) => {
         // This will skip because we have no tokenAuth to pass
-        return currentUserQueryContainer({apolloClient}, userOutputParams, {});
+        return currentUserQueryContainer(apolloConfig, userOutputParams, {});
       },
-      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
-        () => localTestNoAuthTask()
+      mapToNamedResponseAndInputs('apolloConfig',
+        () => {
+          return localTestNoAuthTask();
+        }
       )
     ])().run().listen(defaultRunConfig({
       onResolved:

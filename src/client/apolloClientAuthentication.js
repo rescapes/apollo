@@ -24,6 +24,9 @@ import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic';
+import {containerForApolloType} from '../helpers/containerHelpers';
+import {authApolloClientQueryCache} from './apolloClientCache';
 
 const {ApolloClient} = defaultNode(AC);
 const {of} = T;
@@ -37,102 +40,53 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} config
  * @param {Object} config.apolloConfig Created by
  getOrCreateApolloClientTask({ cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation } ); or similar
- * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
- * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * local storage to store are auth token
  * @param {Function} config.writeDefaults expecting apolloClient that writes defaults ot the cache
  * @param {Object} config.settingsConfig
  * @param {Array|Object} config.settingsConfig.settingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
- * @param {[String]} config.cacheData
  * Existing client cache data if restoring from some externally stored values
- * @return {{apolloClient: ApolloClient}}
+ * @return {Object} Task or component currentUserQueryContainer response
  */
-export const getOrSetDefaultsTask = memoizedTaskWith(
-  obj => {
-    return R.merge(
-      R.pick(['uri', 'cacheData'], obj),
-      // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
-      R.map(
-        ({fields}) => R.keys(fields),
-        strPathOr({}, 'cacheOptions.typePolicies', obj)
-      )
-    );
-  }, (
-    {
-      apolloConfig,
-      cacheData,
-      uri,
-      stateLinkResolvers,
-      writeDefaults,
-      settingsConfig
-    }
-  ) => {
-    const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
-    return composeWithChain([
-      ({apolloConfig, cacheOnlyObjs, cacheIdProps, settingsOutputParams, writeDefaults}) => {
-        const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-        // Set writeDefaults to reset the cache. reset: true tells the function that this isn't the initial call
-        apolloClient.onResetStore(() => writeDefaults(apolloClient, {
-          cacheOnlyObjs,
-          cacheIdProps,
-          settingsOutputParams
-        }));
-        const taskIfNotTask = obj => {
-          return R.unless(obj => 'run' in obj, of)(obj);
-        };
-        // Write the initial defaults as a task if not one already, return the apolloClient
-        // The initial write sets reset: false in case we need to go to the server the first time to get the values
-        // or the structure of the values
-        return R.map(
-          () => {
-            return {apolloClient};
-          },
-          taskIfNotTask(writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}))
-        );
-      },
-      mapToNamedResponseAndInputs('user',
-        ({apolloConfig, tokenAuth}) => {
-          // Fetch the user to get it into the cache so we know we are authenticated
-          return R.ifElse(
-            R.identity,
-            () => currentUserQueryContainer(apolloConfig, userOutputParams, {}),
-            () => of(null)
-          )(strPathOr(null, 'data.tokenAuth', tokenAuth));
-        }
-      ),
-
-      mapToNamedResponseAndInputs('tokenAuth',
-        ({apolloConfig}) => {
-          // Once we have the Apollo client, sync localStorage.getItem('token') with
-          // what is in the Apollo Cache from previous session. We use localStorage as
-          // a mirror of the cache value when the cache isn't in scope
-          return R.map(tokenAuth => {
-              const token = strPathOr(null, 'data.token', tokenAuth);
-              if (token) {
-                localStorage.setItem('token', token);
-              } else {
-                localStorage.removeItem('token');
-              }
-              return tokenAuth;
-            },
-            queryLocalTokenAuthContainer(apolloConfig, {})
-          );
-        }
-      )
-    ])({
-      apolloConfig,
-      cacheData,
-      uri,
-      stateLinkResolvers,
-      writeDefaults,
-      cacheOnlyObjs,
-      cacheIdProps,
-      settingsOutputParams
-    });
+export const getOrSetDefaultsContainer = (
+  {
+    apolloConfig,
+    writeDefaults,
+    settingsConfig
   }
-);
+) => {
+  const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
+  const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
+  // Set writeDefaults to reset the cache. reset: true tells the function that this isn't the initial call
+  apolloClient.onResetStore(() => writeDefaults(apolloClient, {
+    cacheOnlyObjs,
+    cacheIdProps,
+    settingsOutputParams
+  }));
+  writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams});
+  return composeWithComponentMaybeOrTaskChain([
+    (tokenAuthResponse) => {
+      // Once we have the Apollo client, sync localStorage.getItem('token') with
+      // what is in the Apollo Cache from previous session. We use localStorage as
+      // a mirror of the cache value when the cache isn't in scope
+      const token = strPathOr(null, 'data.token', tokenAuthResponse);
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        localStorage.removeItem('token');
+      }
+      // Fetch the user to get it into the cache if we are authenticated
+      return currentUserQueryContainer(apolloConfig, userOutputParams, {token});
+    },
+
+    ({apolloConfig}) => {
+      return queryLocalTokenAuthContainer(apolloConfig, {});
+    }
+  ])({
+    apolloConfig
+  });
+};
 
 /**
  * Given a userLogin with a tokenAuthMutation.token create the getApolloClientTask and return it and the token
@@ -154,34 +108,40 @@ export const getOrCreateApolloClientAndDefaultsTask = R.curry((
   {
     cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaults,
     settingsConfig
-  },
+  }
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   return composeWithChain([
-    apolloConfig => {
-      return getOrSetDefaultsTask({
-        apolloConfig,
-        cacheData,
-        cacheOptions,
-        uri,
-        stateLinkResolvers,
-        writeDefaults,
-        settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-      });
+    ({apolloConfig, user}) => {
+      return of(apolloConfig);
     },
-    () => {
-      // Memoized call
-      return getOrCreateApolloClientTask({
-          // Existing apolloClient to add auth to
-          // If we have an unauthorized client we want to authorize it so we can maintain its cache
+    mapToNamedResponseAndInputs('user',
+      ({apolloConfig}) => {
+        return getOrSetDefaultsContainer({
+          apolloConfig,
           cacheData,
           cacheOptions,
           uri,
           stateLinkResolvers,
-          makeCacheMutation
-        }
-      );
-    }
+          writeDefaults,
+          settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+        });
+      }
+    ),
+    mapToNamedResponseAndInputs('apolloConfig',
+      () => {
+        // Memoized call
+        return getOrCreateApolloClientTask({
+            // Existing apolloClient to add auth to
+            // If we have an unauthorized client we want to authorize it so we can maintain its cache
+            cacheData,
+            cacheOptions,
+            uri,
+            stateLinkResolvers,
+            makeCacheMutation
+          }
+        );
+      })
   ])();
 });
 

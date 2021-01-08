@@ -12,7 +12,7 @@
 import {cacheOptions, localTestConfig} from '../helpers/testHelpers.js';
 import {
   composeWithChain,
-  defaultRunConfig,
+  defaultRunConfig, mapToMergedResponseAndInputs,
   mapToNamedResponseAndInputs,
   reqStrPathThrowing,
   strPathOr
@@ -41,40 +41,44 @@ describe('login', () => {
     // Try it with login info
     const task = composeWithChain([
       // Try it with an auth client
-      mapToNamedResponseAndInputs('apolloConfig',
-        ({apolloClient}) => authClientOrLoginTask({
-          cacheOptions: cacheOptions(typePoliciesConfig),
-          uri,
-          stateLinkResolvers: defaultStateLinkResolvers,
-          writeDefaults: writeDefaultSettingsToCacheContainer,
-          settingsConfig: {
-            cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-            cacheIdProps: defaultSettingsCacheIdProps,
-            settingsOutputParams: defaultSettingsOutputParams
-
-          }
-        }, apolloClient)
+      mapToNamedResponseAndInputs('apolloConfig2',
+        ({apolloConfig}) => {
+          return authClientOrLoginTask({
+            cacheOptions: cacheOptions(typePoliciesConfig),
+            uri,
+            stateLinkResolvers: defaultStateLinkResolvers,
+            writeDefaults: writeDefaultSettingsToCacheContainer,
+            settingsConfig: {
+              cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+              cacheIdProps: defaultSettingsCacheIdProps,
+              settingsOutputParams: defaultSettingsOutputParams
+            }
+          }, apolloConfig.apolloClient);
+        }
       ),
-      () => authClientOrLoginTask({
-          cacheOptions: cacheOptions(typePoliciesConfig),
-          uri,
-          stateLinkResolvers: defaultStateLinkResolvers,
-          writeDefaults: writeDefaultSettingsToCacheContainer,
-          settingsConfig: {
-            cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-            cacheIdProps: defaultSettingsCacheIdProps,
-            settingsOutputParams: defaultSettingsOutputParams
-          }
-        },
-        reqStrPathThrowing('settings.data.testAuthorization', localTestConfig)
-      )
+      mapToMergedResponseAndInputs(
+        () => {
+          return authClientOrLoginTask({
+              cacheOptions: cacheOptions(typePoliciesConfig),
+              uri,
+              stateLinkResolvers: defaultStateLinkResolvers,
+              writeDefaults: writeDefaultSettingsToCacheContainer,
+              settingsConfig: {
+                cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+                cacheIdProps: defaultSettingsCacheIdProps,
+                settingsOutputParams: defaultSettingsOutputParams
+              }
+            },
+            reqStrPathThrowing('settings.data.testAuthorization', localTestConfig)
+          );
+        })
     ])();
     task.run().listen(
       defaultRunConfig(
         {
-          onResolved: ({apolloClient, apolloConfig}) => {
-            // The second auth used the first apolloClient for it's authentication field
-            expect(apolloClient).toEqual(reqStrPathThrowing('apolloClient.authentication', apolloConfig));
+          onResolved: ({apolloConfig, apolloConfig2}) => {
+            expect(apolloConfig).toBeTruthy()
+            expect(apolloConfig2).toBeTruthy()
             done();
           }
         }, errors, done
