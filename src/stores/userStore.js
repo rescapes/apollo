@@ -137,7 +137,7 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
  * @params {Object} apolloClient The Apollo Client
  * @params {Object} ouptputParams OutputParams for the query such as userOutputParams
  * @params {Object} props
- * @params {Object} props.tokenAuth.data.token Unless present skip the query
+ * @params {Object} props.token or localStorage.getItem('token') Unless present skip the query
  * @returns {Task|Object} Task or Component query
  */
 export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, props) => {
@@ -146,7 +146,7 @@ export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, 
         options: {
           // Skip if the user isn't authenticated. If we allow unauthenticated requests, it seems to cache
           // the response and not query again
-          skip: strPathOr(null, 'tokenAuth.data.token', props),
+          skip: !R.propOr(localStorage.getItem('token'), 'token', props),
           variables: props => {
             // No arguments, the server resolves the current user based on authentication
             return {};

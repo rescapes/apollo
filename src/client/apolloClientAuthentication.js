@@ -49,7 +49,7 @@ const log = loggers.get('rescapeDefault');
  * Existing client cache data if restoring from some externally stored values
  * @return {{apolloClient: ApolloClient}}
  */
-export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
+export const getOrSetDefaultsTask = memoizedTaskWith(
   obj => {
     return R.merge(
       R.pick(['uri', 'cacheData'], obj),
@@ -63,7 +63,6 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
     {
       apolloConfig,
       cacheData,
-      cacheOptions,
       uri,
       stateLinkResolvers,
       writeDefaults,
@@ -100,7 +99,7 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
             R.identity,
             () => currentUserQueryContainer(apolloConfig, userOutputParams, {}),
             () => of(null)
-          )(strPathOr(null, 'data.token', tokenAuth));
+          )(strPathOr(null, 'data.tokenAuth', tokenAuth));
         }
       ),
 
@@ -149,19 +148,18 @@ export const getOrCreateApolloClientTaskAndSetDefaults = memoizedTaskWith(
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
- * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient, token.
+ * @return {Task<Object>} Task resolving to an object containing and object with a apolloClient
  */
-export const getOrCreateAuthApolloClientWithTokenTask = R.curry((
+export const getOrCreateApolloClientAndDefaultsTask = R.curry((
   {
     cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaults,
     settingsConfig
   },
-  token
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   return composeWithChain([
     apolloConfig => {
-      return getOrCreateApolloClientTaskAndSetDefaults({
+      return getOrSetDefaultsTask({
         apolloConfig,
         cacheData,
         cacheOptions,

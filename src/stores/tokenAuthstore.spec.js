@@ -14,7 +14,7 @@ import {
   defaultRunConfig,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing
+  reqStrPathThrowing, strPathOr
 } from '@rescapes/ramda';
 import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
@@ -34,7 +34,7 @@ import {
 } from './tokenAuthStore.js';
 import {makeSettingsQueryContainer} from '../helpers/settingsStore.js';
 import {typePoliciesConfig} from '../config';
-import {getOrCreateApolloClientTaskAndSetDefaults} from '../client/apolloClientAuthentication';
+import {getOrSetDefaultsTask} from '../client/apolloClientAuthentication';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -52,19 +52,23 @@ describe('tokenAuthStore', () => {
        */
       mapToNamedPathAndInputs(
         'deleteTokenCookie', 'data.deleteTokenCookie.deleted',
-        ({apolloConfig: {apolloClient, token}, verifyToken}) => deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {})
+        ({apolloConfig: {apolloClient}, tokenAuth, verifyToken}) => {
+          return deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {});
+        }
       ),
       mapToNamedPathAndInputs(
         'refreshToken', 'data.refreshToken.payload',
-        ({apolloConfig: {apolloClient, token}, verifyToken}) => refreshTokenMutationRequestContainer({apolloClient}, {}, {token})
+        ({apolloConfig: {apolloClient}, tokenAuth,  verifyToken}) => {
+          return refreshTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
+        }
       ),
       mapToNamedPathAndInputs(
         'verifyToken', 'data.verifyToken.payload',
-        ({apolloConfig: {apolloClient, token}}) => {
-          return verifyTokenMutationRequestContainer({apolloClient}, {}, {token});
+        ({apolloConfig: {apolloClient}, tokenAuth}) => {
+          return verifyTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
         }
       ),
-      mapToNamedResponseAndInputs('localTokenAuth',
+      mapToNamedResponseAndInputs('tokenAuth',
         // This was cached by the login
         ({apolloConfig}) => {
           return queryLocalTokenAuthContainer(apolloConfig, {});
@@ -82,7 +86,7 @@ describe('tokenAuthStore', () => {
       ),
       mapToNamedResponseAndInputs('apolloConfig',
         ({apolloConfig: {apolloClient, token}}) => {
-          return getOrCreateApolloClientTaskAndSetDefaults({
+          return getOrSetDefaultsTask({
               apolloConfig: {apolloClient},
               cacheData: apolloClient.cache.data.data,
               cacheOptions: cacheOptions(typePoliciesConfig),
@@ -107,11 +111,11 @@ describe('tokenAuthStore', () => {
         onResolved:
           response => {
             expect(response.apolloConfig).not.toBeNull();
-            expect(response.localTokenAuth).not.toBeNull();
+            expect(response.tokenAuth).not.toBeNull();
             expect(response.verifyToken).not.toBeNull();
             expect(response.refreshToken).not.toBeNull();
             expect(response.deleteTokenCookie).not.toBeNull();
-          //  expect(response.deleteRefreshTokenCookie).not.toBeNull();
+            //  expect(response.deleteRefreshTokenCookie).not.toBeNull();
           }
       }, errors, done)
     );

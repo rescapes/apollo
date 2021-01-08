@@ -162,7 +162,7 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
   const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
 
   // Mutate the cache to save settings to the database that are not stored on the server
-  makeCacheMutationContainer(
+  return makeCacheMutationContainer(
     apolloConfig,
     {
       name: 'settings',

@@ -39,15 +39,10 @@ describe('userStore', () => {
     const someUserKeys = ['id', 'email', 'username'];
     const errors = [];
     composeWithChain([
-      ({apolloClient}) => {
-        return currentUserQueryContainer({apolloClient}, userOutputParams, tokenAuth);
+      ({apolloConfig: {apolloClient, token}}) => {
+        return currentUserQueryContainer({apolloClient}, userOutputParams, {token});
       },
-      mapToNamedResponseAndInputs('tokenAuth',
-        ({apolloConfig}) => {
-          return queryLocalTokenAuthContainer(apolloConfig, {});
-        }
-      ),
-      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+      mapToNamedResponseAndInputs('apolloConfig',
         () => localTestAuthTask()
       )
     ])().run().listen(defaultRunConfig({

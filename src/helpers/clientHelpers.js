@@ -23,7 +23,7 @@ import {
 } from './defaultSettingsStore.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
-import {getOrCreateApolloClientTaskAndSetDefaults} from '../client/apolloClientAuthentication';
+import {getOrSetDefaultsTask} from '../client/apolloClientAuthentication';
 
 const log = loggers.get('rescapeDefault');
 
@@ -206,7 +206,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createLocalStorageAuthContainer = config => getOrCreateApolloClientTaskAndSetDefaults({
+export const createLocalStorageAuthContainer = config => getOrSetDefaultsTask({
     apolloConfig: reqStrPathThrowing({}, 'apolloConfig', config),
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),

@@ -142,7 +142,6 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
 
 const createAuthLink = () => new ApolloLink((operation, forward) => {
   operation.setContext(({headers}) => {
-    // get the authentication token from local storage if it exists
     const token = localStorage.getItem('token');
     return {
       headers: {

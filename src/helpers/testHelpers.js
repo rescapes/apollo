@@ -22,9 +22,9 @@ import {
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams, defaultSettingsTypenames
 } from './defaultSettingsStore.js';
-import {getOrCreateNoAuthApolloClientContainer} from '../client/apolloClientAuthentication';
 import {parseApiUrl} from '@rescapes/helpers';
 import {loginToAuthClientTask} from '../auth/login';
+import {getOrCreateApolloClientAndDefaultsTask} from '../client/apolloClientAuthentication';
 
 /**
  * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
@@ -86,7 +86,7 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createTestNoAuthTask = config => getOrCreateNoAuthApolloClientContainer({
+export const createTestNoAuthTask = config => getOrCreateApolloClientAndDefaultsTask({
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),

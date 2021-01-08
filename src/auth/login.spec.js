@@ -10,7 +10,13 @@
  */
 
 import {cacheOptions, localTestConfig} from '../helpers/testHelpers.js';
-import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, reqStrPathThrowing} from '@rescapes/ramda';
+import {
+  composeWithChain,
+  defaultRunConfig,
+  mapToNamedResponseAndInputs,
+  reqStrPathThrowing,
+  strPathOr
+} from '@rescapes/ramda';
 import {authClientOrLoginTask} from './login.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
@@ -83,7 +89,6 @@ describe('login', () => {
         onResolved:
           response => {
             expect(response.apolloClient).not.toBeNull();
-            expect(response.token).toBeNull();
             done();
           }
       }, errors, done)
@@ -99,7 +104,7 @@ describe('login', () => {
           return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,
-            {tokenAuth}
+            {token: strPathOr(null, 'data.tokenAuth.token', tokenAuth)}
           );
         }
       ),
@@ -147,7 +152,6 @@ describe('login', () => {
         onResolved:
           response => {
             expect(response.apolloClient).not.toBeNull();
-            expect(response.token).toBeNull();
             done();
           }
       }, errors, done)

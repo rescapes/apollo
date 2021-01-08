@@ -32,6 +32,10 @@ export {
   getOrCreateApolloClientTask
 } from './client/apolloClient.js';
 export {
+  getOrCreateApolloClientAndDefaultsTask,
+  getOrSetDefaultsTask
+} from './client/apolloClientAuthentication';
+export {
   makeQuery,
   makeQueryContainer,
   apolloQueryResponsesTask,
@@ -122,7 +126,11 @@ export {
 } from './helpers/apolloMonadHelpers.js';
 
 export {
-  currentUserQueryContainer, userOutputParams, userReadInputTypeMapper, isAuthenticatedLocal, authenticatedUserLocalContainer
+  currentUserQueryContainer,
+  userOutputParams,
+  userReadInputTypeMapper,
+  isAuthenticatedLocal,
+  authenticatedUserLocalContainer
 } from './stores/userStore.js';
 
 export {

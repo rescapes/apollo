@@ -17,10 +17,10 @@ import {
   defaultNode,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing
+  reqStrPathThrowing, strPathOr
 } from '@rescapes/ramda';
 import {
-  getOrCreateApolloClientTaskAndSetDefaults
+  getOrSetDefaultsTask
 } from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
@@ -53,14 +53,14 @@ export const loginToAuthClientTask = R.curry((
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
-    ({apolloConfig, user, loginData}) => {
+    ({apolloConfig, user, tokenAuth}) => {
       return of(
         R.mergeAll([
           apolloConfig,
           {user: reqStrPathThrowing('data.currentUser', user)},
           R.pick(
             ['token', 'payload'],
-            reqStrPathThrowing('tokenAuth', loginData)
+            reqStrPathThrowing('data.tokenAuth', tokenAuth)
           )
         ])
       );
@@ -68,7 +68,7 @@ export const loginToAuthClientTask = R.curry((
 
     mapToNamedResponseAndInputs('user',
       ({apolloConfig, tokenAuth}) => {
-        return currentUserQueryContainer(apolloConfig, userOutputParams, {tokenAuth});
+        return currentUserQueryContainer(apolloConfig, userOutputParams, {token: strPathOr(null, 'data.tokenAuth.token', tokenAuth)});
       }
     ),
 
@@ -139,10 +139,10 @@ export const authClientOrLoginTask = R.curry((
     composeWithChain([
       // map userLogin to getApolloClientTask and token
       ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
-        // Since we have a token we can call this getOrCreateAuthApolloClientWithTokenTask,
+        // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
         // although the token will also be stored in localStorage.getItem('token'),
         // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
-        return getOrCreateApolloClientTaskAndSetDefaults({
+        return getOrSetDefaultsTask({
             apolloConfig,
             cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
             cacheOptions,

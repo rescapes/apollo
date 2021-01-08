@@ -24,8 +24,6 @@ import {
 import PropTypes from 'prop-types';
 import {makeFragmentQuery} from './queryHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
-
-import maybe from 'folktale/maybe/index.js';
 import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
