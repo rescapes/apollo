@@ -154,7 +154,7 @@ export const authClientOrLoginTask = R.curry((
               cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames
             }
           },
-          R.prop('data', loginAuthentication)
+          {}
         );
       }),
       mapToNamedResponseAndInputs('loginAuthentication',

@@ -206,7 +206,8 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createLocalStorageAuthContainer = config => getOrSetDefaultsContainer({
+export const createLocalStorageAuthContainer = (config, {render}) => {
+  return getOrSetDefaultsContainer({
     apolloConfig: reqStrPathThrowing('apolloConfig', config),
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
@@ -217,7 +218,7 @@ export const createLocalStorageAuthContainer = config => getOrSetDefaultsContain
       cacheIdProps: defaultSettingsCacheIdProps,
       settingsOutputParams: defaultSettingsOutputParams
     }
-  }
-);
+  }, {render});
+};
 
 

@@ -99,7 +99,7 @@ describe('tokenAuthStore', () => {
                 settingsOutputParams: defaultSettingsOutputParams
               }
             },
-            token
+            {}
           );
         }
       ),

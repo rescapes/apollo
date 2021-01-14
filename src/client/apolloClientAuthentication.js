@@ -46,6 +46,7 @@ const log = loggers.get('rescapeDefault');
  * @param {Array|Object} config.settingsConfig.settingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
+ * @param {Function} The render function for component calls
  * Existing client cache data if restoring from some externally stored values
  * @return {Object} Task or component currentUserQueryContainer response
  */
@@ -54,7 +55,8 @@ export const getOrSetDefaultsContainer = (
     apolloConfig,
     writeDefaults,
     settingsConfig
-  }
+  },
+  {render}
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
@@ -66,7 +68,7 @@ export const getOrSetDefaultsContainer = (
   }));
   writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams});
   return composeWithComponentMaybeOrTaskChain([
-    (tokenAuthResponse) => {
+    tokenAuthResponse  => {
       // Once we have the Apollo client, sync localStorage.getItem('token') with
       // what is in the Apollo Cache from previous session. We use localStorage as
       // a mirror of the cache value when the cache isn't in scope
@@ -77,14 +79,14 @@ export const getOrSetDefaultsContainer = (
         localStorage.removeItem('token');
       }
       // Fetch the user to get it into the cache if we are authenticated
-      return currentUserQueryContainer(apolloConfig, userOutputParams, {token});
+      return currentUserQueryContainer(apolloConfig, userOutputParams, {token, render});
     },
 
-    ({apolloConfig}) => {
-      return queryLocalTokenAuthContainer(apolloConfig, {});
+    ({render}) => {
+      return queryLocalTokenAuthContainer(apolloConfig, {render});
     }
   ])({
-    apolloConfig
+    render
   });
 };
 
@@ -125,7 +127,7 @@ export const getOrCreateApolloClientAndDefaultsTask = R.curry((
           stateLinkResolvers,
           writeDefaults,
           settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
-        });
+        }, {});
       }
     ),
     mapToNamedResponseAndInputs('apolloConfig',
