@@ -36,6 +36,7 @@ import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
+import MutationOnMount from '../helpers/mutationOnMount';
 
 const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
@@ -444,26 +445,36 @@ export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fra
   }
 });
 
+
 /**
  * Wraps a React component in an Apollo component containing the given query with the given options.
  * This is analogous to the authApolloClientQueryContainer in that it is the delayed execution of a graphql
  * query. Unlike authApolloClientQueryContainer, the variable values needed to execute the query
- * are passed by the wrapped apolloComponent as props rather than as part of the options
- * @param {Object} apolloComponent The apollo component. Contains options
- * @param {Object} apolloComponent.options optional Mutation component properties
- * @param {Object} apolloComponent.options.variables Variables mapping function. Props will have already
+ * are passed by the wrapped apolloConfig as props rather than as part of the options
+ * @param {Object} apolloConfig The apollo component. Contains options
+ * @param {Object} apolloConfig.options optional Mutation component properties
+ * @param {Object} apolloConfig.options.variables Variables mapping function. Props will have already
+ * @param {Boolean} apolloConfig.mutateOnMount if true and a component call, calls the mutate function
+ * immediately on mount. Task calls with Apollo client always call mutate immediately
  * been passed through this so it is not used here
  * @param {Object} options.options.errorPolicy optional error policy
  * @param {Just} Returns a Maybe.Just containing the component.
  * The component is wrapped so it's compatible with monad composition. In the future this will be a Task (see below)
  */
 export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mutation, {render, ...props}) => {
+
+  // If mutateOnMount is specified, wrap the Mutation in MutationOnMount to run the mutation immediately
+  // This is only relevant for component calls, since tasks run the mutation immediately
+  const MutationComponent = strPathOr(false, 'mutateOnMount', apolloConfig) && !R.propOr(false, 'apolloClient', apolloConfig)
+    ? MutationOnMount
+    : Mutation;
+
   return R.compose(
     // Wrap in a Maybe.Just so we can chain the results as we would the task result of an ApolloClient mutation
     Just,
     props => {
       return e(
-        Mutation,
+        MutationComponent,
         R.merge(
           {mutation},
           // Merge options with the variables that have already been limited
