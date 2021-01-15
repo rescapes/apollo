@@ -9,9 +9,12 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import T from 'folktale/concurrency/task/index.js'
+import T from 'folktale/concurrency/task/index.js';
+
 const {of} = T;
 import * as R from 'ramda';
+import {reqStrPathThrowing} from '@rescapes/ramda';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 
 /**
  * Returns a Task.of if we are doing an ApolloClient request.
@@ -29,7 +32,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
     R.always(R.propOr(false, 'apolloClient', apolloConfig)),
     responseAndOptionalRender => {
       // If responseAndOptionalRender is {response, render}, extract response
-      return of(R.when(R.has('response'), R.prop('response'))(responseAndOptionalRender))
+      return of(R.when(R.has('response'), R.prop('response'))(responseAndOptionalRender));
     },
     responseAndOptionalRender => {
       const {render, response} = responseAndOptionalRender;
@@ -37,3 +40,71 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
     }
   )(responseAndOptionalRender);
 });
+
+
+/**
+ * Call the given container count times and concat the responses at the response path
+ * @param apolloConfig
+ * @param {Object} config
+ * @param {Number} config.count
+ * @param {Function} config.mutationContainer Apollo mutation request to run count times
+ * @param {Function} config.propVariationFunc Function receiving props and with a 1-based count proped merged in
+ * returns an object that is the props to use for the container request
+ * @param {String} responsePath e.g. 'data.mutate.location'
+ * @param props
+ * @returns {any}
+ */
+export const callMutationNTimesAndConcatResponses = (
+  apolloConfig,
+  {count, mutationContainer, responsePath, propVariationFunc},
+  props
+) => {
+  return composeWithComponentMaybeOrTaskChain(
+    R.prepend(
+      ({objects}) => {
+        return containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(props),
+            response: objects
+          }
+        );
+      },
+      R.flatten(R.times(i => {
+          return [
+            objects => {
+              return containerForApolloType(
+                apolloConfig,
+                {
+                  render: getRenderPropFunction(props),
+                  response: {objects}
+                }
+              );
+            },
+            ({objects}) => {
+              return composeWithComponentMaybeOrTaskChain([
+                response => {
+                  return containerForApolloType(
+                    apolloConfig,
+                    {
+                      render: getRenderPropFunction(props),
+                      response: R.concat(objects, [reqStrPathThrowing(responsePath, response)])
+                    }
+                  );
+                },
+                props => {
+                  return mutationContainer(
+                    apolloConfig,
+                    propVariationFunc(R.merge(props, {count: i+1}))
+                  );
+                }
+              ])(props);
+            }
+          ];
+        },
+        count
+        )
+      )
+    )
+  )(R.merge({objects: []}, props));
+};
