@@ -51,6 +51,7 @@ export const componentAndChildRenderedWithRenderProp = R.curry((childComponent, 
     }));
   };
 });
+
 export const componentAndChildRenderedWithChildrenRenderPropMaybe = R.curry((childComponent, component) => {
   return Maybe.Just(componentAndChildRenderedWithRenderProp(childComponent, component));
 });

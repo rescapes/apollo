@@ -13,7 +13,7 @@ import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
 import * as R from 'ramda';
-import {reqStrPathThrowing} from '@rescapes/ramda';
+import {compact, compactEmpty, reqStrPathThrowing} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 
 /**
@@ -46,19 +46,31 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * Call the given container count times and concat the responses at the response path
  * @param apolloConfig
  * @param {Object} config
- * @param {Number} config.count
+ * @param {Number} [config.count] Number of times to call mutationContainer. The current 1-based count
+ * is passed to propVariationFunc as prop 'item' = 1,2,...
+ * @param {[Object]} [config.items] Pass items to be passed to propVariationFunc for each call instead
+ * of using config.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
  * @param {Function} config.mutationContainer Apollo mutation request to run count times
  * @param {Function} config.propVariationFunc Function receiving props and with a 1-based count proped merged in
  * returns an object that is the props to use for the container request
+ * @param {Object} [config.outputParams] Defaults to null, mutation output params
+ * @param {String} [config.name] if defined, this is passed to the request as the second argument along with
+ * the outputParams
  * @param {String} responsePath e.g. 'data.mutate.location'
  * @param props
  * @returns {any}
  */
 export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
-  {count, mutationContainer, responsePath, propVariationFunc},
+  {
+    count, items, mutationContainer, responsePath, propVariationFunc,
+    outputParams, name
+  },
   props
 ) => {
+  if (!count && !items) {
+    throw new Error('Neither count nor items was given');
+  }
   return composeWithComponentMaybeOrTaskChain(
     R.prepend(
       ({objects}) => {
@@ -71,6 +83,8 @@ export const callMutationNTimesAndConcatResponses = (
         );
       },
       R.flatten(R.times(i => {
+          // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
+          const item = count ? R.add(1, i) : items[i];
           return [
             objects => {
               return containerForApolloType(
@@ -95,16 +109,46 @@ export const callMutationNTimesAndConcatResponses = (
                 props => {
                   return mutationContainer(
                     apolloConfig,
-                    propVariationFunc(R.merge(props, {count: i+1}))
+                    compact({outputParams, name}),
+                    // Pass count to the propVariationFunc so it can be used, but don't let it through to the
+                    // actual mutatino props
+                    R.omit(['item'], propVariationFunc(R.merge(props, {item})))
                   );
                 }
               ])(props);
             }
           ];
         },
-        count
+        // Use count or the length of items. We mutate this many times
+        count ? count : R.length(items)
         )
       )
     )
   )(R.merge({objects: []}, props));
+};
+
+/**
+ * Like mapToNamedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
+ * @param {Object} apolloConfig
+ * @param {Object} [apolloConfig.apolloClient[ Required to indicate tasks
+ * @param {String} name The object key to merge with args
+ * @param {Function} componentOrTaskFunc Function accepting args and returning an task or apollo component response
+ * @param {Object} args Props/Response from the previous function in the chain
+ * @returns {Object|Task} Component response or task resolving to response
+ */
+export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => args => {
+  return composeWithComponentMaybeOrTaskChain([
+    response => {
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(args),
+          response: R.merge(args, {[name]: response})
+        }
+      );
+    },
+    args => {
+      return componentOrTaskFunc(args);
+    }
+  ])(args);
 };
