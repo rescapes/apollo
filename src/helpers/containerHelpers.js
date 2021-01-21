@@ -68,6 +68,10 @@ export const callMutationNTimesAndConcatResponses = (
   },
   props
 ) => {
+  // If 0 count or items return an empty array
+  if (count === 0 || R.length(items) === 0) {
+    return []
+  }
   if (!count && !items) {
     throw new Error('Neither count nor items was given');
   }
