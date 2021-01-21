@@ -30,7 +30,7 @@ import {
   filterWithKeys,
   mapObjToValues,
   omitDeepBy,
-  reqStrPathThrowing
+  reqStrPathThrowing, strPathOr
 } from '@rescapes/ramda';
 import * as AC from '@apollo/client';
 import {print} from 'graphql';
@@ -174,10 +174,13 @@ export const makeMutationRequestContainer = v(R.curry(
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
         apolloConfig => {
-          log.debug(`Running Mutation Task:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)}\n\n`);
-          return composeWithMap( [
+          const skip = strPathOr(false, 'options.skip', apolloConfig);
+          log.debug(`${skip ? 'Skipping' : 'Running'} Mutation Task:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)}\n\n`);
+          return composeWithMap([
             response => {
-              log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
+              if (!skip) {
+                log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
+              }
               // name is null if mutationNameOverride is used
               return addMutateKeyToMutationResponse({name}, response);
             },

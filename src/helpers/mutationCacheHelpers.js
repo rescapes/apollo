@@ -128,7 +128,7 @@ export const makeCacheMutation = v(R.curry(
     log.debug(`Write Cache Fragment: ${
       print(writeFragment)
     } id: ${id} args: ${
-      inspect(propsWithPossibleMerge, null, 2)
+      inspect(propsWithPossibleMerge, null, 10)
     }`);
 
     apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
