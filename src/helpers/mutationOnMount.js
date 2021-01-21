@@ -26,7 +26,7 @@ class DoMutation extends React.Component {
 
 const MutationOnMount = ({children, ...other}) => {
   return e(Mutation,
-    ...other,
+    other,
     (mutate, {data, loading, error}) => {
       return e(
         React.Fragment,
