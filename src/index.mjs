@@ -38,7 +38,7 @@ export {
 export {
   makeQuery,
   makeQueryContainer,
-  apolloQueryResponsesTask,
+  apolloQueryResponsesContainer,
   createRequestVariables,
   composeFuncAtPathIntoApolloConfig
 } from './helpers/queryHelpers.js';

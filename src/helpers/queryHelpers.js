@@ -35,6 +35,7 @@ const {gql} = defaultNode(AC);
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
+import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic';
 
 const {of} = T;
 
@@ -353,20 +354,24 @@ export const createRequestVariables = (apolloComponent, props) => {
  * Runs the apollo queries in queryComponents as tasks if runContainerQueries is true. If true,
  * resolvedPropsTask are resolved and set to the queries. props are also returned independent of the queries
  * If runContainerQueries is false, just resolves resolvedPropsTask and return the props
- * @param {Task} resolvedPropsTask A task that resolves the props to use
- * @param {Object} queryTasks Keyed by name, valued by a queryTask that expects the props.
+ * @param {Function} resolvedPropsContainer A no-arg function that returns a task that resolves the props
+ * or for component queries, a function that returns the props
+ * @param {Object} queryContainers Keyed by name, valued by a queryTask that expects the props.
  * Each queryTask resolves to a response. Responses are combined and keyed by the name
  * The responses are combined
  * @param {boolean} [runContainerQueries] Default true. When true run the container queries
  * @return {Task} A task that resolves to the props of resolvedPropsTask merged with the query results if there
  * are any queries and runContainerQueries is true
  */
-export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runContainerQueries = true) => {
+export const apolloQueryResponsesContainer = (
+  resolvedPropsContainer,
+  queryContainers,
+  runContainerQueries = true) => {
   // Task Object -> Task
-  return composeWithChain([
+  return composeWithComponentMaybeOrTaskChain([
     // Wait for all the queries to finish
     props => {
-      const queryTasksOrNone = runContainerQueries && queryTasks ? queryTasks : {};
+      const queryTasksOrNone = runContainerQueries && queryContainers ? queryContainers : {};
       // Each query resolves and the values are assigned to the key and merged with the props
       // This is similar to how react-adopt calls our Apollo request components
       return composeWithChain([
@@ -385,9 +390,9 @@ export const apolloQueryResponsesTask = (resolvedPropsTask, queryTasks, runConta
         ]
       )(props);
     },
-    // Resolve the props from the task
-    resolvedPropsTask => resolvedPropsTask.map(x => x)
-  ])(resolvedPropsTask);
+    // Resolve the props the container
+    () => resolvedPropsContainer()
+  ])();
 };
 
 /**

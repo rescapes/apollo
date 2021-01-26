@@ -10,7 +10,7 @@
  */
 
 import {
-  apolloQueryResponsesTask,
+  apolloQueryResponsesContainer,
   composeFuncAtPathIntoApolloConfig,
   makeQuery,
   makeQueryContainer
@@ -143,7 +143,7 @@ describe('queryHelpers', () => {
 
   test('apolloQueryResponsesTask', done => {
     const errors = [];
-    apolloQueryResponsesTask(of({key: 1, apple: 1, pear: 2, banana: 3}),
+    apolloQueryResponsesContainer(() => of({key: 1, apple: 1, pear: 2, banana: 3}),
       {
         pacman: props => of(R.pick(['key', 'apple'], props)),
         mspacman: props => of(R.omit(['key'], props))
@@ -163,7 +163,7 @@ describe('queryHelpers', () => {
   });
   test('apolloQueryResponsesTaskEmpty', done => {
     const errors = [];
-    apolloQueryResponsesTask(of({key: 1, apple: 1, pear: 2, banana: 3}), {}).run().listen(
+    apolloQueryResponsesContainer(() => of({key: 1, apple: 1, pear: 2, banana: 3}), {}).run().listen(
       defaultRunConfig({
         onResolved: responses => {
           expect(responses).toEqual({
