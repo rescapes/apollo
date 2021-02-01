@@ -138,6 +138,31 @@ export const callMutationNTimesAndConcatResponses = (
 };
 
 /**
+ * Like mapToMergedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
+ * @param {Object} apolloConfig
+ * @param {Object} [apolloConfig.apolloClient[ Required to indicate tasks
+ * @param {Function} componentOrTaskFunc Function accepting args and returning an task or apollo component response
+ * @param {Object} args Props/Response from the previous function in the chain
+ * @returns {Object|Task} Component response or task resolving to response object merged with args
+ */
+export const mapTaskOrComponentToMergedResponse =  (apolloConfig, componentOrTaskFunc) => args => {
+  return composeWithComponentMaybeOrTaskChain([
+    response => {
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(args),
+          response: R.merge(args, response)
+        }
+      );
+    },
+    args => {
+      return componentOrTaskFunc(args);
+    }
+  ])(args);
+}
+
+/**
  * Like mapToNamedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
  * @param {Object} apolloConfig
  * @param {Object} [apolloConfig.apolloClient[ Required to indicate tasks

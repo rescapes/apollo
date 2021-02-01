@@ -83,7 +83,8 @@ export {
   createTestAuthTask, createTestNoAuthTask
 } from './helpers/testHelpers.js';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
-export {containerForApolloType, callMutationNTimesAndConcatResponses, mapTaskOrComponentToNamedResponseAndInputs} from './helpers/containerHelpers.js';
+export {containerForApolloType, callMutationNTimesAndConcatResponses,
+  mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse} from './helpers/containerHelpers.js';
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCacheContainer,

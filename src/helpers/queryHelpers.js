@@ -35,7 +35,12 @@ const {gql} = defaultNode(AC);
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
-import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
+import {
+  containerForApolloType,
+  mapTaskOrComponentToMergedResponse,
+  mapTaskOrComponentToNamedResponseAndInputs
+} from './containerHelpers';
 
 const {of} = T;
 
@@ -350,49 +355,64 @@ export const createRequestVariables = (apolloComponent, props) => {
   return reqStrPathThrowing('props.variables', apolloComponent(props));
 };
 
+
 /**
  * Runs the apollo queries in queryComponents as tasks if runContainerQueries is true. If true,
  * resolvedPropsTask are resolved and set to the queries. props are also returned independent of the queries
  * If runContainerQueries is false, just resolves resolvedPropsTask and return the props
- * @param {Function} resolvedPropsContainer A no-arg function that returns a task that resolves the props
+ * @param {Object} apolloConfig The apolloConfig
+ * @param {Object} config
+ * @param {Function} config.resolvedPropsContainer A no-arg function that returns a task that resolves the props
  * or for component queries, a function that returns the props
- * @param {Object} queryContainers Keyed by name, valued by a queryTask that expects the props.
+ * @param {Object} config.queryContainers Keyed by name, valued by a queryTask that expects the props.
  * Each queryTask resolves to a response. Responses are combined and keyed by the name
  * The responses are combined
- * @param {boolean} [runContainerQueries] Default true. When true run the container queries
- * @return {Task} A task that resolves to the props of resolvedPropsTask merged with the query results if there
+ * @param {boolean} [config.runContainerQueries] Default true. When true run the container queries
+ * @param {Object} props
+ * @param {Function} props.render
+ * @return {Task|Function} A task or component function that resolves to the props of resolvedPropsTask merged with the query results if there
  * are any queries and runContainerQueries is true
  */
 export const apolloQueryResponsesContainer = (
-  resolvedPropsContainer,
-  queryContainers,
-  runContainerQueries = true) => {
-  // Task Object -> Task
+  apolloConfig,
+  {
+    resolvedPropsContainer,
+    queryContainers,
+    runContainerQueries = true
+  },
+  {render}
+) => {
   return composeWithComponentMaybeOrTaskChain([
     // Wait for all the queries to finish
     props => {
-      const queryTasksOrNone = runContainerQueries && queryContainers ? queryContainers : {};
+      const queryContainersOrNone = runContainerQueries && queryContainers ? queryContainers : {};
       // Each query resolves and the values are assigned to the key and merged with the props
       // This is similar to how react-adopt calls our Apollo request components
-      return composeWithChain([
+      return composeWithComponentMaybeOrTaskChain([
           ...R.reverse(
             mapObjToValues(
-              (tsk, key) => {
-                return mapToNamedResponseAndInputs(key,
-                  props => tsk(props)
+              (container, key) => {
+                return mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, key,
+                  props => container(props)
                 );
               },
-              queryTasksOrNone
+              queryContainersOrNone
             )
           ),
-          // This is our returned task if there are no queries
-          props => of(props)
+          // Just resolve to the props if there are no query containers
+          props => containerForApolloType(
+            apolloConfig,
+            {
+              render: getRenderPropFunction(props),
+              response: props
+            }
+          )
         ]
       )(props);
     },
     // Resolve the props the container
-    () => resolvedPropsContainer()
-  ])();
+    () => resolvedPropsContainer(apolloConfig)
+  ])({render});
 };
 
 /**
