@@ -13,8 +13,9 @@ import T from 'folktale/concurrency/task/index.js';
 
 const {of} = T;
 import * as R from 'ramda';
-import {compact, compactEmpty, reqStrPathThrowing} from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
+import {compact, compactEmpty, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
+import {e} from '@rescapes/helpers-component/src/componentHelpers';
 
 /**
  * Returns a Task.of if we are doing an ApolloClient request.
@@ -68,8 +69,12 @@ export const callMutationNTimesAndConcatResponses = (
   },
   props
 ) => {
+  if (!count && !items) {
+    throw new Error('Neither count nor items was given');
+  }
+  const length = items ? R.length(items) : count;
   // If 0 count or items return an empty array
-  if (count === 0 || R.length(items) === 0) {
+  if (length === 0) {
     return containerForApolloType(
       apolloConfig,
       {
@@ -78,63 +83,43 @@ export const callMutationNTimesAndConcatResponses = (
       }
     );
   }
-  if (!count && !items) {
-    throw new Error('Neither count nor items was given');
-  }
   return composeWithComponentMaybeOrTaskChain(
     R.prepend(
-      ({objects}) => {
+      ({responses}) => {
         return containerForApolloType(
           apolloConfig,
           {
             render: getRenderPropFunction(props),
-            response: objects
+            // We compact here for component queries. The mutation results won't be ready immediately
+            // so we need to handle null response data
+            response: compact(R.map(strPathOr(null, responsePath), responses))
           }
         );
       },
-      R.flatten(R.times(i => {
+      R.times(i => {
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
           const item = count ? R.add(1, i) : items[i];
-          return [
-            objects => {
-              return containerForApolloType(
+          return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
+            props => {
+              return mutationContainer(
                 apolloConfig,
-                {
-                  render: getRenderPropFunction(props),
-                  response: {objects}
-                }
+                compact({outputParams, name}),
+                // Pass count to the propVariationFunc so it can be used, but don't let it through to the
+                // actual mutation props
+                R.omit(['item'],
+                  R.merge(
+                    R.pick(['render'], props),
+                    propVariationFunc(R.merge(props, {item}))
+                  )
+                )
               );
-            },
-            ({objects}) => {
-              return composeWithComponentMaybeOrTaskChain([
-                response => {
-                  return containerForApolloType(
-                    apolloConfig,
-                    {
-                      render: getRenderPropFunction(props),
-                      response: R.concat(objects, [reqStrPathThrowing(responsePath, response)])
-                    }
-                  );
-                },
-                props => {
-                  return mutationContainer(
-                    apolloConfig,
-                    compact({outputParams, name}),
-                    // Pass count to the propVariationFunc so it can be used, but don't let it through to the
-                    // actual mutatino props
-                    R.omit(['item'], propVariationFunc(R.merge(props, {item})))
-                  );
-                }
-              ])(props);
-            }
-          ];
+            });
         },
         // Use count or the length of items. We mutate this many times
         count ? count : R.length(items)
-        )
       )
     )
-  )(R.merge({objects: []}, props));
+  )(props);
 };
 
 /**
@@ -145,7 +130,7 @@ export const callMutationNTimesAndConcatResponses = (
  * @param {Object} args Props/Response from the previous function in the chain
  * @returns {Object|Task} Component response or task resolving to response object merged with args
  */
-export const mapTaskOrComponentToMergedResponse =  (apolloConfig, componentOrTaskFunc) => args => {
+export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTaskFunc) => args => {
   return composeWithComponentMaybeOrTaskChain([
     response => {
       return containerForApolloType(
@@ -160,7 +145,7 @@ export const mapTaskOrComponentToMergedResponse =  (apolloConfig, componentOrTas
       return componentOrTaskFunc(args);
     }
   ])(args);
-}
+};
 
 /**
  * Like mapToNamedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
@@ -174,6 +159,7 @@ export const mapTaskOrComponentToMergedResponse =  (apolloConfig, componentOrTas
 export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => args => {
   return composeWithComponentMaybeOrTaskChain([
     response => {
+      // Name the container after name since we don't have anything better
       return containerForApolloType(
         apolloConfig,
         {
@@ -187,3 +173,30 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
     }
   ])(args);
 };
+
+/**
+ * Like mapTaskOrComponentToNamedResponseAndInputs but concats the response to args[name] and
+ * returns it at name
+ * @param apolloConfig
+ * @param name
+ * @param componentOrTaskFunc
+ * @returns {function(*=): *}
+ */
+export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => args => {
+  return composeWithComponentMaybeOrTaskChain([
+    response => {
+      // Name the container after name since we don't have anything better
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(args),
+          response: R.merge(args, {[name]: R.concat(R.propOr([], name, args), [response])})
+        }
+      );
+    },
+    args => {
+      return componentOrTaskFunc(args);
+    }
+  ])(args);
+};
+
