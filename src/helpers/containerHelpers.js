@@ -14,6 +14,7 @@ import * as R from 'ramda';
 import {camelCase, capitalize, compact, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {loggers} from '@rescapes/log';
+import {mutationOnMountOnce} from '../client/apolloClient';
 
 const {of} = T;
 
@@ -80,7 +81,7 @@ export const callMutationNTimesAndConcatResponses = (
   const length = items ? R.length(items) : count;
 
   // If we haven't been in here before, create mutateOnMount for each sample
-  const mutateOnMountOnceEach = mutateOnMountOnce ? false: mutateOnMountOnce()
+  const mutateOnMountOnceEach = mutateOnMountOnce ? mutateOnMountOnce() : false
   const mutateOnMounts = R.times(i => mutateOnMountOnceEach ? mutationOnMountOnce() : R.always(false), length)
 
   // If 0 count or items return an empty array

@@ -408,7 +408,7 @@ export const apolloQueryResponsesContainer = (
     }),
     // Resolve the props the container
     () => {
-      return resolvedPropsContainer(apolloConfig);
+      return resolvedPropsContainer(apolloConfig, {render});
     }
   ])({render});
 };

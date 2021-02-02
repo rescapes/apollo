@@ -21,8 +21,9 @@ const log = loggers.get('rescapeDefault');
 
 class DoMutation extends React.Component {
   componentDidMount() {
-    const {mutate, mutation, variables, mutationOnMountOnce} = this.props;
-    if (mutationOnMountOnce()) {
+    const {mutate, mutation, variables, mutateOnMountOnce} = this.props;
+    // Mount should only be called once, so mutateOnMountOnce shouldn't be needed
+    if (true || mutateOnMountOnce()) {
       log.debug(`Calling on mount mutation \n${print(mutation)} with predefined args ${inspect(variables, false, 10)}`)
       mutate();
     }
@@ -43,7 +44,7 @@ const MutationOnMount = ({children, ...other}) => {
         {},
         e(
           DoMutation,
-          {mutate, mutation, variables, mutationOnMount: other.mutationOnMountOnce},
+          {mutate, mutation, variables, mutateOnMountOnce: other.mutateOnMountOnce},
           children && children(mutate, {called, data, loading, error})
         )
       );

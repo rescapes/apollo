@@ -484,7 +484,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               options => R.omit(['variables'], options),
               apolloConfig => R.propOr({}, 'options', apolloConfig)
             )(apolloConfig),
-            {variables: props},
+            {variables: props, mutateOnMountOnce: strPathOr(R.always(true), 'mutateOnMountOnce', apolloConfig)},
             // There are always optional
             R.pick(['onCompleted', 'onError'], apolloConfig)
           ])
