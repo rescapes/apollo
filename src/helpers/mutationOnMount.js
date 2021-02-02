@@ -9,14 +9,23 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {print} from 'graphql';
 import React from 'react';
 import {e} from '@rescapes/helpers-component';
+import * as R from 'ramda'
 import {Mutation} from "react-apollo";
+import {inspect} from 'util';
+import {loggers} from '@rescapes/log';
+const log = loggers.get('rescapeDefault');
+
 
 class DoMutation extends React.Component {
   componentDidMount() {
-    const {mutate} = this.props;
-    mutate();
+    const {mutate, mutation, variables, mutationOnMountOnce} = this.props;
+    if (mutationOnMountOnce()) {
+      log.debug(`Calling on mount mutation \n${print(mutation)} with predefined args ${inspect(variables, false, 10)}`)
+      mutate();
+    }
   };
 
   render() {
@@ -25,6 +34,7 @@ class DoMutation extends React.Component {
 };
 
 const MutationOnMount = ({children, ...other}) => {
+  const {mutation, variables} = R.pick(['mutation', 'variables'], other)
   return e(Mutation,
     other,
     (mutate, {called, data, loading, error}) => {
@@ -33,7 +43,7 @@ const MutationOnMount = ({children, ...other}) => {
         {},
         e(
           DoMutation,
-          {mutate},
+          {mutate, mutation, variables, mutationOnMount: other.mutationOnMountOnce},
           children && children(mutate, {called, data, loading, error})
         )
       );

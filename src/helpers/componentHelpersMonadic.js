@@ -14,8 +14,12 @@ import {inspect} from 'util';
 import {strPathOr} from '@rescapes/ramda'
 
 export const nameComponent = (name, component) => {
-  component.displayName = name;
-  return component;
+  try {
+    component.displayName = name;
+  }
+  finally {
+    return component;
+  }
 };
 
 /**
@@ -23,7 +27,7 @@ export const nameComponent = (name, component) => {
  * @param component
  * @return {*}
  */
-const getDisplayName = component => {
+export const getDisplayName = component => {
   return strPathOr(null, 'displayName', component) || strPathOr('Undefined', 'type.name', component);
 };
 
@@ -122,11 +126,9 @@ export const composeWithComponentMaybeOrTaskChain = list => {
           return props => {
             // Delay evaluation by wrapping in a function expecting the children component
             // so we can link the first called component in list (the last one) to the second (the penultimate)
-            const compFunc = children => {
+            return nameComponent(f.displayName || 'compFunc', children => {
               return f(R.merge(props, {[renderProp]: children}));
-            };
-            compFunc.displayName = f.displayName;
-            return compFunc;
+            });
           };
         },
         list

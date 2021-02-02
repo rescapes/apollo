@@ -10,12 +10,14 @@
  */
 
 import T from 'folktale/concurrency/task/index.js';
+import * as R from 'ramda';
+import {camelCase, capitalize, compact, strPathOr} from '@rescapes/ramda';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
+import {loggers} from '@rescapes/log';
 
 const {of} = T;
-import * as R from 'ramda';
-import {compact, compactEmpty, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
-import {e} from '@rescapes/helpers-component/src/componentHelpers';
+
+const log = loggers.get('rescapeDefault');
 
 /**
  * Returns a Task.of if we are doing an ApolloClient request.
@@ -64,6 +66,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
 export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
+    mutateOnMountOnce,
     count, items, mutationContainer, responsePath, propVariationFunc,
     outputParams, name
   },
@@ -72,7 +75,14 @@ export const callMutationNTimesAndConcatResponses = (
   if (!count && !items) {
     throw new Error('Neither count nor items was given');
   }
+
+  const componentName = `${capitalize(camelCase(responsePath.replace('.', '_')))}Resolver`;
   const length = items ? R.length(items) : count;
+
+  // If we haven't been in here before, create mutateOnMount for each sample
+  const mutateOnMountOnceEach = mutateOnMountOnce ? false: mutateOnMountOnce()
+  const mutateOnMounts = R.times(i => mutateOnMountOnceEach ? mutationOnMountOnce() : R.always(false), length)
+
   // If 0 count or items return an empty array
   if (length === 0) {
     return containerForApolloType(
@@ -83,9 +93,8 @@ export const callMutationNTimesAndConcatResponses = (
       }
     );
   }
-  return composeWithComponentMaybeOrTaskChain(
-    R.prepend(
-      ({responses}) => {
+  return composeWithComponentMaybeOrTaskChain([
+      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses}) => {
         return containerForApolloType(
           apolloConfig,
           {
@@ -95,15 +104,16 @@ export const callMutationNTimesAndConcatResponses = (
             response: compact(R.map(strPathOr(null, responsePath), responses))
           }
         );
-      },
-      R.times(i => {
+      }),
+      ...R.reverse(R.times(i => {
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
           const item = count ? R.add(1, i) : items[i];
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
             props => {
               return mutationContainer(
-                apolloConfig,
-                compact({outputParams, name}),
+                // Instruct to mutate on mount the first time this mutation component is mounted
+                R.merge(apolloConfig, {mutateOnMountOnce: mutateOnMounts[i]}),
+                compact({outputParams, name, i}),
                 // Pass count to the propVariationFunc so it can be used, but don't let it through to the
                 // actual mutation props
                 R.omit(['item'],
@@ -117,8 +127,8 @@ export const callMutationNTimesAndConcatResponses = (
         },
         // Use count or the length of items. We mutate this many times
         count ? count : R.length(items)
-      )
-    )
+      ))
+    ]
   )(props);
 };
 
@@ -156,22 +166,24 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
  * @param {Object} args Props/Response from the previous function in the chain
  * @returns {Object|Task} Component response or task resolving to response
  */
-export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => args => {
-  return composeWithComponentMaybeOrTaskChain([
-    response => {
-      // Name the container after name since we don't have anything better
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(args),
-          response: R.merge(args, {[name]: response})
-        }
-      );
-    },
-    args => {
-      return componentOrTaskFunc(args);
-    }
-  ])(args);
+export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => {
+  return nameComponent(`${name}`, args => {
+    return composeWithComponentMaybeOrTaskChain([
+      nameComponent(`${name}`, response => {
+        // Name the container after name since we don't have anything better
+        return containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(args),
+            response: R.merge(args, {[name]: response})
+          }
+        );
+      }),
+      args => {
+        return componentOrTaskFunc(args);
+      }
+    ])(args);
+  });
 };
 
 /**
@@ -182,21 +194,31 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
  * @param componentOrTaskFunc
  * @returns {function(*=): *}
  */
-export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => args => {
-  return composeWithComponentMaybeOrTaskChain([
-    response => {
-      // Name the container after name since we don't have anything better
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(args),
-          response: R.merge(args, {[name]: R.concat(R.propOr([], name, args), [response])})
-        }
-      );
-    },
-    args => {
-      return componentOrTaskFunc(args);
-    }
-  ])(args);
+export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => {
+  return nameComponent(`${name}Resolver`, args => {
+    return composeWithComponentMaybeOrTaskChain([
+      ({myResponse, ...rest}) => {
+        // Name the container after name since we don't have anything better
+        return nameComponent(`${name}Resolver`, containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(args),
+            response: R.over(
+              R.lensProp(name),
+              v => {
+                return R.concat(v, [myResponse]);
+              },
+              rest
+            )
+          }
+        ));
+      },
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'myResponse',
+        args => {
+          log.debug(name);
+          return componentOrTaskFunc(args);
+        })
+    ])(R.over(R.lensProp(name), v => v || [], args));
+  });
 };
 

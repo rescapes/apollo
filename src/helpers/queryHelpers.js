@@ -13,15 +13,13 @@ import {inspect} from 'util';
 import {
   capitalize,
   compact,
-  composeWithChain,
+  defaultNode,
   mapObjToValues,
-  mapToNamedResponseAndInputs,
   memoized,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
-  strPathOr,
-  defaultNode
+  strPathOr
 } from '@rescapes/ramda';
 import * as R from 'ramda';
 import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
@@ -30,17 +28,13 @@ import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
 import PropTypes from 'prop-types';
 import * as AC from '@apollo/client';
-
-const {gql} = defaultNode(AC);
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
-import {
-  containerForApolloType,
-  mapTaskOrComponentToMergedResponse,
-  mapTaskOrComponentToNamedResponseAndInputs
-} from './containerHelpers';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+
+const {gql} = defaultNode(AC);
 
 const {of} = T;
 
@@ -362,6 +356,7 @@ export const createRequestVariables = (apolloComponent, props) => {
  * If runContainerQueries is false, just resolves resolvedPropsTask and return the props
  * @param {Object} apolloConfig The apolloConfig
  * @param {Object} config
+ * @param {String} config.containerName For debugging only. Labels the container with this name
  * @param {Function} config.resolvedPropsContainer A no-arg function that returns a task that resolves the props
  * or for component queries, a function that returns the props
  * @param {Object} config.queryContainers Keyed by name, valued by a queryTask that expects the props.
@@ -376,6 +371,7 @@ export const createRequestVariables = (apolloComponent, props) => {
 export const apolloQueryResponsesContainer = (
   apolloConfig,
   {
+    containerName,
     resolvedPropsContainer,
     queryContainers,
     runContainerQueries = true
@@ -384,7 +380,7 @@ export const apolloQueryResponsesContainer = (
 ) => {
   return composeWithComponentMaybeOrTaskChain([
     // Wait for all the queries to finish
-    props => {
+    nameComponent(containerName, props => {
       const queryContainersOrNone = runContainerQueries && queryContainers ? queryContainers : {};
       // Each query resolves and the values are assigned to the key and merged with the props
       // This is similar to how react-adopt calls our Apollo request components
@@ -409,9 +405,11 @@ export const apolloQueryResponsesContainer = (
           )
         ]
       )(props);
-    },
+    }),
     // Resolve the props the container
-    () => resolvedPropsContainer(apolloConfig)
+    () => {
+      return resolvedPropsContainer(apolloConfig);
+    }
   ])({render});
 };
 
