@@ -9,13 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import RT from 'react'
 import T from 'folktale/concurrency/task/index.js';
 import * as R from 'ramda';
 import {camelCase, capitalize, compact, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {loggers} from '@rescapes/log';
 import {mutationOnMountOnce} from '../client/apolloClient';
+import {e} from '@rescapes/helpers-component';
 
+const {useEffect} = RT
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');
@@ -67,7 +70,6 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
 export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
-    mutateOnMountOnce,
     count, items, mutationContainer, responsePath, propVariationFunc,
     outputParams, name
   },
@@ -79,10 +81,6 @@ export const callMutationNTimesAndConcatResponses = (
 
   const componentName = `${capitalize(camelCase(responsePath.replace('.', '_')))}Resolver`;
   const length = items ? R.length(items) : count;
-
-  // If we haven't been in here before, create mutateOnMount for each sample
-  const mutateOnMountOnceEach = mutateOnMountOnce ? mutateOnMountOnce() : false
-  const mutateOnMounts = R.times(i => mutateOnMountOnceEach ? mutationOnMountOnce() : R.always(false), length)
 
   // If 0 count or items return an empty array
   if (length === 0) {
@@ -99,10 +97,27 @@ export const callMutationNTimesAndConcatResponses = (
         return containerForApolloType(
           apolloConfig,
           {
-            render: getRenderPropFunction(props),
+            render: ({responses}) => {
+              useEffect(() => {
+                // code to run on component mount
+                R.forEach(
+                  response => {
+                    response.mutation()
+                  },
+                  responses
+                )
+              }, [])
+              const objects = compact(R.map(response => {
+                return strPathOr(null, responsePath, response)
+              }, responses))
+              if (R.length(objects) !== R.length(responses)) {
+                return e('div', 'loading')
+              }
+              return getRenderPropFunction(props)({objects})
+            },
             // We compact here for component queries. The mutation results won't be ready immediately
             // so we need to handle null response data
-            response: compact(R.map(strPathOr(null, responsePath), responses))
+            response: {responses}
           }
         );
       }),
@@ -112,8 +127,7 @@ export const callMutationNTimesAndConcatResponses = (
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
             props => {
               return mutationContainer(
-                // Instruct to mutate on mount the first time this mutation component is mounted
-                R.merge(apolloConfig, {mutateOnMountOnce: mutateOnMounts[i]}),
+                apolloConfig,
                 compact({outputParams, name, i}),
                 // Pass count to the propVariationFunc so it can be used, but don't let it through to the
                 // actual mutation props

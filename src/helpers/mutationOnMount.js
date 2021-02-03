@@ -12,21 +12,19 @@
 import {print} from 'graphql';
 import React from 'react';
 import {e} from '@rescapes/helpers-component';
-import * as R from 'ramda'
+import * as R from 'ramda';
 import {Mutation} from "react-apollo";
 import {inspect} from 'util';
 import {loggers} from '@rescapes/log';
+
 const log = loggers.get('rescapeDefault');
 
 
 class DoMutation extends React.Component {
   componentDidMount() {
-    const {mutate, mutation, variables, mutateOnMountOnce} = this.props;
-    // Mount should only be called once, so mutateOnMountOnce shouldn't be needed
-    if (true || mutateOnMountOnce()) {
-      log.debug(`Calling on mount mutation \n${print(mutation)} with predefined args ${inspect(variables, false, 10)}`)
-      mutate();
-    }
+    const {mutate, mutation, variables} = this.props;
+    log.debug(`Calling on mount mutation \n${print(mutation)} with predefined args ${inspect(variables, false, 10)}`);
+    mutate();
   };
 
   render() {
@@ -35,7 +33,7 @@ class DoMutation extends React.Component {
 };
 
 const MutationOnMount = ({children, ...other}) => {
-  const {mutation, variables} = R.pick(['mutation', 'variables'], other)
+  const {mutation, variables} = R.pick(['mutation', 'variables'], other);
   return e(Mutation,
     other,
     (mutate, {called, data, loading, error}) => {
@@ -44,7 +42,7 @@ const MutationOnMount = ({children, ...other}) => {
         {},
         e(
           DoMutation,
-          {mutate, mutation, variables, mutateOnMountOnce: other.mutateOnMountOnce},
+          {mutate, mutation, variables},
           children && children(mutate, {called, data, loading, error})
         )
       );

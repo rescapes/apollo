@@ -454,7 +454,6 @@ export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fra
  * @param {Object} apolloConfig The apollo component. Contains options
  * @param {Object} apolloConfig.options optional Mutation component properties
  * @param {Object} apolloConfig.options.variables Variables mapping function. Props will have already
- * @param {Boolean} apolloConfig.mutateOnMountOnce if true and a component call, calls the mutate function
  * immediately on mount. Task calls with Apollo client always call mutate immediately
  * been passed through this so it is not used here
  * @param {Object} options.options.errorPolicy optional error policy
@@ -463,10 +462,10 @@ export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fra
  */
 export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mutation, {render, ...props}) => {
 
-  // If mutateOnMountONce is specified, wrap the Mutation in MutationOnMount to run the mutation immediately
+  // If mutateOnMount is specified, wrap the Mutation in MutationOnMount to run the mutation immediately
   // once. Subsequent renders won't run it.
   // This is only relevant for component calls, since tasks run the mutation immediately
-  const MutationComponent = strPathOr(false, 'mutateOnMountOnce', apolloConfig) && !R.propOr(false, 'apolloClient', apolloConfig)
+  const MutationComponent = strPathOr(false, 'mutateOnMount', apolloConfig) && !R.propOr(false, 'apolloClient', apolloConfig)
     ? MutationOnMount
     : Mutation;
 
@@ -484,7 +483,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               options => R.omit(['variables'], options),
               apolloConfig => R.propOr({}, 'options', apolloConfig)
             )(apolloConfig),
-            {variables: props, mutateOnMountOnce: strPathOr(R.always(true), 'mutateOnMountOnce', apolloConfig)},
+            {variables: props},
             // There are always optional
             R.pick(['onCompleted', 'onError'], apolloConfig)
           ])
@@ -683,13 +682,3 @@ export const authApolloClientRequestTask = R.curry((apolloClient, args) => {
   return fromPromised(() => apolloClient.request(args))();
 });
 
-export const mutationOnMountOnce = () => {
-  let once = true;
-  return () => {
-    if (once) {
-      once = false
-      return true
-    }
-    return false
-  }
-}
