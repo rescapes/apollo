@@ -29,8 +29,7 @@ export {
   authApolloComponentMutationContainer,
   authApolloComponentQueryContainer,
   authApolloQueryContainer,
-  getOrCreateApolloClientTask,
-  mutationOnMountOnce
+  getOrCreateApolloClientTask
 } from './client/apolloClient.js';
 export {
   getOrCreateApolloClientAndDefaultsTask,

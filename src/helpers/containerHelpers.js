@@ -15,7 +15,6 @@ import * as R from 'ramda';
 import {camelCase, capitalize, compact, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {loggers} from '@rescapes/log';
-import {mutationOnMountOnce} from '../client/apolloClient';
 import {e} from '@rescapes/helpers-component';
 
 const {useEffect} = RT
