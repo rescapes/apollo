@@ -1,24 +1,18 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
 import {makeQueryContainer} from './queryHelpers.js';
-import {addMutateKeyToMutationResponse, makeMutationRequestContainer} from './mutationHelpers.js';
-import {
-  composeWithChain,
-  mapToNamedPathAndInputs,
-  mapToNamedResponseAndInputs,
-  omitDeepPaths,
-  reqStrPathThrowing,
-  strPathOr
-} from '@rescapes/ramda';
+import {addMutateKeyToMutationResponse} from './containerHelpers.js';
+import {makeMutationRequestContainer} from './mutationHelpers';
+import {mapToNamedResponseAndInputs, omitDeepPaths, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {omitClientFields} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
-
-const {of} = T;
 import {isAuthenticatedLocal} from '../stores/userStore.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+
+const {of} = T;
 
 export const settingsTypePolicy = {type: 'SettingsType', fields: ['data']};
 export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};

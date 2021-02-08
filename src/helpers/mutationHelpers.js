@@ -37,6 +37,7 @@ import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {loggers} from '@rescapes/log';
+import {addMutateKeyToMutationResponse} from './containerHelpers';
 
 const {gql} = defaultNode(AC);
 
@@ -202,7 +203,7 @@ export const makeMutationRequestContainer = v(R.curry(
         // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
         // Above we're using an Apollo client so we have a task and leave to the caller to run
         () => {
-          log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)})}\n\n`);
+          //log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)})}\n\n`);
           return R.chain(
             component => {
               // Remove the Just
@@ -241,49 +242,6 @@ export const makeMutationRequestContainer = v(R.curry(
   'makeMutationRequestContainer'
 );
 
-/**
- *
- * Take whatever prop came back with data that begins with create/update and make a copy at mutate
- * It's a pain to check whether a dynamic query was a create or update when we don't care
- * @param {Object} config
- * @param {Object} [config.name] The name of the object foo in response.(update|create({Foo}.data.{foo}
- * Only used for logging. Not needed if silent if true
- * @param {Object} [config.silent] Default false. Supresses logging when updating after mutations
- * @param {Object} response has an object at response.(update|create){Foo}.data.{foo} where foo is the type name
- * @return {Object} response with duplicated mutate key
- * @private
- */
-export const addMutateKeyToMutationResponse = ({name, silent}, response) => {
-  // Find the response.data.[key] where key starts with update or create.
-  // Otherwise take the one and only key in data.response (e.g. tokenAuth)
-  const createOrUpdateKey = R.find(
-    key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
-    R.keys(R.propOr({}, 'data', response))
-  );
-  return R.ifElse(
-    () => {
-      return createOrUpdateKey;
-    },
-    response => {
-      const updated = duplicateKey(R.lensProp('data'), createOrUpdateKey, ['mutate'], response);
-      // Copy the return value at create... or update... to mutate
-      if (!silent) {
-        log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
-          reqStrPathThrowing(`data.mutate.${name}.id`, updated)
-        } for type ${
-          reqStrPathThrowing(`data.mutate.${name}.__typename`, updated)
-        }`);
-      }
-      return updated;
-    },
-    response => {
-      if (!silent && !R.length(R.keys(R.propOr({}, 'data', response)))) {
-        log.error(`Mutation response is null for mutation ${name}`);
-      }
-      return response;
-    }
-  )(response);
-};
 
 /**
  * Creates the parts needed for the mutation

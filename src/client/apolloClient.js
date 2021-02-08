@@ -10,7 +10,6 @@
  */
 import {inspect} from 'util';
 import * as AC from '@apollo/client';
-import {onError} from '@apollo/link-error';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
 import maybe from 'folktale/maybe/index.js';
@@ -37,12 +36,13 @@ import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import MutationOnMount from '../helpers/mutationOnMount';
+import {addMutateKeyToMutationResponse} from '../helpers/containerHelpers';
 
 const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
 
-const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
+const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache, onError} = defaultNode(AC);
 const {Just} = maybe;
 
 const log = loggers.get('rescapeDefault');
@@ -491,7 +491,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         // Pass the tuple as an object to the render function
         // If the apolloConfig.skip is specified, it is our way of indicating the mutation does not have
         // the variables it needs to run. So we make the mutation an noop and pass the skip param
-        (mutation, result) => {
+        (mutate, result) => {
           const skip = R.propOr(false, 'skip', apolloConfig);
           const renderedComponent = render({
             mutation: (...args) => R.ifElse(
@@ -499,11 +499,19 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               () => {
                 log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
               },
-              mutation => {
-                log.debug(`Calling mutation ${mutation} with args ${inspect(args, false, 10)}`)
-                return mutation(...args);
+              mutate => {
+                log.debug(`Calling mutation ${print(mutation)} with args ${inspect(args || props, false, 10)}`);
+                return mutate(...args).then(response => {
+                  // Add 'mutate' to the response so we don't have to check for create... vs update...
+                  // This also debug logs success
+                  // TODO this doesn't actually add it to the result processed by listeners
+                  return addMutateKeyToMutationResponse(
+                    {},
+                    response
+                  );
+                });
               }
-            )(mutation),
+            )(mutate),
             result,
             skip
           });

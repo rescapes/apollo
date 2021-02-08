@@ -46,7 +46,6 @@ export {
   makeMutation,
   makeMutationRequestContainer,
   mutationParts,
-  addMutateKeyToMutationResponse,
   filterOutReadOnlyVersionProps,
   filterOutNullDeleteProps
 } from './helpers/mutationHelpers.js';
@@ -83,8 +82,11 @@ export {
   createTestAuthTask, createTestNoAuthTask
 } from './helpers/testHelpers.js';
 export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
-export {containerForApolloType, callMutationNTimesAndConcatResponses,
-  mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse} from './helpers/containerHelpers.js';
+export {
+  containerForApolloType, callMutationNTimesAndConcatResponses,
+  mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
+  addMutateKeyToMutationResponse
+} from './helpers/containerHelpers.js';
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCacheContainer,

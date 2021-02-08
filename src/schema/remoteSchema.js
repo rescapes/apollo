@@ -12,9 +12,8 @@
 import {parseApiUrl} from '@rescapes/helpers';
 import * as AC from '@apollo/client';
 import {defaultNode} from '@rescapes/ramda'
-const {HttpLink} = defaultNode(AC)
+const {HttpLink, setContext} = defaultNode(AC)
 import fetch from 'node-fetch';
-import {setContext} from '@apollo/link-context';
 // Can't get this to work with webpack
 //import {introspectSchema, makeRemoteExecutableSchema} from 'graphql-tools';
 import {reqStrPathThrowing} from '@rescapes/ramda'

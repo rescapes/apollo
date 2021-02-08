@@ -9,15 +9,15 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import RT from 'react'
+import RT from 'react';
 import T from 'folktale/concurrency/task/index.js';
 import * as R from 'ramda';
-import {camelCase, capitalize, compact, strPathOr} from '@rescapes/ramda';
+import {camelCase, capitalize, compact, duplicateKey, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {loggers} from '@rescapes/log';
 import {e} from '@rescapes/helpers-component';
 
-const {useEffect} = RT
+const {useEffect} = RT;
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');
@@ -101,18 +101,26 @@ export const callMutationNTimesAndConcatResponses = (
                 // code to run on component mount
                 R.forEach(
                   response => {
-                    response.mutation()
+                    response.mutation();
                   },
                   responses
-                )
-              }, [])
-              const objects = compact(R.map(response => {
-                return strPathOr(null, responsePath, response)
-              }, responses))
+                );
+              }, []);
+              const objects = compact(
+                R.map(response => {
+                  return R.compose(
+                    response => strPathOr(null, responsePath, response),
+                    response => addMutateKeyToMutationResponse(
+                      {silent: true},
+                      response
+                    )
+                  )(response.result);
+                }, responses)
+              );
               if (R.length(objects) !== R.length(responses)) {
-                return e('div', 'loading')
+                return e('div', 'loading');
               }
-              return getRenderPropFunction(props)({objects})
+              return getRenderPropFunction(props)({objects});
             },
             // We compact here for component queries. The mutation results won't be ready immediately
             // so we need to handle null response data
@@ -235,4 +243,48 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
     ])(R.over(R.lensProp(name), v => v || [], args));
   });
 };
+
+/**
+ *
+ * Take whatever prop came back with data that begins with create/update and make a copy at mutate
+ * It's a pain to check whether a dynamic query was a create or update when we don't care
+ * @param {Object} config
+ * @param {Object} [config.silent] Default false. Supresses logging when updating after mutations
+ * @param {Object} response has an object at response.(update|create){Foo}.data.{foo} where foo is the type name
+ * @return {Object} response with duplicated mutate key
+ * @private
+ */
+export const addMutateKeyToMutationResponse = ({silent}, response) => {
+  // Find the response.data.[key] where key starts with update or create.
+  // Otherwise take the one and only key in data.response (e.g. tokenAuth)
+  const createOrUpdateKey = R.find(
+    key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
+    R.keys(R.propOr({}, 'data', response))
+  );
+  return R.ifElse(
+    () => {
+      return createOrUpdateKey;
+    },
+    response => {
+      const updated = duplicateKey(R.lensProp('data'), createOrUpdateKey, ['mutate'], response);
+      const name = R.head(R.keys(updated.data.mutate));
+      // Copy the return value at create... or update... to mutate
+      if (!silent) {
+        log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
+          reqStrPathThrowing(`data.mutate.${name}.id`, updated)
+        } for type ${
+          reqStrPathThrowing(`data.mutate.${name}.__typename`, updated)
+        }`);
+      }
+      return updated;
+    },
+    response => {
+      if (!silent && !R.length(R.keys(R.propOr({}, 'data', response)))) {
+        log.error(`Mutation response is null for mutation ${name}`);
+      }
+      return response;
+    }
+  )(response);
+};
+
 
