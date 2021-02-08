@@ -92,11 +92,11 @@ export const callMutationNTimesAndConcatResponses = (
     );
   }
   return composeWithComponentMaybeOrTaskChain([
-      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses}) => {
+      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
         return containerForApolloType(
           apolloConfig,
           {
-            render: ({responses}) => {
+            render: responses => {
               useEffect(() => {
                 // code to run on component mount
                 R.forEach(
@@ -118,13 +118,15 @@ export const callMutationNTimesAndConcatResponses = (
                 }, responses)
               );
               if (R.length(objects) !== R.length(responses)) {
-                return e('div', 'loading');
+                return e('div', {}, 'loading');
               }
-              return getRenderPropFunction(props)({objects});
+              return getRenderPropFunction({render})({objects});
             },
-            // We compact here for component queries. The mutation results won't be ready immediately
-            // so we need to handle null response data
-            response: {responses}
+            // For component queries, pass the full response so render can wait until they are loaded
+            // client calls access the objects from the responses
+            response: R.propOr(false, 'apolloClient', apolloConfig) ?
+              R.map(reqStrPathThrowing(responsePath), responses) :
+              responses
           }
         );
       }),
@@ -141,7 +143,7 @@ export const callMutationNTimesAndConcatResponses = (
                 R.omit(['item'],
                   R.merge(
                     R.pick(['render'], props),
-                    propVariationFunc(R.merge(props, {item}))
+                    propVariationFunc(R.merge(R.omit(['responses'], props), {item}))
                   )
                 )
               );
