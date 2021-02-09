@@ -88,7 +88,7 @@ describe('queryCacheHelpers', () => {
         )
       ),
       ({apolloClient}) => R.map(
-        regionResponse => ({apolloClient, region: reqStrPathThrowing('data.createRegion.region', regionResponse)}),
+        regionResponse => ({apolloClient, region: reqStrPathThrowing('result.data.createRegion.region', regionResponse)}),
         makeMutationRequestContainer(
           {apolloClient},
           {

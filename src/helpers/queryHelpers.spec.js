@@ -112,7 +112,7 @@ describe('queryHelpers', () => {
           {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
         )
       ),
-      mapToNamedPathAndInputs('createdRegion', 'data.createRegion.region',
+      mapToNamedPathAndInputs('createdRegion', 'result.data.createRegion.region',
         ({apolloClient}) => makeMutationRequestContainer(
           {apolloClient},
           {
@@ -171,7 +171,7 @@ describe('queryHelpers', () => {
           );
         }
       ),
-      mapToNamedPathAndInputs('createdRegion', 'data.createRegion.region',
+      mapToNamedPathAndInputs('createdRegion', 'result.data.createRegion.region',
         ({apolloClient}) => makeMutationRequestContainer(
           {apolloClient},
           {

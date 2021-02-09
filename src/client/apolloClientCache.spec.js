@@ -147,7 +147,7 @@ describe('apolloClient', () => {
 const cycleRegion = async apolloClient => {
 
   // Create a region
-  const {data: {createRegion: {region: region}}} = await taskToPromise(makeMutationRequestContainer(
+  const {result: {data: {createRegion: {region: region}}}} = await taskToPromise(makeMutationRequestContainer(
     {apolloClient},
     {
       name: 'region',

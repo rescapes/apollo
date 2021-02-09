@@ -60,7 +60,7 @@ export const loginToAuthClientTask = R.curry((
           {user: reqStrPathThrowing('data.currentUser', user)},
           R.pick(
             ['token', 'payload'],
-            reqStrPathThrowing('data.tokenAuth', tokenAuth)
+            reqStrPathThrowing('result.data.tokenAuth', tokenAuth)
           )
         ])
       );

@@ -99,11 +99,12 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnly
       apolloConfig,
       {
         options: {
-          update: (store, response) => {
+          update: (store, {data, ...rest}) => {
+            const _response = {result: {data}, ...rest}
             // Add mutate to response.data so we dont' have to guess if it's a create or update
             const settings = reqStrPathThrowing(
-              'data.mutate.settings',
-              addMutateKeyToMutationResponse({silent: true}, response)
+              'result.data.mutate.settings',
+              addMutateKeyToMutationResponse({silent: true}, _response)
             );
             makeSettingsCacheMutation(apolloConfig, {outputParams}, props, settings);
           }

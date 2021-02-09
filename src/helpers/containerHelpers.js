@@ -62,7 +62,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @param {Object} [config.outputParams] Defaults to null, mutation output params
  * @param {String} [config.name] if defined, this is passed to the request as the second argument along with
  * the outputParams
- * @param {String} responsePath e.g. 'data.mutate.location'
+ * @param {String} responsePath e.g. 'result.data.mutate.location'
  * @param props
  * @returns {any}
  */
@@ -114,7 +114,7 @@ export const callMutationNTimesAndConcatResponses = (
                       {silent: true},
                       response
                     )
-                  )(response.result);
+                  )(response);
                 }, responses)
               );
               if (R.length(objects) !== R.length(responses)) {
@@ -167,11 +167,14 @@ export const callMutationNTimesAndConcatResponses = (
 export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTaskFunc) => args => {
   return composeWithComponentMaybeOrTaskChain([
     response => {
+      // If the response has render and objects, strip to get objects only
+      const _response = (R.has('render', response) && R.has('objects', response)) ?
+        response.objects : response;
       return containerForApolloType(
         apolloConfig,
         {
           render: getRenderPropFunction(args),
-          response: R.merge(args, response)
+          response: R.merge(args, _response)
         }
       );
     },
@@ -194,12 +197,15 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
   return nameComponent(`${name}`, args => {
     return composeWithComponentMaybeOrTaskChain([
       nameComponent(`${name}`, response => {
+        // If the response has render and objects, strip to get objects only
+        const _response = (R.has('render', response) && R.has('objects', response)) ?
+          response.objects : response;
         // Name the container after name since we don't have anything better
         return containerForApolloType(
           apolloConfig,
           {
             render: getRenderPropFunction(args),
-            response: R.merge(args, {[name]: response})
+            response: R.merge(args, {[name]: _response})
           }
         );
       }),
@@ -222,6 +228,9 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
   return nameComponent(`${name}Resolver`, args => {
     return composeWithComponentMaybeOrTaskChain([
       ({myResponse, ...rest}) => {
+        // If the response has render and objects, strip to get objects only
+        const _response = (R.has('render', myResponse) && R.has('objects', myResponse)) ?
+          myResponse.objects : myResponse;
         // Name the container after name since we don't have anything better
         return nameComponent(`${name}Resolver`, containerForApolloType(
           apolloConfig,
@@ -261,28 +270,28 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
   // Otherwise take the one and only key in data.response (e.g. tokenAuth)
   const createOrUpdateKey = R.find(
     key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
-    R.keys(R.propOr({}, 'data', response))
+    R.keys(strPathOr({}, 'result.data', response))
   );
   return R.ifElse(
     () => {
       return createOrUpdateKey;
     },
     response => {
-      const updated = duplicateKey(R.lensProp('data'), createOrUpdateKey, ['mutate'], response);
-      const name = R.head(R.keys(updated.data.mutate));
+      const updated = duplicateKey(R.lensPath(['result', 'data']), createOrUpdateKey, ['mutate'], response);
+      const name = R.head(R.keys(updated.result.data.mutate));
       // Copy the return value at create... or update... to mutate
       if (!silent) {
         log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
-          reqStrPathThrowing(`data.mutate.${name}.id`, updated)
+          reqStrPathThrowing(`result.data.mutate.${name}.id`, updated)
         } for type ${
-          reqStrPathThrowing(`data.mutate.${name}.__typename`, updated)
+          reqStrPathThrowing(`result.data.mutate.${name}.__typename`, updated)
         }`);
       }
       return updated;
     },
     response => {
-      if (!silent && !R.length(R.keys(R.propOr({}, 'data', response)))) {
-        log.error(`Mutation response is null for mutation ${name}`);
+      if (!silent && !R.length(R.keys(strPathOr({}, 'result.data', response)))) {
+        log.error('Mutation response is null for mutation');
       }
       return response;
     }

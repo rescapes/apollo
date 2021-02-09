@@ -122,7 +122,8 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
           variables: props => {
             return R.pick(['username', 'password'], props);
           },
-          update: (store, response) => {
+          update: (store, {data, ...rest}) => {
+            const _response = {result: {data}, ...rest}
             return R.compose(
               // Accept an update method from apolloConfig.options so that queries can be refetched
               ({store, response}) => {
@@ -130,7 +131,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
               },
               ({store, response}) => {
                 const tokenAuth = reqStrPathThrowing(
-                  'data.tokenAuth',
+                  'result.data.tokenAuth',
                   response
                 );
 
@@ -143,7 +144,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
 
                 return ({store, response});
               }
-            )({store, response});
+            )({store, response: _response});
           }
         }
       }
@@ -200,7 +201,8 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
           variables: props => {
             return {};
           },
-          update: (store, response) => {
+          update: (store,{data, ...rest}) => {
+            const _response = {result: {data}, ...rest}
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
             localStorage.removeItem('token');
@@ -236,7 +238,8 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
           variables: props => {
             return {};
           },
-          update: (store, response) => {
+          update: (store, {data, ...rest}) => {
+            const _response = {result: {data}, ...rest}
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
             localStorage.removeItem('token');

@@ -73,7 +73,7 @@ describe('apolloClient', () => {
           {key: region.key}
         )
       ),
-      mapToNamedPathAndInputs('region', 'data.createRegion.region',
+      mapToNamedPathAndInputs('region', 'result.data.createRegion.region',
         ({props, apolloClient}) => {
           return makeMutationRequestContainer(
             {apolloClient},

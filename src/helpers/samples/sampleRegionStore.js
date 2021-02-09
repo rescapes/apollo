@@ -104,8 +104,9 @@ export const apolloContainers = {
           return R.pick(['id', 'name'], props.region);
         },
         options: {
-          update: (store, response) => {
-            log.debug(response);
+          update: (store, {data, ...rest}) => {
+            const _response = {result: {data}, ...rest};
+            log.debug(_response);
           }
         },
         errorPolicy: 'all',

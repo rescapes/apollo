@@ -108,7 +108,7 @@ describe('login', () => {
           return currentUserQueryContainer(
             apolloConfig,
             userOutputParams,
-            {token: strPathOr(null, 'data.tokenAuth.token', tokenAuth)}
+            {token: strPathOr(null, 'result.data.tokenAuth.token', tokenAuth)}
           );
         }
       ),

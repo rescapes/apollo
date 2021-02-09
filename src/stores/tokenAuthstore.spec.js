@@ -46,24 +46,24 @@ describe('tokenAuthStore', () => {
       /*
       TODO Server is complaining about this method, which we don't currenlty use
       mapToNamedPathAndInputs(
-        'deleteRefreshTokenCookie', 'data.deleteRefreshTokenCookie.deleted',
+        'deleteRefreshTokenCookie', 'reesult.data.deleteRefreshTokenCookie.deleted',
         ({apolloConfig: {apolloClient}, verifyToken}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
       ),
        */
       mapToNamedPathAndInputs(
-        'deleteTokenCookie', 'data.deleteTokenCookie.deleted',
+        'deleteTokenCookie', 'result.data.deleteTokenCookie.deleted',
         ({apolloConfig: {apolloClient}, tokenAuth, verifyToken}) => {
           return deleteTokenCookieMutationRequestContainer({apolloClient}, {}, {});
         }
       ),
       mapToNamedPathAndInputs(
-        'refreshToken', 'data.refreshToken.payload',
+        'refreshToken', 'result.data.refreshToken.payload',
         ({apolloConfig: {apolloClient}, tokenAuth,  verifyToken}) => {
           return refreshTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
         }
       ),
       mapToNamedPathAndInputs(
-        'verifyToken', 'data.verifyToken.payload',
+        'verifyToken', 'result.data.verifyToken.payload',
         ({apolloConfig: {apolloClient}, tokenAuth}) => {
           return verifyTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
         }

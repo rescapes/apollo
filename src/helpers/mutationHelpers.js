@@ -183,7 +183,11 @@ export const makeMutationRequestContainer = v(R.curry(
                 log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
               }
               // name is null if mutationNameOverride is used
-              return addMutateKeyToMutationResponse({name}, response);
+              return R.compose(
+                response => addMutateKeyToMutationResponse({name}, response),
+                // Put response.data in result to match component mutations
+                ({data, ...rest})=> ({result: {data}, ...rest})
+              )(response);
             },
             () => {
               return authApolloClientMutationRequestContainer(
