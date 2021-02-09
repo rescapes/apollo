@@ -290,7 +290,7 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
       return updated;
     },
     response => {
-      if (!silent && !R.length(R.keys(strPathOr({}, 'result.data', response)))) {
+      if (!silent && response.result.called && !response.result.loading && !strPathOr(null, 'result.data', response)) {
         log.error('Mutation response is null for mutation');
       }
       return response;

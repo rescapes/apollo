@@ -22,7 +22,7 @@ import {
   applyDeepWithKeyWithRecurseArraysAndMapObjs,
   compact,
   composeWithChain,
-  defaultNode,
+  defaultNode, duplicateKey,
   mapToNamedResponseAndInputs,
   memoizedTaskWith,
   promiseToTask,
@@ -502,13 +502,17 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               mutate => {
                 log.debug(`Calling mutation ${print(mutation)} with args ${inspect(args || props, false, 10)}`);
                 return mutate(...args).then(response => {
-                  // Add 'mutate' to the response so we don't have to check for create... vs update...
-                  // This also debug logs success
-                  // TODO this doesn't actually add it to the result processed by listeners
-                  return addMutateKeyToMutationResponse(
-                    {},
-                    response
+                  const createOrUpdateKey = R.find(
+                    key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
+                    R.keys(strPathOr({}, 'data', response))
                   );
+                  const updated = duplicateKey(R.lensPath(['data']), createOrUpdateKey, ['mutate'], response);
+                  // Copy the return value at create... or update... to mutate
+                  log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
+                    reqStrPathThrowing(`data.mutate.${name}.id`, updated)
+                  } for type ${
+                    reqStrPathThrowing(`data.mutate.${name}.__typename`, updated)
+                  }`);
                 });
               }
             )(mutate),
