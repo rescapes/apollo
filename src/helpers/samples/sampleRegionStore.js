@@ -74,50 +74,70 @@ export const regionOutputParams = {
   }
 };
 
+export const sampleQueryRegionsContainer = (apolloConfig, {}, props) => {
+  return makeQueryContainer(
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          variables: props => {
+            // These don't need to be limited, just doing for simplicity
+            return R.pick(
+              ['id', 'key', 'keyIn', 'name', 'nameIn'],
+              props.region
+            );
+          },
+          // Pass through error so we can handle it in the component
+          errorPolicy: 'all',
+          partialRefetch: true
+        }
+      }
+    ),
+    {
+      name: 'regions',
+      outputParams: regionOutputParams
+    },
+    props
+  );
+};
+
+export const sampleMutateRegionContainer = (apolloConfig, {}, props) => {
+  return makeMutationRequestContainer(
+    R.merge(
+      apolloConfig,
+      {
+        options: {
+          variables: (props) => {
+            // Only allow the name to be updated
+            return R.ifElse(
+              R.prop('id'),
+              region => R.pick(['id', 'name', 'deleted'], region),
+              region => R.pick(['id', 'key', 'name'], region)
+            )(normalizeSampleRegionPropsForMutating(props.region));
+          },
+          options: {
+            update: (store, {data, ...rest}) => {
+              const _response = {result: {data}, ...rest};
+              log.debug(_response);
+            }
+          },
+          errorPolicy: 'all',
+          partialRefetch: true
+        }
+      }
+    ),
+    {
+      name: 'region',
+      outputParams: regionOutputParams
+    },
+    props
+  );
+};
+
 // Each query and mutation expects a container to compose then props
 export const apolloContainers = {
   // Creates a function expecting a component to wrap and props
-  queryRegions: props => makeQueryContainer(
-    {
-      options: {
-        variables: (props) => {
-          return {
-            id: parseInt(props.region.id)
-          };
-        },
-        // Pass through error so we can handle it in the component
-        errorPolicy: 'all',
-        partialRefetch: true
-      }
-    },
-    {
-      name: 'region',
-      outputParams: regionOutputParams
-    },
-    normalizeSampleRegionPropsForMutating(props)
-  ),
-  mutateRegion: props => makeMutationRequestContainer(
-    {
-      options: {
-        variables: (props) => {
-          // Only allow the name to be updated
-          return R.pick(['id', 'name'], props.region);
-        },
-        options: {
-          update: (store, {data, ...rest}) => {
-            const _response = {result: {data}, ...rest};
-            log.debug(_response);
-          }
-        },
-        errorPolicy: 'all',
-        partialRefetch: true
-      }
-    },
-    {
-      name: 'region',
-      outputParams: regionOutputParams
-    },
-    normalizeSampleRegionPropsForMutating(props)
-  )
+  queryRegions: sampleQueryRegionsContainer,
+  mutateRegion: sampleMutateRegionContainer
 };
 

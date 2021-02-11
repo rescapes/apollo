@@ -1,11 +1,18 @@
-import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+import {
+  callMutationNTimesAndConcatResponses,
+  containerForApolloType,
+  mapTaskOrComponentToNamedResponseAndInputs
+} from './containerHelpers';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
-import {composeWithChain, defaultRunConfig} from '@rescapes/ramda';
+import moment from 'moment';
+import {capitalize, composeWithChain, defaultRunConfig} from '@rescapes/ramda';
 import {localTestAuthTask} from './testHelpers';
+import {sampleMutateRegionContainer, sampleQueryRegionsContainer} from './samples/sampleRegionStore';
+import * as R from 'ramda';
 
 describe('containerHelpers', () => {
   test('mapTaskOrComponentToNamedResponseAndInputs', done => {
-    const errors = []
+    const errors = [];
     composeWithChain([
       (apolloConfig) => composeWithComponentMaybeOrTaskChain([
         mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'chip',
@@ -38,4 +45,40 @@ describe('containerHelpers', () => {
       }
     }, errors, done));
   });
+
+  test('callMutationNTimesAndConcatResponses', done => {
+    const errors = [];
+    composeWithChain([
+      apolloConfig => {
+        return callMutationNTimesAndConcatResponses(
+          apolloConfig,
+          {
+            forceDelete: true, forceDeleteMatchingProps: {region: {nameIn: ['Enwandagon', 'Elbonia']}},
+            queryToDeleteContainer: sampleQueryRegionsContainer, queryResponsePath: 'data.regions',
+            propVariationFuncForDeleted: ({item}) => {
+              return {region: {id: item.id, deleted: moment().toISOString(true)}}
+            },
+            items: [{key: 'enwandagon'}, {key: 'elbonia'}],
+            mutationContainer: sampleMutateRegionContainer,
+            responsePath: 'result.data.mutate.region',
+            propVariationFunc: ({item: {key}}) => {
+              return {
+                region: {
+                  key,
+                  name: capitalize(key)
+                }
+              };
+            }
+          },
+          {}
+        );
+      },
+      () => localTestAuthTask()
+    ])().run().listen(defaultRunConfig({
+      onResolved: objects => {
+        expect(R.length(objects)).toEqual(2);
+      }
+    }, errors, done));
+  }, 100000);
+
 });

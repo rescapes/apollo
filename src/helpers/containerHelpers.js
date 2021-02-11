@@ -55,7 +55,15 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @param {Number} [config.count] Number of times to call mutationContainer. The current 1-based count
  * is passed to propVariationFunc as prop 'item' = 1,2,...
  * @param {[Object]} [config.items] Pass items to be passed to propVariationFunc for each call instead
+ * @param {Boolean} [config.forceDelete] Default false, If true delete instances matching forceDeleteMatchingProps
+ * @param {Object} [config.forceDeleteMatchingProps] If forceDelete is true this must be defined
+ * to provide params to delete instances, such as {keysIn: [...], user: {id: x}}
  * of using config.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
+ * @param {Task|Function} [queryToDeleteContainer] Container that uses forceDeleteMatchingProps to find
+ * instances to delete with mutationContainer
+ * @param {Function} [propVariationFuncForDeleted] the props needed to delete the items from queryToDeleteContainer,
+ * usually this is just the id and a deleted time stamp, e.g. ({item}) => ({item.id, item.delete:  moment().toISOString(true)}
+ * @param {String} [queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryToDeleteContainer
  * @param {Function} config.mutationContainer Apollo mutation request to run count times
  * @param {Function} config.propVariationFunc Function receiving props and with a 1-based count proped merged in
  * returns an object that is the props to use for the container request
@@ -63,13 +71,17 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @param {String} [config.name] if defined, this is passed to the request as the second argument along with
  * the outputParams
  * @param {String} responsePath e.g. 'result.data.mutate.location'
- * @param props
+ * @param {Object} props
+ * @param {Function} props.render Required for component calls, the render function to render the children
+ * of this component
  * @returns {any}
  */
 export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
-    count, items, mutationContainer, responsePath, propVariationFunc,
+    count, items,
+    forceDelete = false, forceDeleteMatchingProps, queryToDeleteContainer, queryResponsePath, propVariationFuncForDeleted,
+    mutationContainer, responsePath, propVariationFunc,
     outputParams, name
   },
   props
@@ -151,7 +163,45 @@ export const callMutationNTimesAndConcatResponses = (
         },
         // Use count or the length of items. We mutate this many times
         count ? count : R.length(items)
-      ))
+      )),
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'deletedItems',
+        nameComponent(`deletedInstances`, ({existingItems, render}) => {
+          const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItems): []
+          return forceDelete && R.length(items) ?
+            // Recurse to use callMutationNTimesAndConcatResponses to delete existing instances
+            callMutationNTimesAndConcatResponses(
+              apolloConfig,
+              {
+                items,
+                mutationContainer,
+                responsePath,
+                propVariationFunc: propVariationFuncForDeleted,
+                outputParams,
+                name
+              },
+              {render}) :
+            containerForApolloType(
+              apolloConfig,
+              {
+                render,
+                response: {objects: []}
+              }
+            );
+        })
+      ),
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItems',
+        nameComponent(`queryToDeletedInstances`, ({responses, render}) => {
+          return forceDelete ?
+            queryToDeleteContainer(apolloConfig, {outputParams: {id: 1}}, forceDeleteMatchingProps) :
+            containerForApolloType(
+              apolloConfig,
+              {
+                render,
+                response: {objects: []}
+              }
+            );
+        })
+      )
     ]
   )(props);
 };
@@ -248,6 +298,7 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
       },
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'myResponse',
         args => {
+          log.debug(name);
           return componentOrTaskFunc(args);
         })
     ])(R.over(R.lensProp(name), v => v || [], args));
@@ -289,7 +340,7 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
       return updated;
     },
     response => {
-      if (!silent && response.result.called && !response.result.loading && !strPathOr(null, 'result.data', response)) {
+      if (!silent && !R.length(R.keys(strPathOr({}, 'data', response)))) {
         log.error('Mutation response is null for mutation');
       }
       return response;
