@@ -248,7 +248,6 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
       },
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'myResponse',
         args => {
-          log.debug(name);
           return componentOrTaskFunc(args);
         })
     ])(R.over(R.lensProp(name), v => v || [], args));

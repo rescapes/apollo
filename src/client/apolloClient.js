@@ -500,19 +500,11 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
                 log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
               },
               mutate => {
-                log.debug(`Calling mutation ${print(mutation)} with args ${inspect(args || props, false, 10)}`);
-                return mutate(...args).then(response => {
-                  const createOrUpdateKey = R.find(
-                    key => R.find(verb => R.startsWith(verb, key), ['create', 'update']),
-                    R.keys(strPathOr({}, 'data', response))
-                  );
-                  const updated = duplicateKey(R.lensPath(['data']), createOrUpdateKey, ['mutate'], response);
-                  // Copy the return value at create... or update... to mutate
-                  log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
-                    reqStrPathThrowing(`data.mutate.${name}.id`, updated)
-                  } for type ${
-                    reqStrPathThrowing(`data.mutate.${name}.__typename`, updated)
-                  }`);
+                log.debug(`Calling mutation ${print(mutation)} with args ${inspect(R.length(args) ? args[0] : props, false, 10)}`);
+                return mutate(...args).then( ({data, ...rest}) => {
+                  const response = {result: {data}, ...rest};
+                  // Just logs the successful mutation
+                  addMutateKeyToMutationResponse({}, response)
                 });
               }
             )(mutate),

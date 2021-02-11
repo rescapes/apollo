@@ -1,3 +1,4 @@
+
 /**
  * Created by Andy Likuski on 2021.01.15
  * Copyright (c) 2021 Andy Likuski
@@ -9,6 +10,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import testUtils from 'react-dom/test-utils';
 import {print} from 'graphql';
 import React from 'react';
 import {e} from '@rescapes/helpers-component';
@@ -17,6 +19,7 @@ import {Mutation} from "react-apollo";
 import {inspect} from 'util';
 import {loggers} from '@rescapes/log';
 
+const {act} = testUtils;
 const log = loggers.get('rescapeDefault');
 
 
@@ -24,7 +27,9 @@ class DoMutation extends React.Component {
   componentDidMount() {
     const {mutate, mutation, variables} = this.props;
     log.debug(`Calling on mount mutation \n${print(mutation)} with predefined args ${inspect(variables, false, 10)}`);
-    mutate();
+    act(() => {
+      mutate();
+    })
   };
 
   render() {
