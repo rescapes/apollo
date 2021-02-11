@@ -55,15 +55,16 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @param {Number} [config.count] Number of times to call mutationContainer. The current 1-based count
  * is passed to propVariationFunc as prop 'item' = 1,2,...
  * @param {[Object]} [config.items] Pass items to be passed to propVariationFunc for each call instead
- * @param {Boolean} [config.forceDelete] Default false, If true delete instances matching forceDeleteMatchingProps
- * @param {Object} [config.forceDeleteMatchingProps] If forceDelete is true this must be defined
+ * @param {Boolean} [config.forceDelete] Default false, If true delete instances matching existingMatchingProps
+ * @param {Object} [config.existingMatchingProps] If forceDelete is true this must be defined. Otherwise
+ * this is used to look for existing items to use instead of creating new ones if forceDelete is false
  * to provide params to delete instances, such as {keysIn: [...], user: {id: x}}
  * of using config.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
- * @param {Task|Function} [queryToDeleteContainer] Container that uses forceDeleteMatchingProps to find
- * instances to delete with mutationContainer
- * @param {Function} [propVariationFuncForDeleted] the props needed to delete the items from queryToDeleteContainer,
+ * @param {Task|Function} queryForExistingContainer Container that uses existingMatchingProps to find
+ * instances to delete with mutationContainer or instances to use instead of creating new instances
+ * @param {Function} [propVariationFuncForDeleted] the props needed to delete the items from queryForExistingContainer,
  * usually this is just the id and a deleted time stamp, e.g. ({item}) => ({item.id, item.delete:  moment().toISOString(true)}
- * @param {String} [queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryToDeleteContainer
+ * @param {String} [queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryForExistingContainer
  * @param {Function} config.mutationContainer Apollo mutation request to run count times
  * @param {Function} config.propVariationFunc Function receiving props and with a 1-based count proped merged in
  * returns an object that is the props to use for the container request
@@ -80,7 +81,7 @@ export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
     count, items,
-    forceDelete = false, forceDeleteMatchingProps, queryToDeleteContainer, queryResponsePath, propVariationFuncForDeleted,
+    forceDelete = false, existingMatchingProps, queryForExistingContainer, queryResponsePath, propVariationFuncForDeleted,
     mutationContainer, responsePath, propVariationFunc,
     outputParams, name
   },
@@ -146,7 +147,18 @@ export const callMutationNTimesAndConcatResponses = (
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
           const item = count ? R.add(1, i) : items[i];
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
-            props => {
+            ({existingItems, deletedItems, ...props}) => {
+              // If we didn't force delete and we have an existing item at this index, use it
+              const existingItem = !forceDelete && queryResponsePath && R.view(R.lensIndex(i), reqStrPathThrowing(queryResponsePath, existingItems));
+              if (existingItem) {
+                return containerForApolloType(
+                  apolloConfig,
+                  {
+                    render: getRenderPropFunction(props),
+                    response: R.set(R.lensPath(R.split('.',responsePath)), existingItem, {})
+                  }
+                )
+              }
               return mutationContainer(
                 apolloConfig,
                 compact({outputParams, name, i}),
@@ -191,8 +203,8 @@ export const callMutationNTimesAndConcatResponses = (
       ),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItems',
         nameComponent(`queryToDeletedInstances`, ({responses, render}) => {
-          return forceDelete ?
-            queryToDeleteContainer(apolloConfig, {outputParams: {id: 1}}, forceDeleteMatchingProps) :
+          return queryForExistingContainer ?
+            queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
             containerForApolloType(
               apolloConfig,
               {
@@ -340,7 +352,7 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
       return updated;
     },
     response => {
-      if (!silent && !R.length(R.keys(strPathOr({}, 'data', response)))) {
+      if (!silent && !R.length(R.keys(strPathOr({}, 'result.data', response)))) {
         log.error('Mutation response is null for mutation');
       }
       return response;
