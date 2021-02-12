@@ -56,7 +56,18 @@ describe('containerHelpers', () => {
             {
               mutationContainer: sampleMutateRegionContainer,
               queryForExistingContainer: sampleQueryRegionsContainer, queryResponsePath: 'data.regions',
-              forceDelete: false, existingMatchingProps: {region: {nameIn: ['Enwandagon', 'Elbonia']}},
+              // If we don't forceDelete, we can reuse existing items
+              forceDelete: false,
+              // Query to look for existing items
+              existingMatchingProps: {
+                region: {
+                  nameIn: ['Enwandagon', 'Elbonia'],
+                }
+              },
+              // Matches existing items so we don't have to recreate samples
+              existingItemMatch: (item, existingItems) => R.find(
+                existingItem => R.startsWith(item.key, existingItem.key), existingItems
+              ),
               items: [{key: 'enwandagon'}, {key: 'elbonia'}],
               responsePath: 'result.data.mutate.region',
               propVariationFunc: ({item: {key}}) => {
@@ -103,10 +114,9 @@ describe('containerHelpers', () => {
         }
       )
     ])({}).run().listen(defaultRunConfig({
-      onResolved: objects => {
-        expect(R.length(objects)).toEqual(2);
+      onResolved: ({items, unforcedItems}) => {
+        expect(R.map(R.prop('id'), items)).toEqual(R.map(R.prop('id'), unforcedItems))
       }
     }, errors, done));
-  }, 100000);
-
+  }, 1000000);
 });

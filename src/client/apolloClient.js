@@ -47,6 +47,13 @@ const {Just} = maybe;
 
 const log = loggers.get('rescapeDefault');
 
+const logLink = new ApolloLink((operation, forward) => {
+  console.info(`${print(operation.query)}\nArguments:\n${inspect(operation.variables, false, 10)}\n\n`)
+  return forward(operation).map((result) => {
+    console.info('response', inspect(result.data, false, 10));
+    return result;
+  });
+});
 /**
  * Creates an ApolloClient.
  * @param {Object} config
@@ -128,6 +135,7 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
           return of([
             errorLink,
             authLink,
+            logLink,
             // Terminal link, has to be last
             httpLink
           ]);

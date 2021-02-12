@@ -62,6 +62,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * of using config.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
  * @param {Task|Function} queryForExistingContainer Container that uses existingMatchingProps to find
  * instances to delete with mutationContainer or instances to use instead of creating new instances
+ * @param {Function} existingItemMatch Used to match an existing item with and item from items
  * @param {Function} [propVariationFuncForDeleted] the props needed to delete the items from queryForExistingContainer,
  * usually this is just the id and a deleted time stamp, e.g. ({item}) => ({item.id, item.delete:  moment().toISOString(true)}
  * @param {String} [queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryForExistingContainer
@@ -81,7 +82,7 @@ export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
     count, items,
-    forceDelete = false, existingMatchingProps, queryForExistingContainer, queryResponsePath, propVariationFuncForDeleted,
+    forceDelete = false, existingMatchingProps,existingItemMatch, queryForExistingContainer, queryResponsePath, propVariationFuncForDeleted,
     mutationContainer, responsePath, propVariationFunc,
     outputParams, name
   },
@@ -148,8 +149,10 @@ export const callMutationNTimesAndConcatResponses = (
           const item = count ? R.add(1, i) : items[i];
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
             ({existingItems, deletedItems, ...props}) => {
-              // If we didn't force delete and we have an existing item at this index, use it
-              const existingItem = !forceDelete && queryResponsePath && R.view(R.lensIndex(i), reqStrPathThrowing(queryResponsePath, existingItems));
+              // If we didn't force delete and we have an existing item, use it
+              const existingItem = !forceDelete &&
+                queryResponsePath &&
+                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItems))
               if (existingItem) {
                 return containerForApolloType(
                   apolloConfig,
@@ -202,7 +205,7 @@ export const callMutationNTimesAndConcatResponses = (
         })
       ),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItems',
-        nameComponent(`queryToDeletedInstances`, ({responses, render}) => {
+        nameComponent(`queryExistingItems`, ({responses, render}) => {
           return queryForExistingContainer ?
             queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
             containerForApolloType(
