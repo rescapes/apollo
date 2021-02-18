@@ -42,15 +42,16 @@ const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
 
-const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache, onError} = defaultNode(AC);
+import {onError} from 'apollo-link-error'
+const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
 const {Just} = maybe;
 
 const log = loggers.get('rescapeDefault');
 
 const logLink = new ApolloLink((operation, forward) => {
-  console.info(`${print(operation.query)}\nArguments:\n${inspect(operation.variables, false, 10)}\n\n`)
+  //console.info(`${print(operation.query)}\nArguments:\n${inspect(operation.variables, false, 10)}\n\n`)
   return forward(operation).map((result) => {
-    console.info('response', inspect(result.data, false, 10));
+    //console.info('response', inspect(result.data, false, 10));
     return result;
   });
 });
@@ -130,12 +131,10 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
 
           const authLink = createAuthLink();
           // TODO I think our error link is out of data
-          //const errorLink = createErrorLink();
-          const errorLink = reportErrors(log.error.bind(log));
+          const errorLink = createErrorLink();
           return of([
             errorLink,
             authLink,
-            logLink,
             // Terminal link, has to be last
             httpLink
           ]);
@@ -163,12 +162,6 @@ const createAuthLink = () => new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-const reportErrors = (errorCallback) => new ApolloLink((operation, forward) => {
-  const observer = forward(operation);
-  // errors will be sent to the errorCallback
-  observer.subscribe({error: errorCallback});
-  return observer;
-});
 /**
  *
  * Error handling link so errors don't get swallowed, which Apollo seems to like doing

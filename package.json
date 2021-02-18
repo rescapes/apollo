@@ -39,6 +39,7 @@
     "@jest/globals": "^26.6.2",
     "@rescapes/translation": "^0.0.24",
     "apollo-cache-persist": "^0.1.1",
+    "apollo-link-error": "^1.1.13",
     "apollo-utilities": "^1.3.2",
     "apollo3-cache-persist": "^0.9.1",
     "browser-or-node": "^1.3.0",
@@ -120,7 +121,6 @@
       "src/**/*.{js,jsx,mjs}"
     ],
     "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,mjs}",
       "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,mjs}"
     ],
     "testEnvironment": "jest-environment-node",
