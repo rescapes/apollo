@@ -12,7 +12,15 @@
 import RT from 'react';
 import T from 'folktale/concurrency/task/index.js';
 import * as R from 'ramda';
-import {camelCase, capitalize, compact, duplicateKey, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {
+  camelCase,
+  capitalize,
+  compact,
+  duplicateKey,
+  reqStrPathThrowing,
+  strPathOr,
+  toArrayIfNot
+} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {loggers} from '@rescapes/log';
 import {e} from '@rescapes/helpers-component';
@@ -47,7 +55,59 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
   )(responseAndOptionalRender);
 });
 
-
+/**
+ * Container to call mutate on mount for each mutationResponse. The container
+ * then returns an empty div until the mutations have completed. For client queries
+ * the mutation will have already happened so it returns a task that resolves
+ * to the mutation responses
+ * @param apolloConfig
+ * @param {Object} options
+ * @param {String} options.responsePath The stringPath into the mutation responses
+ * of that object being mutated.
+ * @param {Object|[Object]} mutationResponses A single or multiple mutation responses
+ * to call the mutation function of once on mount
+ * @returns {Object|Task} The div component when loading or a component
+ * with the mutation responses. For client mutations resolves to the mutation responses
+ */
+export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses) => {
+  const responses = toArrayIfNot(mutationResponses)
+  return containerForApolloType(
+    apolloConfig,
+    {
+      render: responses => {
+        useEffect(() => {
+          // code to run on component mount
+          R.forEach(
+            response => {
+              response.mutation();
+            },
+            responses
+          );
+        }, []);
+        const objects = compact(
+          R.map(response => {
+            return R.compose(
+              response => strPathOr(null, responsePath, response),
+              response => addMutateKeyToMutationResponse(
+                {silent: true},
+                response
+              )
+            )(response);
+          }, responses)
+        );
+        if (R.length(objects) !== R.length(responses)) {
+          return e('div', {}, 'loading');
+        }
+        return getRenderPropFunction({render})({objects});
+      },
+      // For component queries, pass the full response so render can wait until they are loaded
+      // client calls access the objects from the responses
+      response: R.propOr(false, 'apolloClient', apolloConfig) ?
+        R.map(reqStrPathThrowing(responsePath), responses) :
+        responses
+    }
+  );
+}
 /**
  * Call the given container count times and concat the responses at the response path
  * @param apolloConfig
@@ -107,42 +167,7 @@ export const callMutationNTimesAndConcatResponses = (
   }
   return composeWithComponentMaybeOrTaskChain([
       nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
-        return containerForApolloType(
-          apolloConfig,
-          {
-            render: responses => {
-              useEffect(() => {
-                // code to run on component mount
-                R.forEach(
-                  response => {
-                    response.mutation();
-                  },
-                  responses
-                );
-              }, []);
-              const objects = compact(
-                R.map(response => {
-                  return R.compose(
-                    response => strPathOr(null, responsePath, response),
-                    response => addMutateKeyToMutationResponse(
-                      {silent: true},
-                      response
-                    )
-                  )(response);
-                }, responses)
-              );
-              if (R.length(objects) !== R.length(responses)) {
-                return e('div', {}, 'loading');
-              }
-              return getRenderPropFunction({render})({objects});
-            },
-            // For component queries, pass the full response so render can wait until they are loaded
-            // client calls access the objects from the responses
-            response: R.propOr(false, 'apolloClient', apolloConfig) ?
-              R.map(reqStrPathThrowing(responsePath), responses) :
-              responses
-          }
-        );
+        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses)
       }),
       ...R.reverse(R.times(i => {
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'

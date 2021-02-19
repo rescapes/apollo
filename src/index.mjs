@@ -85,7 +85,8 @@ export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './clien
 export {
   containerForApolloType, callMutationNTimesAndConcatResponses,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
-  addMutateKeyToMutationResponse
+  addMutateKeyToMutationResponse,
+  mutateOnceAndWaitContainer
 } from './helpers/containerHelpers.js';
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
