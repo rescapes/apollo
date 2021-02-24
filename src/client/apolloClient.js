@@ -664,7 +664,7 @@ export const getApolloClientTask = (
     fixedHeaders: {},
     makeCacheMutation,
     // This just prevents memoization from working if the state of the token has changed.
-    token: localStorage.get('token')
+    token: localStorage.getItem('token')
   });
 };
 

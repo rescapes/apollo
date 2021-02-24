@@ -179,7 +179,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
 
 
 /**
- * Creates an Apollo Client with authorization based on the presence of localStorage.get('token') having a
+ * Creates an Apollo Client with authorization based on the presence of localStorage.getItem('token') having a
  * valid API token stored in it. This function should be used to create an ApolloClient when localStorage is
  * used, whether or not the token is present. The apollo-link-state check for token on each request
  * and sends if to the server if available.
