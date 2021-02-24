@@ -493,7 +493,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         // If the apolloConfig.skip is specified, it is our way of indicating the mutation does not have
         // the variables it needs to run. So we make the mutation an noop and pass the skip param
         (mutate, result) => {
-          const skip = R.propOr(false, 'options.skip', apolloConfig);
+          const skip = strPathOr(false, 'options.skip', apolloConfig);
           const renderedComponent = render({
             mutation: (...args) => R.ifElse(
               () => skip,
