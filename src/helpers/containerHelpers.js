@@ -66,15 +66,16 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * of that object being mutated.
  * @param {Object|[Object]} mutationResponses A single or multiple mutation responses
  * to call the mutation function of once on mount
+ * @param {Function} render The render prop
  * @returns {Object|Task} The div component when loading or a component
  * with the mutation responses. For client mutations resolves to the mutation responses
  */
-export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses) => {
-  const responses = toArrayIfNot(mutationResponses)
+export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses, render=null) => {
+  const responses = {responses: toArrayIfNot(mutationResponses)}
   return containerForApolloType(
     apolloConfig,
     {
-      render: responses => {
+      render: ({responses}) => {
         useEffect(() => {
           // code to run on component mount
           R.forEach(
@@ -87,7 +88,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
         const objects = compact(
           R.map(response => {
             return R.compose(
-              response => strPathOr(null, responsePath, response),
+              response => responsePath ? strPathOr(null, responsePath, response) : response,
               response => addMutateKeyToMutationResponse(
                 {silent: true},
                 response
@@ -108,6 +109,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
     }
   );
 }
+
 /**
  * Call the given container count times and concat the responses at the response path
  * @param apolloConfig
@@ -167,7 +169,7 @@ export const callMutationNTimesAndConcatResponses = (
   }
   return composeWithComponentMaybeOrTaskChain([
       nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
-        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses)
+        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render)
       }),
       ...R.reverse(R.times(i => {
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'

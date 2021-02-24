@@ -493,7 +493,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
         // If the apolloConfig.skip is specified, it is our way of indicating the mutation does not have
         // the variables it needs to run. So we make the mutation an noop and pass the skip param
         (mutate, result) => {
-          const skip = R.propOr(false, 'skip', apolloConfig);
+          const skip = R.propOr(false, 'options.skip', apolloConfig);
           const renderedComponent = render({
             mutation: (...args) => R.ifElse(
               () => skip,
@@ -504,8 +504,9 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
                 log.debug(`Calling mutation ${print(mutation)} with args ${inspect(R.length(args) ? args[0] : props, false, 10)}`);
                 return mutate(...args).then( ({data, ...rest}) => {
                   const response = {result: {data}, ...rest};
-                  // Just logs the successful mutation
-                  addMutateKeyToMutationResponse({}, response)
+                  // Just logs the successful mutation. With an apolloClient the response is returned,
+                  // but for component mutations this is mapping i sthrown away by react
+                  return addMutateKeyToMutationResponse({}, response)
                 });
               }
             )(mutate),
