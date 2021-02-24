@@ -141,8 +141,6 @@ export const getOrCreateApolloClientAndDefaultsTask = R.curry((
             uri,
             stateLinkResolvers,
             makeCacheMutation,
-            // This just prevents memoization from working if the state of the token has changed.
-            token: localStorage.getItem('token')
           }
         );
       })

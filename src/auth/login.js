@@ -96,9 +96,7 @@ export const loginToAuthClientTask = R.curry((
           uri,
           stateLinkResolvers,
           makeCacheMutation,
-          fixedHeaders: {authorization: null},
-          // This just prevents memoization from working if the state of the token has changed.
-          token: localStorage.getItem('token')
+          fixedHeaders: {authorization: null}
         });
       }
     )
@@ -178,9 +176,7 @@ export const authClientOrLoginTask = R.curry((
       mapToNamedResponseAndInputs('apolloConfig',
         ({uri, stateLinkResolvers}) => {
           return getOrCreateApolloClientTask({
-            cacheOptions, uri, stateLinkResolvers, makeCacheMutation,
-            // This just prevents memoization from working if the state of the token has changed.
-            token: localStorage.getItem('token')
+            cacheOptions, uri, stateLinkResolvers, makeCacheMutation
           });
         }
       )
