@@ -47,7 +47,13 @@ const {ApolloClient} = defaultNode(AC);
  * @return {{apolloClient: ApolloClient, token}}
  */
 export const loginToAuthClientTask = R.curry((
-  {cacheOptions, uri, stateLinkResolvers, writeDefaults, settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}},
+  {
+    cacheOptions,
+    uri,
+    stateLinkResolvers,
+    writeDefaults,
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+  },
   props
 ) => {
   return composeWithChain([
@@ -86,7 +92,13 @@ export const loginToAuthClientTask = R.curry((
       ({uri, stateLinkResolvers}) => {
         // Use unauthenticated ApolloClient for login
         return getOrCreateApolloClientTask({
-          cacheOptions, uri, stateLinkResolvers, makeCacheMutation, fixedHeaders: {authorization: null}
+          cacheOptions,
+          uri,
+          stateLinkResolvers,
+          makeCacheMutation,
+          fixedHeaders: {authorization: null},
+          // This just prevents memoization from working if the state of the token has changed.
+          token: localStorage.get('token')
         });
       }
     )
@@ -138,25 +150,25 @@ export const authClientOrLoginTask = R.curry((
     apolloClient => of({apolloClient}),
     composeWithChain([
       mapToNamedResponseAndInputs('user',
-      // map userLogin to getApolloClientTask and token
-      ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
-        // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
-        // although the token will also be stored in localStorage.getItem('token'),
-        // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
-        return getOrSetDefaultsContainer({
-            apolloConfig,
-            cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
-            cacheOptions,
-            uri,
-            stateLinkResolvers,
-            writeDefaults,
-            settingsConfig: {
-              cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames
-            }
-          },
-          {}
-        );
-      }),
+        // map userLogin to getApolloClientTask and token
+        ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
+          // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
+          // although the token will also be stored in localStorage.getItem('token'),
+          // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
+          return getOrSetDefaultsContainer({
+              apolloConfig,
+              cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
+              cacheOptions,
+              uri,
+              stateLinkResolvers,
+              writeDefaults,
+              settingsConfig: {
+                cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames
+              }
+            },
+            {}
+          );
+        }),
       mapToNamedResponseAndInputs('loginAuthentication',
         ({apolloConfig, authentication}) => {
           return tokenAuthMutationContainer(apolloConfig, {}, authentication);
@@ -165,7 +177,11 @@ export const authClientOrLoginTask = R.curry((
       // map login values to token
       mapToNamedResponseAndInputs('apolloConfig',
         ({uri, stateLinkResolvers}) => {
-          return getOrCreateApolloClientTask({cacheOptions, uri, stateLinkResolvers, makeCacheMutation});
+          return getOrCreateApolloClientTask({
+            cacheOptions, uri, stateLinkResolvers, makeCacheMutation,
+            // This just prevents memoization from working if the state of the token has changed.
+            token: localStorage.get('token')
+          });
         }
       )
     ])

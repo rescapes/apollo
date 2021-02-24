@@ -83,7 +83,7 @@ const logLink = new ApolloLink((operation, forward) => {
 export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
     return R.merge(
-      R.pick(['uri', 'cacheData'], obj),
+      R.pick(['uri', 'cacheData', 'token'], obj),
       // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
       R.map(
         ({fields}) => R.keys(fields),
@@ -662,7 +662,9 @@ export const getApolloClientTask = (
     uri,
     stateLinkResolvers,
     fixedHeaders: {},
-    makeCacheMutation
+    makeCacheMutation,
+    // This just prevents memoization from working if the state of the token has changed.
+    token: localStorage.get('token')
   });
 };
 
