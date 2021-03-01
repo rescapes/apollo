@@ -65,8 +65,8 @@ describe('containerHelpers', () => {
                 }
               },
               // Matches existing items so we don't have to recreate samples
-              existingItemMatch: (item, existingItems) => R.find(
-                existingItem => R.startsWith(item.key, existingItem.key), existingItems
+              existingItemMatch: (item, existingItemResponses) => R.find(
+                existingItem => R.startsWith(item.key, existingItem.key), existingItemResponses
               ),
               items: [{key: 'enwandagon'}, {key: 'elbonia'}],
               responsePath: 'result.data.mutate.region',

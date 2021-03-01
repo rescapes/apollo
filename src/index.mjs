@@ -86,7 +86,8 @@ export {
   containerForApolloType, callMutationNTimesAndConcatResponses,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
   addMutateKeyToMutationResponse,
-  mutateOnceAndWaitContainer
+  mutateOnceAndWaitContainer,
+  deleteItemsOfExistingResponses
 } from './helpers/containerHelpers.js';
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {

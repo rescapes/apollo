@@ -111,30 +111,85 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
 };
 
 /**
+ * @param {Object} apolloConfig
+ * @param {Object} options
+ * @param {String} options.queryResponsePath Path into existingItemResponses to get objects to delete
+ * @param {Boolean} options.forceDelete If true and there are existingItemResponses delete, otherwise
+ * return any empty response to indicate that nothing was deleted
+ * @param {Function} options.mutationContainer The apollo mutation request function to call on each item
+ * to update it to deleted
+ * @param {String} options.responsePath The path to the deleted item once the mutation is called. The deleted
+ * items are returned in the response, not the deleted item responses
+ * @param {Function} options.propVariationFuncForDeleted Called on each item to modify it with values that
+ * will indicate that it is now deleted, namely deleted: Datetime.now() or similar
+ * @param {Object} [options.outputParams] Output parameters for the mutationContainer call if explicitly required
+ * @param {String} [options.name] if defined, this is passed to the request as the second argument along with
+ * the outputParams to each mutation call
+ * @param {Object} props
+ * @param {[Object]} props.existingItemResponses
+ * @param {Object} props.render
+ * @returns {[Object]} The list of deleted objects in the resolved task or component response
+ */
+export const deleteItemsOfExistingResponses = (
+  apolloConfig, {
+    queryResponsePath,
+    forceDelete,
+    mutationContainer,
+    responsePath,
+    propVariationFuncForDeleted,
+    outputParams,
+    name
+  },
+  {existingItemResponses, render}
+) => {
+  const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItemResponses) : [];
+  return forceDelete && R.length(items) ?
+    // Recurse to use callMutationNTimesAndConcatResponses to delete existing instances
+    callMutationNTimesAndConcatResponses(
+      apolloConfig,
+      {
+        items,
+        mutationContainer,
+        responsePath,
+        propVariationFunc: propVariationFuncForDeleted,
+        outputParams,
+        name
+      },
+      {render}) :
+    containerForApolloType(
+      apolloConfig,
+      {
+        render,
+        response: {objects: []}
+      }
+    );
+};
+
+/**
  * Call the given container count times and concat the responses at the response path
- * @param apolloConfig
- * @param {Object} config
- * @param {Number} [config.count] Number of times to call mutationContainer. The current 1-based count
+ * @param {Object} apolloConfig
+ * @param {Object} options
+ * @param {Number} [options.count] Number of times to call mutationContainer. The current 1-based count
  * is passed to propVariationFunc as prop 'item' = 1,2,...
- * @param {[Object]} [config.items] Pass items to be passed to propVariationFunc for each call instead
- * @param {Boolean} [config.forceDelete] Default false, If true delete instances matching existingMatchingProps
- * @param {Object} [config.existingMatchingProps] If forceDelete is true this must be defined. Otherwise
+ * @param {[Object]} [options.items] Pass items to be passed to propVariationFunc for each call instead
+ * @param {Boolean} [options.forceDelete] Default false, If true delete instances matching existingMatchingProps
+ * @param {Object} [options.existingMatchingProps] If forceDelete is true this must be defined. Otherwise
  * this is used to look for existing items to use instead of creating new ones if forceDelete is false
  * to provide params to delete instances, such as {keysIn: [...], user: {id: x}}
- * of using config.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
- * @param {Task|Function} queryForExistingContainer Container that uses existingMatchingProps to find
+ * of using options.count. Used for updates and deletion. Item is passed as prop 'item' = Object1, Object2, ...
+ * @param {Task|Function} options.queryForExistingContainer Container that uses existingMatchingProps to find
  * instances to delete with mutationContainer or instances to use instead of creating new instances
- * @param {Function} existingItemMatch Used to match an existing item with and item from items
- * @param {Function} [propVariationFuncForDeleted] the props needed to delete the items from queryForExistingContainer,
+ * @param {Function} options.existingItemMatch Used to match an existing item with and item from items
+ * @param {Function} [options.propVariationFuncForDeleted] the props needed to delete the items from queryForExistingContainer,
  * usually this is just the id and a deleted time stamp, e.g. ({item}) => ({item.id, item.delete:  moment().toISOString(true)}
- * @param {String} [queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryForExistingContainer
- * @param {Function} config.mutationContainer Apollo mutation request to run count times
- * @param {Function} config.propVariationFunc Function receiving props and with a 1-based count proped merged in
+ * @param {String} [options.queryResponsePath] Required if forceDelete is true to get the items from the respnose of queryForExistingContainer
+ * @param {Function} options.mutationContainer Apollo mutation request to run count times
+ * @param {Function} options.propVariationFunc Function receiving props and with a 1-based count proped merged in
  * returns an object that is the props to use for the container request
- * @param {Object} [config.outputParams] Defaults to null, mutation output params
- * @param {String} [config.name] if defined, this is passed to the request as the second argument along with
+ * @param {Object} [options.outputParams] Defaults to null, mutation output params
+ * @param {String} [options.name] if defined, this is passed to the request as the second argument along with
  * the outputParams
- * @param {String} responsePath e.g. 'result.data.mutate.location'
+ * @param {String} options.responsePath e.g. 'result.data.mutate.location'
  * @param {Object} props
  * @param {Function} props.render Required for component calls, the render function to render the children
  * of this component
@@ -184,11 +239,11 @@ export const callMutationNTimesAndConcatResponses = (
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
           const item = count ? R.add(1, i) : items[i];
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
-            ({existingItems, deletedItems, ...props}) => {
+            ({existingItemResponses, deletedItems, ...props}) => {
               // If we didn't force delete and we have an existing item, use it
               const existingItem = !forceDelete &&
                 queryResponsePath &&
-                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItems));
+                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItemResponses));
               if (existingItem) {
                 return containerForApolloType(
                   apolloConfig,
@@ -216,31 +271,23 @@ export const callMutationNTimesAndConcatResponses = (
         count ? count : R.length(items)
       )),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'deletedItems',
-        nameComponent(`deletedInstances`, ({existingItems, render}) => {
-          const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItems) : [];
-          return forceDelete && R.length(items) ?
-            // Recurse to use callMutationNTimesAndConcatResponses to delete existing instances
-            callMutationNTimesAndConcatResponses(
-              apolloConfig,
-              {
-                items,
+        nameComponent(`deletedInstances`,
+          ({existingItemResponses, render}) => {
+            return deleteItemsOfExistingResponses(
+              apolloConfig, {
+                queryResponsePath,
+                forceDelete,
                 mutationContainer,
                 responsePath,
-                propVariationFunc: propVariationFuncForDeleted,
+                propVariationFuncForDeleted,
                 outputParams,
                 name
               },
-              {render}) :
-            containerForApolloType(
-              apolloConfig,
-              {
-                render,
-                response: {objects: []}
-              }
+              {existingItemResponses, render}
             );
-        })
+          })
       ),
-      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItems',
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItemResponses',
         nameComponent(`queryExistingItems`, ({responses, render}) => {
           return queryForExistingContainer ?
             queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
@@ -380,9 +427,11 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
     response => {
       const updated = duplicateKey(R.lensPath(['result', 'data']), createOrUpdateKey, ['mutate'], response);
       const name = R.head(R.keys(updated.result.data.mutate));
+      const obj = strPathOr(null, `result.data.mutate.${name}`, updated)
       // Copy the return value at create... or update... to mutate
+      const deleted = R.when(R.identity, () => '(DELETE)')(strPathOr('', 'deleted', obj))
       if (!silent) {
-        log.debug(`Mutation ${createOrUpdateKey} succeeded and returned id ${
+        log.debug(`Mutation ${deleted} ${createOrUpdateKey} succeeded and returned id ${
           reqStrPathThrowing(`result.data.mutate.${name}.id`, updated)
         } for type ${
           reqStrPathThrowing(`result.data.mutate.${name}.__typename`, updated)
