@@ -70,12 +70,12 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @returns {Object|Task} The div component when loading or a component
  * with the mutation responses. For client mutations resolves to the mutation responses
  */
-export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses, render=null) => {
-  const responses = {responses: toArrayIfNot(mutationResponses)}
+export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses, render = null) => {
+  const responses = toArrayIfNot(mutationResponses);
   return containerForApolloType(
     apolloConfig,
     {
-      render: ({responses}) => {
+      render: (responses) => {
         useEffect(() => {
           // code to run on component mount
           R.forEach(
@@ -108,7 +108,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
         responses
     }
   );
-}
+};
 
 /**
  * Call the given container count times and concat the responses at the response path
@@ -143,10 +143,19 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
 export const callMutationNTimesAndConcatResponses = (
   apolloConfig,
   {
-    count, items,
-    forceDelete = false, existingMatchingProps,existingItemMatch, queryForExistingContainer, queryResponsePath, propVariationFuncForDeleted,
-    mutationContainer, responsePath, propVariationFunc,
-    outputParams, name
+    count,
+    items,
+    forceDelete = false,
+    existingMatchingProps,
+    existingItemMatch,
+    queryForExistingContainer,
+    queryResponsePath,
+    propVariationFuncForDeleted,
+    mutationContainer,
+    responsePath,
+    propVariationFunc,
+    outputParams,
+    name
   },
   props
 ) => {
@@ -169,7 +178,7 @@ export const callMutationNTimesAndConcatResponses = (
   }
   return composeWithComponentMaybeOrTaskChain([
       nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
-        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render)
+        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
       }),
       ...R.reverse(R.times(i => {
           // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
@@ -179,15 +188,15 @@ export const callMutationNTimesAndConcatResponses = (
               // If we didn't force delete and we have an existing item, use it
               const existingItem = !forceDelete &&
                 queryResponsePath &&
-                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItems))
+                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItems));
               if (existingItem) {
                 return containerForApolloType(
                   apolloConfig,
                   {
                     render: getRenderPropFunction(props),
-                    response: R.set(R.lensPath(R.split('.',responsePath)), existingItem, {})
+                    response: R.set(R.lensPath(R.split('.', responsePath)), existingItem, {})
                   }
-                )
+                );
               }
               return mutationContainer(
                 apolloConfig,
@@ -208,7 +217,7 @@ export const callMutationNTimesAndConcatResponses = (
       )),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'deletedItems',
         nameComponent(`deletedInstances`, ({existingItems, render}) => {
-          const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItems): []
+          const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItems) : [];
           return forceDelete && R.length(items) ?
             // Recurse to use callMutationNTimesAndConcatResponses to delete existing instances
             callMutationNTimesAndConcatResponses(

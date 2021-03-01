@@ -9,14 +9,16 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import {ApolloConsumer} from 'react-apollo';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
-import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
+import {e} from '@rescapes/helpers-component';
 
 const {of} = T;
 
@@ -123,7 +125,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
             return R.pick(['username', 'password'], props);
           },
           update: (store, {data, ...rest}) => {
-            const _response = {result: {data}, ...rest}
+            const _response = {result: {data}, ...rest};
             return R.compose(
               // Accept an update method from apolloConfig.options so that queries can be refetched
               ({store, response}) => {
@@ -193,30 +195,49 @@ export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) =>
  * @return {TasK|Object} Task or Apollo Component resolving to
  */
 export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, {outputParams = deleteTokenCookieOutputParams}, props) => {
-  return makeMutationRequestContainer(
-    R.merge(
-      apolloConfig,
-      {
-        options: {
-          variables: props => {
-            return {};
-          },
-          update: (store,{data, ...rest}) => {
-            const _response = {result: {data}, ...rest}
-            // Clear the token so apolloClient is no longer authenticated
-            // This will reset the apolloClient to unauthenticated and clear the cache
-            localStorage.removeItem('token');
+  return composeWithComponentMaybeOrTaskChain([
+    ({apolloClient, ...props}) => {
+      return makeMutationRequestContainer(
+        R.merge(
+          apolloConfig,
+          {
+            options: {
+              variables: props => {
+                return {};
+              },
+              update: (store, {data, ...rest}) => {
+                const _response = {result: {data}, ...rest};
+                // Clear the token so apolloClient is no longer authenticated
+                // This will reset the apolloClient to unauthenticated and clear the cache
+                apolloClient.clearStore();
+                localStorage.removeItem('token');
+              }
+            }
           }
-        }
-      }
-    ),
-    {
-      outputParams: outputParams || {deleted: 1},
-      flattenVariables: true,
-      mutationNameOverride: 'deleteTokenCookie'
+        ),
+        {
+          outputParams: outputParams || {deleted: 1},
+          flattenVariables: true,
+          mutationNameOverride: 'deleteTokenCookie'
+        },
+        props
+      );
     },
-    props
-  );
+    ({render}) => {
+      // If a component, supply the apolloClient from the ApolloConsumer so that update can call clearStore()
+      R.ifElse(
+        R.has('apolloClient'),
+        of,
+        () => {
+          return e(
+            ApolloConsumer,
+            {},
+            apolloClient => render(R.merge({apolloClient}, props))
+          );
+        }
+      )(apolloConfig);
+    }
+  ])(props);
 });
 
 
@@ -239,7 +260,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
             return {};
           },
           update: (store, {data, ...rest}) => {
-            const _response = {result: {data}, ...rest}
+            const _response = {result: {data}, ...rest};
             // Clear the token so apolloClient is no longer authenticated
             // This will reset the apolloClient to unauthenticated and clear the cache
             localStorage.removeItem('token');

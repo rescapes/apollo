@@ -42,7 +42,8 @@ const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
 
-import {onError} from 'apollo-link-error'
+import {onError} from 'apollo-link-error';
+
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache} = defaultNode(AC);
 const {Just} = maybe;
 
@@ -78,7 +79,7 @@ const logLink = new ApolloLink((operation, forward) => {
  *
  * }
  * Add additional headers. Authentication comes from localStorage
- * @return {{apolloClient: ApolloClient}}
+ * @return {{apolloClient: ApolloClient, persistor}}
  */
 export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
@@ -94,15 +95,17 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
   ({cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation}) => {
 
     return composeWithChain([
-      ({cache, cacheData, links}) => {
+      ({cache, cacheData, links, persistor}) => {
         const apolloClient = _completeApolloClient({
           stateLinkResolvers,
           links,
-          cache
+          cache,
+          persistor
         });
         // Use existing cache data if defined. This is only relevant for passing an unauthorized client's
         // cache values
         // TODO restore no longer expects an argument
+        // We probably have to do something manual here if we ever have cacheData from disk
         if (cacheData) {
           apolloClient.cache.restore(cacheData);
         }
@@ -111,7 +114,7 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
           apolloClient
         });
       },
-      mapToNamedResponseAndInputs('void',
+      mapToNamedResponseAndInputs('persistor',
         ({cache}) => {
           // Create the persisted cache and resolves nothing
           return createPersistedCacheTask(cache);
@@ -275,10 +278,11 @@ const createPersistedCacheTask = (cache) => {
  * @param {Object} stateLinkResolvers The stateLinkResolvers to give the client
  * @param {[Object]} links List of links to give the Apollo Client.
  * @param {Object} cache InMemoryCache instance
+ * @param {Object} persistor Thing to help clear the cache
  * @return {Object} {apolloClient: ApolloClient}
  * @private
  */
-const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
+const _completeApolloClient = ({stateLinkResolvers, links, cache, persistor}) => {
   // Create the ApolloClient using the following ApolloClientOptions
   const apolloClient = new ApolloClient({
     // This is just a guess at link order.
@@ -297,6 +301,7 @@ const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
     },
     connectToDevTools: true
   });
+
   apolloClient.__CREATED__ = moment().format('HH-mm-SS');
   return apolloClient;
 };
@@ -484,7 +489,9 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               options => R.omit(['variables'], options),
               apolloConfig => R.propOr({}, 'options', apolloConfig)
             )(apolloConfig),
-            {variables: props},
+            {
+              variables: props
+            },
             // There are always optional
             R.pick(['onCompleted', 'onError'], apolloConfig)
           ])
@@ -502,11 +509,19 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
               },
               mutate => {
                 log.debug(`Calling mutation ${print(mutation)} with args ${inspect(R.length(args) ? args[0] : props, false, 10)}`);
-                return mutate(...args).then( ({data, ...rest}) => {
+                return mutate(...args).catch(
+                  error => {
+                    log.debug(`Mutation threw an error. This will not be thrown but handled by the components. Here is the error: ${
+                      inspect(error, false, 10)}`)
+                    return {data: null, error}
+                  }
+                ).then(({data, error, ...rest}) => {
+                  if (error)
+                    return
                   const response = {result: {data}, ...rest};
                   // Just logs the successful mutation. With an apolloClient the response is returned,
                   // but for component mutations this is mapping i sthrown away by react
-                  return addMutateKeyToMutationResponse({}, response)
+                  return addMutateKeyToMutationResponse({}, response);
                 });
               }
             )(mutate),
