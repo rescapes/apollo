@@ -225,7 +225,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
     },
     ({render}) => {
       // If a component, supply the apolloClient from the ApolloConsumer so that update can call clearStore()
-      R.ifElse(
+      return R.ifElse(
         R.has('apolloClient'),
         of,
         () => {
