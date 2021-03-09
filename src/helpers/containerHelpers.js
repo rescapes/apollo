@@ -69,7 +69,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * to call the mutation function of once on mount
  * @param {Function} render The render prop
  * @returns {Object|Task} The div component when loading or a component
- * with the mutation responses. For client mutations resolves to the mutation responses
+ * with the mutation response or responses. For client mutations resolves to the mutation responses
  */
 export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutationResponses, render = null) => {
   const responses = toArrayIfNot(mutationResponses);
@@ -104,9 +104,15 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
       },
       // For component queries, pass the full response so render can wait until they are loaded
       // client calls access the objects from the responses
-      response: R.propOr(false, 'apolloClient', apolloConfig) ?
-        R.map(reqStrPathThrowing(responsePath), responses) :
-        responses
+      response: R.compose(
+        // Return a singular response if mutationResponses was singular
+        responses => R.ifElse(Array.isArray, () => responses, () => R.head(responses))(mutationResponses),
+        responses => {
+          return R.propOr(false, 'apolloClient', apolloConfig) ?
+            R.map(reqStrPathThrowing(responsePath), responses) :
+            responses;
+        }
+      )(responses)
     }
   );
 };
