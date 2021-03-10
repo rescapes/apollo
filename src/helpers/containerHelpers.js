@@ -121,7 +121,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
  * @param {Object} apolloConfig
  * @param {Object} options
  * @param {String} options.queryResponsePath Path into existingItemResponses to get objects to delete
- * @param {Boolean} options.forceDelete If true and there are existingItemResponses delete, otherwise
+ * @param {Boolean} options.forceDelete Default true. If true and there are existingItemResponses delete, otherwise
  * return any empty response to indicate that nothing was deleted
  * @param {Function} options.mutationContainer The apollo mutation request function to call on each item
  * to update it to deleted
@@ -143,7 +143,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
 export const deleteItemsOfExistingResponses = (
   apolloConfig, {
     queryResponsePath,
-    forceDelete,
+    forceDelete=true,
     mutationContainer,
     responsePath,
     propVariationFuncForDeleted = ({item: {id}}) => {
@@ -428,6 +428,10 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
  * @private
  */
 export const addMutateKeyToMutationResponse = ({silent}, response) => {
+  // If skipped there is no mutation response to process
+  if (R.propOr(false, 'skip', response)) {
+    return response
+  }
   // Find the response.data.[key] where key starts with update or create.
   // Otherwise take the one and only key in data.response (e.g. tokenAuth)
   const createOrUpdateKey = R.find(
