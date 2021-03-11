@@ -143,7 +143,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
 export const deleteItemsOfExistingResponses = (
   apolloConfig, {
     queryResponsePath,
-    forceDelete=true,
+    forceDelete = true,
     mutationContainer,
     responsePath,
     propVariationFuncForDeleted = ({item: {id}}) => {
@@ -227,97 +227,107 @@ export const callMutationNTimesAndConcatResponses = (
     name
   },
   props
-  ) => {
-    if (!count && !items) {
-      throw new Error('Neither count nor items was given');
-    }
-
-    const componentName = `${capitalize(camelCase(responsePath.replace('.', '_')))}Resolver`;
-    const length = items ? R.length(items) : count;
-
-    // If 0 count or items return an empty array
-    if (length === 0) {
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(props),
-          response: {objects: []}
-        }
-      );
-    }
-    return composeWithComponentMaybeOrTaskChain([
-        nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
-          return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
-        }),
-        ...R.reverse(R.times(i => {
-            // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
-            const item = count ? R.add(1, i) : items[i];
-            return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
-              ({existingItemResponses, deletedItems, ...props}) => {
-                // If we didn't force delete and we have an existing item, use it
-                const existingItem = !forceDelete &&
-                  queryResponsePath &&
-                  existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItemResponses));
-                if (existingItem) {
-                  return containerForApolloType(
-                    apolloConfig,
-                    {
-                      render: getRenderPropFunction(props),
-                      response: R.set(R.lensPath(R.split('.', responsePath)), existingItem, {})
-                    }
-                  );
-                }
-                return mutationContainer(
-                  apolloConfig,
-                  compact({outputParams, name, i}),
-                  // Pass count to the propVariationFunc so it can be used, but don't let it through to the
-                  // actual mutation props
-                  R.omit(['item'],
-                    R.merge(
-                      R.pick(['render'], props),
-                      propVariationFunc(R.merge(R.omit(['responses'], props), {item}))
-                    )
-                  )
-                );
-              });
-          },
-          // Use count or the length of items. We mutate this many times
-          count ? count : R.length(items)
-        )),
-        mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'deletedItems',
-          nameComponent(`deletedInstances`,
-            ({existingItemResponses, render}) => {
-              return deleteItemsOfExistingResponses(
-                apolloConfig, {
-                  queryResponsePath,
-                  forceDelete,
-                  mutationContainer,
-                  responsePath,
-                  propVariationFuncForDeleted,
-                  outputParams,
-                  name
-                },
-                {existingItemResponses, render}
-              );
-            })
-        ),
-        mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItemResponses',
-          nameComponent(`queryExistingItems`, ({responses, render}) => {
-            return queryForExistingContainer ?
-              queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
-              containerForApolloType(
-                apolloConfig,
-                {
-                  render,
-                  response: {objects: []}
-                }
-              );
-          })
-        )
-      ]
-    )(props);
+) => {
+  if (!count && !items) {
+    throw new Error('Neither count nor items was given');
   }
-;
+
+  const componentName = `${capitalize(camelCase(responsePath.replace('.', '_')))}Resolver`;
+  const length = items ? R.length(items) : count;
+
+  // If 0 count or items return an empty array
+  if (length === 0) {
+    return containerForApolloType(
+      apolloConfig,
+      {
+        render: getRenderPropFunction(props),
+        response: {objects: []}
+      }
+    );
+  }
+  return composeWithComponentMaybeOrTaskChain([
+      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
+        return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
+      }),
+      ...R.reverse(R.times(i => {
+          // If count is defined we pass i+1 to the propVariationFunc as 'item'. Else pass current item as 'item'
+          const item = count ? R.add(1, i) : items[i];
+          return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
+            ({existingItemResponses, deletedItems, ...props}) => {
+              // If we didn't force delete and we have an existing item, use it
+              const existingItem = !forceDelete &&
+                queryResponsePath &&
+                existingItemMatch(item, reqStrPathThrowing(queryResponsePath, existingItemResponses));
+              if (existingItem) {
+                return containerForApolloType(
+                  apolloConfig,
+                  {
+                    render: getRenderPropFunction(props),
+                    response: R.set(R.lensPath(R.split('.', responsePath)), existingItem, {})
+                  }
+                );
+              }
+              return mutationContainer(
+                apolloConfig,
+                compact({outputParams, name, i}),
+                // Pass count to the propVariationFunc so it can be used, but don't let it through to the
+                // actual mutation props
+                R.omit(['item'],
+                  R.merge(
+                    R.pick(['render'], props),
+                    propVariationFunc(R.merge(R.omit(['responses'], props), {item}))
+                  )
+                )
+              );
+            });
+        },
+        // Use count or the length of items. We mutate this many times
+        count ? count : R.length(items)
+      )),
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'deletedItems',
+        nameComponent(`deletedInstances`,
+          ({existingItemResponses, render}) => {
+            return deleteItemsOfExistingResponses(
+              apolloConfig, {
+                queryResponsePath,
+                forceDelete,
+                mutationContainer,
+                responsePath,
+                propVariationFuncForDeleted,
+                outputParams,
+                name
+              },
+              {existingItemResponses, render}
+            );
+          })
+      ),
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItemResponses',
+        nameComponent(`queryExistingItems`, ({responses, render}) => {
+          return queryForExistingContainer ?
+            queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
+            containerForApolloType(
+              apolloConfig,
+              {
+                render,
+                response: {objects: []}
+              }
+            );
+        })
+      )
+    ]
+  )(props);
+};
+
+const _convertEmptyObjectsResponseToEmptyArray = response => {
+  // If the response only has a property objects that is empty, it indicates that the desired response for
+  // key name is an empty array
+  const _responseWithoutRender = R.omit(['render'], response);
+  const _response = R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
+  R.has('objects', _responseWithoutRender) &&
+  R.propEq([], 'objects', _responseWithoutRender) ?
+    response.objects : response;
+  return _response;
+};
 
 /**
  * Like mapToMergedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
@@ -325,14 +335,15 @@ export const callMutationNTimesAndConcatResponses = (
  * @param {Object} [apolloConfig.apolloClient[ Required to indicate tasks
  * @param {Function} componentOrTaskFunc Function accepting args and returning an task or apollo component response
  * @param {Object} args Props/Response from the previous function in the chain
- * @returns {Object|Task} Component response or task resolving to response object merged with args
+ * @returns {Object|Task} Component response or task resolving to response object merged with the input args. If the response is {objects: [], [render]} it
+ * will be converted to [] before being assigned to the name key. This allows returning an empty array when we know
+ * the value is going to be assigned to the key name and merged with the other input key/values. A response can't
+ * be an array initially because the response must be merged with the render prop
  */
 export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTaskFunc) => args => {
   return composeWithComponentMaybeOrTaskChain([
     response => {
-      // If the response has render and objects, strip to get objects only
-      const _response = (R.has('render', response) && R.has('objects', response)) ?
-        response.objects : response;
+      const _response = _convertEmptyObjectsResponseToEmptyArray(response)
       return containerForApolloType(
         apolloConfig,
         {
@@ -347,6 +358,7 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
   ])(args);
 };
 
+
 /**
  * Like mapToNamedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
  * @param {Object} apolloConfig
@@ -354,15 +366,18 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
  * @param {String} name The object key to merge with args
  * @param {Function} componentOrTaskFunc Function accepting args and returning an task or apollo component response
  * @param {Object} args Props/Response from the previous function in the chain
- * @returns {Object|Task} Component response or task resolving to response
+ * @returns {Object|Task} Component response or task resolving to response, where the response is assigned
+ * to the key named and merged with the inputs. If the response is {objects: [], [render]} it
+ * will be converted to [] before being assigned to the name key. This allows returning an empty array when we know
+ * the value is going to be assigned to the key name and merged with the other input key/values. A response can't
+ * be an array initially because the response must be merged with the render prop
  */
 export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => {
   return nameComponent(`${name}`, args => {
     return composeWithComponentMaybeOrTaskChain([
       nameComponent(`${name}`, response => {
-        // If the response has render and objects, strip to get objects only
-        const _response = (R.has('render', response) && R.has('objects', response)) ?
-          response.objects : response;
+
+        const _response = _convertEmptyObjectsResponseToEmptyArray(response);
         // Name the container after name since we don't have anything better
         return containerForApolloType(
           apolloConfig,
@@ -379,21 +394,20 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
   });
 };
 
+
 /**
  * Like mapTaskOrComponentToNamedResponseAndInputs but concats the response to args[name] and
  * returns it at name
  * @param apolloConfig
  * @param name
  * @param componentOrTaskFunc
- * @returns {function(*=): *}
+ * @returns {Object|Task} Component response or task resolving to response, where the response values are assigned
+ * to name and merged with the inputs.
  */
 export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig, name, componentOrTaskFunc) => {
   return nameComponent(`${name}Resolver`, args => {
     return composeWithComponentMaybeOrTaskChain([
       ({myResponse, ...rest}) => {
-        // If the response has render and objects, strip to get objects only
-        const _response = (R.has('render', myResponse) && R.has('objects', myResponse)) ?
-          myResponse.objects : myResponse;
         // Name the container after name since we don't have anything better
         return nameComponent(`${name}Resolver`, containerForApolloType(
           apolloConfig,
@@ -402,7 +416,7 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
             response: R.over(
               R.lensProp(name),
               v => {
-                return R.concat(v, [_response]);
+                return R.concat(v, [myResponse]);
               },
               rest
             )
@@ -430,7 +444,7 @@ export const mapTaskOrComponentToConcattedNamedResponseAndInputs = (apolloConfig
 export const addMutateKeyToMutationResponse = ({silent}, response) => {
   // If skipped there is no mutation response to process
   if (R.propOr(false, 'skip', response)) {
-    return response
+    return response;
   }
   // Find the response.data.[key] where key starts with update or create.
   // Otherwise take the one and only key in data.response (e.g. tokenAuth)
