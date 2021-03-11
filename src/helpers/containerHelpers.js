@@ -241,7 +241,7 @@ export const callMutationNTimesAndConcatResponses = (
         apolloConfig,
         {
           render: getRenderPropFunction(props),
-          response: []
+          response: {objects: []}
         }
       );
     }
