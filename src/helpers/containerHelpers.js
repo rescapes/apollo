@@ -324,7 +324,7 @@ const _convertEmptyObjectsResponseToEmptyArray = response => {
   const _responseWithoutRender = R.omit(['render'], response);
   const _response = R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
   R.has('objects', _responseWithoutRender) &&
-  R.propEq([], 'objects', _responseWithoutRender) ?
+  R.propEq('objects', [], _responseWithoutRender) ?
     response.objects : response;
   return _response;
 };
@@ -376,7 +376,6 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
   return nameComponent(`${name}`, args => {
     return composeWithComponentMaybeOrTaskChain([
       nameComponent(`${name}`, response => {
-
         const _response = _convertEmptyObjectsResponseToEmptyArray(response);
         // Name the container after name since we don't have anything better
         return containerForApolloType(
