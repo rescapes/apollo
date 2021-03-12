@@ -365,11 +365,10 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
  */
 const _convertObjectsResponseToArray = response => {
   const _responseWithoutRender = R.omit(['render'], response);
-  const _response = R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
+  return R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
   R.has('objects', _responseWithoutRender) &&
   R.propEq('objects', [], _responseWithoutRender) ?
     response.objects : response;
-  return _response;
 };
 
 /**
