@@ -100,19 +100,17 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
         if (R.length(objects) !== R.length(responses)) {
           return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
         }
-        return getRenderPropFunction({render})({objects});
+
+        // Make objects singular if mutationResponses was
+        return getRenderPropFunction({render})({
+          objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(mutationResponses)
+        });
       },
       // For component queries, pass the full response so render can wait until they are loaded
       // client calls access the objects from the responses
-      response: R.compose(
-        // Return a singular response if mutationResponses was singular
-        responses => R.ifElse(Array.isArray, () => responses, () => R.head(responses))(mutationResponses),
-        responses => {
-          return R.propOr(false, 'apolloClient', apolloConfig) ?
-            R.map(reqStrPathThrowing(responsePath), responses) :
-            responses;
-        }
-      )(responses)
+      response: R.propOr(false, 'apolloClient', apolloConfig) ?
+        R.map(reqStrPathThrowing(responsePath), responses) :
+        responses
     }
   );
 };
@@ -326,7 +324,6 @@ export const callMutationNTimesAndConcatResponses = (
     ]
   )(props);
 };
-
 
 
 /**
