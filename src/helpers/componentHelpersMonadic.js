@@ -28,7 +28,7 @@ export const nameComponent = v((name, component) => {
   }
 }, [
   ['name', PropTypes.string.isRequired],
-  ['component', PropTypes.oneOfType([PropTypes.function, PropTypes.shape()]).isRequired]
+  ['component', PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired]
 ], 'nameComponent');
 
 /**
