@@ -98,7 +98,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
           }, responses)
         );
         if (R.length(objects) !== R.length(responses)) {
-          return e('div', {}, 'loading');
+          return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
         }
         return getRenderPropFunction({render})({objects});
       },
@@ -254,6 +254,11 @@ export const callMutationNTimesAndConcatResponses = (
           const item = count ? R.add(1, i) : items[i];
           return mapTaskOrComponentToConcattedNamedResponseAndInputs(apolloConfig, 'responses',
             ({existingItemResponses, deletedItems, ...props}) => {
+              if (R.prop('loading', existingItemResponses)) {
+                // For component requests, return loading until existingItems finish loading
+                return nameComponent('callMutationNTimesAndConcatResponses', e('div', {}, 'loading'));
+              }
+
               // If we didn't force delete and we have an existing item, use it
               const existingItem = !forceDelete &&
                 queryResponsePath &&
@@ -304,7 +309,11 @@ export const callMutationNTimesAndConcatResponses = (
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'existingItemResponses',
         nameComponent(`queryExistingItems`, ({responses, render}) => {
           return queryForExistingContainer ?
-            queryForExistingContainer(apolloConfig, {outputParams: {id: 1}}, existingMatchingProps) :
+            queryForExistingContainer(
+              apolloConfig,
+              {outputParams: {id: 1}},
+              R.merge(existingMatchingProps, {render})
+            ) :
             containerForApolloType(
               apolloConfig,
               {
@@ -318,16 +327,7 @@ export const callMutationNTimesAndConcatResponses = (
   )(props);
 };
 
-const _convertEmptyObjectsResponseToEmptyArray = response => {
-  // If the response only has a property objects that is empty, it indicates that the desired response for
-  // key name is an empty array
-  const _responseWithoutRender = R.omit(['render'], response);
-  const _response = R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
-  R.has('objects', _responseWithoutRender) &&
-  R.propEq('objects', [], _responseWithoutRender) ?
-    response.objects : response;
-  return _response;
-};
+
 
 /**
  * Like mapToMergedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
@@ -335,20 +335,16 @@ const _convertEmptyObjectsResponseToEmptyArray = response => {
  * @param {Object} [apolloConfig.apolloClient[ Required to indicate tasks
  * @param {Function} componentOrTaskFunc Function accepting args and returning an task or apollo component response
  * @param {Object} args Props/Response from the previous function in the chain
- * @returns {Object|Task} Component response or task resolving to response object merged with the input args. If the response is {objects: [], [render]} it
- * will be converted to [] before being assigned to the name key. This allows returning an empty array when we know
- * the value is going to be assigned to the key name and merged with the other input key/values. A response can't
- * be an array initially because the response must be merged with the render prop
+ * @returns {Object|Task} Component response or task resolving to response object merged with the input args.
  */
 export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTaskFunc) => args => {
   return composeWithComponentMaybeOrTaskChain([
     response => {
-      const _response = _convertEmptyObjectsResponseToEmptyArray(response)
       return containerForApolloType(
         apolloConfig,
         {
           render: getRenderPropFunction(args),
-          response: R.merge(args, _response)
+          response: R.merge(args, response)
         }
       );
     },
@@ -358,6 +354,23 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
   ])(args);
 };
 
+/**
+ *
+ * If the response only has a property objects, it indicates that the desired response for
+ * key name is an array, so return response.objects here and it will be assigned a key
+ * by mapTaskOrComponentToNamedResponseAndInputs
+ * @param response
+ * @returns {[]|*}
+ * @private
+ */
+const _convertObjectsResponseToArray = response => {
+  const _responseWithoutRender = R.omit(['render'], response);
+  const _response = R.equals(1, R.length(R.keys(_responseWithoutRender))) &&
+  R.has('objects', _responseWithoutRender) &&
+  R.propEq('objects', [], _responseWithoutRender) ?
+    response.objects : response;
+  return _response;
+};
 
 /**
  * Like mapToNamedResponse but supports apollo component chaining using composeWithComponentMaybeOrTaskChain
@@ -376,7 +389,7 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
   return nameComponent(`${name}`, args => {
     return composeWithComponentMaybeOrTaskChain([
       nameComponent(`${name}`, response => {
-        const _response = _convertEmptyObjectsResponseToEmptyArray(response);
+        const _response = _convertObjectsResponseToArray(response);
         // Name the container after name since we don't have anything better
         return containerForApolloType(
           apolloConfig,

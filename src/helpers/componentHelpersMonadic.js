@@ -12,15 +12,24 @@
 import * as R from 'ramda';
 import {inspect} from 'util';
 import {strPathOr} from '@rescapes/ramda'
+import {v} from '@rescapes/validate'
+import PropTypes from 'prop-types'
 
-export const nameComponent = (name, component) => {
+/**
+ * Name the component by assigning name to component.displayName. If for some reason the component
+ * can't be named with a displayName, the component is still returned
+ */
+export const nameComponent = v((name, component) => {
   try {
     component.displayName = name;
   }
   finally {
     return component;
   }
-};
+}, [
+  ['name', PropTypes.string.isRequired]
+  ['component', PropTypes.onOfType([PropTypes.function, PropTypes.shape()]).isRequired]
+], 'nameComponent');
 
 /**
  * For some reason Query and Mutation don't have displayNames, so use their type.name
