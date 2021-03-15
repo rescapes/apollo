@@ -109,7 +109,10 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
       // For component queries, pass the full response so render can wait until they are loaded
       // client calls access the objects from the responses
       response: R.propOr(false, 'apolloClient', apolloConfig) ?
-        R.map(reqStrPathThrowing(responsePath), responses) :
+        R.compose(
+          objects => R.ifElse(Array.isArray, () => objects, () => R.head(objects))(mutationResponses),
+          responses => R.map(reqStrPathThrowing(responsePath), responses)
+        )(responses) :
         responses
     }
   );
