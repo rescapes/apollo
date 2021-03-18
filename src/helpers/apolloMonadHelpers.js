@@ -11,7 +11,7 @@
 
 import * as R from 'ramda';
 import Result from 'folktale/result/index.js';
-import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda'
+import {reqStrPath, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 
 /**
  * Returns a Result.Ok if data is loaded and a Result.Error if the response is loading or an error.
@@ -57,7 +57,7 @@ export const apolloResponseValueOrNull = (responseName, response) => {
     apolloResult => resultOkOrNull(apolloResult),
     response => R.map(
       // Map the data response to the data value
-      response => reqStrPathThrowing(`data.${responseName}`, response),
+      response => reqStrPath(`data.${responseName}`, response),
       apolloResult(response)
     )
   )(response);

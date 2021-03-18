@@ -441,9 +441,11 @@ export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fra
 
   // If this throws then we did something wrong
   try {
+    const data = reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id})
     // Put in data to match the return structure of normal queries
+    log.debug(`Read Fragment Returned: ${data ? inspect(data, false, 10) : 'No response'}`)
     return {
-      data: reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id})
+      data
     };
   } catch (e) {
     log.error(`Could not read the fragment just written to the cache. Fragment ${print(fragment)}. Id: ${id}`);

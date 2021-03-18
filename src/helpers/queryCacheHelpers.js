@@ -22,7 +22,12 @@ import {
 import {_makeQuery, makeFragmentQuery, makeQuery} from './queryHelpers.js';
 import {loggers} from '@rescapes/log';
 import {_winnowRequestProps} from './requestHelpers.js';
-import {pickRenderProps} from './componentHelpersMonadic.js';
+import {
+  composeWithComponentMaybeOrTaskChain,
+  getRenderPropFunction,
+  pickRenderProps
+} from './componentHelpersMonadic.js';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
 
 const {gql} = defaultNode(AC)
 
@@ -109,21 +114,38 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
     winnowedProps
   )}`;
   log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
-  const response = authApolloClientOrComponentQueryCacheContainer(
-    apolloConfig,
-    {
-      query
+  return composeWithComponentMaybeOrTaskChain([
+    ({response, ...props}) => {
+      // If it's not a component response
+      if (R.propOr(false, 'data', response)) {
+        log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
+      }
+      else {
+        log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
+      }
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response
+        }
+      );
     },
-    R.merge(
-      winnowedProps,
-      pickRenderProps(props)
-    )
-  );
-  // If it's not a component response
-  if (R.has('data', response)) {
-    log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
-  }
-  return response;
+    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
+    props => {
+      return authApolloClientOrComponentQueryCacheContainer(
+        apolloConfig,
+        {
+          query
+        },
+        R.merge(
+          winnowedProps,
+          pickRenderProps(props)
+        )
+      );
+    })
+  ])(props)
+
 });
 
 /**
@@ -148,17 +170,37 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
   )}`;
 
   log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick(['id'], props), false, 2)}\n`);
-  const response = authApolloClientOrComponentReadFragmentCacheContainer(
-    apolloConfig,
-    {
-      fragment
+  return composeWithComponentMaybeOrTaskChain([
+    ({response, ...props})  => {
+      if (R.has('data', response || {})) {
+        log.debug(
+          `makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`
+        );
+      }
+      else {
+        log.debug(
+          `makeQueryFromCacheContainer for ${name} return no data`
+        );
+      }
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response
+        }
+      );
     },
-    R.omit(['__typename', 'id'], props),
-    reqStrPathThrowing('id', props)
-  );
-
-  if (R.has('data', response || {})) {
-    log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
-  }
-  return response;
+    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
+      (props) => {
+        const x = authApolloClientOrComponentReadFragmentCacheContainer(
+          apolloConfig,
+          {
+            fragment
+          },
+          R.omit(['__typename', 'id'], props),
+          reqStrPathThrowing('id', props)
+        );
+        return x
+      })
+  ])(props)
 });

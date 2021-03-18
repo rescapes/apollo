@@ -371,7 +371,7 @@ export const createRequestVariables = (apolloComponent, props) => {
 export const apolloQueryResponsesContainer = (
   apolloConfig,
   {
-    containerName,
+    containerName='apolloQueryResponsesContainer',
     resolvedPropsContainer,
     queryContainers,
     runContainerQueries = true

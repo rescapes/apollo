@@ -21,8 +21,10 @@ import {_winnowRequestProps} from '../helpers/requestHelpers.js';
 import * as R from 'ramda';
 import {apolloClientReadFragmentCacheContainer} from './apolloClient.js';
 import {reqStrPathThrowing, defaultNode} from '@rescapes/ramda';
+import T from 'folktale/concurrency/task/index.js';
 
 const {MissingFieldError} = defaultNode(AC);
+const {of} = T;
 
 const log = loggers.get('rescapeDefault');
 
@@ -69,11 +71,11 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
     // Apollo Client instance
     [R.has('apolloClient'),
       apolloConfig => {
-        return authApolloClientQueryCache(
+        return of(authApolloClientQueryCache(
           apolloConfig,
           query,
           props
-        );
+        ));
       }
     ],
     // Apollo component instance
@@ -86,7 +88,7 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
           {},
           apolloClient => {
             return containerForApolloType(
-              apolloClient,
+              {},
               {
                 render: getRenderPropFunction(props),
                 response: authApolloClientQueryCache(
@@ -114,11 +116,11 @@ export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((ap
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
-      apolloConfig => apolloClientReadFragmentCacheContainer(
+      apolloConfig => of(apolloClientReadFragmentCacheContainer(
         apolloConfig,
         fragment,
         id
-      )
+      ))
     ],
     // Apollo component instance
     [R.T,
