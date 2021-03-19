@@ -87,7 +87,8 @@ export {
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
   addMutateKeyToMutationResponse,
   mutateOnceAndWaitContainer,
-  deleteItemsOfExistingResponses
+  deleteItemsOfExistingResponses,
+  mutationRequestWithMutateOnceAndWaitContainer
 } from './helpers/containerHelpers.js';
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {

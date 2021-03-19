@@ -57,6 +57,33 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
 });
 
 /**
+ * Calls a mutationRequestContainer and then mutates once with the response and waits for the
+ * mutation response. The mutationRequestContainer can return a single mutation response or multiple
+ * (multiple if for instance using mutationRequestContainer)
+ * @param {Object} apolloConfig The apolloConfig. Add options.variables if the mutation request needs
+ * to limit the variables from props
+ * @param {Object} options
+ * @param {Object} options.outputParams Output params for the mutation request. May not be required
+ * if defaults are built into the particular request
+ * @param {String} options.responsePath Dot-separated return path for the mutate response, such as
+ * 'result.data.mutateRegion.region'
+ * @param {Task|Object} mutationRequestContainer The task or apollo container that returns a mutation response
+ * NOte that for task requests the mutation will happen immediately, so mutateOnceAndWaitContainer
+ * just uses the responsePath to extract the mutate result
+ * @param {Object} props Props for the mutation. Must contain a render prop for component calls
+ * so that something can be done with the mutate response.
+ * @returns {Task|Object} a task that does what is described above or an Apollo container that does
+ */
+export const mutationRequestWithMutateOnceAndWaitContainer = (apolloConfig, {outputParams, responsePath}, mutationRequestContainer, props) => {
+  return composeWithComponentMaybeOrTaskChain([
+    (mutationResponses) => {
+      return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, mutationResponses)
+    },
+    () => {return mutationRequestContainer(apolloConfig, {outputParams}, props)}
+  ])(props)
+}
+
+/**
  * Container to call mutate on mount for each mutationResponse. The container
  * then returns an empty div until the mutations have completed. For client queries
  * the mutation will have already happened so it returns a task that resolves
