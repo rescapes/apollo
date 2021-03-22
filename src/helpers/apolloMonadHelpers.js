@@ -55,7 +55,7 @@ export const apolloResponseValueOrNull = (responseName, response) => {
   return R.compose(
     // Return null if status is loading or error
     apolloResult => resultOkOrNull(apolloResult),
-    response => R.map(
+    response => R.chain(
       // Map the data response to the data value
       response => reqStrPath(`data.${responseName}`, response),
       apolloResult(response)

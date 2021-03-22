@@ -51,7 +51,19 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
     },
     responseAndOptionalRender => {
       const {render, response} = responseAndOptionalRender;
-      return render(response);
+      if (render === response.render) {
+        // Don't pass the above render prop through if the response.render is the same,
+        // it means we at the end of a composition of components and the render function is
+        // being applied, so we don't want to pass it as props again and risk calling it lower down
+        // in the component tree
+        return render(R.omit(['render'], response))
+      }
+      else {
+        // If it's not the same pass it through since it is being used later in a composition of components.
+        // It's currently required to pass render to ever component in a composition so that we know
+        // that we are using Apollo components, not Tasks/Apollo Client
+        return render(response);
+      }
     }
   )(responseAndOptionalRender);
 });
@@ -63,25 +75,34 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
  * @param {Object} apolloConfig The apolloConfig. Add options.variables if the mutation request needs
  * to limit the variables from props
  * @param {Object} options
- * @param {Object} options.outputParams Output params for the mutation request. May not be required
+ * @param {Object} [options.outputParams] Output params for the mutation request. May not be required
  * if defaults are built into the particular request
  * @param {String} options.responsePath Dot-separated return path for the mutate response, such as
  * 'result.data.mutateRegion.region'
- * @param {Task|Object} mutationRequestContainer The task or apollo container that returns a mutation response
- * NOte that for task requests the mutation will happen immediately, so mutateOnceAndWaitContainer
- * just uses the responsePath to extract the mutate result
+ * @param {Function} mutationRequestContainer that expects apolloConfig, {outputParams}, props and returns
+ * a task or apollo container that does what is described above
  * @param {Object} props Props for the mutation. Must contain a render prop for component calls
  * so that something can be done with the mutate response.
- * @returns {Task|Object} a task that does what is described above or an Apollo container that does
+ * @returns {Task|Object} Task or apollo container that does what is described above
  */
-export const mutationRequestWithMutateOnceAndWaitContainer = (apolloConfig, {outputParams, responsePath}, mutationRequestContainer, props) => {
+export const mutationRequestWithMutateOnceAndWaitContainer = (apolloConfig, {
+  outputParams,
+  responsePath
+}, mutationRequestContainer, props) => {
   return composeWithComponentMaybeOrTaskChain([
-    (mutationResponses) => {
-      return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, mutationResponses)
+    mutationResponses => {
+      return mutateOnceAndWaitContainer(
+        apolloConfig,
+        {responsePath},
+        mutationResponses,
+        R.propOr(null, 'render', props)
+      );
     },
-    () => {return mutationRequestContainer(apolloConfig, {outputParams}, props)}
-  ])(props)
-}
+    props => {
+      return mutationRequestContainer(apolloConfig, {outputParams}, props);
+    }
+  ])(props);
+};
 
 /**
  * Container to call mutate on mount for each mutationResponse. The container

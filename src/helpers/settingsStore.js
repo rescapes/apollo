@@ -1,4 +1,5 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
+import {inspect} from 'util';
 import {makeQueryContainer} from './queryHelpers.js';
 import {addMutateKeyToMutationResponse} from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
@@ -11,8 +12,11 @@ import T from 'folktale/concurrency/task/index.js';
 import {isAuthenticatedLocal} from '../stores/userStore.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+import {loggers} from '@rescapes/log';
 
 const {of} = T;
+
+const log = loggers.get('rescapeDefault');
 
 export const settingsTypePolicy = {type: 'SettingsType', fields: ['data']};
 export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};
@@ -93,14 +97,18 @@ export const makeSettingsQueryContainer = v(R.curry((apolloConfig, {outputParams
  *  @returns {Task|Just} A container. For ApolloClient mutations we get a Task back. For Apollo components
  *  we get a Just.Maybe back. In the future the latter will be a Task when Apollo and React enables async components
  */
-export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {cacheOnlyObjs, cacheIdProps, outputParams}, props) => {
+export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {
+  cacheOnlyObjs,
+  cacheIdProps,
+  outputParams
+}, props) => {
   return makeMutationRequestContainer(
     R.merge(
       apolloConfig,
       {
         options: {
           update: (store, {data, ...rest}) => {
-            const _response = {result: {data}, ...rest}
+            const _response = {result: {data}, ...rest};
             // Add mutate to response.data so we dont' have to guess if it's a create or update
             const settings = reqStrPathThrowing(
               'result.data.mutate.settings',
@@ -194,9 +202,15 @@ export const writeConfigToServerAndCacheContainer = (config) => {
     const props = R.prop('settings', config);
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
+      mapToNamedResponseAndInputs('void',
+        ({settingsWithoutCacheValues}) => {
+          log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
+          return null;
+        }
+      ),
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedResponseAndInputs('settingsWithoutCacheValues',
-        settingsFromServer => {
+        ({settingsFromServer}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return nameComponent('settingsMutation', R.ifElse(
             () => {
@@ -254,6 +268,6 @@ export const writeConfigToServerAndCacheContainer = (config) => {
           ));
         }
       )
-    ])(props)
+    ])(props);
   };
 };
