@@ -127,7 +127,7 @@ export {
   apolloResult,
   resultOkOrNull,
   apolloResponseSingleValueOrNull,
-  apolloResponseValueOrNull,
+  apolloQueryResponseValueOrNull,
   apolloResponseFilterOrEmpty
 } from './helpers/apolloMonadHelpers.js';
 

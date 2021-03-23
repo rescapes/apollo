@@ -14,7 +14,7 @@ import Result from 'folktale/result/index.js';
 import {
   apolloResponseFilterOrEmpty,
   apolloResponseSingleValueOrNull,
-  apolloResponseValueOrNull,
+  apolloQueryResponseValueOrNull,
   apolloResult
 } from './apolloMonadHelpers.js';
 
@@ -52,7 +52,7 @@ describe('apolloMonadHelpers', () => {
       loading: false,
       error: false
     };
-    expect(apolloResponseValueOrNull('foos', apolloDataResponse)).toEqual(
+    expect(apolloQueryResponseValueOrNull('foos', apolloDataResponse)).toEqual(
       [{id: 'f'}, {id: 'o'}, {id: 'oo'}]
     );
 
@@ -62,7 +62,7 @@ describe('apolloMonadHelpers', () => {
       loading: true,
       error: false
     };
-    expect(apolloResponseValueOrNull('foos', apolloLoadingResponse)).toEqual(null);
+    expect(apolloQueryResponseValueOrNull('foos', apolloLoadingResponse)).toEqual(null);
   });
 
   test('apolloResponseSingleValueOrNull', () => {

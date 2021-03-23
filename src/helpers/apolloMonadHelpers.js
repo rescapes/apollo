@@ -41,29 +41,23 @@ export const resultOkOrNull = apolloResult => {
 };
 
 /**
- * Converts the Apollo query response with the given response name at response: {data: [responseName]: {}/[]}}
- * to the value at responseName or returns null if the response is loading or an error.
+ * Converts the Apollo query response with the given response name at response: {data: [responsePath]: {}/[]}}
+ * to the value at responsePath or returns null if the response is loading or an error.
  * This method can be used to give Apollo request response values to components that just need
  * the value or null, and don't care if the value is loading or error. If the component needs to know,
  * the response should be given directly to the component so that it can process it
- * @param {String} responseName The string at {data: {[responseName]: [...]/{...}}
+ * @param {String} responsePath The string at {data: {[responsePath]: [...]/{...}} where responsePath
+ * can be a single attribute or a string of child attributes, e.g. 'userState.data.userRegions.0.region'
  * @param {Object} response An Apollo request response
- * @returns {Object|List<Objectd>} The single object or list of objects at responseName or null
+ * @returns {Object|List<Object>} The single object or list of objects at responseName or null
  * for the loading/error case
  */
-export const apolloResponseValueOrNull = (responseName, response) => {
-  return R.compose(
-    // Return null if status is loading or error
-    apolloResult => resultOkOrNull(apolloResult),
-    response => R.chain(
-      // Map the data response to the data value
-      response => reqStrPath(`data.${responseName}`, response),
-      apolloResult(response)
-    )
-  )(response);
+export const apolloQueryResponseValueOrNull = (responsePath, response) => {
+    return strPathOr(null, `data.${responsePath}`, response)
 };
+
 /**
- * Same as apolloResponseValueOrNull, but takes the first item of the resolved value,
+ * Same as apolloQueryResponseValueOrNull, but takes the first item of the resolved value,
  * which is expected to be an array.
  * @param {String} responseName The string at {data: {[responseName]: [...]}}
  * @param {Object} response An Apollo request response
@@ -72,12 +66,12 @@ export const apolloResponseValueOrNull = (responseName, response) => {
 export const apolloResponseSingleValueOrNull = (responseName, response) => {
   return R.compose(
     listOrNull => R.head(listOrNull || []),
-    response => apolloResponseValueOrNull(responseName, response)
+    response => apolloQueryResponseValueOrNull(responseName, response)
   )(response);
 };
 
 /**
- * Like apolloResponseValueOrNull but additionally filters each returned item if not null
+ * Like apolloQueryResponseValueOrNull but additionally filters each returned item if not null
  * @param {String} responseName The string at {data: {[responseName]: [...]}}
  * @param {Function} filterItem Unary filter to apply to each item
  * @param {Object} response An Apollo request response
@@ -90,6 +84,6 @@ export const apolloResponseFilterOrEmpty = (responseName, filterItem, response) 
       list
     ),
     R.defaultTo([]),
-    response => apolloResponseValueOrNull(responseName, response)
+    response => apolloQueryResponseValueOrNull(responseName, response)
   )(response);
 };
