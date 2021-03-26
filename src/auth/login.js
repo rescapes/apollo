@@ -24,7 +24,6 @@ import {
 } from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import {defaultSettingsTypenames} from '../helpers/defaultSettingsStore.js';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
 import {getOrCreateApolloClientTask} from '../client/apolloClient';
 
@@ -129,6 +128,7 @@ export const loginToAuthClientTask = R.curry((
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
+ * @param {[String]} config.settingsConfig.defaultSettingsTypenames See defaultSettingsStore for an example
  * @param {GraphQLClient|Object} authentication. If a GraphQLClient, a client with authentication already
  * in the header, such as an auth token. If an object, then username and password
  * @returns {Task<Object>} {apolloClient: Authorized Apollo Client, token: The authentication token,
@@ -140,7 +140,7 @@ export const authClientOrLoginTask = R.curry((
     uri,
     stateLinkResolvers,
     writeDefaults,
-    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames}
   }, authentication) => {
   return R.ifElse(
     ({authentication}) => R.is(ApolloClient, authentication),

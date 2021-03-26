@@ -3,7 +3,7 @@ import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from 
 import {mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
 import {authenticatedUserLocalContainer} from '../stores/userStore';
-import {settingsQueryContainerDefault} from './defaultContainers';
+import {querySettingsContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
 
 /**
@@ -160,7 +160,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
       // Fetch the props if they exist on the server
       mapToNamedResponseAndInputs('settingsFromServer',
         (props) => {
-          return settingsQueryContainerDefault(
+          return querySettingsContainerDefault(
             apolloConfig,
             {outputParams: settingsOutputParams},
             R.merge({token: localStorage.getItem('token')}, props)

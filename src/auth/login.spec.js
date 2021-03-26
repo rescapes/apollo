@@ -22,7 +22,7 @@ import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams,
+  defaultSettingsOutputParams, defaultSettingsTypenames,
   writeDefaultSettingsToCacheContainer
 } from '../helpers/defaultSettingsStore.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
@@ -51,7 +51,8 @@ describe('login', () => {
             settingsConfig: {
               cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
               cacheIdProps: defaultSettingsCacheIdProps,
-              settingsOutputParams: defaultSettingsOutputParams
+              settingsOutputParams: defaultSettingsOutputParams,
+              defaultSettingsTypenames
             }
           }, apolloConfig.apolloClient);
         }
@@ -66,7 +67,8 @@ describe('login', () => {
               settingsConfig: {
                 cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
                 cacheIdProps: defaultSettingsCacheIdProps,
-                settingsOutputParams: defaultSettingsOutputParams
+                settingsOutputParams: defaultSettingsOutputParams,
+                defaultSettingsTypenames
               }
             },
             reqStrPathThrowing('settings.data.testAuthorization', localTestConfig)

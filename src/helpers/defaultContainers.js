@@ -25,8 +25,8 @@ import * as R from 'ramda';
  * @param {Number} props.id The settings id. This or id must be used to query settings
  * @returns {*}
  */
-export const settingsQueryContainerDefault = (apolloConfig, outputParams, {token, ...props}) => {
-  return nameComponent('settingsQueryContainer',
+export const querySettingsContainerDefault = (apolloConfig, outputParams, {token, ...props}) => {
+  return nameComponent('querySettingsContainerDefault',
     settingsQueryContainer(
       R.merge(apolloConfig, {
         options: {

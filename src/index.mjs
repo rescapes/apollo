@@ -148,5 +148,5 @@ export {
 } from './stores/tokenAuthStore.js';
 
 export {
-  settingsQueryContainerDefault
+  querySettingsContainerDefault
 } from './helpers/defaultContainers'
