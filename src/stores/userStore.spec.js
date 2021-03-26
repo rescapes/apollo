@@ -85,7 +85,7 @@ describe('userStore', () => {
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
-          ({isAuthenticated, user}) => {
+          ({user}) => {
             expect(user.data.currentUser.id).toBeGreaterThan(0);
           }
       }, errors, done)
@@ -104,7 +104,7 @@ describe('userStore', () => {
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
-          ({isAuthenticated, user}) => {
+          ({user}) => {
             expect(user).toEqual({data: null});
           }
       }, errors, done)

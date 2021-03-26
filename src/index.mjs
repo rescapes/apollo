@@ -135,7 +135,6 @@ export {
   currentUserQueryContainer,
   userOutputParams,
   userReadInputTypeMapper,
-  isAuthenticatedLocal,
   authenticatedUserLocalContainer
 } from './stores/userStore.js';
 
