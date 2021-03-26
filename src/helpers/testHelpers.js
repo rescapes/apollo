@@ -13,7 +13,7 @@ import {keyStringToLensPath, omitDeep, reqStrPathThrowing, strPathOr} from '@res
 import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
-import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink.js';
+import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js';
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
 import {typePoliciesConfig} from '../config.js';
@@ -43,7 +43,7 @@ export const cacheOptions = typePoliciesConfig => {
 /**
  * The config for test. We add some cache only properties to
  */
-export const localTestConfig = mergeLocalTestValuesIntoConfig({
+export const localTestConfig = {
   settings,
   settingsConfig: {
     settingsOutputParams: defaultSettingsOutputParams,
@@ -58,7 +58,7 @@ export const localTestConfig = mergeLocalTestValuesIntoConfig({
     stateLinkResolvers: defaultStateLinkResolvers,
     cacheOptions: cacheOptions(typePoliciesConfig)
   }
-});
+};
 
 
 /**
@@ -139,16 +139,17 @@ export const createTestAuthTask = (settingsConfig, config) => {
   );
 };
 
+export const settingsConfig = {
+  cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+  cacheIdProps: defaultSettingsCacheIdProps,
+  settingsOutputParams: defaultSettingsOutputParams,
+};
+
 /**
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
 export const localTestAuthTask = () => {
-  const settingsConfig = {
-    cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-    cacheIdProps: defaultSettingsCacheIdProps,
-    settingsOutputParams: defaultSettingsOutputParams
-  };
   return createTestAuthTask(settingsConfig, localTestConfig);
 };
 

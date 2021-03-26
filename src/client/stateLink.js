@@ -105,22 +105,6 @@ export const defaultStateLinkResolvers = {
 };
 
 
-/**
- * Default values for StateLink resolvers for the given config
- * @param {Object} config The application config. This matches our API settings object
- * and is used to form the shape of the cache to match the settings.
- */
-export const mergeLocalTestValuesIntoConfig = config => {
-  return R.merge(
-    config,
-    {
-      networkStatus: {
-        __typename: 'NetworkStatus',
-        isConnected: false
-      },
-      todos: []
-    }
-  );
-};
+
 
 

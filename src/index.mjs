@@ -79,9 +79,9 @@ export {
 } from './helpers/samples/sampleData.js';
 export {
   localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys,
-  createTestAuthTask, createTestNoAuthTask
+  createTestAuthTask, createTestNoAuthTask, settingsConfig
 } from './helpers/testHelpers.js';
-export {mergeLocalTestValuesIntoConfig, defaultStateLinkResolvers} from './client/stateLink.js';
+export {defaultStateLinkResolvers} from './client/stateLink.js';
 export {
   containerForApolloType, callMutationNTimesAndConcatResponses,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,

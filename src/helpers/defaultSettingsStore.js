@@ -32,8 +32,8 @@ export const defaultSettingsTypenames =
         _typename: 'MapboxApiDataType'
       }
     }
-
   };
+
 // Global settings.
 // omitCacheOnlyFields to true to omit cache only fields from the query
 export const defaultSettingsOutputParams = {
