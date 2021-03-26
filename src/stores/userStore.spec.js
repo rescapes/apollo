@@ -81,7 +81,7 @@ describe('userStore', () => {
           return authenticatedUserLocalContainer({apolloClient}, {});
         }
       ),
-      () => createTestAuthTask(localTestConfig)
+      () => localTestAuthTask()
     ])().run().listen(defaultRunConfig(
       {
         onResolved:

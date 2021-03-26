@@ -14,7 +14,7 @@ import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink.js';
-import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js'
+import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js';
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
 import {typePoliciesConfig} from '../config.js';
 import {
@@ -100,6 +100,10 @@ export const createTestNoAuthTask = config => getOrCreateApolloClientAndDefaults
 );
 /**
  * Task to return and authorized client for tests
+ * @param {Object} settingsConfig
+ * @param {Object} settingsConfig.cacheOnlyObjs See defaultSettingsCacheOnlyObjs for an example
+ * @param {Object} settingsConfig.cacheIdProps See defaultSettingsCacheIdProps for an example
+ * @param {Object} settingsConfig.settingsOutputParams See defaultSettingsOutputParams for an example
  * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} config The configuration to set up the test
  * @param {Object} config.settings.data
  * @param {Object} config.settings.data.api
@@ -123,24 +127,30 @@ export const createTestNoAuthTask = config => getOrCreateApolloClientAndDefaults
  * a username and password
  * Returns an object {apolloClient:An authorized client}
  */
-export const createTestAuthTask = config => loginToAuthClientTask({
-    cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
-    uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
-    stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
-    writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
-    settingsConfig: {
-      cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-      cacheIdProps: defaultSettingsCacheIdProps,
-      settingsOutputParams: defaultSettingsOutputParams
-    }
-  },
-  reqStrPathThrowing('settings.data.testAuthorization', config)
-);
+export const createTestAuthTask = (settingsConfig, config) => {
+  return loginToAuthClientTask({
+      cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
+      uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
+      stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
+      writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
+      settingsConfig
+    },
+    reqStrPathThrowing('settings.data.testAuthorization', config)
+  );
+};
+
 /**
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const localTestAuthTask = () => createTestAuthTask(localTestConfig);
+export const localTestAuthTask = () => {
+  const settingsConfig = {
+    cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+    cacheIdProps: defaultSettingsCacheIdProps,
+    settingsOutputParams: defaultSettingsOutputParams
+  };
+  return createTestAuthTask(settingsConfig, localTestConfig);
+};
 
 /**
  * Task to return and authorized client for tests
