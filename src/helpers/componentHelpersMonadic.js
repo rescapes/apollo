@@ -168,17 +168,11 @@ export const composeWithComponentMaybeOrTaskChain = list => {
     // We could optional expect props with/ a children props as the child component here,
     // but I think we'll always pass the child component before the props
     const taskOrComponent = composed(props);
-    return R.ifElse(
+    return R.unless(
+      // Return as is for tasks
       () => R.hasIn('run', taskOrComponent),
-      () => {
-        // For tasks, just pass the props. This returns a task that is ready to execute
-        if (!R.hasIn('run', taskOrComponent)) {
-          throw new Error('Task expected, but composed did not produce a task. Is this supposed to be a component and you forgot to pass a render function?')
-        }
-        return taskOrComponent
-      },
       // Match the form of HOC(component)(props), even though composed expects props first
-      props => {
+      taskOrComponent => {
         if (!R.any(prop => R.propOr(false, prop, props), ['render', 'children'])) {
           throw new Error(`Expected a render function in props but did't find one ${inspect(props)}`)
         }
@@ -187,6 +181,6 @@ export const composeWithComponentMaybeOrTaskChain = list => {
         // Pass the render prop. This passes the render prop from outermost component to innermost
         return taskOrComponent(R.prop(renderProp, props));
       }
-    )(props);
+    )(taskOrComponent);
   };
 };

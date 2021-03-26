@@ -57,31 +57,19 @@ export const tokenAuthTypePolicy = {
 export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
-    return R.compose(
-      // Wrap in a task when we are doing apolloClient queries, otherwise we already have
-      // a proper apollo container
-      containerOrValue => R.when(
-        () => {
-          return R.propOr(false, 'apolloClient', apolloConfig);
-        },
-        of
-      )(containerOrValue),
-      props => {
-        return makeReadFragmentFromCacheContainer(
-          apolloConfig,
-          {
-            name: 'tokenAuth',
-            readInputTypeMapper: tokenAuthReadInputTypeMapper,
-            outputParams: tokenAuthOutputParams
-          },
-          // Pass all the props including the render function. Only __typenmae and id are needed by the fragment read
-          R.merge(props,
-            // Singleton so id is just the type
-            {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
-          )
-        );
-      }
-    )(props);
+    return makeReadFragmentFromCacheContainer(
+      apolloConfig,
+      {
+        name: 'tokenAuth',
+        readInputTypeMapper: tokenAuthReadInputTypeMapper,
+        outputParams: tokenAuthOutputParams
+      },
+      // Pass all the props including the render function. Only __typenmae and id are needed by the fragment read
+      R.merge(props,
+        // Singleton so id is just the type
+        {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
+      )
+    )
   } catch (e) {
     return containerForApolloType(
       apolloConfig,

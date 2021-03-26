@@ -19,7 +19,7 @@ import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import * as AC from '@apollo/client';
 import {_winnowRequestProps} from '../helpers/requestHelpers.js';
 import * as R from 'ramda';
-import {apolloClientReadFragmentCacheContainer} from './apolloClient.js';
+import {apolloClientReadFragmentCache} from './apolloClient.js';
 import {reqStrPathThrowing, defaultNode} from '@rescapes/ramda';
 import T from 'folktale/concurrency/task/index.js';
 
@@ -106,17 +106,18 @@ export const authApolloClientOrComponentQueryCacheContainer = R.curry((apolloCon
 });
 
 /**
- * Direct read fragment from the cache
+ * Direct read fragment from the cache returning a component or task
  * @param {Object} apolloConfig
  * @param {Object} fragment The fragment query
  * @param {Object} props Not used in the fragment, but passed to the render prop for components
  * @param {Number|String} id The id for the fragment query
+ * @returns {Object|Task} For component queries, returns a component, for client queries, returns a task
  */
 export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((apolloConfig, {fragment}, props, id) => {
   return R.cond([
     // Apollo Client instance
     [R.has('apolloClient'),
-      apolloConfig => of(apolloClientReadFragmentCacheContainer(
+      apolloConfig => of(apolloClientReadFragmentCache(
         apolloConfig,
         fragment,
         id
@@ -135,7 +136,7 @@ export const authApolloClientOrComponentReadFragmentCacheContainer = R.curry((ap
               apolloConfig,
               {
                 render: getRenderPropFunction(props),
-                response: apolloClientReadFragmentCacheContainer(
+                response: apolloClientReadFragmentCache(
                   R.merge(apolloConfig, {apolloClient}),
                   fragment,
                   id

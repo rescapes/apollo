@@ -96,14 +96,14 @@ export {
   defaultSettingsOutputParams,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsCacheIdProps,
-  defaultSettingsTypenames
+  defaultSettingsTypenames,
+  writeConfigToServerAndCacheContainer
 } from './helpers/defaultSettingsStore.js';
 export {
   makeSettingsMutationContainer,
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
-  makeSettingsQueryContainer,
-  writeConfigToServerAndCacheContainer
+  settingsQueryContainer,
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig
@@ -147,3 +147,7 @@ export {
   deleteRefreshTokenCookieMutationRequestContainer,
   queryLocalTokenAuthContainer
 } from './stores/tokenAuthStore.js';
+
+export {
+  settingsQueryContainerDefault
+} from './helpers/defaultContainers'

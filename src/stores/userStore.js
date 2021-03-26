@@ -11,8 +11,6 @@
 
 import * as AC from '@apollo/client';
 import T from 'folktale/concurrency/task/index.js';
-import {v} from '@rescapes/validate';
-import PropTypes from 'prop-types';
 import {makeQueryContainer} from '../helpers/queryHelpers.js';
 import {makeQueryFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {versionOutputParamsMixin} from '../helpers/requestHelpers.js';
@@ -23,6 +21,9 @@ import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 
 const {MissingFieldError} = defaultNode(AC);
 const {of} = T;
+import {v} from '@rescapes/validate';
+import PropTypes from 'prop-types';
+import {authApolloClientQueryCache} from '../client/apolloClientCache';
 
 
 export const userOutputParams = {
@@ -46,40 +47,9 @@ export const userReadInputTypeMapper = {
   'data': 'DataTypeofUserTypeRelatedReadInputType'
 };
 
-/**
- * Reads the cache to check if the client is authenticated
- * It's technically possible to used an unauthed apolloClient to read from the cache
- * when the user is present, but hopefully this won't happen. It would be better
- * to check the apolloClient for th AuthLink header auth token, but I don't know how
- * to access the authLink since it's composed with other links. We could also but
- * an auth flag on the apolloClient object somewhere
- * @param {Object} apolloConfig
- * @param {Object} apolloConfig.apolloClient The Apollo client
- * @returns {Boolean} true if authenticated or false
- */
-export const isAuthenticatedLocal = apolloConfig => {
-  // Unfortunately a cache miss throws
-  try {
-    return !!strPathOr(
-      false,
-      'data.currentUser',
-      makeQueryFromCacheContainer(
-        apolloConfig,
-        {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-        {}
-      )
-    );
-  } catch (e) {
-    if (R.is(MissingFieldError)) {
-      return false;
-    }
-    throw e;
-  }
-};
 
 /**
- * Like isAuthenticatedLocal, but matches the style of asynchronous requests,
- * returning a task or apollo component
+ * Container to get local auth
  *
  * @param {Object} apolloConfig
  * @param apolloConfig.apolloClient. If non-null then a task is returned. If null
@@ -90,34 +60,22 @@ export const isAuthenticatedLocal = apolloConfig => {
 export const authenticatedUserLocalContainer = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
-    return R.compose(
-      // Wrap in a task when we are doing apolloClient queries, otherwise we already have
-      // a proper apollo container
-      containerOrValue => {
-        return R.when(
-          () => R.propOr(false, 'apolloClient', apolloConfig),
-          of
-        )(containerOrValue);
-      },
-      props => {
-        return makeQueryFromCacheContainer(
-          R.merge(apolloConfig,
-            {
-              options: {
-                variables: () => {
-                  return {};
-                },
-                // Pass through error so we can handle it in the component
-                errorPolicy: 'all',
-                partialRefetch: true
-              }
-            }
-          ),
-          {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-          props
-        );
-      }
-    )(props);
+    return makeQueryFromCacheContainer(
+      R.merge(apolloConfig,
+        {
+          options: {
+            variables: () => {
+              return {};
+            },
+            // Pass through error so we can handle it in the component
+            errorPolicy: 'all',
+            partialRefetch: true
+          }
+        }
+      ),
+      {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+      props
+    );
   } catch (e) {
     if (R.is(MissingFieldError, e)) {
       return containerForApolloType(

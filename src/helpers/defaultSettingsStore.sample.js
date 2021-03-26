@@ -19,7 +19,7 @@ import {
   defaultSettingsCacheOnlyObjs,
   defaultSettingsOutputParams
 } from './defaultSettingsStore.js';
-import {makeSettingsMutationContainer, makeSettingsQueryContainer} from './settingsStore.js';
+import {makeSettingsMutationContainer, settingsQueryContainer} from './settingsStore.js';
 
 /**
  * Created by Andy Likuski on 2019.01.22
@@ -46,7 +46,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // This MUST use omitClientFields or the query will return data: null
     mapToNamedPathAndInputs('settingsFromServerOnly', 'data.settings',
       ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
-        return makeSettingsQueryContainer(
+        return settingsQueryContainer(
           {
             apolloClient,
             options: {
@@ -62,7 +62,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // So let's force it go to the server so we are sure that the server and cache-only values work
     mapToNamedPathAndInputs('settingsFromCache', 'data.settings',
       ({settingsWithoutCacheValues, apolloConfig: {apolloClient}, defaultSettingsOutputParams}) => {
-        return makeSettingsQueryContainer(
+        return settingsQueryContainer(
           {
             apolloClient,
             options: {
@@ -81,7 +81,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // Apollo doesn't know how many values the query might return
     mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
       ({settingsWithoutCacheValues, apolloConfig, defaultSettingsOutputParams}) => {
-        return makeSettingsQueryContainer(
+        return settingsQueryContainer(
           apolloConfig,
           {outputParams: defaultSettingsOutputParams},
           R.pick(['id'], settingsWithoutCacheValues)

@@ -433,7 +433,7 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
 /**
  * Reads a fragment
  */
-export const apolloClientReadFragmentCacheContainer = R.curry((apolloConfig, fragment, id) => {
+export const apolloClientReadFragmentCache = R.curry((apolloConfig, fragment, id) => {
 
   log.debug(`Read Fragment: ${
     print(fragment)

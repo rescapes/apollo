@@ -14,7 +14,7 @@ import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers, mergeLocalTestValuesIntoConfig} from '../client/stateLink.js';
-import {writeConfigToServerAndCacheContainer} from './settingsStore.js';
+import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js'
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
 import {typePoliciesConfig} from '../config.js';
 import {

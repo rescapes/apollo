@@ -59,11 +59,11 @@ describe('apolloClient', () => {
       // Query with direct cache call. This works because the query with the same name was just made and it
       // will match that query by name
       mapToNamedPathAndInputs('region', 'data.regions.0',
-        ({apolloClient, region}) => of(makeQueryFromCacheContainer(
+        ({apolloClient, region}) => makeQueryFromCacheContainer(
           {apolloClient},
           {name: 'regions', readInputTypeMapper, outputParams: regionOutputParams},
           {key: region.key}
-        ))
+        )
       ),
       // Query so we can cache what we created
       mapToNamedPathAndInputs('region', 'data.regions.0',

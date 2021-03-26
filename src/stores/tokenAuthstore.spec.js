@@ -32,7 +32,7 @@ import {
   refreshTokenMutationRequestContainer,
   verifyTokenMutationRequestContainer
 } from './tokenAuthStore.js';
-import {makeSettingsQueryContainer} from '../helpers/settingsStore.js';
+import {settingsQueryContainer} from '../helpers/settingsStore.js';
 import {typePoliciesConfig} from '../config';
 import {getOrSetDefaultsContainer} from '../client/apolloClientAuthentication';
 
@@ -43,13 +43,6 @@ describe('tokenAuthStore', () => {
   test('testLoginCredentials', done => {
     const errors = [];
     composeWithChain([
-      /*
-      TODO Server is complaining about this method, which we don't currenlty use
-      mapToNamedPathAndInputs(
-        'deleteRefreshTokenCookie', 'reesult.data.deleteRefreshTokenCookie.deleted',
-        ({apolloConfig: {apolloClient}, verifyToken}) => deleteRefreshTokenCookieMutationRequestContainer({apolloClient}, {}, {})
-      ),
-       */
       mapToNamedPathAndInputs(
         'deleteTokenCookie', 'result.data.deleteTokenCookie.deleted',
         ({apolloConfig: {apolloClient}, tokenAuth, verifyToken}) => {
@@ -76,7 +69,7 @@ describe('tokenAuthStore', () => {
       ),
       mapToNamedPathAndInputs('settings', 'data.settings.0',
         ({apolloConfig}) => {
-          return makeSettingsQueryContainer(
+          return settingsQueryContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams}, {
               key: 'default'

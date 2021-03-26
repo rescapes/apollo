@@ -9,11 +9,16 @@
  * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {composeWithChain, defaultRunConfig, expectKeysAtPath, mapToNamedResponseAndInputs} from '@rescapes/ramda';
+import {
+  composeWithChain,
+  defaultRunConfig,
+  expectKeysAtPath,
+  mapToNamedPathAndInputs,
+  mapToNamedResponseAndInputs
+} from '@rescapes/ramda';
 import {
   authenticatedUserLocalContainer,
   currentUserQueryContainer,
-  isAuthenticatedLocal,
   userOutputParams
 } from './userStore.js';
 import {
@@ -74,19 +79,13 @@ describe('userStore', () => {
       mapToNamedResponseAndInputs('user',
         ({apolloClient}) => {
           return authenticatedUserLocalContainer({apolloClient}, {});
-        }),
-      mapToNamedResponseAndInputs('isAuthenticated',
-        ({apolloClient}) => {
-          return of(
-            isAuthenticatedLocal({apolloClient})
-          );
-        }),
+        }
+      ),
       () => createTestAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
           ({isAuthenticated, user}) => {
-            expect(isAuthenticated).toBe(true);
             expect(user.data.currentUser.id).toBeGreaterThan(0);
           }
       }, errors, done)
@@ -99,19 +98,13 @@ describe('userStore', () => {
       mapToNamedResponseAndInputs('user',
         ({apolloClient}) => {
           return authenticatedUserLocalContainer({apolloClient}, {});
-        }),
-      mapToNamedResponseAndInputs('isAuthenticated',
-        ({apolloClient}) => {
-          return of(
-            isAuthenticatedLocal({apolloClient})
-          );
-        }),
+        }
+      ),
       () => createTestNoAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:
           ({isAuthenticated, user}) => {
-            expect(isAuthenticated).toBe(false);
             expect(user).toEqual({data: null});
           }
       }, errors, done)

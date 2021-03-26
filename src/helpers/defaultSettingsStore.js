@@ -1,5 +1,10 @@
 import settings from './privateSettings.js';
-import {writeConfigToServerAndCacheContainer} from './settingsStore.js';
+import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
+import {mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+import {authenticatedUserLocalContainer} from '../stores/userStore';
+import {settingsQueryContainerDefault} from './defaultContainers';
+import * as R from 'ramda';
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -76,6 +81,95 @@ export const defaultSettingsCacheIdProps = [
   'data.__typename',
   'data.mapbox.__typename'
 ];
+
+
+/**
+ * Writes or rewrites the default settings to the cache if needed.
+ * Non-server values in the config are ignored and must be added manually.
+ * If the apollo client isn't authenticated we write straight to cache
+ * @param {Object} config
+ * @param {Object} config.settings The settings to write. It must match Settings object of the Apollo schema,
+ * although cache-only values can be included
+ * @param {Object} config.defaultSettingsTypenames Typenmaes of the settings in the form
+ * {
+ *   __typename: string,
+ *   data: {
+ *     __typename: string
+ *     foo: {...}
+ *   }
+ * }
+ * Only need to write settings to the cache for an unauthed user when no settings are on the server (rare)
+ */
+export const writeConfigToServerAndCacheContainer = (config) => {
+  return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
+    const apolloConfig = {apolloClient};
+    // Only the settings are written to the server
+    const props = R.prop('settings', config);
+    const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
+    return composeWithComponentMaybeOrTaskChain([
+      mapToNamedResponseAndInputs('void',
+        ({settingsWithoutCacheValues}) => {
+          log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
+          return null;
+        }
+      ),
+      // Update/Create the default settings to the database. This puts them in the cache
+      mapToNamedResponseAndInputs('settingsWithoutCacheValues',
+        ({settingsFromServer, user}) => {
+          const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
+          return nameComponent('settingsMutation', R.ifElse(
+            () => user,
+            () => {
+              // Update the settings on the server with those configured in code.
+              // TODO this should be removed in favor of a one time database write
+              // in a server init script
+              return makeSettingsMutationContainer(
+                apolloConfig,
+                {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
+                R.merge(props, R.pick(['id'], settings))
+              );
+            },
+            () => {
+              // Not authenticated or no updates needed
+              // Write the server or configured values to the cache manually
+              // If we have settings from the server, they will already be in the cache,
+              // but we need to write any non server settings
+              // If we don't have settings from the server and we aren't authenticated, just
+              // cache the configured settings
+              const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepRight(
+                props,
+                // TODO this should come from the remote schema so it can be customized
+                // to the app's settings
+                defaultSettingsTypenames
+              );
+              return makeSettingsCacheMutationContainer(
+                apolloConfig,
+                {outputParams: settingsOutputParams},
+                props,
+                settingsToCache
+              );
+            }
+          ))();
+        }
+      ),
+      mapToNamedPathAndInputs('userAuthToken', 'data.currentUser',
+        () => {
+          return authenticatedUserLocalContainer({apolloClient}, {});
+        }
+      ),
+      // Fetch the props if they exist on the server
+      mapToNamedResponseAndInputs('settingsFromServer',
+        (props) => {
+          return settingsQueryContainerDefault(
+            apolloConfig,
+            {outputParams: settingsOutputParams},
+            R.merge({token: localStorage.getItem('token')}, props)
+          );
+        }
+      )
+    ])(props);
+  };
+};
 
 /**
  * Writes or rewrites the default settings to the cache

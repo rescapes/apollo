@@ -27,7 +27,7 @@ import {
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {createSampleSettingsTask} from './defaultSettingsStore.sample.js';
-import {createCacheOnlyPropsForSettings, makeSettingsQueryContainer} from './settingsStore.js';
+import {createCacheOnlyPropsForSettings, settingsQueryContainer} from './settingsStore.js';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',
@@ -42,7 +42,7 @@ describe('mutationCacheHelpers', () => {
         // See if the all the settings are still in the cache
         mapToNamedPathAndInputs('settings', 'data.settings',
           ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
-            return makeSettingsQueryContainer(
+            return settingsQueryContainer(
               {
                 apolloClient,
                 options: {
@@ -71,7 +71,7 @@ describe('mutationCacheHelpers', () => {
         // See if the all correct settings in the cache
         mapToNamedPathAndInputs('settings', 'data.settings',
           ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
-            return makeSettingsQueryContainer(
+            return settingsQueryContainer(
               {
                 apolloClient,
                 options: {

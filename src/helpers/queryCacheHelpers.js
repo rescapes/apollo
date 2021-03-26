@@ -102,7 +102,8 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  * @param {Array|Object} [outputParams] output parameters for the query in this style json format. See makeQueryContainer
  * @param {Object} component The Apollo component for component queries
  * @param {Function} props The properties to pass to the query.
- * @returns {Object} Returns the object from cache
+ * @returns {Object|Task} For component queries returns a component, for client queries returns a task
+ * Both resolve to the cache value
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   // Not using the client directive here, rather we'll do a direct cache read with this query
@@ -191,8 +192,8 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
       );
     },
     mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
-      (props) => {
-        const x = authApolloClientOrComponentReadFragmentCacheContainer(
+      props => {
+        return authApolloClientOrComponentReadFragmentCacheContainer(
           apolloConfig,
           {
             fragment
@@ -200,7 +201,6 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
           R.omit(['__typename', 'id'], props),
           reqStrPathThrowing('id', props)
         );
-        return x
       })
   ])(props)
 });
