@@ -77,7 +77,7 @@ describe('tokenAuthStore', () => {
           );
         }
       ),
-      mapToNamedResponseAndInputs('user',
+      mapToNamedResponseAndInputs('userResponse',
         ({apolloConfig: {apolloClient, token}}) => {
           return writeDefaultsAndQueryCurrentUserContainer({
               apolloConfig: {apolloClient},

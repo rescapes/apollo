@@ -60,11 +60,11 @@ export const loginToAuthClientTask = R.curry((
   return composeWithChain([
     // loginResult.data contains {tokenAuth: token}
     // TODO can we modify noAuthApolloClientTask by writing the auth data to the cache instead??
-    ({apolloConfig, user, tokenAuth}) => {
+    ({apolloConfig, currentUserResponse, tokenAuth}) => {
       return of(
         R.mergeAll([
           apolloConfig,
-          {user: reqStrPathThrowing('data.currentUser', user)},
+          {user: reqStrPathThrowing('data.currentUser', currentUserResponse)},
           R.pick(
             ['token', 'payload'],
             reqStrPathThrowing('result.data.tokenAuth', tokenAuth)
@@ -73,12 +73,27 @@ export const loginToAuthClientTask = R.curry((
       );
     },
 
-    mapToNamedResponseAndInputs('user',
-      ({apolloConfig, tokenAuth}) => {
-        return currentUserQueryContainer(apolloConfig, userOutputParams, {token: strPathOr(null, 'data.tokenAuth.token', tokenAuth)});
+    // Write defaults and settings
+    mapToNamedResponseAndInputs('currentUserResponse',
+      ({apolloConfig, uri, stateLinkResolvers}) => {
+        // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
+        // although the token will also be stored in localStorage.getItem('token'),
+        // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
+        return writeDefaultsAndQueryCurrentUserContainer({
+            apolloConfig,
+            cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
+            cacheOptions,
+            uri,
+            stateLinkResolvers,
+            writeDefaultsContainer,
+            settingsConfig: {
+              cacheOnlyObjs, cacheIdProps, settingsOutputParams
+            }
+          },
+          {}
+        );
       }
     ),
-
     // Login in to the server to get the auth token
     mapToNamedResponseAndInputs('tokenAuth',
       ({apolloConfig, props}) => {
@@ -149,9 +164,9 @@ export const authClientOrLoginTask = R.curry((
     // Just wrap it in a task to match the other option
     apolloClient => of({apolloClient}),
     composeWithChain([
+      // Write defaults and settings
       mapToNamedResponseAndInputs('currentUserResponse',
-        // map userLogin to getApolloClientTask and token
-        ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
+        ({apolloConfig, uri, stateLinkResolvers}) => {
           // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
           // although the token will also be stored in localStorage.getItem('token'),
           // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
@@ -168,13 +183,15 @@ export const authClientOrLoginTask = R.curry((
             },
             {}
           );
-        }),
+        }
+      ),
+      // Log in with the authentication props
       mapToNamedResponseAndInputs('loginAuthentication',
         ({apolloConfig, authentication}) => {
           return tokenAuthMutationContainer(apolloConfig, {}, authentication);
         }
       ),
-      // map login values to token
+      // Get the apolloConfig, authenticated or not
       mapToNamedResponseAndInputs('apolloConfig',
         ({uri, stateLinkResolvers}) => {
           return getOrCreateApolloClientTask({
