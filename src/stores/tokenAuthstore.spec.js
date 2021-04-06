@@ -34,7 +34,7 @@ import {
 } from './tokenAuthStore.js';
 import {settingsQueryContainer} from '../helpers/settingsStore.js';
 import {typePoliciesConfig} from '../config';
-import {getOrSetDefaultsContainer} from '../client/apolloClientAuthentication';
+import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
@@ -79,13 +79,13 @@ describe('tokenAuthStore', () => {
       ),
       mapToNamedResponseAndInputs('user',
         ({apolloConfig: {apolloClient, token}}) => {
-          return getOrSetDefaultsContainer({
+          return writeDefaultsAndQueryCurrentUserContainer({
               apolloConfig: {apolloClient},
               cacheData: apolloClient.cache.data.data,
               cacheOptions: cacheOptions(typePoliciesConfig),
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,
-              writeDefaults: writeDefaultSettingsToCacheContainer,
+              writeDefaultsContainer: writeDefaultSettingsToCacheContainer,
               settingsConfig: {
                 cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
                 cacheIdProps: defaultSettingsCacheIdProps,

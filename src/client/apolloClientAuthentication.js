@@ -34,39 +34,38 @@ const {of} = T;
 const log = loggers.get('rescapeDefault');
 
 /**
- * Given a token that tells us we are authenticated, returns a GraphQL client
- * Even without a token we might have a token in localStorage.getItem('token'),
- * but this tells us to try load the current user as if we are logged in.
+ * Writes defaults to the cache and then calls queryLocalTokenAuthContainer
+ * to see if the user is logged in, then calls queryCurrentUserContainer if the user is authenticated
  * @param {Object} config
  * @param {Object} config.apolloConfig Created by
  getOrCreateApolloClientTask({ cacheData, cacheOptions, uri, stateLinkResolvers, makeCacheMutation } ); or similar
  * local storage to store are auth token
- * @param {Function} config.writeDefaults expecting apolloClient that writes defaults ot the cache
+ * @param {Function} config.writeDefaultsContainer expecting apolloClient that writes defaults ot the cache
  * @param {Object} config.settingsConfig
  * @param {Array|Object} config.settingsConfig.settingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.cacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.cacheIdProps See defaultSettingsStore for an example
- * @param {Function} The render function for component calls
- * Existing client cache data if restoring from some externally stored values
+ * @param {Object} props
+ * @param {Function} props.render The render function for component calls
  * @return {Object} Task or component currentUserQueryContainer response
+ * Existing client cache data if restoring from some externally stored values
  */
-export const getOrSetDefaultsContainer = (
+export const writeDefaultsAndQueryCurrentUserContainer = (
   {
     apolloConfig,
-    writeDefaults,
+    writeDefaultsContainer,
     settingsConfig
   },
   {render}
 ) => {
   const {cacheOnlyObjs, cacheIdProps, settingsOutputParams} = settingsConfig;
   const apolloClient = reqStrPathThrowing('apolloClient', apolloConfig);
-  // Set writeDefaults to reset the cache. reset: true tells the function that this isn't the initial call
-  apolloClient.onResetStore(() => writeDefaults(apolloClient, {
+  // Set writeDefaultsContainer to reset the cache. reset: true tells the function that this isn't the initial call
+  apolloClient.onResetStore(() => writeDefaultsContainer(apolloClient, {
     cacheOnlyObjs,
     cacheIdProps,
     settingsOutputParams
-  }));
-  writeDefaults(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams});
+  }).run());
   return composeWithComponentMaybeOrTaskChain([
     tokenAuthResponse  => {
       // Once we have the Apollo client, sync localStorage.getItem('token') with
@@ -84,7 +83,9 @@ export const getOrSetDefaultsContainer = (
 
     ({render}) => {
       return queryLocalTokenAuthContainer(apolloConfig, {render});
-    }
+    },
+
+    () => writeDefaultsContainer(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams})
   ])({
     render
   });
@@ -98,7 +99,8 @@ export const getOrSetDefaultsContainer = (
  * @param {Object} config.cacheOptions
  * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
- * @param {Function} config.writeDefaults
+ * @param {Function} config.writeDefaultsContainer Writes defaults to the cache and optionally
+ * writes the settings to the database and/or cache
  * @param {Array|Object} config.outputParams Teh settings outputParams
  * @param {Object} token Return value from loginMutationTask() api call
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
@@ -108,7 +110,7 @@ export const getOrSetDefaultsContainer = (
  */
 export const getOrCreateApolloClientAndDefaultsTask = R.curry((
   {
-    cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaults,
+    cacheData, cacheOptions, uri, stateLinkResolvers, writeDefaultsContainer,
     settingsConfig
   }
 ) => {
@@ -119,13 +121,13 @@ export const getOrCreateApolloClientAndDefaultsTask = R.curry((
     },
     mapToNamedResponseAndInputs('user',
       ({apolloConfig}) => {
-        return getOrSetDefaultsContainer({
+        return writeDefaultsAndQueryCurrentUserContainer({
           apolloConfig,
           cacheData,
           cacheOptions,
           uri,
           stateLinkResolvers,
-          writeDefaults,
+          writeDefaultsContainer: writeDefaultsContainer,
           settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
         }, {});
       }

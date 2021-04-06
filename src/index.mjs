@@ -33,7 +33,7 @@ export {
 } from './client/apolloClient.js';
 export {
   getOrCreateApolloClientAndDefaultsTask,
-  getOrSetDefaultsContainer
+  writeDefaultsAndQueryCurrentUserContainer
 } from './client/apolloClientAuthentication';
 export {
   makeQuery,

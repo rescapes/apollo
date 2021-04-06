@@ -23,7 +23,7 @@ import {
 } from './defaultSettingsStore.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
-import {getOrSetDefaultsContainer} from '../client/apolloClientAuthentication';
+import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
 
 const log = loggers.get('rescapeDefault');
 
@@ -183,7 +183,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * valid API token stored in it. This function should be used to create an ApolloClient when localStorage is
  * used, whether or not the token is present. The apollo-link-state check for token on each request
  * and sends if to the server if available.
- * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} config The configuration to set up the test
+ * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaultsContainer: (Object|Task)}} config The configuration to set up the test
  * @param {Object} config.settings.data
  * @param {Object} config.settings.data.api
  * @param {String} [config.settings.data.api.protocol] E.g. 'http'
@@ -204,15 +204,17 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * policies specify merging strategies, and must be included for types that store cache only values
  * This can have options the class takes such as typePolicies. Defaults to cacheOptions
  * a username and password
- * Returns an object {apolloClient:An authorized client}
+ * @param {Object} props
+ * @param {Function} [props.render] Render prop function for components only
+ * @returns Returns an object {apolloClient:An authorized client}
  */
 export const createLocalStorageAuthContainer = (config, {render}) => {
-  return getOrSetDefaultsContainer({
+  return writeDefaultsAndQueryCurrentUserContainer({
     apolloConfig: reqStrPathThrowing('apolloConfig', config),
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
-    writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
+    writeDefaultsContainer: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
     settingsConfig: {
       cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
       cacheIdProps: defaultSettingsCacheIdProps,

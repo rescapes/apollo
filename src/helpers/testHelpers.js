@@ -63,7 +63,7 @@ export const localTestConfig = {
 
 /**
  * Task to return and non-authorized client for tests
- * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} config The configuration to set up the test
+ * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaultsContainer: (Object|Task)}} config The configuration to set up the test
  * @param {Object} config.settings.data
  * @param {Object} config.settings.data.api
  * @param {String} [config.settings.data.api.protocol] E.g. 'http'
@@ -90,7 +90,7 @@ export const createTestNoAuthTask = config => getOrCreateApolloClientAndDefaults
     cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
     uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
     stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
-    writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
+    writeDefaultsContainer: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
     settingsConfig: {
       cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
       cacheIdProps: defaultSettingsCacheIdProps,
@@ -104,7 +104,7 @@ export const createTestNoAuthTask = config => getOrCreateApolloClientAndDefaults
  * @param {Object} settingsConfig.cacheOnlyObjs See defaultSettingsCacheOnlyObjs for an example
  * @param {Object} settingsConfig.cacheIdProps See defaultSettingsCacheIdProps for an example
  * @param {Object} settingsConfig.settingsOutputParams See defaultSettingsOutputParams for an example
- * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaults: (Object|Task)}} config The configuration to set up the test
+ * @param {{settings: {overpass: {cellSize: number, sleepBetweenCalls: number}, mapbox: {viewport: {latitude: number, zoom: number, longitude: number}, mapboxAuthentication: {mapboxApiAccessToken: string}}, domain: string, testAuthorization: {password: string, username: string}, api: {path: string, protocol: string, port: string, host: string}}, writeDefaultsContainer: (Object|Task)}} config The configuration to set up the test
  * @param {Object} config.settings.data
  * @param {Object} config.settings.data.api
  * @param {String} [config.settings.data.api.protocol] E.g. 'http'
@@ -132,7 +132,7 @@ export const createTestAuthTask = (settingsConfig, config) => {
       cacheOptions: strPathOr({}, 'apollo.cacheOptions', config),
       uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
       stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
-      writeDefaults: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
+      writeDefaultsContainer: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
       settingsConfig
     },
     reqStrPathThrowing('settings.data.testAuthorization', config)

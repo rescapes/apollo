@@ -47,7 +47,7 @@ describe('login', () => {
             cacheOptions: cacheOptions(typePoliciesConfig),
             uri,
             stateLinkResolvers: defaultStateLinkResolvers,
-            writeDefaults: writeDefaultSettingsToCacheContainer,
+            writeDefaultsContainer: writeDefaultSettingsToCacheContainer,
             settingsConfig: {
               cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
               cacheIdProps: defaultSettingsCacheIdProps,
@@ -63,7 +63,7 @@ describe('login', () => {
               cacheOptions: cacheOptions(typePoliciesConfig),
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,
-              writeDefaults: writeDefaultSettingsToCacheContainer,
+              writeDefaultsContainer: writeDefaultSettingsToCacheContainer,
               settingsConfig: {
                 cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
                 cacheIdProps: defaultSettingsCacheIdProps,

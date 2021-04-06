@@ -5,6 +5,11 @@ import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHe
 import {authenticatedUserLocalContainer} from '../stores/userStore';
 import {settingsQueryContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
+import {loggers} from '@rescapes/log';
+import {inspect} from 'util';
+import T from 'folktale/concurrency/task/index.js';
+const {of} = T;
+const log = loggers.get('rescapeDefault');
 
 /**
  * Created by Andy Likuski on 2018.12.31
@@ -110,15 +115,15 @@ export const writeConfigToServerAndCacheContainer = (config) => {
       mapToNamedResponseAndInputs('void',
         ({settingsWithoutCacheValues}) => {
           log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
-          return null;
+          return of(null);
         }
       ),
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedResponseAndInputs('settingsWithoutCacheValues',
-        ({settingsFromServer, user}) => {
+        ({settingsFromServer, userResponse}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return nameComponent('settingsMutation', R.ifElse(
-            () => user,
+            () => strPathOr(false, 'data', userResponse),
             () => {
               // Update the settings on the server with those configured in code.
               // TODO this should be removed in favor of a one time database write
@@ -152,7 +157,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
           ))();
         }
       ),
-      mapToNamedPathAndInputs('userAuthToken', 'data.currentUser',
+      mapToNamedResponseAndInputs('userResponse',
         () => {
           return authenticatedUserLocalContainer({apolloClient}, {});
         }

@@ -20,7 +20,7 @@ import {
   reqStrPathThrowing, strPathOr
 } from '@rescapes/ramda';
 import {
-  getOrSetDefaultsContainer
+  writeDefaultsAndQueryCurrentUserContainer
 } from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
@@ -36,6 +36,8 @@ const {ApolloClient} = defaultNode(AC);
  * @param {Object} config.cacheOptions
  * @param {String} config.uri graphql uri
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
+ * @param {Object} config.writeDefaultsContainer: Writes defaults to the cache and optionally
+ * updates the database settings or cache settings
  * @param {Object} props
  * @param {String} props.username The username
  * @param {String} props.password The password
@@ -50,7 +52,7 @@ export const loginToAuthClientTask = R.curry((
     cacheOptions,
     uri,
     stateLinkResolvers,
-    writeDefaults,
+    writeDefaultsContainer,
     settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
   },
   props
@@ -123,8 +125,8 @@ export const loginToAuthClientTask = R.curry((
  * @param {String} config.uri The URL to create client with if authentication is not already a GraphQLClient
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * @param {Array} config.defaultSettingsOutputParams the settings output params
- * @param {Function} config.writeDefaults. Function to write default values to the client
- * @param {Object} config.settingsConfig
+ * @param {Object} config.writeDefaultsContainer: Writes defaults to the cache and optionally
+ * updates the database settings or cache settings
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
@@ -139,7 +141,7 @@ export const authClientOrLoginTask = R.curry((
     cacheOptions,
     uri,
     stateLinkResolvers,
-    writeDefaults,
+    writeDefaultsContainer,
     settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames}
   }, authentication) => {
   return R.ifElse(
@@ -147,19 +149,19 @@ export const authClientOrLoginTask = R.curry((
     // Just wrap it in a task to match the other option
     apolloClient => of({apolloClient}),
     composeWithChain([
-      mapToNamedResponseAndInputs('user',
+      mapToNamedResponseAndInputs('currentUserResponse',
         // map userLogin to getApolloClientTask and token
         ({apolloConfig, uri, stateLinkResolvers, loginAuthentication}) => {
           // Since we have a token we can call this getOrCreateApolloClientAndDefaultsTask,
           // although the token will also be stored in localStorage.getItem('token'),
           // so we could likewise call getOrCreateNoAuthApolloClientWithTokenTask
-          return getOrSetDefaultsContainer({
+          return writeDefaultsAndQueryCurrentUserContainer({
               apolloConfig,
               cacheData: reqStrPathThrowing('apolloClient.cache.data.data', apolloConfig),
               cacheOptions,
               uri,
               stateLinkResolvers,
-              writeDefaults,
+              writeDefaultsContainer,
               settingsConfig: {
                 cacheOnlyObjs, cacheIdProps, settingsOutputParams, defaultSettingsTypenames
               }
