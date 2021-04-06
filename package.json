@@ -1,6 +1,6 @@
 {
   "name": "@rescapes/apollo",
-  "version": "0.1.453",
+  "version": "0.1.454",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
@@ -66,6 +66,8 @@
     "unfetch": "^4.2.0"
   },
   "devDependencies": {
+    "@chakra-ui/core": "1.0.0-rc.8",
+    "@chakra-ui/react": "1.4.2",
     "@rescapes/geospatial-sankey": ">=0.7.62",
     "@rescapes/helpers": ">=1.1.114",
     "@rescapes/helpers-component": ">=1.5.143",
@@ -107,6 +109,8 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "peerDependencies": {
+    "@chakra-ui/core": "1.0.0-rc.8",
+    "@chakra-ui/react": "1.4.2",
     "@rescapes/geospatial-sankey": ">=0.7.17",
     "@rescapes/helpers": ">=1.1.99",
     "@rescapes/helpers-component": ">=1.5.38",
