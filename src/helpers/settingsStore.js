@@ -1,5 +1,5 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
-import {makeQueryContainer} from './queryHelpers.js';
+import {composeFuncAtPathIntoApolloConfig, makeQueryContainer} from './queryHelpers.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import {compact, defaultNode, omitDeepPaths, reqStrPathThrowing} from '@rescapes/ramda';
@@ -94,17 +94,12 @@ export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props)
   // Unfortunately a cache miss throws
   try {
     return makeQueryFromCacheContainer(
-      R.merge(apolloConfig,
-        {
-          options: {
-            variables: props => {
-              // We always query settings by key, because we cache it that way and don't care about the id
-              return R.pick(['key'], props);
-            },
-            // Pass through error so we can handle it in the component
-            errorPolicy: 'all',
-            partialRefetch: true
-          }
+      composeFuncAtPathIntoApolloConfig(
+        apolloConfig,
+        'options.variables',
+        props => {
+          // We always query settings by key, because we cache it that way and don't care about the id
+          return R.pick(['key'], props);
         }
       ),
       {name: 'settings', readInputTypeMapper, outputParams},
