@@ -104,7 +104,7 @@ export {
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   settingsQueryContainer,
-  settingsLocalQueryContainer
+  settingsLocalQueryContainer,
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig
@@ -149,5 +149,6 @@ export {
 } from './stores/tokenAuthStore.js';
 
 export {
-  settingsQueryContainerDefault
+  settingsQueryContainerDefault,
+  settingsLocalQueryContainerDefault
 } from './helpers/defaultContainers'
