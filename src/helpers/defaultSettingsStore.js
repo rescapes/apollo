@@ -1,14 +1,14 @@
 import settings from './privateSettings.js';
 import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
-import {mapToNamedPathAndInputs, mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
-import {authenticatedUserLocalContainer} from '../stores/userStore';
 import {settingsQueryContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
 import {loggers} from '@rescapes/log';
 import {inspect} from 'util';
 import T from 'folktale/concurrency/task/index.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
+
 const {of} = T;
 const log = loggers.get('rescapeDefault');
 
@@ -82,6 +82,7 @@ export const defaultSettingsOutputParams = {
 export const defaultSettingsCacheOnlyObjs = ['data.testAuthorization', 'data.mapbox.mapboxAuthentication'];
 // These values come back from the server and get merged into cacheOnlyProps for identification
 export const defaultSettingsCacheIdProps = [
+  'key',
   'id',
   '__typename',
   'data.__typename',
@@ -107,10 +108,10 @@ export const defaultSettingsCacheIdProps = [
  * Only need to write settings to the cache for an unauthed user when no settings are on the server (rare)
  */
 export const writeConfigToServerAndCacheContainer = (config) => {
-  return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}) => {
+  return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}, {render}) => {
     const apolloConfig = {apolloClient};
     // Only the settings are written to the server
-    const props = R.prop('settings', config);
+    const props = R.merge(R.prop('settings', config), {render});
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
       mapToNamedResponseAndInputs('void',
@@ -124,7 +125,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
         ({settingsFromServer, authTokenResponse}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return nameComponent('settingsMutation', R.ifElse(
-            () => strPathOr(false, 'data', authTokenResponse),
+            () => strPathOr(false, 'data.token', authTokenResponse),
             () => {
               // Update the settings on the server with those configured in code.
               // TODO this should be removed in favor of a one time database write

@@ -10,7 +10,7 @@ import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {loggers} from '@rescapes/log';
 import {makeQueryFromCacheContainer} from './queryCacheHelpers';
-import {getRenderPropFunction} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 import * as AC from '@apollo/client';
 
 const {MissingFieldError} = defaultNode(AC);
@@ -217,7 +217,7 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
         propsWithCacheOnlyItems
       );
     },
-    R.filter(p => R.propOr(null, p, props), ['id', 'key'])
+    R.filter(p => R.propOr(null, p, propsWithCacheOnlyItems), ['id', 'key'])
   );
 };
 
@@ -234,17 +234,40 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
   // Add the cache only values to the persisted settings
   const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
 
-  // Mutate the cache to save settings to the database that are not stored on the server
-  return makeCacheMutationContainer(
-    apolloConfig,
-    {
-      name: 'settings',
-      // Use key instead of id in the case of the unauthenticated user needs to cache default settings
-      idField: props => R.propOr(R.prop('key', props), 'id', props),
-      // output for the read fragment
-      outputParams
+  return composeWithComponentMaybeOrTaskChain([
+    ({render}) => {
+      // Just here so compose has at least two functions
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response: {render}
+        }
+      );
     },
-    propsWithCacheOnlyItems
-  );
+    ...R.map(
+      idField => {
+        return ({render}) => {
+          return makeCacheMutationContainer(
+            apolloConfig,
+            {
+              name: 'settings',
+              idField: props => R.compose(
+                // The apollo cache stores non-ids as {"key":"value"} as the cache key.
+                // This makes sense, but it's not documented, so we have to make the same
+                // key in order to match the ones that apollo writes internally
+                R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
+                R.prop(idField)
+              )(props),
+              // output for the read fragment
+              outputParams
+            },
+            R.merge(propsWithCacheOnlyItems, {render})
+          );
+        };
+      },
+      R.filter(p => R.propOr(null, p, propsWithCacheOnlyItems), ['id', 'key'])
+    ),
+  ])(R.pick(['render'], props));
 };
 

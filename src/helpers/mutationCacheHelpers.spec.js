@@ -27,7 +27,12 @@ import {
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import {createSampleSettingsTask} from './defaultSettingsStore.sample.js';
-import {createCacheOnlyPropsForSettings, settingsQueryContainer} from './settingsStore.js';
+import {
+  createCacheOnlyPropsForSettings,
+  makeSettingsCacheMutationContainer,
+  settingsQueryContainer
+} from './settingsStore.js';
+import {settingsLocalQueryContainerDefault} from './defaultContainers';
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',
@@ -69,7 +74,19 @@ describe('mutationCacheHelpers', () => {
       const errors = [];
       composeWithChain([
         // See if the all correct settings in the cache
-        mapToNamedPathAndInputs('settings', 'data.settings',
+        mapToNamedPathAndInputs('settingsWithKey', 'data.settings',
+          ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
+            return settingsLocalQueryContainerDefault(
+              {
+                apolloClient,
+              },
+              {outputParams: defaultSettingsOutputParams},
+              R.pick(['key'], settingsWithoutCacheValues)
+            );
+          }
+        ),
+        // See if the all correct settings in the cache
+        mapToNamedPathAndInputs('settingsWithId', 'data.settings',
           ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
             return settingsQueryContainer(
               {
@@ -86,12 +103,11 @@ describe('mutationCacheHelpers', () => {
         // Just update cache-only values like we would on the browser
         mapToNamedResponseAndInputs('void',
           ({settingsFromCache, apolloConfig}) => {
-            makeCacheMutation(
+            return makeSettingsCacheMutationContainer(
               apolloConfig,
               {
-                name: 'settings',
                 // output for the read fragment
-                outputParams: defaultSettingsOutputParams
+                outputParams: defaultSettingsOutputParams,
               },
               // Make a nonsense change to cache only data
               createCacheOnlyPropsForSettings(
@@ -108,17 +124,17 @@ describe('mutationCacheHelpers', () => {
                 )(settingsFromCache)
               )
             );
-            return of(null);
           }
         ),
         (apolloConfig) => createSampleSettingsTask(apolloConfig),
         () => localTestAuthTask()
       ])().run().listen(defaultRunConfig({
         onResolved:
-          ({settings}) => {
-            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settings)).toContain('happy');
+          ({settingsWithId, settingsWithKey}) => {
+            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithId)).toContain('happy');
+            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithKey)).toContain('happy');
           }
       }, errors, done));
-    }, 100000);
+    }, 1000000);
   }
 );
