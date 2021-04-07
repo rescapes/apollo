@@ -34,7 +34,7 @@
     "publish-minor": "yarn version --minor && yarn publish --non-interactive"
   },
   "dependencies": {
-    "@apollo/client": "^3.3.13",
+    "@apollo/client": "^3.3.14",
     "@apollo/react-hooks": "^4.0.0",
     "@jest/globals": "^26.6.2",
     "@rescapes/translation": "^0.0.26",
@@ -58,19 +58,13 @@
     "ramda-lens": "^0.1.2",
     "react-adopt": "^0.6.0",
     "react-apollo": "^3.0.1",
-    "react-async-component": "^2.0.0",
-    "react-emotion": "^10.0.0",
     "regenerator-runtime": "^0.13.3",
     "request": "^2.88.0",
-    "safe-json-stringify": "^1.2.0",
     "unfetch": "^4.2.0"
   },
   "devDependencies": {
-    "@chakra-ui/core": "1.0.0-rc.8",
-    "@chakra-ui/react": "1.4.2",
-    "@rescapes/geospatial-sankey": ">=0.7.62",
-    "@rescapes/helpers": ">=1.1.114",
-    "@rescapes/helpers-component": ">=1.5.143",
+    "@rescapes/helpers": ">=1.1.115",
+    "@rescapes/helpers-component": ">=1.5.144",
     "@rescapes/log": ">=0.1.30",
     "@rescapes/ramda": ">=1.6.172",
     "@rescapes/validate": ">=1.3.25",
@@ -109,9 +103,6 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "peerDependencies": {
-    "@chakra-ui/core": "1.0.0-rc.8",
-    "@chakra-ui/react": "1.4.2",
-    "@rescapes/geospatial-sankey": ">=0.7.17",
     "@rescapes/helpers": ">=1.1.99",
     "@rescapes/helpers-component": ">=1.5.38",
     "@rescapes/log": ">=0.1.11",
