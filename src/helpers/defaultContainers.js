@@ -10,18 +10,20 @@
  */
 
 import {nameComponent} from './componentHelpersMonadic';
-import {settingsQueryContainer} from './settingsStore';
+import {settingsLocalQueryContainer, settingsQueryContainer} from './settingsStore';
 import {omitClientFields} from './requestHelpers';
 import * as R from 'ramda';
+import {compact} from '@rescapes/ramda';
 
 /**
  * Default settings query container
  * @param {Object} apolloConfig
  * @param {Object} outputParams Unlike other defaults, this query container needs outputParams
  * because implementing libraries will have unique settings
- * @param {Boolean} token Required auth token whose absence tells us to skip the query
  * @param props
- * @param {String} props.key The settings key. This or id must be used to query settings. Usually 'default'
+ * @param {Boolean} [props.token] Optional to indicate that the user is authenticated. Othwerise
+ * localStorage.getItem('token') is consulted. Query is skipped if there is no token
+ * @param {String} props.key The settings key. Defaults to 'default'
  * @param {Number} props.id The settings id. This or id must be used to query settings
  * @returns {*}
  */
@@ -30,14 +32,46 @@ export const settingsQueryContainerDefault = (apolloConfig, {outputParams}, {tok
     settingsQueryContainer(
       R.merge(apolloConfig, {
         options: {
-          skip: !token,
+          skip: !R.propOr(localStorage.getItem('token'), 'token', props),
           fetchPolicy: 'network-only',
           variables: props => {
-            return R.pick(['id', 'key'], props);
+            // Default to key: 'default' if id is not specified
+            return R.merge(
+              R.unless(R.prop('id'), () => ({key: 'default'}))(props),
+              compact(R.pick(['id', 'key'], props))
+            );
           }
         }
       }),
       {outputParams: omitClientFields(outputParams)},
+      props
+    )
+  );
+};
+
+/**
+ * Default settings query. Defaults props 'key' to 'default'
+ * @param apolloConfig
+ * @param outputParams
+ * @param token
+ * @param props
+ * @returns {*}
+ */
+export const settingsLocalQueryContainerDefault = (apolloConfig, {outputParams}, {token, ...props}) => {
+  return nameComponent('settingsLocalQueryContainerDefault',
+    settingsLocalQueryContainer(
+      R.merge(apolloConfig, {
+        options: {
+          variables: props => {
+            // Default to key: 'default' if id is not specified
+            return R.merge(
+              R.unless(R.prop('id'), () => ({key: 'default'}))(props),
+              compact(R.pick(['id', 'key'], props))
+            );
+          }
+        }
+      }),
+      {outputParams},
       props
     )
   );

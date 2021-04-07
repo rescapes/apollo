@@ -8,6 +8,7 @@ import * as R from 'ramda';
 import {loggers} from '@rescapes/log';
 import {inspect} from 'util';
 import T from 'folktale/concurrency/task/index.js';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 const {of} = T;
 const log = loggers.get('rescapeDefault');
 
@@ -120,10 +121,10 @@ export const writeConfigToServerAndCacheContainer = (config) => {
       ),
       // Update/Create the default settings to the database. This puts them in the cache
       mapToNamedResponseAndInputs('settingsWithoutCacheValues',
-        ({settingsFromServer, userResponse}) => {
+        ({settingsFromServer, authTokenResponse}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return nameComponent('settingsMutation', R.ifElse(
-            () => strPathOr(false, 'data', userResponse),
+            () => strPathOr(false, 'data', authTokenResponse),
             () => {
               // Update the settings on the server with those configured in code.
               // TODO this should be removed in favor of a one time database write
@@ -157,9 +158,9 @@ export const writeConfigToServerAndCacheContainer = (config) => {
           ))();
         }
       ),
-      mapToNamedResponseAndInputs('userResponse',
+      mapToNamedResponseAndInputs('authTokenResponse',
         () => {
-          return authenticatedUserLocalContainer({apolloClient}, {});
+          return queryLocalTokenAuthContainer(apolloConfig, {});
         }
       ),
       // Fetch the props if they exist on the server

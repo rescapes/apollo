@@ -12,7 +12,7 @@
 import {inspect} from 'util';
 import * as R from 'ramda';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
-import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
+import {replaceValuesWithCountAtDepthAndStringify, reqStrPathThrowing, defaultNode, capitalize} from '@rescapes/ramda';
 import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {
@@ -29,7 +29,7 @@ import {
 } from './componentHelpersMonadic.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
 
-const {gql} = defaultNode(AC)
+const {gql} = defaultNode(AC);
 
 const log = loggers.get('rescapeDefault');
 
@@ -96,9 +96,12 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  * Like makeQueryWithClientDirectiveContainer but only reads from the cache.
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
- * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
- * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
+ * @params {Object} options
+ * @params {String} options.name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
+ * @params {Object} options.readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
+ * @params {Object} options.readCachedMutations, check cache for query created${Name} and updated${Name}
+ * if name doesn't find anything
  * @param {Array|Object} [outputParams] output parameters for the query in this style json format. See makeQueryContainer
  * @param {Object} component The Apollo component for component queries
  * @param {Function} props The properties to pass to the query.
@@ -147,7 +150,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
     })
   ])(props)
 
-});
+  });
 
 /**
  * Read a fragment from the cache and return a task or apollo client
@@ -161,7 +164,11 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
  * @param {String} props.__typename Required. The typename for the fragment query
  * @param {Number|String} props.id Required. The id for the fragment query
  */
-export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
+export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
+  name,
+  readInputTypeMapper,
+  outputParams
+}, props) => {
   // Write the fragment
   const fragment = gql`${makeFragmentQuery(
   `${name}WithClientFields`,
@@ -172,13 +179,12 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
 
   log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick(['id'], props), false, 2)}\n`);
   return composeWithComponentMaybeOrTaskChain([
-    ({response, ...props})  => {
+    ({response, ...props}) => {
       if (R.has('data', response || {})) {
         log.debug(
           `makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`
         );
-      }
-      else {
+      } else {
         log.debug(
           `makeQueryFromCacheContainer for ${name} return no data`
         );
@@ -202,5 +208,5 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {name, 
           reqStrPathThrowing('id', props)
         );
       })
-  ])(props)
+  ])(props);
 });

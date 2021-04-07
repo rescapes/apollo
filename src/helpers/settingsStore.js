@@ -1,20 +1,25 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
 import {makeQueryContainer} from './queryHelpers.js';
-import {addMutateKeyToMutationResponse} from './containerHelpers.js';
+import {addMutateKeyToMutationResponse, containerForApolloType} from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
-import {omitDeepPaths, reqStrPathThrowing} from '@rescapes/ramda';
+import {compact, defaultNode, omitDeepPaths, reqStrPathThrowing} from '@rescapes/ramda';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {loggers} from '@rescapes/log';
+import {makeQueryFromCacheContainer} from './queryCacheHelpers';
+import {getRenderPropFunction} from './componentHelpersMonadic';
+import * as AC from '@apollo/client';
+
+const {MissingFieldError} = defaultNode(AC);
 
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');
 
-export const settingsTypePolicy = {type: 'SettingsType', fields: ['data']};
+export const settingsTypePolicy = {type: 'SettingsType', fields: ['data'], keyFields: ['key']};
 export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};
 
 /**
@@ -71,6 +76,53 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
     ['props', PropTypes.shape().isRequired]
   ], 'settingsQueryContainer');
 
+/**
+ * Container to get local settings
+ *
+ * @param {Object} apolloConfig
+ * @param apolloConfig.apolloClient. If non-null then a task is returned. If null
+ * an apollo component is returned.
+ * @param {Object} options
+ * @param {Object} options.outputParams Must be specified since different settings are different
+ * for each application
+ * @param {Object} props
+ * @param {Object} props.key Required unless using id
+ * @param {Object} [props.render] Required for component queries
+ * @returns {Task|Object} The authenticated user as a task or apollo component
+ */
+export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props) => {
+  // Unfortunately a cache miss throws
+  try {
+    return makeQueryFromCacheContainer(
+      R.merge(apolloConfig,
+        {
+          options: {
+            variables: props => {
+              // We always query settings by key, because we cache it that way and don't care about the id
+              return R.pick(['key'], props);
+            },
+            // Pass through error so we can handle it in the component
+            errorPolicy: 'all',
+            partialRefetch: true
+          }
+        }
+      ),
+      {name: 'settings', readInputTypeMapper, outputParams},
+      props
+    );
+  } catch (e) {
+    if (R.is(MissingFieldError, e)) {
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response: null
+        }
+      );
+    }
+    throw e;
+  }
+};
 /**
  * Makes a Settings mutation
  * @param {Object} apolloConfig Configuration of the Apollo Client when using one inst
@@ -142,23 +194,35 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {
  * @param outputParams
  * @param props
  * @param settings
+ * @returns [{Object}] The result of one or more cache mutations, usually not needed
  */
 export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, settings) => {
 
   // Add the cache only values to the persisted settings
   const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
 
-  // Mutate the cache to save settings to the database that are not stored on the server
-  makeCacheMutation(
-    apolloConfig,
-    {
-      name: 'settings',
-      // Use key instead of id in the case of the unauthenticated user needs to cache default settings
-      idField: props => R.propOr(R.prop('key', props), 'id', props),
-      // output for the read fragment
-      outputParams
+  // Cache by both key and id, normally we read the cache using the key
+  // If the user isn't authenticated, only cache by key, since we haven't gotten the settings from the database
+  return R.map(
+    idField => {
+      return makeCacheMutation(
+        apolloConfig,
+        {
+          name: 'settings',
+          idField: props => R.compose(
+            // The apollo cache stores non-ids as {"key":"value"} as the cache key.
+            // This makes sense, but it's not documented, so we have to make the same
+            // key in order to match the ones that apollo writes internally
+            R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
+            R.prop(idField)
+          )(props),
+          // output for the read fragment
+          outputParams
+        },
+        propsWithCacheOnlyItems
+      );
     },
-    propsWithCacheOnlyItems
+    R.filter(p => R.propOr(null, p, props), ['id', 'key'])
   );
 };
 

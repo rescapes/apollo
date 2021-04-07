@@ -104,6 +104,7 @@ export {
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   settingsQueryContainer,
+  settingsLocalQueryContainer
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig

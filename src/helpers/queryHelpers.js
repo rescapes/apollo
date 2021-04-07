@@ -13,7 +13,7 @@ import {inspect} from 'util';
 import {
   capitalize,
   compact,
-  defaultNode,
+  defaultNode, lowercase,
   mapObjToValues,
   memoized,
   omitDeep,
@@ -50,9 +50,9 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} queryArguments
  * @returns {String} The query in a string
  */
-export const makeQuery = R.curry((queryName, inputParamTypeMapper, outputParams, queryArguments) => {
+export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryArguments) => {
   return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
-});
+};
 
 /**
  * Creates a fragment query for fetching values from the cache
@@ -134,8 +134,14 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
     R.always(content)
   )(queryConfig);
 
+  // If we pass in a query name based on a mutation, such as 'createSettings' or 'updateSettings',
+  // we need to remove the verb from the outputParams and lowercase
+  const removedCreateUpdateQueryName = R.compose(
+    lowercase,
+    n => R.replace(/^(create|update)/, '', n)
+  )(queryName)
   const output = R.join('', compact([
-    unlessFragment(R.join(' ', compact([queryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
+    unlessFragment(R.join(' ', compact([removedCreateUpdateQueryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
     formatOutputParams(outputParams),
     unlessFragment('}')
   ]));

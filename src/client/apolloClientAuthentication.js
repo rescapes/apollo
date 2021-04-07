@@ -67,7 +67,7 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
     settingsOutputParams
   }).run());
   return composeWithComponentMaybeOrTaskChain([
-    tokenAuthResponse  => {
+    tokenAuthResponse => {
       // Once we have the Apollo client, sync localStorage.getItem('token') with
       // what is in the Apollo Cache from previous session. We use localStorage as
       // a mirror of the cache value when the cache isn't in scope
@@ -85,7 +85,9 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
       return queryLocalTokenAuthContainer(apolloConfig, {render});
     },
 
-    () => writeDefaultsContainer(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams})
+    () => {
+      return writeDefaultsContainer(apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams});
+    }
   ])({
     render
   });
@@ -142,7 +144,7 @@ export const getOrCreateApolloClientAndDefaultsTask = R.curry((
             cacheOptions,
             uri,
             stateLinkResolvers,
-            makeCacheMutation,
+            makeCacheMutation
           }
         );
       })
