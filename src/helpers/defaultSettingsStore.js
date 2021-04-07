@@ -1,14 +1,15 @@
 import settings from './privateSettings.js';
 import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
 import {mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain, nameComponent} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {settingsQueryContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
 import {loggers} from '@rescapes/log';
 import {inspect} from 'util';
 import T from 'folktale/concurrency/task/index.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
-
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+import {e} from '@rescapes/helpers-component'
 const {of} = T;
 const log = loggers.get('rescapeDefault');
 
@@ -114,14 +115,21 @@ export const writeConfigToServerAndCacheContainer = (config) => {
     const props = R.merge(R.prop('settings', config), {render});
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
-      mapToNamedResponseAndInputs('void',
-        ({settingsWithoutCacheValues}) => {
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'void',
+        ({settingsFromServer, settingsWithoutCacheValues}) => {
           log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
-          return of(null);
+          return containerForApolloType(
+            apolloConfig,
+            {
+              render: getRenderPropFunction(props),
+              // This isn't actually used
+              response: R.prop('skip', settingsFromServer) ? settingsWithoutCacheValues : settingsFromServer
+            }
+          )
         }
       ),
       // Update/Create the default settings to the database. This puts them in the cache
-      mapToNamedResponseAndInputs('settingsWithoutCacheValues',
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'settingsWithoutCacheValues',
         ({settingsFromServer, authTokenResponse}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
           return nameComponent('settingsMutation', R.ifElse(
@@ -159,13 +167,17 @@ export const writeConfigToServerAndCacheContainer = (config) => {
           ))();
         }
       ),
-      mapToNamedResponseAndInputs('authTokenResponse',
-        () => {
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
+        ({settingsFromServer}) => {
+          if (!R.prop('skip', settingsFromServer) && !R.prop('data', settingsFromServer)) {
+            // Wait for loading
+            return nameComponent('settingsFromServer', e('div', {}, 'loading'))
+          }
           return queryLocalTokenAuthContainer(apolloConfig, {});
         }
       ),
       // Fetch the props if they exist on the server
-      mapToNamedResponseAndInputs('settingsFromServer',
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'settingsFromServer',
         (props) => {
           return settingsQueryContainerDefault(
             apolloConfig,
