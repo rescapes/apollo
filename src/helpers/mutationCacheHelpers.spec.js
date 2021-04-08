@@ -74,7 +74,7 @@ describe('mutationCacheHelpers', () => {
       const errors = [];
       composeWithChain([
         // See if the all correct settings in the cache
-        mapToNamedPathAndInputs('settingsWithKey', 'data.settings',
+        mapToNamedPathAndInputs('settingsWithKey', 'data',
           ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
             return settingsLocalQueryContainerDefault(
               {
@@ -86,7 +86,7 @@ describe('mutationCacheHelpers', () => {
           }
         ),
         // See if the all correct settings in the cache
-        mapToNamedPathAndInputs('settingsWithId', 'data.settings',
+        mapToNamedPathAndInputs('settingsWithId', 'data.settings.0',
           ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
             return settingsQueryContainer(
               {
@@ -131,8 +131,8 @@ describe('mutationCacheHelpers', () => {
       ])().run().listen(defaultRunConfig({
         onResolved:
           ({settingsWithId, settingsWithKey}) => {
-            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithId)).toContain('happy');
-            expect(strPathOr(null, '0.data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithKey)).toContain('happy');
+            expect(strPathOr(null, 'data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithId)).toContain('happy');
+            expect(strPathOr(null, 'data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithKey)).toContain('happy');
           }
       }, errors, done));
     }, 1000000);

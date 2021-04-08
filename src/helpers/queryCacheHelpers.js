@@ -123,8 +123,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
       // If it's not a component response
       if (R.propOr(false, 'data', response)) {
         log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
-      }
-      else {
+      } else {
         log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
       }
       return containerForApolloType(
@@ -136,21 +135,21 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
       );
     },
     mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
-    props => {
-      return authApolloClientOrComponentQueryCacheContainer(
-        apolloConfig,
-        {
-          query
-        },
-        R.merge(
-          winnowedProps,
-          pickRenderProps(props)
-        )
-      );
-    })
-  ])(props)
+      props => {
+        return authApolloClientOrComponentQueryCacheContainer(
+          apolloConfig,
+          {
+            query
+          },
+          R.merge(
+            winnowedProps,
+            pickRenderProps(props)
+          )
+        );
+      })
+  ])(props);
 
-  });
+});
 
 /**
  * Read a fragment from the cache and return a task or apollo client
@@ -167,6 +166,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
 export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
   name,
   readInputTypeMapper,
+  idField = 'id',
   outputParams
 }, props) => {
   // Write the fragment
@@ -204,8 +204,13 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
           {
             fragment
           },
-          R.omit(['__typename', 'id'], props),
-          reqStrPathThrowing('id', props)
+          R.omit(['__typename', idField], props),
+          // Use the Typename:{"field":"value"} format if idField is not id. The cache seems to require this
+          R.unless(() => R.equals('id', idField), value => {
+            return `${reqStrPathThrowing('__typename', props)}:{"${idField}":"${value}"}`;
+          })(
+            reqStrPathThrowing(idField, props)
+          )
         );
       })
   ])(props);

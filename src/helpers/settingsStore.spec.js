@@ -1,6 +1,6 @@
 import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, strPathOr} from '@rescapes/ramda';
 import {localTestAuthTask} from '../helpers/testHelpers.js';
-import {settingsLocalQueryContainer} from './settingsStore';
+import {settingsCacheFragmentContainer} from './settingsStore';
 import {defaultSettingsOutputParams} from './defaultSettingsStore';
 
 describe('settingsStore', () => {
@@ -9,10 +9,10 @@ describe('settingsStore', () => {
   composeWithChain([
    mapToNamedResponseAndInputs('settingsLocalResponse',
      ({apolloClient}) => {
-      return settingsLocalQueryContainer(
+      return settingsCacheFragmentContainer(
         {apolloClient},
         {outputParams: defaultSettingsOutputParams},
-        {key: 'default'});
+        {key: 'default', __typename: 'SettingsType'});
      }
    ),
    () => localTestAuthTask()
@@ -20,7 +20,7 @@ describe('settingsStore', () => {
     {
      onResolved:
        ({settingsLocalResponse}) => {
-        expect(strPathOr(false, 'data.settings.0', settingsLocalResponse)).toBeTruthy()
+        expect(strPathOr(false, 'data', settingsLocalResponse)).toBeTruthy()
        }
     }, errors, done)
   );

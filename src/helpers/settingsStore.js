@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {loggers} from '@rescapes/log';
-import {makeQueryFromCacheContainer} from './queryCacheHelpers';
+import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 import * as AC from '@apollo/client';
 
@@ -88,22 +88,16 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
  * @param {Object} props
  * @param {Object} props.key Required unless using id
  * @param {Object} [props.render] Required for component queries
- * @returns {Task|Object} The authenticated user as a task or apollo component
+ * @returns {Task|Object} For hits, task or component resolving to {data: settings object}
+ * otherwise resolves to {data: null}
  */
-export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props) => {
+export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
   // Unfortunately a cache miss throws
   try {
-    return makeQueryFromCacheContainer(
-      composeFuncAtPathIntoApolloConfig(
-        apolloConfig,
-        'options.variables',
-        props => {
-          // We always query settings by key, because we cache it that way and don't care about the id
-          return R.pick(['key'], props);
-        }
-      ),
-      {name: 'settings', readInputTypeMapper, outputParams},
-      props
+    return makeReadFragmentFromCacheContainer(
+      apolloConfig,
+      {name: 'settings', readInputTypeMapper, outputParams, idField:'key'},
+      R.merge(props, {'__typename': 'SettingsType'})
     );
   } catch (e) {
     if (R.is(MissingFieldError, e)) {

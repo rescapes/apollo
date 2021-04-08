@@ -10,7 +10,7 @@
  */
 
 import {nameComponent} from './componentHelpersMonadic';
-import {settingsLocalQueryContainer, settingsQueryContainer} from './settingsStore';
+import {settingsCacheFragmentContainer, settingsQueryContainer} from './settingsStore';
 import {omitClientFields} from './requestHelpers';
 import * as R from 'ramda';
 import {compact} from '@rescapes/ramda';
@@ -59,7 +59,7 @@ export const settingsQueryContainerDefault = (apolloConfig, {outputParams}, {tok
  */
 export const settingsLocalQueryContainerDefault = (apolloConfig, {outputParams}, {token, ...props}) => {
   return nameComponent('settingsLocalQueryContainerDefault',
-    settingsLocalQueryContainer(
+    settingsCacheFragmentContainer(
       R.merge(apolloConfig, {
         options: {
           variables: props => {
