@@ -83,7 +83,7 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
     },
 
     () => {
-      const f = apolloClient => {
+      const f = (apolloConfig, apolloClient) => {
         // Set writeDefaultsContainer to reset the cache. reset: true tells the function that this isn't the initial call
         apolloClient.onResetStore(() => writeDefaultsContainer(apolloClient, {
           cacheOnlyObjs,
@@ -91,7 +91,8 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
           settingsOutputParams
         }).run());
         return writeDefaultsContainer(
-          apolloClient,
+          // Pass null for component queries
+          R.propOr(null, 'apolloClient', apolloConfig),
           {cacheOnlyObjs, cacheIdProps, settingsOutputParams},
           {render}
         );
@@ -100,14 +101,14 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
       return R.ifElse(
         R.has('apolloClient'),
         ({apolloClient}) => {
-          return f(apolloClient);
+          return f(apolloConfig, apolloClient);
         },
         () => {
           return e(
             ApolloConsumer,
             {},
             apolloClient => {
-              return f(apolloClient);
+              return f(apolloConfig, apolloClient);
             }
           );
         }

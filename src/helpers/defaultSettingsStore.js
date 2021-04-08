@@ -1,6 +1,6 @@
 import settings from './privateSettings.js';
 import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
-import {mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {compact, mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {settingsQueryContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
@@ -110,18 +110,18 @@ export const defaultSettingsCacheIdProps = [
  */
 export const writeConfigToServerAndCacheContainer = (config) => {
   return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}, {render}) => {
-    const apolloConfig = {apolloClient};
+    const apolloConfig = compact({apolloClient});
     // Only the settings are written to the server
     const props = R.merge(R.prop('settings', config), {render});
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'void',
-        ({settingsFromServer, settingsWithoutCacheValues}) => {
+        ({settingsFromServer, settingsWithoutCacheValues, render}) => {
           log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
           return containerForApolloType(
             apolloConfig,
             {
-              render: getRenderPropFunction(props),
+              render: getRenderPropFunction(render),
               // This isn't actually used
               response: R.prop('skip', settingsFromServer) ? settingsWithoutCacheValues : settingsFromServer
             }
@@ -168,12 +168,12 @@ export const writeConfigToServerAndCacheContainer = (config) => {
         }
       ),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
-        ({settingsFromServer}) => {
+        ({settingsFromServer, render}) => {
           if (!R.prop('skip', settingsFromServer) && !R.prop('data', settingsFromServer)) {
             // Wait for loading
             return nameComponent('settingsFromServer', e('div', {}, 'loading'))
           }
-          return queryLocalTokenAuthContainer(apolloConfig, {});
+          return queryLocalTokenAuthContainer(apolloConfig, {render});
         }
       ),
       // Fetch the props if they exist on the server

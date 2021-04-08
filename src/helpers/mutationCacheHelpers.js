@@ -255,7 +255,7 @@ export const makeCacheMutationContainer = v(R.curry(
    },
    props) => {
 
-    const data = makeCacheMutation(
+    const _makeCacheMutation = apolloConfig => makeCacheMutation(
       apolloConfig,
       {
         idField,
@@ -269,11 +269,11 @@ export const makeCacheMutationContainer = v(R.curry(
       props
     );
 
-    // Put the new cache value in a Task or Maybe.Just, depending on if we have an Apollo Client or Container
+    // Put the new cache value in a Task or component, depending on if we have an Apollo Client or Container
     return R.cond([
       // If we have an ApolloClient
       [apolloConfig => R.has('apolloClient', apolloConfig),
-        () => of(data)
+        () => of(_makeCacheMutation(apolloConfig))
       ],
       // If we have an Apollo Component
       [R.T,
@@ -284,15 +284,13 @@ export const makeCacheMutationContainer = v(R.curry(
             ApolloConsumer,
             {},
             apolloClient => {
+              const _apolloConfig = R.merge(apolloConfig, {apolloClient})
+              const data = _makeCacheMutation(_apolloConfig)
               return containerForApolloType(
                 apolloClient,
                 {
                   render: getRenderPropFunction(props),
-                  response: authApolloClientQueryCache(
-                    R.merge(apolloConfig, {apolloClient}),
-                    data,
-                    props
-                  )
+                  response: data
                 }
               );
             }
