@@ -2,7 +2,14 @@ import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutatio
 import {composeFuncAtPathIntoApolloConfig, makeQueryContainer} from './queryHelpers.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
-import {compact, defaultNode, omitDeepPaths, reqStrPathThrowing} from '@rescapes/ramda';
+import {
+  compact,
+  defaultNode,
+  mapToNamedResponseAndInputs,
+  omitDeepPaths,
+  reqStrPathThrowing,
+  strPathOr
+} from '@rescapes/ramda';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
@@ -12,6 +19,7 @@ import {loggers} from '@rescapes/log';
 import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 import * as AC from '@apollo/client';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const {MissingFieldError} = defaultNode(AC);
 
@@ -94,11 +102,20 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
 export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
   // Unfortunately a cache miss throws
   try {
-    return makeReadFragmentFromCacheContainer(
-      apolloConfig,
-      {name: 'settings', readInputTypeMapper, outputParams, idField:'key'},
-      R.merge(props, {'__typename': 'SettingsType'})
-    );
+    return composeWithComponentMaybeOrTaskChain([
+      ({authTokenResponse, ...props}) => {
+        // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
+        const omitAuthFields = strPathOr(false, 'data.token', authTokenResponse) ? [] : ['id'];
+        return makeReadFragmentFromCacheContainer(
+          apolloConfig,
+          {name: 'settings', readInputTypeMapper, outputParams: R.omit(omitAuthFields, outputParams), idField: 'key'},
+          R.merge(props, {'__typename': 'SettingsType'})
+        );
+      },
+      mapToNamedResponseAndInputs('authTokenResponse',
+        () => queryLocalTokenAuthContainer(apolloConfig, {})
+      )
+    ])(props);
   } catch (e) {
     if (R.is(MissingFieldError, e)) {
       return containerForApolloType(
@@ -261,7 +278,7 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
         };
       },
       R.filter(p => R.propOr(null, p, propsWithCacheOnlyItems), ['id', 'key'])
-    ),
+    )
   ])(R.pick(['render'], props));
 };
 

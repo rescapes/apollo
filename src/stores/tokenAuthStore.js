@@ -75,7 +75,7 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
       apolloConfig,
       {
         render: getRenderPropFunction(props),
-        response: null
+        response: {data: null}
       }
     );
   }

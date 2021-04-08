@@ -169,15 +169,20 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
   idField = 'id',
   outputParams
 }, props) => {
+  // Apply apolloConfig.options.variables, but maintain __typename for the cache lookup
+  const winnowedProps = R.merge(
+    _winnowRequestProps(apolloConfig, props),
+    R.pick(['__typename', 'render'], props)
+  );
   // Write the fragment
   const fragment = gql`${makeFragmentQuery(
   `${name}WithClientFields`,
    readInputTypeMapper,
     outputParams, 
-    R.pick(['__typename'], props)
+    R.pick(['__typename'], winnowedProps)
   )}`;
 
-  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick(['id'], props), false, 2)}\n`);
+  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick([idField], winnowedProps), false, 2)}\n`);
   return composeWithComponentMaybeOrTaskChain([
     ({response, ...props}) => {
       if (R.has('data', response || {})) {
@@ -213,5 +218,5 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
           )
         );
       })
-  ])(props);
+  ])(winnowedProps);
 });
