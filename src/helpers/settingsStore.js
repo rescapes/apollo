@@ -94,9 +94,26 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
  * otherwise resolves to {data: null}
  */
 export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
+  // TODO we are doing a cache fragment read for now because
+  // a cache query read was failing to match. I think this was because of field misalignment,
+  // so we can change this back to query
   // Unfortunately a cache miss throws
   try {
     return composeWithComponentMaybeOrTaskChain([
+      // Return just the cache response
+      response => {
+        return containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(props),
+            response: R.merge({
+                // Simulate a successful load status for our component status check
+                // TODO this is hacky
+                networkStatus: 7, loading: false, called: true},
+              response)
+          }
+        );
+      },
       ({authTokenResponse, ...props}) => {
         // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
         const omitAuthFields = strPathOr(false, 'data.token', authTokenResponse) ? [] : ['id'];
