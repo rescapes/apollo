@@ -90,6 +90,24 @@ export const defaultSettingsCacheIdProps = [
   'data.mapbox.__typename'
 ];
 
+export const settingsDataTypeIdPathLookup = {
+  // Identify routes as unique by key
+  ['routing.routes']: ['key'],
+};
+
+export const settingsTypePolicy = {
+  type: 'SettingsType',
+  fields: ['data'],
+  keyFields: ['key']
+};
+export const settingsDataTypePolicy = {
+  type: 'SettingsDataType',
+  fields: ['mapbox'],
+  idPathLookup: settingsDataTypeIdPathLookup,
+  cacheOnlyFieldLookup: defaultSettingsCacheOnlyObjs
+};
+
+
 
 /**
  * Writes or rewrites the default settings to the cache if needed.

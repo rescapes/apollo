@@ -1,26 +1,19 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
-import {composeFuncAtPathIntoApolloConfig, makeQueryContainer} from './queryHelpers.js';
+import {makeQueryContainer} from './queryHelpers.js';
 import {
   addMutateKeyToMutationResponse,
   containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs
 } from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
-import {
-  compact,
-  defaultNode,
-  mapToNamedResponseAndInputs,
-  omitDeepPaths,
-  reqStrPathThrowing,
-  strPathOr
-} from '@rescapes/ramda';
+import {defaultNode, omitDeepPaths, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {loggers} from '@rescapes/log';
-import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
+import {makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 import * as AC from '@apollo/client';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
@@ -30,9 +23,6 @@ const {MissingFieldError} = defaultNode(AC);
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');
-
-export const settingsTypePolicy = {type: 'SettingsType', fields: ['data'], keyFields: ['key']};
-export const settingsDataTypePolicy = {type: 'SettingsDataType', fields: ['mapbox']};
 
 /**
  * Created by Andy Likuski on 2020.03.20

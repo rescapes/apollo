@@ -10,7 +10,7 @@
  *
  */
 import {tokenAuthTypePolicy} from './stores/tokenAuthStore';
-import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/settingsStore';
+import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/defaultSettingsStore';
 
 /**
  * Combines the given config of the calling library with rescape-apollo's type policies
