@@ -182,7 +182,8 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
     R.pick(['__typename'], winnowedProps)
   )}`;
 
-  log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick([idField], winnowedProps), false, 2)}\n`);
+  // Pausing this because fragments run over and over
+  // log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick([idField], winnowedProps), false, 2)}\n`);
   return composeWithComponentMaybeOrTaskChain([
     ({response, ...props}) => {
       /* Pausing this because fragments run over and over, unlike queries
