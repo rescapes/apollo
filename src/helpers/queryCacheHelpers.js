@@ -185,6 +185,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
   log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick([idField], winnowedProps), false, 2)}\n`);
   return composeWithComponentMaybeOrTaskChain([
     ({response, ...props}) => {
+      /* Pausing this because fragments run over and over, unlike queries
       if (R.has('data', response || {})) {
         log.debug(
           `makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`
@@ -194,6 +195,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
           `makeQueryFromCacheContainer for ${name} return no data`
         );
       }
+      */
       return containerForApolloType(
         apolloConfig,
         {

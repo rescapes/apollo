@@ -1,5 +1,5 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
-import {makeQueryContainer} from './queryHelpers.js';
+import {composeFuncAtPathIntoApolloConfig, makeQueryContainer} from './queryHelpers.js';
 import {
   addMutateKeyToMutationResponse,
   containerForApolloType,
@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers';
 import {loggers} from '@rescapes/log';
-import {makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
+import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
 import * as AC from '@apollo/client';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
@@ -78,6 +78,36 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
     ['props', PropTypes.shape().isRequired]
   ], 'settingsQueryContainer');
 
+
+export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props) => {
+  // Unfortunately a cache miss throws
+  try {
+    return makeQueryFromCacheContainer(
+      composeFuncAtPathIntoApolloConfig(
+        apolloConfig,
+        'options.variables',
+        props => {
+          // We always query settings by key, because we cache it that way and don't care about the id
+          return R.pick(['key'], props);
+        }
+      ),
+      {name: 'settings', readInputTypeMapper, outputParams},
+      props
+    );
+  } catch (e) {
+    if (R.is(MissingFieldError, e)) {
+      return containerForApolloType(
+        apolloConfig,
+        {
+          render: getRenderPropFunction(props),
+          response: null
+        }
+      );
+    }
+    throw e;
+  }
+};
+
 /**
  * Container to get local settings
  *
@@ -95,8 +125,9 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
  */
 export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
   // TODO we are doing a cache fragment read for now because
-  // a cache query read was failing to match. I think this was because of field misalignment,
-  // so we can change this back to query
+  // a cache query read was failing to match. When we mutate the cache we don't
+  // get a query under ROOT_QUERY, so we can't use a cache query.
+  // We need to change our cache mutations to be writes instead of fragment writes
   // Unfortunately a cache miss throws
   try {
     return composeWithComponentMaybeOrTaskChain([

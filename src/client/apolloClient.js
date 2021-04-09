@@ -443,7 +443,8 @@ export const apolloClientReadFragmentCache = R.curry((apolloConfig, fragment, id
   try {
     const data = reqStrPathThrowing('apolloClient', apolloConfig).readFragment({fragment, id})
     // Put in data to match the return structure of normal queries
-    log.debug(`Read Fragment Returned: ${data ? inspect(data, false, 10) : 'No response'}`)
+    // Pausing this because fragment reads run over and over, unlike cache queries
+    //log.debug(`Read Fragment Returned: ${data ? inspect(data, false, 10) : 'No response'}`)
     return {
       data
     };
