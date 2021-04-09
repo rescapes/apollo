@@ -98,7 +98,7 @@ export const defaultSettingsCacheIdProps = [
  * @param {Object} config
  * @param {Object} config.settings The settings to write. It must match Settings object of the Apollo schema,
  * although cache-only values can be included
- * @param {Object} config.defaultSettingsTypenames Typenmaes of the settings in the form
+ * @param {Object} config.defaultSettingsTypenames Typenames of the settings in the form
  * {
  *   __typename: string,
  *   data: {

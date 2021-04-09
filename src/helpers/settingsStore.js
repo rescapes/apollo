@@ -1,6 +1,10 @@
 import {createCacheOnlyProps, makeCacheMutation, mergeCacheable} from './mutationCacheHelpers.js';
 import {composeFuncAtPathIntoApolloConfig, makeQueryContainer} from './queryHelpers.js';
-import {addMutateKeyToMutationResponse, containerForApolloType} from './containerHelpers.js';
+import {
+  addMutateKeyToMutationResponse,
+  containerForApolloType,
+  mapTaskOrComponentToNamedResponseAndInputs
+} from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers';
 import {
   compact,
@@ -112,8 +116,10 @@ export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, pro
           R.merge(props, {'__typename': 'SettingsType'})
         );
       },
-      mapToNamedResponseAndInputs('authTokenResponse',
-        () => queryLocalTokenAuthContainer(apolloConfig, {})
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
+        ({render}) => {
+          return queryLocalTokenAuthContainer(apolloConfig, {render});
+        }
       )
     ])(props);
   } catch (e) {

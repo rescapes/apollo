@@ -78,9 +78,12 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData.js';
 export {
-  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys,
-  createTestAuthTask, createTestNoAuthTask, settingsConfig
+  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys, settingsConfig
 } from './helpers/testHelpers.js';
+export {
+  initializeAuthorizedTask, initializeNoAuthTask
+} from './helpers/initializationHelpers';
+
 export {defaultStateLinkResolvers} from './client/stateLink.js';
 export {
   containerForApolloType, callMutationNTimesAndConcatResponses,
@@ -104,7 +107,7 @@ export {
   createCacheOnlyPropsForSettings,
   readInputTypeMapper,
   settingsQueryContainer,
-  settingsCacheFragmentContainer,
+  settingsCacheFragmentContainer
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig
@@ -151,4 +154,4 @@ export {
 export {
   settingsQueryContainerDefault,
   settingsLocalQueryContainerDefault
-} from './helpers/defaultContainers'
+} from './helpers/defaultContainers';

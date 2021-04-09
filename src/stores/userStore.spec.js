@@ -11,9 +11,8 @@
 
 import {composeWithChain, defaultRunConfig, expectKeysAtPath, mapToNamedResponseAndInputs} from '@rescapes/ramda';
 import {authenticatedUserLocalContainer, currentUserQueryContainer, userOutputParams} from './userStore.js';
-import {createTestNoAuthTask, localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers.js';
-import T from 'folktale/concurrency/task/index.js';
-
+import {initializeNoAuthTask} from '../helpers/initializationHelpers.js';
+import {localTestAuthTask, localTestConfig, localTestNoAuthTask} from '../helpers/testHelpers.js';
 
 describe('userStore', () => {
   test('currentUserQueryContainer', done => {
@@ -83,7 +82,7 @@ describe('userStore', () => {
           return authenticatedUserLocalContainer({apolloClient}, {});
         }
       ),
-      () => createTestNoAuthTask(localTestConfig)
+      () => initializeNoAuthTask(localTestConfig)
     ])().run().listen(defaultRunConfig(
       {
         onResolved:

@@ -26,7 +26,7 @@ import {
   writeDefaultSettingsToCacheContainer
 } from '../helpers/defaultSettingsStore.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
-import {createTestAuthTask, createTestNoAuthTask} from '../helpers/testHelpers.js';
+import {initializeAuthorizedTask, initializeNoAuthTask} from '../helpers/initializationHelpers.js'
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {typePoliciesConfig} from '../config';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
@@ -90,7 +90,7 @@ describe('login', () => {
 
   test('createNoAuthTask', done => {
     const errors = [];
-    createTestNoAuthTask(localTestConfig).run().listen(defaultRunConfig(
+    initializeNoAuthTask(localTestConfig).run().listen(defaultRunConfig(
       {
         onResolved:
           response => {
@@ -136,7 +136,7 @@ describe('login', () => {
         }
       ),
       () => {
-        return createTestNoAuthTask(localTestConfig);
+        return initializeNoAuthTask(localTestConfig);
       }
     ])().run().listen(defaultRunConfig(
       {
@@ -154,7 +154,7 @@ describe('login', () => {
 
   test('noLoginToAuthClientTask', done => {
     const errors = [];
-    createTestNoAuthTask(localTestConfig).run().listen(defaultRunConfig({
+    initializeNoAuthTask(localTestConfig).run().listen(defaultRunConfig({
         onResolved:
           response => {
             expect(response.apolloClient).not.toBeNull();

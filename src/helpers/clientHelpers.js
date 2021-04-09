@@ -191,8 +191,9 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
  * @param {String} [config.settings.data.api.port] E.g. '8008'
  * @param {String} [config.settings.data.api.path] E.g. '/graphql/'
  * @param {String} [config.settings.data.api.uri] Uri to use instead of the above parts
+ * @param {Object} [config.settings.data.outputParams] Output params. Defaults to defaultSettingsOutputParams
  * @param {Object} config.settings.data.testAuthorization Special test section in the settings with
- * @param {Object} [config.apollo.stateLinkResolvers] Optional opject of stateLinkResolvers to pass to the Apollo Client
+ * @param {Object} [config.apollo.stateLinkResolvers] Optional object of stateLinkResolvers to pass to the Apollo Client
  * @param {Function} config.apollo.writeDefaultsCreator Required. Function to write defaults to the cache.
  * Accepts the testConfig with the writeDefaultsCreator key removed
  * @param {Object} [config.apollo.cacheOptions] An object to pass to the Apollo InMemoryCache.
@@ -218,7 +219,7 @@ export const createLocalStorageAuthContainer = (config, {render}) => {
     settingsConfig: {
       cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
       cacheIdProps: defaultSettingsCacheIdProps,
-      settingsOutputParams: defaultSettingsOutputParams
+      settingsOutputParams: reqStrPathThrowing('settingsConfig.settingsOutputParams', config)
     }
   }, {render});
 };
