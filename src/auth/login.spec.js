@@ -28,7 +28,7 @@ import {
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {initializeAuthorizedTask, initializeNoAuthTask} from '../helpers/initializationHelpers.js'
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import {typePoliciesConfig} from '../config';
+import {typePoliciesConfig, typePoliciesConfigLocal} from '../config';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
@@ -44,7 +44,7 @@ describe('login', () => {
       mapToNamedResponseAndInputs('apolloConfig2',
         ({apolloConfig}) => {
           return authClientOrLoginTask({
-            cacheOptions: cacheOptions(typePoliciesConfig),
+            cacheOptions: cacheOptions(typePoliciesConfigLocal),
             uri,
             stateLinkResolvers: defaultStateLinkResolvers,
             writeDefaultsContainer: writeDefaultSettingsToCacheContainer,
@@ -60,7 +60,7 @@ describe('login', () => {
       mapToMergedResponseAndInputs(
         () => {
           return authClientOrLoginTask({
-              cacheOptions: cacheOptions(typePoliciesConfig),
+              cacheOptions: cacheOptions(typePoliciesConfigLocal),
               uri,
               stateLinkResolvers: defaultStateLinkResolvers,
               writeDefaultsContainer: writeDefaultSettingsToCacheContainer,

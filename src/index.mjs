@@ -110,7 +110,8 @@ export {
   settingsCacheFragmentContainer
 } from './helpers/settingsStore.js';
 export {
-  typePoliciesConfig
+  typePoliciesConfig,
+  typePolicies
 } from './config.js';
 export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer

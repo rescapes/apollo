@@ -9,7 +9,8 @@ import {inspect} from 'util';
 import T from 'folktale/concurrency/task/index.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
-import {e} from '@rescapes/helpers-component'
+import {e} from '@rescapes/helpers-component';
+
 const {of} = T;
 const log = loggers.get('rescapeDefault');
 
@@ -90,23 +91,28 @@ export const defaultSettingsCacheIdProps = [
   'data.mapbox.__typename'
 ];
 
-export const settingsDataTypeIdPathLookup = {
+export const settingsTypeIdPathLookup = {
   // Identify routes as unique by key
-  ['routing.routes']: ['key'],
+  ['data.routing.routes']: ['key']
 };
 
 export const settingsTypePolicy = {
   type: 'SettingsType',
+  keyFields: ['key'],
   fields: ['data'],
-  keyFields: ['key']
+  idPathLookup: settingsTypeIdPathLookup,
+  cacheOnlyFieldLookup: {
+    data: {testAuthorization: true, mapbox: true}
+  }
 };
+
 export const settingsDataTypePolicy = {
   type: 'SettingsDataType',
   fields: ['mapbox'],
-  idPathLookup: settingsDataTypeIdPathLookup,
-  cacheOnlyFieldLookup: defaultSettingsCacheOnlyObjs
+  cacheOnlyFieldLookup: {
+    mapbox: {mapboxAuthentication: true}
+  }
 };
-
 
 
 /**
@@ -143,7 +149,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
               // This isn't actually used
               response: R.prop('skip', settingsFromServer) ? settingsWithoutCacheValues : settingsFromServer
             }
-          )
+          );
         }
       ),
       // Update/Create the default settings to the database. This puts them in the cache
@@ -189,7 +195,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
         ({settingsFromServer, render}) => {
           if (!R.prop('skip', settingsFromServer) && !R.prop('data', settingsFromServer)) {
             // Wait for loading
-            return nameComponent('settingsFromServer', e('div', {}, 'loading'))
+            return nameComponent('settingsFromServer', e('div', {}, 'loading'));
           }
           return queryLocalTokenAuthContainer(apolloConfig, {render});
         }

@@ -16,7 +16,7 @@ import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js';
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
-import {typePoliciesConfig} from '../config.js';
+import {typePoliciesConfig, typePoliciesConfigLocal} from '../config.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -57,7 +57,7 @@ export const localTestConfig = {
   apollo: {
     writeDefaultsCreator: writeConfigToServerAndCacheContainer,
     stateLinkResolvers: defaultStateLinkResolvers,
-    cacheOptions: cacheOptions(typePoliciesConfig)
+    cacheOptions: cacheOptions(typePoliciesConfigLocal)
   }
 };
 

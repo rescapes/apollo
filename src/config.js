@@ -11,13 +11,26 @@
  */
 import {tokenAuthTypePolicy} from './stores/tokenAuthStore';
 import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/defaultSettingsStore';
+import * as R from 'ramda';
+
 
 /**
- * Combines the given config of the calling library with rescape-apollo's type policies
- * @returns {[Object]} List of type policies
+ * Raw Type Policies. Implementors should merges theirs with these
+ * @type {{settingsDataTypePolicy: {cacheOnlyFieldLookup: {mapbox: {mapboxAuthentication: boolean}}, type: string, fields: [string]}, settingsTypePolicy: {cacheOnlyFieldLookup: {data: {mapbox: boolean, testAuthorization: boolean}}, keyFields: [string], type: string, fields: [string], idPathLookup: {[p: string]: [string], 'data.routing.routes': string[]}}, tokenAuthTypePolicy: {keyFields: [], outputParams: {payload: number, token: number}, name: string, type: string}}}
  */
-export const typePoliciesConfig = [
+export const typePolicies = {
   settingsTypePolicy,
   settingsDataTypePolicy,
   tokenAuthTypePolicy
-];
+}
+
+/**
+ * Takes the values of the typePolicies.
+ * @returns {[Object]} List of type policies
+ */
+export const typePoliciesConfig = mergedTypePolicies => {
+  return R.values(mergedTypePolicies)
+}
+
+// For local testing only
+export const typePoliciesConfigLocal = typePoliciesConfig(typePolicies);
