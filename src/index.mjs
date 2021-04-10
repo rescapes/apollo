@@ -111,7 +111,8 @@ export {
 } from './helpers/settingsStore.js';
 export {
   typePoliciesConfig,
-  typePolicies
+  typePolicies,
+  cacheOptions
 } from './config.js';
 export {
   makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer

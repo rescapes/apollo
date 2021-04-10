@@ -53,6 +53,9 @@ const log = loggers.get('rescapeDefault');
 export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryArguments) => {
   return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 };
+export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, outputParams, queryArguments) => {
+  return _makeQuery({queryRootName: lowercase(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+};
 
 /**
  * Creates a fragment query for fetching values from the cache
@@ -76,6 +79,8 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @param {Object} queryConfig
  * @param {Boolean} queryConfig.client If true adds a client directive
  * @param {Boolean} queryConfig.isFragment If true creates a fragment
+ * @param {Boolean} queryConfig.queryRootName: Named for the root query for write queries
+ * that must match the typename
  * @param queryName
  * @param inputParamTypeMapper
  * @param {Array|Object} outputParams
@@ -85,7 +90,7 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @return {string} The query string, not gql
  * @private
  */
-export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
+export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
   // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
@@ -141,7 +146,7 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
     n => R.replace(/^(create|update)/, '', n)
   )(queryName)
   const output = R.join('', compact([
-    unlessFragment(R.join(' ', compact([removedCreateUpdateQueryName, parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
+    unlessFragment(R.join(' ', compact([strPathOr(removedCreateUpdateQueryName, 'queryRootName', queryConfig), parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
     formatOutputParams(outputParams),
     unlessFragment('}')
   ]));
@@ -150,7 +155,7 @@ export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper
   return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
   ${output}
 }`;
-});
+};
 
 /**
  * Composes normalizeProps onto options.variables function if already defined by the caller.

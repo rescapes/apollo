@@ -131,28 +131,46 @@ export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, pro
   // Unfortunately a cache miss throws
   try {
     return composeWithComponentMaybeOrTaskChain([
-      // Return just the cache response
-      response => {
-        return containerForApolloType(
-          apolloConfig,
-          {
-            render: getRenderPropFunction(props),
-            response: R.merge({
-                // Simulate a successful load status for our component status check
-                // TODO this is hacky
-                networkStatus: 7, loading: false, called: true},
-              response)
-          }
-        );
-      },
       ({authTokenResponse, ...props}) => {
         // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
-        const omitAuthFields = strPathOr(false, 'data.token', authTokenResponse) ? [] : ['id'];
-        return makeReadFragmentFromCacheContainer(
-          apolloConfig,
-          {name: 'settings', readInputTypeMapper, outputParams: R.omit(omitAuthFields, outputParams), idField: 'key'},
-          R.merge(props, {'__typename': 'SettingsType'})
-        );
+        const authenticated = strPathOr(false, 'data.token', authTokenResponse);
+
+        if (authenticated) {
+          return settingsLocalQueryContainer(
+            apolloConfig,
+            {name: 'settings', readInputTypeMapper, outputParams: outputParams, idField: 'key'},
+            R.merge(props, {'__typename': 'SettingsType'})
+          );
+        } else {
+          const omitAuthFields = ['id'];
+          return composeWithComponentMaybeOrTaskChain([
+            // Return just the cache response
+            response => {
+              return containerForApolloType(
+                apolloConfig,
+                {
+                  render: getRenderPropFunction(props),
+                  response: R.merge({
+                      // Simulate a successful load status for our component status check
+                      // TODO this is hacky
+                      networkStatus: 7, loading: false, called: true
+                    },
+                    response)
+                }
+              );
+            },
+            props => makeReadFragmentFromCacheContainer(
+              apolloConfig,
+              {
+                name: 'settings',
+                readInputTypeMapper,
+                outputParams: R.omit(omitAuthFields, outputParams),
+                idField: 'key'
+              },
+              props
+            )
+          ])(R.merge(props, {'__typename': 'SettingsType'}));
+        }
       },
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
         ({render}) => {

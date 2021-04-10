@@ -22,7 +22,7 @@ import {
   reqStrPathThrowing
 } from '@rescapes/ramda';
 import PropTypes from 'prop-types';
-import {makeFragmentQuery} from './queryHelpers.js';
+import {makeFragmentQuery, makeQuery, makeWriteQuery} from './queryHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
@@ -116,6 +116,34 @@ export const makeCacheMutation = v(R.curry(
         id
       }, props)
     )(props);
+
+    /*
+    This is an attempt to use writeQuery instead of writeFragment. Currently writeQuery
+    doesn't actually write anything to the cache, so I need to debug more
+    const writeQuery = gql`${makeWriteQuery(
+      `write${capitalize(name)}`,
+      props.__typename,
+      {},
+      minimizedOutputParams,
+      {[idField]: id}
+      )
+    }`;
+
+    log.debug(`Write Cache Query: ${
+      print(writeQuery)
+    } ${idField}: ${id} data ${
+      inspect(propsWithPossibleMerge, null, 10)
+    }`);
+
+    apolloClientOrStore.writeQuery({query: writeQuery, variables: {[idField]: id}, data: propsWithPossibleMerge});
+    // Read to verify that the write succeeded.
+    // If this throws then we did something wrong
+    try {
+      const test = apolloClientOrStore.readQuery({query: writeQuery, variables: {[idField]: id}});
+      if (!test) {
+        throw new Error('null readQuery result');
+      }
+    */
 
     // Write the fragment
     const writeFragment = gql`${makeFragmentQuery(

@@ -12,6 +12,7 @@
 import {tokenAuthTypePolicy} from './stores/tokenAuthStore';
 import {settingsDataTypePolicy, settingsTypePolicy} from './helpers/defaultSettingsStore';
 import * as R from 'ramda';
+import {typePoliciesWithMergeObjects} from './helpers/clientHelpers';
 
 
 /**
@@ -34,3 +35,17 @@ export const typePoliciesConfig = mergedTypePolicies => {
 
 // For local testing only
 export const typePoliciesConfigLocal = typePoliciesConfig(typePolicies);
+
+/**
+ * Create the cacheOptions needed by typePoliciesWithMergeObjects. You must pass a merge
+ * of all type policies form rescape-apollo and whatever libraries are calling this
+ * @param mergedTypePolicies
+ * @returns {{typePolicies}}
+ */
+export const cacheOptions = mergedTypePolicies => {
+  return {
+    typePolicies: typePoliciesWithMergeObjects(
+      typePoliciesConfig(mergedTypePolicies)
+    )
+  };
+};
