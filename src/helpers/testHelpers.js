@@ -14,17 +14,14 @@ import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
-import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js';
-import {typePoliciesWithMergeObjects} from './clientHelpers.js';
-import {cacheOptions, typePoliciesConfig, typePoliciesConfigLocal} from '../config.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams, defaultSettingsTypenames
+  defaultSettingsOutputParams,
+  defaultSettingsTypenames,
+  writeConfigToServerAndCacheContainer
 } from './defaultSettingsStore.js';
-import {parseApiUrl} from '@rescapes/helpers';
-import {loginToAuthClientTask} from '../auth/login';
-import {getOrCreateApolloClientAndDefaultsTask} from '../client/apolloClientAuthentication';
+import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
 import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers';
 
 

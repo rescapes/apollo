@@ -33,7 +33,7 @@ import {
   verifyTokenMutationRequestContainer
 } from './tokenAuthStore.js';
 import {settingsQueryContainer} from '../helpers/settingsStore.js';
-import {cacheOptions, typePoliciesConfigLocal} from '../config';
+import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
 import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);

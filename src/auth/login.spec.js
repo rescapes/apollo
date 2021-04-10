@@ -12,7 +12,8 @@
 import {localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
 import {
   composeWithChain,
-  defaultRunConfig, mapToMergedResponseAndInputs,
+  defaultRunConfig,
+  mapToMergedResponseAndInputs,
   mapToNamedResponseAndInputs,
   reqStrPathThrowing,
   strPathOr
@@ -22,13 +23,14 @@ import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams, defaultSettingsTypenames,
+  defaultSettingsOutputParams,
+  defaultSettingsTypenames,
   writeDefaultSettingsToCacheContainer
 } from '../helpers/defaultSettingsStore.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
-import {initializeAuthorizedTask, initializeNoAuthTask} from '../helpers/initializationHelpers.js'
+import {initializeNoAuthTask} from '../helpers/initializationHelpers.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import {cacheOptions, typePoliciesConfig, typePoliciesConfigLocal} from '../config';
+import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
