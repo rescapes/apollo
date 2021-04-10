@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
+import {localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
 import {
   composeWithChain,
   defaultRunConfig, mapToMergedResponseAndInputs,
@@ -28,7 +28,7 @@ import {
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {initializeAuthorizedTask, initializeNoAuthTask} from '../helpers/initializationHelpers.js'
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import {typePoliciesConfig, typePoliciesConfigLocal} from '../config';
+import {cacheOptions, typePoliciesConfig, typePoliciesConfigLocal} from '../config';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);

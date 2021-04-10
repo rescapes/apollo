@@ -78,7 +78,7 @@ export {
   sampleResourceProps
 } from './helpers/samples/sampleData.js';
 export {
-  localTestConfig, localTestAuthTask, localTestNoAuthTask, cacheOptions, expectKeys, settingsConfig
+  localTestConfig, localTestAuthTask, localTestNoAuthTask, expectKeys, settingsConfig
 } from './helpers/testHelpers.js';
 export {
   initializeAuthorizedTask, initializeNoAuthTask

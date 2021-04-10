@@ -16,7 +16,7 @@ import {v} from '@rescapes/validate';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {writeConfigToServerAndCacheContainer} from './defaultSettingsStore.js';
 import {typePoliciesWithMergeObjects} from './clientHelpers.js';
-import {typePoliciesConfig, typePoliciesConfigLocal} from '../config.js';
+import {cacheOptions, typePoliciesConfig, typePoliciesConfigLocal} from '../config.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -27,19 +27,6 @@ import {loginToAuthClientTask} from '../auth/login';
 import {getOrCreateApolloClientAndDefaultsTask} from '../client/apolloClientAuthentication';
 import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers';
 
-/**
- * InMemoryCache Policies for tests. This makes sure that the given type fields merge existing with incoming
- * when updating the cache
- * @params {[Object]} typePoliciesConfig List of TypePolicy objects
- * @type {any}
- */
-export const cacheOptions = typePoliciesConfig => {
-  return {
-    typePolicies: typePoliciesWithMergeObjects(
-      typePoliciesConfig
-    )
-  };
-};
 
 /**
  * The config for test. We add some cache only properties to

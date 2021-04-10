@@ -14,9 +14,10 @@ import {
   defaultRunConfig,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing, strPathOr
+  reqStrPathThrowing,
+  strPathOr
 } from '@rescapes/ramda';
-import {cacheOptions, localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
+import {localTestAuthTask, localTestConfig} from '../helpers/testHelpers.js';
 import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {
   defaultSettingsCacheIdProps,
@@ -26,14 +27,13 @@ import {
 } from '../helpers/defaultSettingsStore.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
-  deleteRefreshTokenCookieMutationRequestContainer,
   deleteTokenCookieMutationRequestContainer,
   queryLocalTokenAuthContainer,
   refreshTokenMutationRequestContainer,
   verifyTokenMutationRequestContainer
 } from './tokenAuthStore.js';
 import {settingsQueryContainer} from '../helpers/settingsStore.js';
-import {typePoliciesConfig, typePoliciesConfigLocal} from '../config';
+import {cacheOptions, typePoliciesConfigLocal} from '../config';
 import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
@@ -51,7 +51,7 @@ describe('tokenAuthStore', () => {
       ),
       mapToNamedPathAndInputs(
         'refreshToken', 'result.data.refreshToken.payload',
-        ({apolloConfig: {apolloClient}, tokenAuth,  verifyToken}) => {
+        ({apolloConfig: {apolloClient}, tokenAuth, verifyToken}) => {
           return refreshTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
         }
       ),

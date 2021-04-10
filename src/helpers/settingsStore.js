@@ -135,14 +135,17 @@ export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, pro
         // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
         const authenticated = strPathOr(false, 'data.token', authTokenResponse);
 
-        if (authenticated) {
+        const omitAuthFields = authenticated ? [] : ['id'];
+        if (false && authenticated) {
+          // TODO this is disabled because I havne't figured out wow to get writeQuery
+          // to actually put values in the cache, which means that readQuery fails
+          // because we are writing fragments and not queries, so no query matches
           return settingsLocalQueryContainer(
             apolloConfig,
             {name: 'settings', readInputTypeMapper, outputParams: outputParams, idField: 'key'},
             R.merge(props, {'__typename': 'SettingsType'})
           );
         } else {
-          const omitAuthFields = ['id'];
           return composeWithComponentMaybeOrTaskChain([
             // Return just the cache response
             response => {
