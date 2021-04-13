@@ -151,7 +151,8 @@ export {
   tokenAuthMutationContainer,
   deleteTokenCookieMutationRequestContainer,
   deleteRefreshTokenCookieMutationRequestContainer,
-  queryLocalTokenAuthContainer
+  queryLocalTokenAuthContainer,
+  tokenAuthOutputParams
 } from './stores/tokenAuthStore.js';
 
 export {
