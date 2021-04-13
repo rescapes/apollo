@@ -90,7 +90,7 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @return {string} The query string, not gql
  * @private
  */
-export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
+export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
   const resolve = resolveGraphQLType(inputParamTypeMapper);
 
   // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
@@ -155,7 +155,7 @@ export const _makeQuery = (queryConfig, queryName, inputParamTypeMapper, outputP
   return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
   ${output}
 }`;
-};
+});
 
 /**
  * Composes normalizeProps onto options.variables function if already defined by the caller.

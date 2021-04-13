@@ -97,6 +97,7 @@ export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './h
 export {
   writeDefaultSettingsToCacheContainer,
   defaultSettingsOutputParams,
+  settingsTypeIdPathLookup,
   defaultSettingsCacheOnlyObjs,
   defaultSettingsCacheIdProps,
   defaultSettingsTypenames,
