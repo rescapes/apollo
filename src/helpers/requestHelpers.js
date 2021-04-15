@@ -396,7 +396,7 @@ export const _winnowRequestProps = (apolloConfig, props) => {
     return R.ifElse(
       prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
       () => {
-        // Deep omit _typename
+        // Deep omit __typename
         return R.compose(
           ...R.map(path => {
             return R.when(
@@ -415,6 +415,7 @@ export const _winnowRequestProps = (apolloConfig, props) => {
                 );
               }
             )(value);
+            // Look for __typename here in the queries/mutations
           }, [['data'], ['result', 'data']])
         )(
           value
