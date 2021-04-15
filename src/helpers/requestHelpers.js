@@ -406,7 +406,7 @@ export const _winnowRequestProps = (apolloConfig, props) => {
                   R.lensPath(path),
                   data => {
                     return data && omitDeepBy(_prop => {
-                        return R.startsWith('_typename_', _prop);
+                        return R.startsWith('__typename', _prop);
                       },
                       data
                     );
