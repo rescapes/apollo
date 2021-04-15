@@ -12,7 +12,20 @@
 import {inspect} from 'util';
 import ramdaLens from 'ramda-lens';
 import pluralize from 'pluralize';
-import { capitalize, filterWithKeys, flattenObj, mapObjToValues, mergeDeepAll, omitDeepBy, pickDeepPaths, reqStrPath, strPathOr, strPathOrNullOk, unflattenObj } from '@rescapes/ramda'
+import {
+  capitalize,
+  compact,
+  filterWithKeys,
+  flattenObj,
+  mapObjToValues,
+  mergeDeepAll,
+  omitDeepBy,
+  pickDeepPaths,
+  reqStrPath,
+  strPathOr,
+  strPathOrNullOk,
+  unflattenObj
+} from '@rescapes/ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result/index.js';
 
@@ -362,17 +375,61 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
  * @param {Object} props Props to winnow
  * @returns {Object} The winnowed props
  */
+/**
+ * Given an apolloConfig with options.variables, where variables is a function, this runs
+ * the props through the variables function to deliver the props that the query will be built upon.
+ * @param {Object} apolloConfig Apollo config
+ * @param {Object} apolloConfig.options
+ * @param {Function|Object} apolloConfig.options.variables A unary function that expects props and returns the winnowed props
+ * If an object then props are ignored and these values are returned. This would only occur if the variables were constant,
+ * which seems unlikely, but matches Apollo's possible configuration
+ * @param {Object} props Props to winnow
+ * @returns {Object} The winnowed props
+ */
 export const _winnowRequestProps = (apolloConfig, props) => {
   const func = strPathOr(R.identity, 'options.variables', apolloConfig);
   const resolvedProps = R.when(R.is(Function), R.applyTo(props))(func);
   // Remove _typename props that might be left from the result of previous Apollo requests
   // Also remove the render and children prop if not done by options.variables. We never want these is our request
-  return omitDeepBy(prop => {
-    return R.either(
-      p => R.includes(p, ['render', 'children']),
-      p => R.startsWith('_', p)
+  return compact(R.mapObjIndexed((value, prop) => {
+    return R.ifElse(
+      prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
+      () => {
+        // Deep omit _typename
+        return R.compose(
+          ...R.map(path => {
+            return R.when(
+              () => pathOr(false, path),
+              value => {
+                return R.over(
+                  R.lensPath(path),
+                  data => {
+                    return data && omitDeepBy(_prop => {
+                        return R.startsWith('_typename_', _prop);
+                      },
+                      data
+                    );
+                  },
+                  value
+                );
+              }
+            )(value);
+          }, [['data'], ['result', 'data']])
+        )(
+          value
+        );
+      },
+      prop => {
+        // Remove render and children
+        return R.when(
+          () => {
+            return R.includes(prop, ['render', 'children']);
+          },
+          () => null
+        )(value);
+      }
     )(prop);
-  }, resolvedProps);
+  }, resolvedProps));
 };
 
 /**

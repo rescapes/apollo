@@ -446,7 +446,9 @@ export const apolloClientReadFragmentCache = R.curry((apolloConfig, fragment, id
     // Pausing this because fragment reads run over and over, unlike cache queries
     //log.debug(`Read Fragment Returned: ${data ? inspect(data, false, 10) : 'No response'}`)
     return {
-      data
+      data,
+      // Match query flags so we know that the data is ready
+      networkStatus: 7, loading: false, called: true
     };
   } catch (e) {
     log.error(`Could not read the fragment just written to the cache. Fragment ${print(fragment)}. Id: ${id}`);
