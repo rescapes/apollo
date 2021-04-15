@@ -24,7 +24,8 @@ import {
   reqStrPath,
   strPathOr,
   strPathOrNullOk,
-  unflattenObj
+  unflattenObj,
+  pathOr
 } from '@rescapes/ramda';
 import * as R from 'ramda';
 import Result from 'folktale/result/index.js';
