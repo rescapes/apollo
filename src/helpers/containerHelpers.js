@@ -360,7 +360,7 @@ export const callMutationNTimesAndConcatResponses = (
           return queryForExistingContainer ?
             queryForExistingContainer(
               apolloConfig,
-              {outputParams: {id: 1}},
+              {outputParams: outputParams || {id: true}},
               R.merge(existingMatchingProps, {render})
             ) :
             containerForApolloType(
