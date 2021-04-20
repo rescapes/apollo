@@ -175,7 +175,17 @@ export const writeConfigToServerAndCacheContainer = (config) => {
               // but we need to write any non server settings
               // If we don't have settings from the server and we aren't authenticated, just
               // cache the configured settings
-              const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepRight(
+              const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepWithKey(
+                (k,l,r) => {
+                  if (Array.isArray(l)) {
+                    // Merge the typename of defaultSettingsTypenames into each item of arrays
+                    return R.map(item => R.merge(item, r), l)
+                  }
+                  else {
+                    // Merge the typename of defaultSettingsTypenames into the obj
+                    return R.merge(l, r)
+                  }
+                },
                 props,
                 // TODO this should come from the remote schema so it can be customized
                 // to the app's settings
