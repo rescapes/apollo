@@ -441,7 +441,7 @@ export const apolloClientReadFragmentCache = R.curry((apolloConfig, fragment, id
 
   // If this throws then we did something wrong
   try {
-    reqStrPathThrowing('apolloClient', apolloConfig).readFragment({
+    const data = reqStrPathThrowing('apolloClient', apolloConfig).readFragment({
       // Allow partial data returns because the cache is so picky about empty arrays and stuff
       returnPartialData: true,
       fragment,
