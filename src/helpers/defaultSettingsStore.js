@@ -1,6 +1,6 @@
 import settings from './privateSettings.js';
 import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
-import {compact, mapToNamedResponseAndInputs, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {compact, mapToNamedResponseAndInputs, omitDeep, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
 import {settingsQueryContainerDefault} from './defaultContainers';
 import * as R from 'ramda';
@@ -156,49 +156,54 @@ export const writeConfigToServerAndCacheContainer = (config) => {
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'settingsWithoutCacheValues',
         ({settingsFromServer, authTokenResponse}) => {
           const settings = strPathOr({}, 'data.settings.0', settingsFromServer);
-          return nameComponent('settingsMutation', R.ifElse(
-            () => strPathOr(false, 'data.token', authTokenResponse),
-            () => {
-              // Update the settings on the server with those configured in code.
-              // TODO this should be removed in favor of a one time database write
-              // in a server init script
-              return makeSettingsMutationContainer(
-                apolloConfig,
-                {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
-                R.merge(props, R.pick(['id'], settings))
-              );
-            },
-            () => {
-              // Not authenticated or no updates needed
-              // Write the server or configured values to the cache manually
-              // If we have settings from the server, they will already be in the cache,
-              // but we need to write any non server settings
-              // If we don't have settings from the server and we aren't authenticated, just
-              // cache the configured settings
-              const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepWithKey(
-                (k,l,r) => {
-                  if (Array.isArray(l)) {
-                    // Merge the typename of defaultSettingsTypenames into each item of arrays
-                    return R.map(item => R.merge(item, r), l)
-                  }
-                  else {
-                    // Merge the typename of defaultSettingsTypenames into the obj
-                    return R.merge(l, r)
-                  }
-                },
-                props,
-                // TODO this should come from the remote schema so it can be customized
-                // to the app's settings
-                defaultSettingsTypenames
-              );
-              return makeSettingsCacheMutationContainer(
-                apolloConfig,
-                {outputParams: settingsOutputParams},
-                props,
-                settingsToCache
-              );
-            }
-          ))();
+          const _settings = omitDeep(['__typename'], settings)
+          return nameComponent('settingsMutation',
+            R.ifElse(
+              // If we are authenticated and the local settings have changed from the server (unlikely),
+              // mutate the server settings
+              () => R.and(strPathOr(false, 'data.token', authTokenResponse),
+                R.complement(R.equals)(R.merge(R.omit(['render'], props), _settings), _settings)
+              ),
+              () => {
+                // Update the settings on the server with those configured in code.
+                // TODO this should be removed in favor of a one time database write
+                // in a server init script
+                return makeSettingsMutationContainer(
+                  apolloConfig,
+                  {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
+                  R.merge(props, R.pick(['id'], settings))
+                );
+              },
+              () => {
+                // Not authenticated or no updates needed
+                // Write the server or configured values to the cache manually
+                // If we have settings from the server, they will already be in the cache,
+                // but we need to write any non server settings
+                // If we don't have settings from the server and we aren't authenticated, just
+                // cache the configured settings
+                const settingsToCache = R.length(R.keys(settings)) ? settings : R.mergeDeepWithKey(
+                  (k, l, r) => {
+                    if (Array.isArray(l)) {
+                      // Merge the typename of defaultSettingsTypenames into each item of arrays
+                      return R.map(item => R.merge(item, r), l)
+                    } else {
+                      // Merge the typename of defaultSettingsTypenames into the obj
+                      return R.merge(l, r)
+                    }
+                  },
+                  props,
+                  // TODO this should come from the remote schema so it can be customized
+                  // to the app's settings
+                  defaultSettingsTypenames
+                );
+                return makeSettingsCacheMutationContainer(
+                  apolloConfig,
+                  {outputParams: settingsOutputParams},
+                  props,
+                  settingsToCache
+                );
+              }
+            ))();
         }
       ),
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',

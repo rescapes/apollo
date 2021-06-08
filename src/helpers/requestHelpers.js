@@ -399,9 +399,9 @@ export const _winnowRequestProps = (apolloConfig, props) => {
         // Deep omit __typename
         return R.compose(
           ...R.map(path => {
-            return R.when(
-              () => pathOr(false, path),
-              value => {
+            return value => R.when(
+              v => pathOr(false, path, v),
+              v => {
                 return R.over(
                   R.lensPath(path),
                   data => {
@@ -411,15 +411,13 @@ export const _winnowRequestProps = (apolloConfig, props) => {
                       data
                     );
                   },
-                  value
+                  v
                 );
               }
             )(value);
             // Look for __typename here in the queries/mutations
           }, [['data'], ['result', 'data']])
-        )(
-          value
-        );
+        )(value);
       },
       prop => {
         // Remove render and children
