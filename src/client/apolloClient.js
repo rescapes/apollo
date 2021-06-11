@@ -521,8 +521,8 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
                 log.debug(`Calling mutation ${print(mutation)} with args ${inspect(R.length(args) ? args[0] : props, false, 10)}`);
                 return mutate(...args).catch(
                   error => {
-                    log.debug(`Mutation threw an error. This will not be thrown but handled by the components. Here is the error: ${
-                      inspect(error, false, 10)}`)
+                    log.debug('Mutation threw an error. This will not be thrown but handled by the components')
+                    log.error(error)
                     return {data: null, error}
                   }
                 ).then(({data, error, ...rest}) => {
