@@ -220,7 +220,9 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
           return e(
             ApolloConsumer,
             {},
-            apolloClient => render(R.merge({apolloClient}, props))
+            apolloClient => {
+              return render(R.merge({apolloClient}, props))
+            }
           );
         }
       )(apolloConfig);
