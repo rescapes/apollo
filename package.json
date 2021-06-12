@@ -1,6 +1,6 @@
 {
   "name": "@rescapes/apollo",
-  "version": "0.1.520",
+  "version": "0.1.521",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
@@ -38,6 +38,7 @@
     "@apollo/react-hooks": "^4.0.0",
     "@jest/globals": "^26.6.2",
     "@rescapes/translation": "^0.0.26",
+    "apollo-link-dedup": "^1.0.21",
     "apollo-link-error": "^1.1.13",
     "apollo-utilities": "^1.3.2",
     "apollo3-cache-persist": "^0.9.1",
