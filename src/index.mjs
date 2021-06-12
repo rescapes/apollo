@@ -40,7 +40,8 @@ export {
   makeQueryContainer,
   apolloQueryResponsesContainer,
   createRequestVariables,
-  composeFuncAtPathIntoApolloConfig
+  composeFuncAtPathIntoApolloConfig,
+  logicalOrValueAtPathIntoApolloConfig
 } from './helpers/queryHelpers.js';
 export {
   makeMutation,

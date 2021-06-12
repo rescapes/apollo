@@ -427,7 +427,6 @@ export const apolloQueryResponsesContainer = (
 /**
  * Modifies apolloConfig's 'options.variables', 'onComplete', 'onError', or other function, composing the given
  * func with any existing one. Useful when a caller and the underlying call each have a function that need to be
- * composed.
  * @param {Object} apolloConfig The apolloConfig
  * @param {String} strPath dot-separated path relative to apolloConfig
  * @param {Function} func Expects props and returns filtered props
@@ -445,4 +444,19 @@ export const composeFuncAtPathIntoApolloConfig = (apolloConfig, strPath, func) =
     apolloConfig
   );
 };
+
+/**
+ * For combining various booleans at 'options.skip' so that if any is true skip is true
+ * @param apolloConfig
+ * @param strPath
+ * @param value
+ * @returns {*}
+ */
+export const logicalOrValueAtPathIntoApolloConfig = (apolloConfig, strPath, value) => {
+  return R.over(
+    R.lensPath(R.split('.', strPath)),
+    existingValue => R.or(existingValue, value),
+    apolloConfig
+  )
+}
 

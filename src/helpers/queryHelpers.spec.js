@@ -10,7 +10,7 @@
  */
 
 import {
-  composeFuncAtPathIntoApolloConfig,
+  composeFuncAtPathIntoApolloConfig, logicalOrValueAtPathIntoApolloConfig,
   makeQuery,
   makeQueryContainer
 } from './queryHelpers.js';
@@ -196,4 +196,58 @@ describe('queryHelpers', () => {
         }
     }, errors, done));
   });
+
+  test('logicalOrValueAtPathIntoApolloConfig', done => {
+    const task = composeWithChain([
+      mapToNamedResponseAndInputs('regionResponse',
+        ({apolloClient, createdRegion}) => {
+          const apolloConfig = (
+            {
+              apolloClient,
+              options: {
+                skip: false
+              }
+            }
+          );
+          return makeQueryContainer(
+            logicalOrValueAtPathIntoApolloConfig(
+              apolloConfig,
+              'options.skip',
+              true
+            ),
+            {
+              name: 'regions',
+              readInputTypeMapper: {},
+              outputParams: {id: 1, key: 1, name: 1, geojson: {features: {type: 1}}}
+            },
+            {key: createdRegion.key, sillyPropThatWontBeUsed: '11wasAraceHorse'}
+          );
+        }
+      ),
+      mapToNamedPathAndInputs('createdRegion', 'result.data.createRegion.region',
+        ({apolloClient}) => makeMutationRequestContainer(
+          {apolloClient},
+          {
+            name: 'region',
+            outputParams: {id: 1, key: 1}
+          },
+          {
+            key: `test${moment().format('HH-mm-SS')}`,
+            name: `Test${moment().format('HH-mm-SS')}`
+          }
+        )
+      ),
+      mapToNamedPathAndInputs('apolloClient', 'apolloClient',
+        () => localTestAuthTask()
+      )
+    ])();
+    const errors = [];
+    task.run().listen(defaultRunConfig({
+      onResolved:
+        ({regionResponse}) => {
+          expect(regionResponse.skip).toBeTruthy()
+        }
+    }, errors, done));
+  })
 });
+
