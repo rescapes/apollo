@@ -156,7 +156,10 @@ export const makeCacheMutation = v(R.curry(
     log.debug(`Write Cache Fragment: ${
       print(writeFragment)
     } id: ${id} args: ${
-      inspect(propsWithPossibleMerge, null, 10)
+      // Just show keys until we can limit big data structures
+      R.keys(propsWithPossibleMerge)
+      // Keep the depth reasonable so we don't get huge dumps
+      //inspect(propsWithPossibleMerge, null, 3)
     }`);
 
     apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});

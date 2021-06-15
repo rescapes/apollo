@@ -279,11 +279,10 @@ const createPersistedCacheTask = (cache) => {
  * @param {Object} stateLinkResolvers The stateLinkResolvers to give the client
  * @param {[Object]} links List of links to give the Apollo Client.
  * @param {Object} cache InMemoryCache instance
- * @param {Object} persistor Thing to help clear the cache
  * @return {Object} {apolloClient: ApolloClient}
  * @private
  */
-const _completeApolloClient = ({stateLinkResolvers, links, cache, persistor}) => {
+const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
   // Create the ApolloClient using the following ApolloClientOptions
   const apolloClient = new ApolloClient({
     // This is just a guess at link order.
