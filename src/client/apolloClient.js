@@ -8,6 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import {ApolloConsumer} from 'react-apollo';
 import {inspect} from 'util';
 import * as AC from '@apollo/client';
 import * as R from 'ramda';
@@ -36,7 +37,7 @@ import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import MutationOnMount from '../helpers/mutationOnMount';
-import {addMutateKeyToMutationResponse} from '../helpers/containerHelpers';
+import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers';
 
 const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 
@@ -582,6 +583,34 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
     // Render prop
     responseProps => {
       const skip = strPathOr(false, 'options.skip', apolloConfig);
+      if (
+        !strPathOr(null, 'data', responseProps) &&
+        !skip &&
+        R.equals(7, strPathOr(-1, 'networkStatus', responseProps))
+      ) {
+        // If the query returns null data, we have a missed cache field error
+        // The missed cache field errors are hidden by Apollo, but it's the only reason we get
+        // a loading = false, error = false, null data response. Using partialRefetch on the query might help
+        const error = new Error(`Null data missed cache error for Query:\n${
+          print(query)
+        }\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
+        return containerForApolloType(
+          apolloConfig,
+          {
+            render: props => e(
+              ApolloConsumer,
+              {},
+              apolloClient => {
+                // Debug here
+                const cache = apolloClient.cache;
+                log.error(error);
+                throw error;
+              }
+            ),
+            response: {error}
+          }
+        );
+      }
       const renderedComponent = (render || children)(
         R.merge(
           // Since the response has no good indication of a skipped query, except loading=false and data=undefined,
@@ -592,22 +621,6 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
       );
       if (!renderedComponent) {
         throw new Error("authApolloComponentQueryContainer: render function did not return a value.");
-      }
-      if (
-        !strPathOr(null, 'data', responseProps) &&
-        !skip &&
-        R.equals(7, strPathOr(-1, 'networkStatus', responseProps))
-      ) {
-        // If the query returns null data, we have a missed cache field error
-        // The missed cache field errors are hidden by Apollor, but it's the only reason we get
-        // a loading = false, error = false, null data response
-        const error = new Error(`Null data missed cache error for Query:\n${
-          print(query)
-        }\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
-        const cache = apolloConfig.cache;
-
-        log.error(error);
-        throw error;
       }
       return renderedComponent;
     }

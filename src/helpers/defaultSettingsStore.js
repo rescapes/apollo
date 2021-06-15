@@ -161,18 +161,21 @@ export const writeConfigToServerAndCacheContainer = (config) => {
             R.ifElse(
               // If we are authenticated and the local settings have changed from the server (unlikely),
               // mutate the server settings
-              () => R.and(strPathOr(false, 'data.token', authTokenResponse),
+              () => false && R.and(strPathOr(false, 'data.token', authTokenResponse),
                 R.complement(R.equals)(R.merge(R.omit(['render'], props), _settings), _settings)
               ),
               () => {
                 // Update the settings on the server with those configured in code.
                 // TODO this should be removed in favor of a one time database write
                 // in a server init script
+                // TODO commened out, causing bad data on the server
+                /*
                 return makeSettingsMutationContainer(
                   apolloConfig,
                   {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
                   R.merge(props, R.pick(['id'], settings))
                 );
+                 */
               },
               () => {
                 // Not authenticated or no updates needed

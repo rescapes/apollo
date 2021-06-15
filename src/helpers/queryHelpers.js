@@ -316,6 +316,18 @@ export const makeQueryContainer = v(R.curry(
       // Non-winnowed props because the component does calls its options.variables function
       props
     );
+    /*
+    TODO how do we log only when the query is actually run? Is there something on the Query component we can use?
+    log.debug(`Creating Query:\n${
+      print(query)
+    }\nArguments:\n${
+      R.ifElse(
+        () => skip,
+        () => 'Props are not ready',
+        (winnowedProps) => JSON.stringify(winnowedProps)
+      )(winnowedProps)
+    }\n`);
+     */
     return R.when(
       componentOrTask => 'run' in componentOrTask,
       // If it's a task report the result. Components have to run their query
