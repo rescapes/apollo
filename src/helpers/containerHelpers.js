@@ -108,7 +108,8 @@ export const mutationRequestWithMutateOnceAndWaitContainer = (apolloConfig, {
  * Container to call mutate on mount for each mutationResponse. The container
  * then returns an empty div until the mutations have completed. For client queries
  * the mutation will have already happened so it returns a task that resolves
- * to the mutation responses
+ * to the mutation responses. If a mutationResponse in mutationResponses, doesn't have a mutation method,
+ * it is taken to mean that an existing item was found and that item doesn't need to call mutation
  * @param apolloConfig
  * @param {Object} options
  * @param {String} options.responsePath The stringPath into the mutation responses
@@ -129,7 +130,9 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
           // code to run on component mount
           R.forEach(
             response => {
-              response.mutation();
+              if (R.has('mutation', response)) {
+                response.mutation();
+              }
             },
             responses
           );
@@ -295,7 +298,7 @@ export const callMutationNTimesAndConcatResponses = (
     );
   }
   return composeWithComponentMaybeOrTaskChain([
-      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({responses, render}) => {
+      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({existingItemResponses, responses, render}) => {
         return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
       }),
       ...R.reverse(R.times(i => {
