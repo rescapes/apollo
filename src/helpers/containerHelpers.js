@@ -105,6 +105,58 @@ export const mutationRequestWithMutateOnceAndWaitContainer = (apolloConfig, {
 };
 
 /**
+ * Calls mutation on each this.props.responses that has a mutation function. Using this instead of effects
+ * because this component is conditionally rendered, which messes up hooks/effects (sigh)
+ */
+class MutateResponsesOnce extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {mutatedOnce: false}
+  }
+
+  render() {
+    // See if our responses are loaded (not relevant for tasks, only components)
+    const objects = compact(
+      R.map(response => {
+        return R.compose(
+          response => responsePath ? strPathOr(null, responsePath, response) : response,
+          response => addMutateKeyToMutationResponse(
+            {silent: true},
+            response
+          )
+        )(response);
+      }, this.props.responses)
+    );
+
+    // If not, wait
+    if (R.length(objects) !== R.length(this.props.responses)) {
+      return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
+    }
+
+    // Do only once
+    if (!this.state.mutatedOnce) {
+      R.forEach(
+        response => {
+          // If the response does not have a mutation, it indicates that the response does not need to call
+          // mutation because it represents data that has already been created. TODO this could cause
+          // problems if response lacks mutation by accident
+          if (R.has('mutation', response)) {
+            response.mutation();
+          }
+        },
+        this.props.responses
+      );
+      // Once we've iterated through our responses and called mutate, don't do it again
+      this.state.setState({mutatedOnce: true})
+    }
+
+    // Make objects singular if mutationResponses was
+    return getRenderPropFunction({render: this.props.render})({
+      objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(this.mutationResponses)
+    });
+  }
+}
+/**
  * Container to call mutate on mount for each mutationResponse. The container
  * then returns an empty div until the mutations have completed. For client queries
  * the mutation will have already happened so it returns a task that resolves
@@ -126,10 +178,16 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
     apolloConfig,
     {
       render: (responses) => {
+
+        /*
+        // This code causes erros because hooks can't stand conditional rendering
         useEffect(() => {
           // code to run on component mount
           R.forEach(
             response => {
+              // If the response does not have a mutation, it indicates that the response does not need to call
+              // mutation because it represents data that has already been created. TODO this could cause
+              // problems if response lacks mutation by accident
               if (R.has('mutation', response)) {
                 response.mutation();
               }
@@ -137,25 +195,9 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
             responses
           );
         }, []);
-        const objects = compact(
-          R.map(response => {
-            return R.compose(
-              response => responsePath ? strPathOr(null, responsePath, response) : response,
-              response => addMutateKeyToMutationResponse(
-                {silent: true},
-                response
-              )
-            )(response);
-          }, responses)
-        );
-        if (R.length(objects) !== R.length(responses)) {
-          return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
-        }
-
-        // Make objects singular if mutationResponses was
-        return getRenderPropFunction({render})({
-          objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(mutationResponses)
-        });
+         */
+        // Calls each responses' mutation function once and only once
+        return e(MutateResponsesOnce, {responses, mutationResponses, render})
       },
       // For component queries, pass the full response so render can wait until they are loaded
       // client calls access the objects from the responses
