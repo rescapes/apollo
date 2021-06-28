@@ -42,7 +42,7 @@ export const readInputTypeMapper = {
 export const normalizeSampleRegionPropsForMutating = region => {
   return R.compose(
     // Make sure related objects only have an id
-    region => relatedObjectsToIdForm(RELATED_PROPS, region),
+    region => relatedObjectsToIdForm({relatedPropPaths: RELATED_PROPS}, region),
     region => filterOutReadOnlyVersionProps(region)
   )(region);
 };

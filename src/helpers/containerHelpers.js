@@ -58,8 +58,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
         // being applied, so we don't want to pass it as props again and risk calling it lower down
         // in the component tree
         return render(R.omit(['render'], response))
-      }
-      else {
+      } else {
         // If it's not the same pass it through since it is being used later in a composition of components.
         // It's currently required to pass render to ever component in a composition so that we know
         // that we are using Apollo components, not Tasks/Apollo Client
@@ -115,12 +114,11 @@ class MutateResponsesOnce extends React.Component {
     this.state = {mutatedOnce: false}
   }
 
-  render() {
-    // See if our responses are loaded (not relevant for tasks, only components)
-    const objects = compact(
+  objects() {
+    return compact(
       R.map(response => {
         return R.compose(
-          response => responsePath ? strPathOr(null, responsePath, response) : response,
+          response => this.props.responsePath ? strPathOr(null, this.props.responsePath, response) : response,
           response => addMutateKeyToMutationResponse(
             {silent: true},
             response
@@ -128,7 +126,13 @@ class MutateResponsesOnce extends React.Component {
         )(response);
       }, this.props.responses)
     );
+  }
 
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    // See if our responses are loaded (not relevant for tasks, only components)
+    const objects = this.objects();
+
+    // See if our responses are loaded (not relevant for tasks, only components)
     // If not, wait
     if (R.length(objects) !== R.length(this.props.responses)) {
       return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
@@ -148,15 +152,19 @@ class MutateResponsesOnce extends React.Component {
         this.props.responses
       );
       // Once we've iterated through our responses and called mutate, don't do it again
-      this.state.setState({mutatedOnce: true})
+      this.setState({mutatedOnce: true})
     }
+  }
 
+  render() {
+    const objects = this.objects();
     // Make objects singular if mutationResponses was
     return getRenderPropFunction({render: this.props.render})({
-      objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(this.mutationResponses)
+      objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(this.props.mutationResponses)
     });
   }
 }
+
 /**
  * Container to call mutate on mount for each mutationResponse. The container
  * then returns an empty div until the mutations have completed. For client queries
@@ -198,14 +206,18 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
         }, []);
          */
         // Calls each responses' mutation function once and only once
-        return e(MutateResponsesOnce, {responses, mutationResponses, render})
+        return e(MutateResponsesOnce, {responses, mutationResponses, responsePath, render})
       },
       // For component queries, pass the full response so render can wait until they are loaded
       // client calls access the objects from the responses
       response: R.propOr(false, 'apolloClient', apolloConfig) ?
         R.compose(
-          objects => R.ifElse(Array.isArray, () => objects, () => R.head(objects))(mutationResponses),
-          responses => R.map(reqStrPathThrowing(responsePath), responses)
+          objects => {
+            return R.ifElse(Array.isArray, () => objects, () => R.head(objects))(mutationResponses)
+          },
+          responses => {
+            return R.map(reqStrPathThrowing(responsePath), responses)
+          }
         )(responses) :
         responses
     }
@@ -341,7 +353,11 @@ export const callMutationNTimesAndConcatResponses = (
     );
   }
   return composeWithComponentMaybeOrTaskChain([
-      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({existingItemResponses, responses, render}) => {
+      nameComponent(`callMutationNTimesAndConcatResponses${componentName}`, ({
+                                                                               existingItemResponses,
+                                                                               responses,
+                                                                               render
+                                                                             }) => {
         return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
       }),
       ...R.reverse(R.times(i => {

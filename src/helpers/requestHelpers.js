@@ -565,10 +565,15 @@ export const createReadInputTypeMapper = (className, keys) => {
  * @param {[String]} relatedPropPaths list of paths toOne and toMany objects. If they aren't at the the top level,
  * use dot syntax: 'foo.bars'. Note that toMany objects must be detected as plural by pluralize.isPlural
  * so the correct lens can be created to handle arrays
+ * @param {Object} [relatedPropPathsToAllowedFields] Optional lookup to allow a related prop path to reduce
+ * to something more than id. For instance is a related prop path points to an object that is allowed to be
+ * mutated when the main object is mutated, this might be {'some.replaced.path': {'name', 'geojson', 'data'}}
+ * (id is always included). In this case the object at someReplacedPath would be reduced to keys name, geojson, data, id
+ * instead of down to just id
  * @param {Object} props The props to process
  * @returns {Object} The modified props
  */
-export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
+export const relatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields={}}, props) => {
   const updatedProps = R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
       const lens = R.compose(...R.chain(
@@ -591,7 +596,12 @@ export const relatedObjectsToIdForm = (relatedPropPaths, props) => {
           obj => {
             return R.when(
               R.identity,
-              obj => R.pick(['id'], obj)
+              // If relatedPropPathsToAllowedFields contains an entry for propPath, do a custom pick. Otherwise
+              // just pick id
+              obj => R.pick(
+                R.concat(['id'], R.propOr([], propPath, relatedPropPathsToAllowedFields)),
+                obj
+              )
             )(obj);
           },
           props

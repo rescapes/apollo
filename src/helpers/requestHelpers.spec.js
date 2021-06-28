@@ -302,14 +302,14 @@ describe('requestHelpers', () => {
   });
 
   test('relatedObjectsToIdForm', () => {
-    expect(relatedObjectsToIdForm([
+    expect(relatedObjectsToIdForm({relatedPropPaths: [
       'drooling.moose',
       'scapegoats',
       'elks.slow',
       'elks.poke.jams',
       'billy',
       'smacky'
-    ], {
+    ], relatedPropPathsToAllowedFields: {'drooling.moose': ['type']}}, {
       drooling: {
         moose: {
           type: 'Canadian',
@@ -329,6 +329,8 @@ describe('requestHelpers', () => {
     })).toEqual({
       drooling: {
         moose: {
+          // type preserved by relatedPropPathsToAllowedFields
+          type: 'Canadian',
           id: 1
         }
       },
