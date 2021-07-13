@@ -1,8 +1,7 @@
 import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, strPathOr} from '@rescapes/ramda';
 import {localTestAuthTask, localTestNoAuthTask} from '../helpers/testHelpers.js';
-import {settingsCacheFragmentContainer, settingsQueryContainer} from './settingsStore';
-import {defaultSettingsOutputParams} from './defaultSettingsStore';
-import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
+import {settingsCacheFragmentContainer, settingsQueryContainer} from './settingsStore.js';
+import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 
 describe('settingsStore', () => {
   test('settingsLocalQueryContainer', done => {

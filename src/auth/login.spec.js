@@ -31,7 +31,7 @@ import {defaultStateLinkResolvers} from '../client/stateLink.js';
 import {initializeNoAuthTask} from '../helpers/initializationHelpers.js';
 import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
 import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
-import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
