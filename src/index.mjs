@@ -83,7 +83,7 @@ export {
 } from './helpers/testHelpers.js';
 export {
   initializeAuthorizedTask, initializeNoAuthTask
-} from './helpers/initializationHelpers';
+} from './helpers/initializationHelpers.js';
 
 export {defaultStateLinkResolvers} from './client/stateLink.js';
 export {

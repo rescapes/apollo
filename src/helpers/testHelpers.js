@@ -22,7 +22,7 @@ import {
   writeConfigToServerAndCacheContainer
 } from './defaultSettingsStore.js';
 import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
-import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers';
+import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers.js';
 
 
 /**
