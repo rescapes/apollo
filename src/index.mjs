@@ -34,7 +34,7 @@ export {
 export {
   getOrCreateApolloClientAndDefaultsTask,
   writeDefaultsAndQueryCurrentUserContainer
-} from './client/apolloClientAuthentication';
+} from './client/apolloClientAuthentication.js';
 export {
   makeQuery,
   makeQueryContainer,
@@ -159,4 +159,4 @@ export {
 export {
   settingsQueryContainerDefault,
   settingsLocalQueryContainerDefault
-} from './helpers/defaultContainers';
+} from './helpers/defaultContainers.js';

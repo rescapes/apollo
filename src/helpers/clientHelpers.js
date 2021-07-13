@@ -19,11 +19,10 @@ import {parseApiUrl} from '@rescapes/helpers';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams
 } from './defaultSettingsStore.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {loggers} from '@rescapes/log';
-import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
+import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication.js';
 
 const log = loggers.get('rescapeDefault');
 

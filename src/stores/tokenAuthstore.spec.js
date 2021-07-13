@@ -34,7 +34,7 @@ import {
 } from './tokenAuthStore.js';
 import {settingsQueryContainer} from '../helpers/settingsStore.js';
 import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
-import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication';
+import {writeDefaultsAndQueryCurrentUserContainer} from '../client/apolloClientAuthentication.js';
 
 const api = reqStrPathThrowing('settings.data.api', localTestConfig);
 const uri = parseApiUrl(api);
