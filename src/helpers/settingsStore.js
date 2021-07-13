@@ -11,12 +11,12 @@ import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
-import {makeCacheMutationContainer} from './mutationCacheHelpers';
+import {makeCacheMutationContainer} from './mutationCacheHelpers.js';
 import {loggers} from '@rescapes/log';
-import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
+import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers.js';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
 import * as AC from '@apollo/client';
-import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 
 const {MissingFieldError} = defaultNode(AC);
 

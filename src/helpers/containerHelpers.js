@@ -23,7 +23,7 @@ import {
   strPathOr,
   toArrayIfNot
 } from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
 import {loggers} from '@rescapes/log';
 import {e} from '@rescapes/helpers-component';
 

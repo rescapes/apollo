@@ -1,6 +1,6 @@
 import * as RR from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic';
-import {createLocalStorageAuthContainer} from './clientHelpers';
+import {composeWithComponentMaybeOrTaskChain} from './componentHelpersMonadic.js';
+import {createLocalStorageAuthContainer} from './clientHelpers.js';
 import {reqStrPathThrowing} from '@rescapes/ramda';
 
 Error.stackTraceLimit = Infinity;
