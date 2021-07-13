@@ -12,7 +12,7 @@ const config = {
     'src/helpers/clientHelpers.js',
     'src/helpers/containerHelpers.js',
     'src/helpers/defaultSettingsStore.js',
-    'src/helpers/mutationCacheHelpers',
+    'src/helpers/mutationCacheHelpers.js',
     'src/helpers/mutationHelpers.js',
     'src/helpers/queryCacheHelpers.js',
     'src/helpers/queryHelpers.js',

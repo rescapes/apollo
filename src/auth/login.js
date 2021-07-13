@@ -15,17 +15,15 @@ import * as AC from '@apollo/client';
 import {
   composeWithChain,
   defaultNode,
-  mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing, strPathOr
+  reqStrPathThrowing
 } from '@rescapes/ramda';
 import {
   writeDefaultsAndQueryCurrentUserContainer
 } from '../client/apolloClientAuthentication.js';
 import {tokenAuthMutationContainer, tokenAuthOutputParams} from '../stores/tokenAuthStore.js';
-import {currentUserQueryContainer, userOutputParams} from '../stores/userStore.js';
-import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
-import {getOrCreateApolloClientTask} from '../client/apolloClient';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
+import {getOrCreateApolloClientTask} from '../client/apolloClient.js';
 
 const {of} = T;
 const {ApolloClient} = defaultNode(AC);
