@@ -27,7 +27,7 @@ import {
   getRenderPropFunction,
   pickRenderProps
 } from './componentHelpersMonadic.js';
-import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 
 const {gql} = defaultNode(AC);
 

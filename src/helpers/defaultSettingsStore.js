@@ -1,14 +1,14 @@
 import settings from './privateSettings.js';
-import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
-import {compact, mapToNamedResponseAndInputs, omitDeep, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
-import {settingsQueryContainerDefault} from './defaultContainers';
+import {makeSettingsCacheMutationContainer} from './settingsStore.js';
+import {compact, omitDeep, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
+import {settingsQueryContainerDefault} from './defaultContainers.js';
 import * as R from 'ramda';
 import {loggers} from '@rescapes/log';
 import {inspect} from 'util';
 import T from 'folktale/concurrency/task/index.js';
-import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
-import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 import {e} from '@rescapes/helpers-component';
 
 const {of} = T;

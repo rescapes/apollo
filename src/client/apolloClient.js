@@ -36,8 +36,8 @@ import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
-import MutationOnMount from '../helpers/mutationOnMount';
-import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers';
+import MutationOnMount from '../helpers/mutationOnMount.js';
+import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers.js';
 
 const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
 

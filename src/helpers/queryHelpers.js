@@ -31,8 +31,8 @@ import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic';
-import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 
 const {gql} = defaultNode(AC);
 

@@ -27,9 +27,8 @@ import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
 import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
-import {containerForApolloType} from './containerHelpers';
-import {getRenderPropFunction} from './componentHelpersMonadic';
-import {authApolloClientQueryCache} from '../client/apolloClientCache';
+import {containerForApolloType} from './containerHelpers.js';
+import {getRenderPropFunction} from './componentHelpersMonadic.js';
 import {e} from '@rescapes/helpers-component';
 
 const {gql} = defaultNode(AC);

@@ -26,18 +26,17 @@ import {
   capitalize,
   composeWithMap,
   defaultNode,
-  duplicateKey,
   filterWithKeys,
   mapObjToValues,
   omitDeepBy,
-  reqStrPathThrowing, strPathOr
+  strPathOr
 } from '@rescapes/ramda';
 import * as AC from '@apollo/client';
 import {print} from 'graphql';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {loggers} from '@rescapes/log';
-import {addMutateKeyToMutationResponse} from './containerHelpers';
+import {addMutateKeyToMutationResponse} from './containerHelpers.js';
 
 const {gql} = defaultNode(AC);
 

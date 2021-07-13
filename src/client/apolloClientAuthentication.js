@@ -25,11 +25,9 @@ import * as AC from '@apollo/client';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
-import {makeCacheMutation} from '../helpers/mutationCacheHelpers';
-import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic';
-import {containerForApolloType} from '../helpers/containerHelpers';
-import {authApolloClientQueryCache} from './apolloClientCache';
+import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
+import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 
 const {ApolloClient} = defaultNode(AC);
 const {of} = T;

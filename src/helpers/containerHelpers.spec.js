@@ -2,12 +2,12 @@ import {
   callMutationNTimesAndConcatResponses,
   containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs
-} from './containerHelpers';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic';
+} from './containerHelpers.js';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
 import moment from 'moment';
 import {capitalize, composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs} from '@rescapes/ramda';
-import {localTestAuthTask} from './testHelpers';
-import {sampleMutateRegionContainer, sampleQueryRegionsContainer} from './samples/sampleRegionStore';
+import {localTestAuthTask} from './testHelpers.,js';
+import {sampleMutateRegionContainer, sampleQueryRegionsContainer} from './samples/sampleRegionStore.js';
 import * as R from 'ramda';
 
 describe('containerHelpers', () => {
