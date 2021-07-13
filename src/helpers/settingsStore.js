@@ -5,7 +5,7 @@ import {
   containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs
 } from './containerHelpers.js';
-import {makeMutationRequestContainer} from './mutationHelpers';
+import {makeMutationRequestContainer} from './mutationHelpers.js';
 import {defaultNode, omitDeepPaths, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
