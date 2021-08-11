@@ -129,15 +129,6 @@ class MutateResponsesOnce extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    // See if our responses are loaded (not relevant for tasks, only components)
-    const objects = this.objects();
-
-    // See if our responses are loaded (not relevant for tasks, only components)
-    // If not, wait
-    if (R.length(objects) !== R.length(this.props.responses)) {
-      return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
-    }
-
     // Do only once
     if (!this.state.mutatedOnce) {
       R.forEach(
@@ -153,6 +144,14 @@ class MutateResponsesOnce extends React.Component {
       );
       // Once we've iterated through our responses and called mutate, don't do it again
       this.setState({mutatedOnce: true})
+    }
+    // See if our responses are loaded (not relevant for tasks, only components)
+    const objects = this.objects();
+
+    // See if our responses are loaded (not relevant for tasks, only components)
+    // If not, wait
+    if (R.length(objects) !== R.length(this.props.responses)) {
+      return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
     }
   }
 
@@ -189,7 +188,8 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
       render: (responses) => {
 
         /*
-        // This code causes erros because hooks can't stand conditional rendering
+        // TODO This code causes errors because hooks can't stand conditional rendering
+        // Using MutateResponsesOnce below instead
         useEffect(() => {
           // code to run on component mount
           R.forEach(
