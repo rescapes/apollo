@@ -1,6 +1,6 @@
 {
   "name": "@rescapes/apollo",
-  "version": "0.1.553",
+  "version": "0.1.554",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
@@ -12,8 +12,7 @@
   "author": "calocan <andy@likuski.org>",
   "license": "MIT",
   "files": [
-    "src",
-    "lib"
+    "src"
   ],
   "scripts": {
     "clean": "rimraf lib esm coverage",
