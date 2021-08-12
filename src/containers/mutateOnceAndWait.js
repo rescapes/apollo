@@ -169,7 +169,7 @@ export const mutateOnceAndWaitContainer = (apolloConfig, {responsePath}, mutatio
          */
         // Calls each responses' mutation function once and only once
         return e(MutateResponsesOnce, {
-          responsesAreArray: R.lt(1, R.length(mutationResponses)),
+          responsesAreArray: Array.isArray(mutationResponses),
           responses,
           responsePath,
           render
