@@ -7,8 +7,11 @@ import {compact, reqStrPathThrowing, strPathOr, toArrayIfNot} from "@rescapes/ra
 import {addMutateKeyToMutationResponse, containerForApolloType} from "../helpers/containerHelpers";
 import {loggers} from '@rescapes/log';
 import * as R from 'ramda'
+import React from 'react';
+import {e} from '@rescapes/helpers-component';
 
 import * as PropTypes from 'prop-types';
+
 const log = loggers.get('rescapeDefault');
 
 /**
@@ -70,9 +73,11 @@ class MutateResponsesOnce extends React.Component {
       }, this.props.responses)
     );
   }
+
   componentDidMount() {
-    return this.componentDidUpdate(prevProps, prevState, snapshot)
+    return this.componentDidUpdate({}, {}, {})
   }
+
   componentDidUpdate(prevProps, prevState, snapshot) {
     // Do only once
     if (!this.state.mutatedOnce) {
@@ -103,12 +108,16 @@ class MutateResponsesOnce extends React.Component {
       return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
     }
 
-    // Make objects singular if mutationResponses was
     return getRenderPropFunction({render: this.props.render})({
-      objects: R.ifElse(Array.isArray, () => objects, () => R.head(objects))(this.props.mutationResponses)
+      // Make objects singular if responses was
+      objects: R.unless(
+        () => this.props.responsesAreArray,
+        objects => R.head(objects)
+      )(objects)
     });
   }
 }
+
 MutateResponsesOnce.propTypes = {
   responsesAreArray: PropTypes.bool.isRequired,
   responses: PropTypes.arrayOf(PropTypes.shape).isRequired,

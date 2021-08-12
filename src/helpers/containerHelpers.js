@@ -26,8 +26,8 @@ import {
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
 import {loggers} from '@rescapes/log';
 import {e} from '@rescapes/helpers-component';
+import {mutateOnceAndWaitContainer} from "../containers/mutateOnceAndWait";
 
-const {useEffect} = RT;
 const {of} = T;
 
 const log = loggers.get('rescapeDefault');

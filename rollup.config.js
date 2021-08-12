@@ -2,6 +2,7 @@ import babel from 'rollup-plugin-babel';
 import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
 import * as R from 'ramda';
+import json from 'rollup-plugin-json';
 
 const config = {
   input: [
@@ -69,7 +70,7 @@ const configs = R.map(c => {
       dir: 'esm',
       format: 'esm',
       indent: true,
-      sourcemap: true
+      source: false
     },
     external: [
       ...externals,
@@ -77,7 +78,7 @@ const configs = R.map(c => {
       ...Object.keys(pkg.peerDependencies || {})
     ],
     plugins: R.concat(config.plugins, [
-      nodeResolve({})
+      json()
     ])
   },
   /*
