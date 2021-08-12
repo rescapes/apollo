@@ -90,10 +90,9 @@ export {
   containerForApolloType, callMutationNTimesAndConcatResponses,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
   addMutateKeyToMutationResponse,
-  mutateOnceAndWaitContainer,
   deleteItemsOfExistingResponses,
-  mutationRequestWithMutateOnceAndWaitContainer
 } from './helpers/containerHelpers.js';
+export {mutationRequestWithMutateOnceAndWaitContainer, mutateOnceAndWaitContainer} from './containers/mutateOnceAndWait.js'
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCacheContainer,

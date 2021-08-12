@@ -40,6 +40,7 @@ const configs = R.map(c => {
   return x;
 }, [
   // CommonJS
+  /*
   {
     output: {
       dir: 'lib',
@@ -61,7 +62,7 @@ const configs = R.map(c => {
       babel()
     ])
   },
-  /*
+  */
   // ES
   {
     output: {
@@ -79,7 +80,7 @@ const configs = R.map(c => {
       nodeResolve({})
     ])
   },
-
+  /*
   // ES for Browsers
   {
     output: {
