@@ -9,8 +9,7 @@ import {loggers} from '@rescapes/log';
 import * as R from 'ramda'
 import React from 'react';
 import {e} from '@rescapes/helpers-component';
-
-import * as PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 
 const log = loggers.get('rescapeDefault');
 
@@ -81,13 +80,19 @@ class MutateResponsesOnce extends React.Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     // Do only once
     if (!this.state.mutatedOnce) {
-      R.forEach(
-        response => {
+      R.addIndex(R.forEach)(
+        (response, i) => {
           // If the response does not have a mutation, it indicates that the response does not need to call
           // mutation because it represents data that has already been created. TODO this could cause
           // problems if response lacks mutation by accident
           if (R.has('mutation', response)) {
-            log.debug('Calling mutate once on response ')
+            log.debug(`Calling mutation once on response ${
+              i + 1
+            } of ${
+              R.length(this.props.responses)
+            } responses that have responsePath ${
+              this.props.responsePath
+            }`)
             response.mutation();
           }
         },

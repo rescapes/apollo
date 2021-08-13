@@ -20,6 +20,7 @@ const config = {
     'src/helpers/requestHelpers.js',
     'src/helpers/testHelpers.js',
     'src/helpers/utilityHelpers.js',
+    'src/containers/mutateOnceAndWait.js',
     'src/config.js'
   ],
   plugins: []

@@ -6,7 +6,7 @@ import {
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
 import moment from 'moment';
 import {capitalize, composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs} from '@rescapes/ramda';
-import {localTestAuthTask} from './testHelpers.,js';
+import {localTestAuthTask} from './testHelpers.js';
 import {sampleMutateRegionContainer, sampleQueryRegionsContainer} from './samples/sampleRegionStore.js';
 import * as R from 'ramda';
 

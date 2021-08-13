@@ -87,11 +87,12 @@ export {
 
 export {defaultStateLinkResolvers} from './client/stateLink.js';
 export {
-  containerForApolloType, callMutationNTimesAndConcatResponses,
+  containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
   addMutateKeyToMutationResponse,
   deleteItemsOfExistingResponses,
 } from './helpers/containerHelpers.js';
+export {callMutationNTimesAndConcatResponses} from './containers/multipleMutations.js'
 export {mutationRequestWithMutateOnceAndWaitContainer, mutateOnceAndWaitContainer} from './containers/mutateOnceAndWait.js'
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {

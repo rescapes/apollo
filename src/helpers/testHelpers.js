@@ -29,6 +29,8 @@ import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHe
  * The config for test. We add some cache only properties to
  */
 export const localTestConfig = {
+  // Says to create/update the settings for each test
+  forceMutateSettings: true,
   settings,
   settingsConfig: {
     settingsOutputParams: defaultSettingsOutputParams,

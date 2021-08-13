@@ -36,7 +36,6 @@
     "@apollo/client": "^3.3.14",
     "@apollo/react-hooks": "^4.0.0",
     "@jest/globals": "^26.6.2",
-    "@rescapes/translation": "^0.0.26",
     "apollo-link-dedup": "^1.0.21",
     "apollo-link-error": "^1.1.13",
     "apollo-utilities": "^1.3.2",
@@ -56,10 +55,10 @@
     "prop-types": "^15.7.2",
     "ramda": "^0.27.1",
     "ramda-lens": "^0.1.2",
-    "react-adopt": "^0.6.0",
     "react-apollo": "^3.0.1",
     "regenerator-runtime": "^0.13.3",
     "request": "^2.88.0",
+    "rescapes-react-adopt": "^0.6.2",
     "unfetch": "^4.2.0"
   },
   "devDependencies": {
@@ -67,6 +66,8 @@
     "@rescapes/helpers-component": ">=1.5.144",
     "@rescapes/log": ">=0.1.30",
     "@rescapes/ramda": ">=1.6.172",
+    "@rescapes/react-adopt": ">=0.6.4",
+    "@rescapes/translation": ">=0.0.32",
     "@rescapes/validate": ">=1.3.25",
     "@testing-library/react": "^11.2.6",
     "@types/jest": "^26.0.22",
@@ -103,11 +104,13 @@
     "rollup-plugin-terser": "^7.0.2"
   },
   "peerDependencies": {
-    "@rescapes/helpers": ">=1.1.99",
-    "@rescapes/helpers-component": ">=1.5.38",
-    "@rescapes/log": ">=0.1.11",
-    "@rescapes/ramda": ">=1.5.78",
-    "@rescapes/validate": ">=1.2.23"
+    "@rescapes/helpers": ">=1.1.115",
+    "@rescapes/helpers-component": ">=1.5.144",
+    "@rescapes/log": ">=0.1.30",
+    "@rescapes/ramda": ">=1.6.172",
+    "@rescapes/react-adopt": ">=0.6.4",
+    "@rescapes/translation": ">=0.0.32",
+    "@rescapes/validate": ">=1.3.25"
   },
   "jest": {
     "modulePaths": [],

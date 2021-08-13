@@ -311,36 +311,39 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
   const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
 
   return composeWithComponentMaybeOrTaskChain([
-    ({render}) => {
+    ({settingsResponse, render}) => {
       // Just here so compose has at least two functions
       return containerForApolloType(
         apolloConfig,
         {
           render: getRenderPropFunction(props),
-          response: {render}
+          // Match a server response
+          response: {result: {data: {mutate: {settings: settingsResponse}}}}
         }
       );
     },
     ...R.map(
       idField => {
-        return ({render}) => {
-          return makeCacheMutationContainer(
-            apolloConfig,
-            {
-              name: 'settings',
-              idField: props => R.compose(
-                // The apollo cache stores non-ids as {"key":"value"} as the cache key.
-                // This makes sense, but it's not documented, so we have to make the same
-                // key in order to match the ones that apollo writes internally
-                R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
-                R.prop(idField)
-              )(props),
-              // output for the read fragment
-              outputParams
-            },
-            R.merge(propsWithCacheOnlyItems, {render})
-          );
-        };
+        return mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'settingsResponse',
+          ({render}) => {
+            return makeCacheMutationContainer(
+              apolloConfig,
+              {
+                name: 'settings',
+                idField: props => R.compose(
+                  // The apollo cache stores non-ids as {"key":"value"} as the cache key.
+                  // This makes sense, but it's not documented, so we have to make the same
+                  // key in order to match the ones that apollo writes internally
+                  R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
+                  R.prop(idField)
+                )(props),
+                // output for the read fragment
+                outputParams
+              },
+              R.merge(propsWithCacheOnlyItems, {render})
+            );
+          }
+        );
       },
       R.filter(p => R.propOr(null, p, propsWithCacheOnlyItems), ['id', 'key'])
     )

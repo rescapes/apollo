@@ -1,5 +1,5 @@
 import settings from './privateSettings.js';
-import {makeSettingsCacheMutationContainer} from './settingsStore.js';
+import {makeSettingsCacheMutationContainer, makeSettingsMutationContainer} from './settingsStore.js';
 import {compact, omitDeep, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
 import {settingsQueryContainerDefault} from './defaultContainers.js';
@@ -10,6 +10,7 @@ import T from 'folktale/concurrency/task/index.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 import {e} from '@rescapes/helpers-component';
+import {mutateOnceAndWaitContainer} from "../containers/mutateOnceAndWait";
 
 const {of} = T;
 const log = loggers.get('rescapeDefault');
@@ -122,6 +123,8 @@ export const settingsDataTypePolicy = {
  * @param {Object} config
  * @param {Object} config.settings The settings to write. It must match Settings object of the Apollo schema,
  * although cache-only values can be included
+ * @param {Object} [config.forceMutateSettings] Default false. If true force the creation/update of the
+ * default settings
  * @param {Object} config.defaultSettingsTypenames Typenames of the settings in the form
  * {
  *   __typename: string,
@@ -140,14 +143,17 @@ export const writeConfigToServerAndCacheContainer = (config) => {
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'void',
-        ({settingsFromServer, settingsWithoutCacheValues, render}) => {
+        ({authTokenResponse, settingsFromServer, settingsWithoutCacheValues, render}) => {
           log.debug(`settingsWithoutCacheValues: ${inspect(settingsWithoutCacheValues, {depth: 10})}`);
           return containerForApolloType(
             apolloConfig,
             {
               render: getRenderPropFunction(render),
-              // This isn't actually used
-              response: R.prop('skip', settingsFromServer) ? settingsWithoutCacheValues : settingsFromServer
+              // This isn't actually used, but either gets the existing settings or the ones that were just created
+              response: R.prop('skip', settingsFromServer) ||
+              (!R.length(strPathOr([], 'data.settings', settingsFromServer)) && R.and(strPathOr(false, 'data.token', authTokenResponse))) ?
+                reqStrPathThrowing('result.data.mutate.settings', settingsWithoutCacheValues) :
+                strPathOr(null, 'data.settings', settingsFromServer)
             }
           );
         }
@@ -161,21 +167,18 @@ export const writeConfigToServerAndCacheContainer = (config) => {
             R.ifElse(
               // If we are authenticated and the local settings have changed from the server (unlikely),
               // mutate the server settings
-              () => false && R.and(strPathOr(false, 'data.token', authTokenResponse),
+              () => config['forceMutateSettings'] && R.and(strPathOr(false, 'data.token', authTokenResponse),
                 R.complement(R.equals)(R.merge(R.omit(['render'], props), _settings), _settings)
               ),
               () => {
-                // Update the settings on the server with those configured in code.
-                // TODO this should be removed in favor of a one time database write
-                // in a server init script
-                // TODO commened out, causing bad data on the server
-                /*
+                // if config['forceMutateSettings'] and authenticated
+                // Insert/Update the settings on the server with those configured in code.
+                // TODO this does nothing for components, use mutateOnceAndWaitContainer() if needed with components
                 return makeSettingsMutationContainer(
                   apolloConfig,
                   {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
                   R.merge(props, R.pick(['id'], settings))
                 );
-                 */
               },
               () => {
                 // Not authenticated or no updates needed

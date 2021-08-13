@@ -25,11 +25,13 @@ import Result from 'folktale/result/index.js';
 import T from 'folktale/concurrency/task/index.js'
 const {of} = T;
 import * as R from 'ramda';
-import {reqStrPathThrowing, reqStrPath, taskToPromise, pickDeepPaths, defaultNode} from '@rescapes/ramda'
+import {reqStrPathThrowing, reqStrPath, taskToPromise, defaultNode} from '@rescapes/ramda'
 import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 import {print} from 'graphql';
 import * as AC from '@apollo/client';
+
 const {gql} = defaultNode(AC)
+
 
 describe('requestHelpers', () => {
 
@@ -302,14 +304,16 @@ describe('requestHelpers', () => {
   });
 
   test('relatedObjectsToIdForm', () => {
-    expect(relatedObjectsToIdForm({relatedPropPaths: [
-      'drooling.moose',
-      'scapegoats',
-      'elks.slow',
-      'elks.poke.jams',
-      'billy',
-      'smacky'
-    ], relatedPropPathsToAllowedFields: {'drooling.moose': ['type']}}, {
+    expect(relatedObjectsToIdForm({
+      relatedPropPaths: [
+        'drooling.moose',
+        'scapegoats',
+        'elks.slow',
+        'elks.poke.jams',
+        'billy',
+        'smacky'
+      ], relatedPropPathsToAllowedFields: {'drooling.moose': ['type']}
+    }, {
       drooling: {
         moose: {
           type: 'Canadian',
