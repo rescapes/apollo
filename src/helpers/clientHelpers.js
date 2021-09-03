@@ -95,7 +95,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
 };
 
 /**
- * Merge objects including thos with arrays
+ * Merge objects including those with arrays
  * @param {Object} config
  * @param {Function} config.mergeObjects InMemoryCache's merge function
  * @param {Object} config.idPathLookup Id path lookup for objects wihtout ids

@@ -33,7 +33,6 @@ export const settingsQueryContainerDefault = (apolloConfig, {outputParams}, {tok
       R.merge(apolloConfig, {
         options: {
           skip: !R.propOr(localStorage.getItem('token'), 'token', props),
-          fetchPolicy: 'network-only',
           variables: props => {
             // Default to key: 'default' if id is not specified
             return R.merge(

@@ -43,6 +43,16 @@ const {ApolloClient} = defaultNode(AC);
  * @param {Array|Object} config.settingsConfig.defaultSettingsOutputParams The settings outputParams
  * @param {[String]} config.settingsConfig.defaultSettingsCacheOnlyObjs See defaultSettingsStore for an example
  * @param {[String]} config.settingsConfig.defaultSettingsCacheIdProps See defaultSettingsStore for an example
+ * @param {Object} [mockTokenAuth] Default null, if using mocks, pass a response in the form:
+ *       "tokenAuth": {
+        "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InRlc3QiLCJleHAiOjE2MzA0ODUwMTIsIm9yaWdJYXQiOjE2MzA0ODQ3MTJ9.PA31kF2P1CeMedybVrYdNWKq7EhNDYka3r9SsSGWfxI",
+        "payload": {
+          "username": "test",
+          "exp": 1630485012,
+          "origIat": 1630484712
+        },
+        "__typename": "ObtainJSONWebToken"
+      }
  * @return {{apolloClient: ApolloClient, token}}
  */
 export const loginToAuthClientTask = R.curry((
@@ -51,7 +61,8 @@ export const loginToAuthClientTask = R.curry((
     uri,
     stateLinkResolvers,
     writeDefaultsContainer,
-    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams}
+    settingsConfig: {cacheOnlyObjs, cacheIdProps, settingsOutputParams},
+    mockTokenAuth=null
   },
   props
 ) => {
@@ -95,7 +106,8 @@ export const loginToAuthClientTask = R.curry((
     // Login in to the server to get the auth token
     mapToNamedResponseAndInputs('tokenAuth',
       ({apolloConfig, props}) => {
-        return tokenAuthMutationContainer(
+        // If mocking don't call the mutation, rather return the mock token auth response
+        return mockTokenAuth ? of(mockTokenAuth) : tokenAuthMutationContainer(
           apolloConfig,
           {outputParams: tokenAuthOutputParams},
           props

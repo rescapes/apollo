@@ -22,7 +22,7 @@ import {
   strPathOr
 } from '@rescapes/ramda';
 import * as R from 'ramda';
-import {_winnowRequestProps, formatOutputParams, resolveGraphQLType} from './requestHelpers.js';
+import {_winnowRequestProps, formatOutputParams, omitClientFields, resolveGraphQLType} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
@@ -51,7 +51,10 @@ const log = loggers.get('rescapeDefault');
  * @returns {String} The query in a string
  */
 export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryArguments) => {
-  return _makeQuery({}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+  // Hack here to omit client fields when using mocks since @apollo/react-testing errors because it removes
+  // the @client directives in our mock queries even if we put them in
+  // https://github.com/apollographql/react-apollo/issues/3316
+  return _makeQuery({}, queryName, inputParamTypeMapper,  process.env.USE_MOCKS ? omitClientFields(outputParams) : outputParams, queryArguments);
 };
 export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, outputParams, queryArguments) => {
   return _makeQuery({queryRootName: lowercase(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);

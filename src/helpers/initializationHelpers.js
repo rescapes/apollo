@@ -15,6 +15,7 @@ import {loginToAuthClientTask} from '../auth/login.js';
 import {parseApiUrl} from '@rescapes/helpers';
 import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
+import * as R from 'ramda'
 
 /**
 
@@ -113,7 +114,8 @@ export const initializeAuthorizedTask = v(config => {
       uri: strPathOr(parseApiUrl(reqStrPathThrowing('settings.data.api', config)), 'uri', config),
       stateLinkResolvers: strPathOr({}, 'apollo.stateLinkResolvers', config),
       writeDefaultsContainer: reqStrPathThrowing('apollo.writeDefaultsCreator', config)(omitDeep(['apollo.writeDefaultsCreator'], config)),
-      settingsConfig: reqStrPathThrowing('settingsConfig', config)
+      settingsConfig: reqStrPathThrowing('settingsConfig', config),
+      mockTokenAuth: R.propOr(null, 'mockTokenAuth', config),
     },
     reqStrPathThrowing('settings.data.testAuthorization', config)
   );
