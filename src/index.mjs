@@ -90,7 +90,7 @@ export {
   containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs, mapTaskOrComponentToMergedResponse,
   addMutateKeyToMutationResponse,
-  deleteItemsOfExistingResponses,
+
 } from './helpers/containerHelpers.js';
 export {callMutationNTimesAndConcatResponses} from './containers/multipleMutations.js'
 export {mutationRequestWithMutateOnceAndWaitContainer, mutateOnceAndWaitContainer} from './containers/mutateOnceAndWait.js'
@@ -160,3 +160,4 @@ export {
   settingsQueryContainerDefault,
   settingsLocalQueryContainerDefault
 } from './helpers/defaultContainers.js';
+export {deleteItemsOfExistingResponses} from "./containers/multipleMutations.js";

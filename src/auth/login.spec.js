@@ -83,7 +83,6 @@ describe('login', () => {
           onResolved: ({apolloConfig, apolloConfig2}) => {
             expect(apolloConfig).toBeTruthy()
             expect(apolloConfig2).toBeTruthy()
-            done();
           }
         }, errors, done
       )
@@ -97,7 +96,6 @@ describe('login', () => {
         onResolved:
           response => {
             expect(response.apolloClient).not.toBeNull();
-            done();
           }
       }, errors, done)
     );
@@ -148,7 +146,6 @@ describe('login', () => {
             expect(response.user.data.currentUser).not.toBeNull();
             expect(response.apolloConfig.apolloClient).not.toBeNull();
             expect(response.apolloConfig.token).not.toBeNull();
-            done();
           }
       }, errors, done)
     );
@@ -160,7 +157,6 @@ describe('login', () => {
         onResolved:
           response => {
             expect(response.apolloClient).not.toBeNull();
-            done();
           }
       }, errors, done)
     );

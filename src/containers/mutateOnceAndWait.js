@@ -8,7 +8,7 @@ import {addMutateKeyToMutationResponse, containerForApolloType} from "../helpers
 import {loggers} from '@rescapes/log';
 import * as R from 'ramda'
 import React from 'react';
-import {e} from '@rescapes/helpers-component';
+import {e} from '../helpers/componentHelpers.js';
 import PropTypes from 'prop-types';
 
 const log = loggers.get('rescapeDefault');

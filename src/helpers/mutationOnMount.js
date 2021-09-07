@@ -13,9 +13,9 @@
 import testUtils from 'react-dom/test-utils.js';
 import {print} from 'graphql';
 import React from 'react';
-import {e} from '@rescapes/helpers-component';
+import {e} from '../helpers/componentHelpers.js';
 import * as R from 'ramda';
-import {Mutation} from "react-apollo";
+import {Mutation} from '@apollo/client/react/components'
 import {inspect} from 'util';
 import {loggers} from '@rescapes/log';
 

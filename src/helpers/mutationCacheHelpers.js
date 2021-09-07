@@ -8,7 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {ApolloConsumer} from 'react-apollo';
+import {ApolloConsumer} from '@apollo/client';
 import {inspect} from 'util';
 import * as R from 'ramda';
 import * as AC from '@apollo/client';
@@ -29,7 +29,7 @@ import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {containerForApolloType} from './containerHelpers.js';
 import {getRenderPropFunction} from './componentHelpersMonadic.js';
-import {e} from '@rescapes/helpers-component';
+import {e} from '../helpers/componentHelpers.js';
 
 const {gql} = defaultNode(AC);
 

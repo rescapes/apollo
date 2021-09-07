@@ -29,7 +29,6 @@ describe('userStore', () => {
       onResolved:
         response => {
           expectKeysAtPath(someUserKeys, 'data.currentUser', response);
-          done();
         }
     }, errors, done));
   });
@@ -50,7 +49,6 @@ describe('userStore', () => {
       onResolved:
         response => {
           expect(response.data).toBeNull();
-          done();
         }
     }, errors, done));
   });

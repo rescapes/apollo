@@ -1,5 +1,4 @@
 import {
-  callMutationNTimesAndConcatResponses,
   containerForApolloType,
   mapTaskOrComponentToNamedResponseAndInputs
 } from './containerHelpers.js';
@@ -9,6 +8,7 @@ import {capitalize, composeWithChain, defaultRunConfig, mapToNamedResponseAndInp
 import {localTestAuthTask} from './testHelpers.js';
 import {sampleMutateRegionContainer, sampleQueryRegionsContainer} from './samples/sampleRegionStore.js';
 import * as R from 'ramda';
+import {callMutationNTimesAndConcatResponses} from "../containers/multipleMutations.js";
 
 describe('containerHelpers', () => {
   test('mapTaskOrComponentToNamedResponseAndInputs', done => {

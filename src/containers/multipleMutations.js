@@ -1,21 +1,83 @@
-import {camelCase, capitalize, compact, reqStrPathThrowing} from "@rescapes/ramda";
+import {camelCase, capitalize, compact, reqStrPathThrowing, strPathOr} from "@rescapes/ramda";
 import {
-  containerForApolloType, deleteItemsOfExistingResponses,
+  containerForApolloType,
   mapTaskOrComponentToConcattedNamedResponseAndInputs,
   mapTaskOrComponentToNamedResponseAndInputs
 } from "../helpers/containerHelpers";
 import React from 'react';
 import moment from 'moment';
-import T from 'folktale/concurrency/task/index.js';
 import * as R from 'ramda';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from '../helpers/componentHelpersMonadic.js';
+import {
+  composeWithComponentMaybeOrTaskChain,
+  getRenderPropFunction,
+  nameComponent
+} from '../helpers/componentHelpersMonadic.js';
 import {loggers} from '@rescapes/log';
-import {e} from '@rescapes/helpers-component';
+import {e} from '../helpers/componentHelpers.js';
 import {mutateOnceAndWaitContainer} from "./mutateOnceAndWait.js";
 
 const log = loggers.get('rescapeDefault');
 
 
+/**
+ * @param {Object} apolloConfig
+ * @param {Object} options
+ * @param {String} options.queryResponsePath Path into existingItemResponses to get objects to delete
+ * @param {Boolean} options.forceDelete Default true. If true and there are existingItemResponses delete, otherwise
+ * return any empty response to indicate that nothing was deleted
+ * @param {Function} options.mutationContainer The apollo mutation request function to call on each item
+ * to update it to deleted
+ * @param {String} options.responsePath The path to the deleted item once the mutation is called. The deleted
+ * items are returned in the response, not the deleted item responses
+ * @param {Function} [options.propVariationFuncForDeleted] Called on each item to modify it with values that
+ * will indicate that it is now deleted, namely deleted. Default is
+ * ({item: {id}}) => {
+      return {id, deleted: moment().toISOString(true)}
+    }
+ * @param {Object} [options.outputParams] Output parameters for the mutationContainer, defaults to {id: 1, deleted: 1}
+ * @param {String} [options.name] if defined, this is passed to the request as the second argument along with
+ * the outputParams to each mutation call
+ * @param {Object} props
+ * @param {[Object]} props.existingItemResponses
+ * @param {Object} props.render
+ * @returns {[Object]} The list of deleted objects in the resolved task or component response
+ */
+export const deleteItemsOfExistingResponses = (
+  apolloConfig, {
+    queryResponsePath,
+    forceDelete = true,
+    mutationContainer,
+    responsePath,
+    propVariationFuncForDeleted = ({item: {id}}) => {
+      return {id, deleted: moment().toISOString(true)};
+    },
+    outputParams = {id: 1, deleted: 1},
+    name
+  },
+  {existingItemResponses, render}
+) => {
+  const items = queryResponsePath ? strPathOr([], queryResponsePath, existingItemResponses) : [];
+  return forceDelete && R.length(items) ?
+    // Recurse to use callMutationNTimesAndConcatResponses to delete existing instances
+    callMutationNTimesAndConcatResponses(
+      apolloConfig,
+      {
+        items,
+        mutationContainer,
+        responsePath,
+        propVariationFunc: propVariationFuncForDeleted,
+        outputParams,
+        name
+      },
+      {render}) :
+    containerForApolloType(
+      apolloConfig,
+      {
+        render,
+        response: {objects: []}
+      }
+    );
+};
 /**
  * Call the given container count times and concat the responses at the response path
  * @param {Object} apolloConfig

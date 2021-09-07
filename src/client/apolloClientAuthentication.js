@@ -9,14 +9,12 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {ApolloConsumer} from 'react-apollo';
-import {e} from '@rescapes/helpers-component';
+import {ApolloConsumer} from '@apollo/client';
+import {e} from '../helpers/componentHelpers.js';
 import {
   composeWithChain,
   defaultNode,
   mapToNamedResponseAndInputs,
-  reqStrPathThrowing,
-  memoizedTaskWith,
   strPathOr
 } from '@rescapes/ramda';
 import {getOrCreateApolloClientTask} from './apolloClient.js';
@@ -27,7 +25,7 @@ import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
-import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
+import {composeWithComponentMaybeOrTaskChain} from '../helpers/componentHelpersMonadic.js';
 
 const {ApolloClient} = defaultNode(AC);
 const {of} = T;

@@ -1,5 +1,6 @@
 import * as R from 'ramda';
 import Maybe from 'folktale/maybe/index.js';
+import React from 'react'
 
 /**
  * Created by Andy Likuski on 2020.04.01
@@ -12,7 +13,7 @@ import Maybe from 'folktale/maybe/index.js';
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+export const e = React.createElement;
 
 /**
  * Given a component and the props passed to it, extract the render prop or children component from the props and create a

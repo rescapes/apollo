@@ -60,7 +60,7 @@ const initializeCache = async apolloClient => {
  */
 describe('apolloClient', () => {
 
-  test('test linkState mutation', async done => {
+  test('test linkState mutation', async () => {
     expect.assertions(6);
     const {apolloClient} = await taskToPromise(localTestAuthTask());
 
@@ -140,7 +140,6 @@ describe('apolloClient', () => {
     );
     expect(reqStrPathThrowing('data.networkStatus.isConnected', queryResponseAfterUnscubscribe)).toEqual(false);
    */
-    done();
   }, 100000);
 });
 

@@ -8,14 +8,14 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-import {ApolloConsumer} from 'react-apollo';
+import {ApolloConsumer} from '@apollo/client';
 import {inspect} from 'util';
 import * as AC from '@apollo/client';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
 import maybe from 'folktale/maybe/index.js';
-import {Mutation, Query} from "react-apollo";
-import {e} from '@rescapes/helpers-component';
+import {Mutation, Query} from '@apollo/client/react/components'
+import {e} from '../helpers/componentHelpers.js';
 import * as ACP from 'apollo3-cache-persist';
 import {print} from 'graphql';
 import moment from 'moment';
@@ -235,6 +235,7 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
   R.forEachObjIndexed(
     (typePolicy, typeName) => {
       // keyFields empty indicates a singleton that we need to initialize to a null query result
+      // Use true if keyFields is undefined so we don't run this logic
       if (!R.length(strPathOr([true], 'keyFields', typePolicy))) {
         const outputParams = reqStrPathThrowing('outputParams', typePolicy);
         makeCacheMutation(
