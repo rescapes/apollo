@@ -124,7 +124,8 @@ export {
   componentRenderedWithChildrenRenderProp,
   componentRenderedWithChildrenRenderPropMaybe,
   componentAndChildRenderedWithRenderProp,
-  componentAndChildRenderedWithChildrenRenderPropMaybe
+  componentAndChildRenderedWithChildrenRenderPropMaybe,
+  e
 } from './helpers/componentHelpers.js';
 
 export {
