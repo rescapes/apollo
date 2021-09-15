@@ -22,14 +22,15 @@ import {
   reqStrPathThrowing
 } from '@rescapes/ramda';
 import PropTypes from 'prop-types';
-import {makeFragmentQuery, makeQuery, makeWriteQuery} from './queryHelpers.js';
+import {composeFuncAtPathIntoApolloConfig, makeFragmentQuery, makeQuery, makeWriteQuery} from './queryHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
-import {omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
+import {_winnowRequestProps, omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
-import {containerForApolloType} from './containerHelpers.js';
-import {getRenderPropFunction} from './componentHelpersMonadic.js';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
+import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
 import {e} from '../helpers/componentHelpers.js';
+import {makeQueryFromCacheContainer} from "./queryCacheHelpers.js";
 
 const {gql} = defaultNode(AC);
 
@@ -43,6 +44,8 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
+ * @param {Object} [apolloConfig.options.variables] Defaults to the identity function.
+ * Accepts the props and resolves to the props that should be cached
  * @params {Object} mutationConfig
  * @params {String|Number|Function} mutationConfig.idField Default 'id', alternative id field
  * If a function pass props to get the value
@@ -54,10 +57,11 @@ const log = loggers.get('rescapeDefault');
  * @param {Boolean} [mutationConfig.mergeFromCacheFirst] Default false. If true do a deep merge with the existing
  * value in cache before writing. This usually isn't needed because the cache is configured with type policies that
  * do the merging.
- * @param {Boolean} [force] Default false. Write to the cache even without @client fields
- * identify the array item. This is a path to an id, such as 'region.id' for userRegions.region.id
- * outputParams must contain @client directives that match values in props. Otherwise this function will not write
- * anything to the cache that wasn't written by the mutation itself
+ * @param {Boolean} [requireClientFields] Default false. If true requires that at least one @client directive
+ * is present in the outputParams. This is used for mutations whose update method writes additional data to
+ * the cache. It ensures that there actually is additional data to write to the cache.
+ * if true, outputParams must contain @client directives that match values in props. Otherwise this function will not write
+ * anything to the cache that wasn't written by the mutation itself. Set false for cache-only mutations.
  * @param {Boolean} [singleton] Default false. When true, don't use an id, but assume only on instance is being cached
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
@@ -68,110 +72,125 @@ const log = loggers.get('rescapeDefault');
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
 export const makeCacheMutation = v(R.curry(
-  (apolloConfig,
-   {
-     idField = 'id',
-     name,
-     outputParams,
-     idPathLookup,
-     mergeFromCacheFirst,
-     force = false,
-     singleton = false
-   },
-   props) => {
+    (apolloConfig,
+     {
+       idField = 'id',
+       name,
+       outputParams,
+       idPathLookup,
+       mergeFromCacheFirst,
+       requireClientFields = false,
+       singleton = false
+     },
+     props) => {
 
-    // Use the apolloClient or store
-    const apolloClientOrStore = R.propOr(R.prop('store', apolloConfig), 'apolloClient', apolloConfig);
-    // The id to get use to get the right fragment
-    const id = R.ifElse(
-      R.identity,
-      () => reqStrPathThrowing('__typename', props),
-      () => `${reqStrPathThrowing('__typename', props)}:${
-        R.ifElse(
-          R.is(Function),
-          idField => idField(props),
-          idField => reqStrPathThrowing(idField, props)
-        )(idField)}`
-    )(singleton);
 
-    const minimizedOutputParams = omitUnrepresentedOutputParams(props, outputParams);
-    const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
-    if (!force && R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
-      const info = `makeCacheMutation: For ${name}, outputParams do not contain any @client directives. Found ${
-        inspect(minimizedOutputParams)
-      }. No write to the cache will be performed`;
-      log.info(info);
-      return props;
-    }
+      // If apolloConfig.options.variables is specified, this winnows the props to whatever we want to cache
+      // If can also resolve the props to an array of items if we are concatting with existing cache array or empty array
+      const resolvedProps = _winnowRequestProps(apolloConfig, props)
 
-    // Optionally merge the existing cache data into the props before writing.
-    // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
-    const propsWithPossibleMerge = R.when(
-      () => mergeFromCacheFirst,
-      props => mergeExistingFromCache({
-        apolloClient: apolloClientOrStore,
-        idPathLookup,
-        outputParamsWithOmittedClientFields,
-        id
-      }, props)
-    )(props);
+      // Use the apolloClient or store
+      const apolloClientOrStore = R.propOr(R.prop('store', apolloConfig), 'apolloClient', apolloConfig);
+      // The id to use to get the right fragment
+      const id = R.ifElse(
+        R.identity,
+        () => reqStrPathThrowing('__typename', resolvedProps),
+        () => `${reqStrPathThrowing('__typename', resolvedProps)}:${
+          R.compose(
+            // The apollo cache stores non-ids as {"key":"value"} as the cache key.
+            // This makes sense, but it's not documented, so we have to make the same
+            // key in order to match the ones that apollo writes internally
+            id => R.unless(
+              () => R.equals('id', idField),
+              idField => `{"${idField}":"${id}"}`
+            )(R.prop(idField, resolvedProps)),
+            idField => R.when(
+              R.is(Function),
+              // If already a function, call it to resolve the field. This would probably never be needed
+              idField => idField(resolvedProps),
+            )(idField)
+          )(idField)
+        }`
+      )(singleton);
 
-    /*
-    This is an attempt to use writeQuery instead of writeFragment. Currently writeQuery
-    doesn't actually write anything to the cache, so I need to debug more
-    const writeQuery = gql`${makeWriteQuery(
-      `write${capitalize(name)}`,
-      props.__typename,
-      {},
-      minimizedOutputParams,
-      {[idField]: id}
-      )
-    }`;
-
-    log.debug(`Write Cache Query: ${
-      print(writeQuery)
-    } ${idField}: ${id} data ${
-      inspect(propsWithPossibleMerge, null, 10)
-    }`);
-
-    apolloClientOrStore.writeQuery({query: writeQuery, variables: {[idField]: id}, data: propsWithPossibleMerge});
-    // Read to verify that the write succeeded.
-    // If this throws then we did something wrong
-    try {
-      const test = apolloClientOrStore.readQuery({query: writeQuery, variables: {[idField]: id}});
-      if (!test) {
-        throw new Error('null readQuery result');
+      const minimizedOutputParams = omitUnrepresentedOutputParams(resolvedProps, outputParams);
+      const outputParamsWithOmittedClientFields = omitClientFields(minimizedOutputParams);
+      if (requireClientFields && R.equals(minimizedOutputParams, outputParamsWithOmittedClientFields)) {
+        const info = `makeCacheMutation: For ${name}, outputParams do not contain any @client directives. Found ${
+          inspect(minimizedOutputParams)
+        }. No write to the cache will be performed`;
+        log.info(info);
+        return resolvedProps;
       }
-    */
 
-    // Write the fragment
-    const writeFragment = gql`${makeFragmentQuery(
-      `${name}WithClientFields`, 
-      {}, 
-      minimizedOutputParams, 
-      R.pick(['__typename'], props))
-    }`;
+      // Optionally merge the existing cache data into the props before writing.
+      // This shouldn't normally be need because writing the fragment triggers the cache's type policy merge functions
+      const propsWithPossibleMerge = R.when(
+        () => mergeFromCacheFirst,
+        props => mergeExistingFromCache({
+          apolloClient: apolloClientOrStore,
+          idPathLookup,
+          outputParamsWithOmittedClientFields,
+          id
+        }, props)
+      )(resolvedProps);
 
-    log.debug(`Write Cache Fragment: ${
-      print(writeFragment)
-    } id: ${id} args: ${
-      // Just show keys until we can limit big data structures
-      R.keys(propsWithPossibleMerge)
-      // Keep the depth reasonable so we don't get huge dumps
-      //inspect(propsWithPossibleMerge, null, 3)
-    }`);
+      /*
+      This is an attempt to use writeQuery instead of writeFragment. Currently writeQuery
+      doesn't actually write anything to the cache, so I need to debug more
+      const writeQuery = gql`${makeWriteQuery(
+        `write${capitalize(name)}`,
+        props.__typename,
+        {},
+        minimizedOutputParams,
+        {[idField]: id}
+        )
+      }`;
 
-    apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
-    // Read to verify that the write succeeded.
-    // If this throws then we did something wrong
-    try {
-      const test = apolloClientOrStore.readFragment({fragment: writeFragment, id});
-    } catch (e) {
-      log.error(`Could not read the fragment just written to the cache. Props ${inspect(props)}`);
-      throw e;
-    }
-    return propsWithPossibleMerge;
-  }),
+      log.debug(`Write Cache Query: ${
+        print(writeQuery)
+      } ${idField}: ${id} data ${
+        inspect(propsWithPossibleMerge, null, 10)
+      }`);
+
+      apolloClientOrStore.writeQuery({query: writeQuery, variables: {[idField]: id}, data: propsWithPossibleMerge});
+      // Read to verify that the write succeeded.
+      // If this throws then we did something wrong
+      try {
+        const test = apolloClientOrStore.readQuery({query: writeQuery, variables: {[idField]: id}});
+        if (!test) {
+          throw new Error('null readQuery result');
+        }
+      */
+
+      // Write the fragment
+      const writeFragment = makeFragmentQuery(
+        `${name}WithClientFields`,
+        {},
+        minimizedOutputParams,
+        R.pick(['__typename'], propsWithPossibleMerge)
+      )
+
+      log.debug(`Write Cache Fragment: ${
+        print(writeFragment)
+      } id: ${id} args: ${
+        // Just show keys until we can limit big data structures
+        R.keys(propsWithPossibleMerge)
+        // Keep the depth reasonable so we don't get huge dumps
+        //inspect(propsWithPossibleMerge, null, 3)
+      }`);
+
+      apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
+      // Read to verify that the write succeeded.
+      // If this throws then we did something wrong
+      try {
+        const test = apolloClientOrStore.readFragment({fragment: writeFragment, id});
+      } catch (e) {
+        log.error(`Could not read the fragment just written to the cache. Props ${inspect(props)}`);
+        throw e;
+      }
+      return propsWithPossibleMerge;
+    }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
@@ -208,13 +227,13 @@ const mergeExistingFromCache = ({apolloClient, idPathLookup, outputParamsWithOmi
   // of pre-merged data that will be merged again by the cache
 
   // Create a fragment to fetch the existing data from the cache. Note that we only use props for the __typename
-  const fragment = gql`${makeFragmentQuery(
-      `${name}WithoutClientFields`, 
-      {}, 
-      // Don't output cache only fields where
-      outputParamsWithOmittedClientFields, 
-      R.pick(['__typename'], props)
-    )}`;
+  const fragment = makeFragmentQuery(
+    `${name}WithoutClientFields`,
+    {},
+    // Don't output cache only fields where
+    outputParamsWithOmittedClientFields,
+    R.pick(['__typename'], props)
+  );
   log.debug(`Query Fragment: ${print(fragment)} id: ${id}`);
 
   // Get the fragment
@@ -258,6 +277,8 @@ export const mergeCacheable = ({idPathLookup}, existing, incoming) => {
  * @param {Object} apolloConfig The Apollo configuration with either an ApolloClient for server work or an
  * Apollo wrapped Component for browser work. The client is specified here and the component in the component argument
  * @param {Object} apolloConfig.apolloClient Optional Apollo client, authenticated for most calls
+ * @param {Object} apolloConfig.apolloClient.options.variables Default identity. Accepts the props and resolves to
+ * the props that should be cached
  * @params {String} name The lowercase name of the object matching the query name, e.g. 'regions' for regionsQuery
  * @params {Object} readInputTypeMapper maps object keys to complex input types from the Apollo schema. Hopefully this
  * will be automatically resolved soon. E.g. {data: 'DataTypeofLocationTypeRelatedReadInputType'}
@@ -273,64 +294,64 @@ export const mergeCacheable = ({idPathLookup}, existing, incoming) => {
  * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
  */
 export const makeCacheMutationContainer = v(R.curry(
-  (apolloConfig,
-   {
-     idField = 'id',
-     name,
-     outputParams,
-     idPathLookup,
-     mergeFromCacheFirst,
-     force = false,
-     singleton = false
-   },
-   props) => {
+    (apolloConfig,
+     {
+       idField = 'id',
+       name,
+       outputParams,
+       idPathLookup,
+       mergeFromCacheFirst,
+       requireClientFields = false,
+       singleton = false
+     },
+     props) => {
 
-    const _makeCacheMutation = apolloConfig => {
-      return makeCacheMutation(
-        apolloConfig,
-        {
-          idField,
-          name,
-          outputParams,
-          idPathLookup,
-          mergeFromCacheFirst,
-          force,
-          singleton
-        },
-        R.omit(['render'], props)
-      );
-    };
+      const _makeCacheMutation = apolloConfig => {
+        return makeCacheMutation(
+          apolloConfig,
+          {
+            idField,
+            name,
+            outputParams,
+            idPathLookup,
+            mergeFromCacheFirst,
+            requireClientFields,
+            singleton
+          },
+          R.omit(['render'], props)
+        );
+      };
 
-    // Put the new cache value in a Task or component, depending on if we have an Apollo Client or Container
-    return R.cond([
-      // If we have an ApolloClient
-      [apolloConfig => R.has('apolloClient', apolloConfig),
-        () => of(_makeCacheMutation(apolloConfig))
-      ],
-      // If we have an Apollo Component
-      [R.T,
-        // Since we aren't using a Query component, use an ApolloConsumer to get access to the
-        // apollo client from the react context
-        apolloConfig => {
-          return e(
-            ApolloConsumer,
-            {},
-            apolloClient => {
-              const _apolloConfig = R.merge(apolloConfig, {apolloClient});
-              const data = _makeCacheMutation(_apolloConfig);
-              return containerForApolloType(
-                apolloClient,
-                {
-                  render: getRenderPropFunction(props),
-                  response: data
-                }
-              );
-            }
-          );
-        }
-      ]
-    ])(apolloConfig);
-  }),
+      // Put the new cache value in a Task or component, depending on if we have an Apollo Client or Container
+      return R.cond([
+        // If we have an ApolloClient
+        [apolloConfig => R.has('apolloClient', apolloConfig),
+          () => of(_makeCacheMutation(apolloConfig))
+        ],
+        // If we have an Apollo Component
+        [R.T,
+          // Since we aren't using a Query component, use an ApolloConsumer to get access to the
+          // apollo client from the react context
+          apolloConfig => {
+            return e(
+              ApolloConsumer,
+              {},
+              apolloClient => {
+                const _apolloConfig = R.merge(apolloConfig, {apolloClient});
+                const data = _makeCacheMutation(_apolloConfig);
+                return containerForApolloType(
+                  apolloClient,
+                  {
+                    render: getRenderPropFunction(props),
+                    response: data
+                  }
+                );
+              }
+            );
+          }
+        ]
+      ])(apolloConfig);
+    }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
@@ -421,3 +442,52 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
     R.toPairs(cacheOnlyObjectTypeNames(name, cacheOnlyObjs))
   );
 };
+
+/**
+ * Combines a cache query with a mutation, concatting the given props to what is already in the cache
+ * after checking for uniqueness.
+ *
+ * Props to concat can be extracted using the apolloConfig.options.variables function. Since we don't
+ * support operating on props as array, the array being concatted must be stored at a key such as
+ * {selection: [...]}}. Any arrays found in the props will be deep-merge concatted based on id uniqueness
+ *
+ * id uniqueness defaults to checking the 'id' field of each item in the array. However this can be
+ * overridden using options.idField.
+ * @param apolloConfig
+ * @param {Object} options
+ * @param {String} options.name
+ * @param {Object} options.outputParams
+ * @param {String} [options.idField] Default 'id' The id field of the items being concatted
+ * @param {Object} [options.idPathLookup] Default {} Specifies how ids in objects in props are found.
+ * @param {Boolean} [options.singleton] Default false. Set true if the outer object represented by the props
+ * is singleton, meaning it doesn't have an id and there is only one instance that is stored in the cache.
+ * This is often the case when storing cache-only data is based on a single visual component, like a drop-down
+ * E.g. {selection: {blocks: [{id: 1}, ...]}} would be {['selection.blocks']: ['id']}
+ * Always use an array for the value since ids can be stored by the cache by concatting field values
+ * @param {Object} props
+ * @returns {Object} Task or Component resolving to the new stored list of values
+ */
+export const concatCacheMutation = (
+  apolloConfig,
+  {
+    name,
+    outputParams,
+    readInputTypeMapper: {},
+    idField = 'id',
+    idPathLookup = {},
+    singleton = false,
+  },
+  props
+) => {
+  return makeCacheMutationContainer(
+    apolloConfig,
+    {
+      name,
+      outputParams,
+      idField,
+      idPathLookup,
+      singleton
+    },
+    props
+  );
+}

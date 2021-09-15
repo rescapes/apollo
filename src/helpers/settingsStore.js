@@ -280,13 +280,7 @@ export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, s
         apolloConfig,
         {
           name: 'settings',
-          idField: props => R.compose(
-            // The apollo cache stores non-ids as {"key":"value"} as the cache key.
-            // This makes sense, but it's not documented, so we have to make the same
-            // key in order to match the ones that apollo writes internally
-            R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
-            R.prop(idField)
-          )(props),
+          idField,
           // output for the read fragment
           outputParams
         },
@@ -330,13 +324,7 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
               apolloConfig,
               {
                 name: 'settings',
-                idField: props => R.compose(
-                  // The apollo cache stores non-ids as {"key":"value"} as the cache key.
-                  // This makes sense, but it's not documented, so we have to make the same
-                  // key in order to match the ones that apollo writes internally
-                  R.unless(() => R.equals('id', idField), value => `{"${idField}":"${value}"}`),
-                  R.prop(idField)
-                )(props),
+                idField,
                 // output for the read fragment
                 outputParams
               },

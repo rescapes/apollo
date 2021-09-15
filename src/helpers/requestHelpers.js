@@ -382,6 +382,7 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
  * @param {Object} apolloConfig Apollo config
  * @param {Object} apolloConfig.options
  * @param {Function|Object} apolloConfig.options.variables A unary function that expects props and returns the winnowed props
+ * @param {Object} [apolloConfig.options.preserveNulls] Default false. Used only by caching initial values of singletons
  * If an object then props are ignored and these values are returned. This would only occur if the variables were constant,
  * which seems unlikely, but matches Apollo's possible configuration
  * @param {Object} props Props to winnow
@@ -390,9 +391,10 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
 export const _winnowRequestProps = (apolloConfig, props) => {
   const func = strPathOr(R.identity, 'options.variables', apolloConfig);
   const resolvedProps = R.when(R.is(Function), R.applyTo(props))(func);
-  // Remove _typename props that might be left from the result of previous Apollo requests
+  // Remove _typename props that might be left from the result of previous Apollo requests from response props such
+  // as queryFoo or mutateFoo.
   // Also remove the render and children prop if not done by options.variables. We never want these is our request
-  return compact(R.mapObjIndexed((value, prop) => {
+  return (strPathOr('options.preserveNulls', apolloConfig) ? R.identity : compact)(R.mapObjIndexed((value, prop) => {
     return R.ifElse(
       prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
       () => {

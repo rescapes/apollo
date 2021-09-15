@@ -15,7 +15,7 @@ import {
   compact,
   defaultNode, lowercase,
   mapObjToValues,
-  memoized,
+  memoized, memoizedWith,
   omitDeep,
   replaceValuesWithCountAtDepthAndStringify,
   reqStrPathThrowing,
@@ -33,6 +33,7 @@ import {authApolloQueryContainer} from '../client/apolloClient.js';
 import T from 'folktale/concurrency/task/index.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
+import {flattenObj} from "@rescapes/ramda/src/functions.js";
 
 const {gql} = defaultNode(AC);
 
@@ -54,14 +55,16 @@ export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryAr
   // Hack here to omit client fields when using mocks since @apollo/react-testing errors because it removes
   // the @client directives in our mock queries even if we put them in
   // https://github.com/apollographql/react-apollo/issues/3316
-  return _makeQuery({}, queryName, inputParamTypeMapper,  process.env.USE_MOCKS ? omitClientFields(outputParams) : outputParams, queryArguments);
+  return _makeQuery({}, queryName, inputParamTypeMapper, process.env.USE_MOCKS ? omitClientFields(outputParams) : outputParams, queryArguments);
 };
 export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, outputParams, queryArguments) => {
   return _makeQuery({queryRootName: lowercase(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 };
 
 /**
- * Creates a fragment query for fetching values from the cache
+ * Creates a fragment query for fetching values from the cache. This function must be memoized
+ * because Apollo is too recognize that multiple queries with the same name are not duplicates, but the
+ * same query, since Apollo stupidly encourages hard-coded gql
  * @param {String} queryName Unique query name
  * @param {Object} inputParamTypeMapper Used to generate the correct complex input types
  * @param {Array|Object} outputParams
@@ -71,9 +74,14 @@ export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, output
  * @return {string} The query string, not gql
  * @type {any}
  */
-export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outputParams, props) => {
-  return _makeQuery({isFragment: true}, queryName, inputParamTypeMapper, outputParams, props);
-});
+export const makeFragmentQuery = memoizedWith(
+  (queryName, inputParamTypeMapper, outputParams, props) => {
+    // Just memoize the prop keys, since we use the keys to form the structure of the query
+    return {queryName, inputParamTypeMapper, outputParams, props: R.keys(flattenObj(props))}
+  },
+  (queryName, inputParamTypeMapper, outputParams, props) => {
+    return gql`${_makeQuery({isFragment: true}, queryName, inputParamTypeMapper, outputParams, props)}`;
+  });
 
 /***
  *
@@ -93,72 +101,76 @@ export const makeFragmentQuery = R.curry((queryName, inputParamTypeMapper, outpu
  * @return {string} The query string, not gql
  * @private
  */
-export const _makeQuery = memoized((queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
-  const resolve = resolveGraphQLType(inputParamTypeMapper);
+export const _makeQuery = memoizedWith(((queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
+    // We don't memoize props because they can change without changing the query
+    return {queryConfig, queryName, inputParamTypeMapper, outputParams, props: R.keys(flattenObj(props))}
+  }),
+  (queryConfig, queryName, inputParamTypeMapper, outputParams, props) => {
+    const resolve = resolveGraphQLType(inputParamTypeMapper);
 
-  // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
-  const cleanedQueryArguments = omitDeep(['__typename'], props);
+    // Never allow __typename. It might be in the queryArguments if the they come from the output of another query
+    const cleanedQueryArguments = omitDeep(['__typename'], props);
 
-  // These are the first line parameter definitions of the query, which list the name and type
-  const params = R.join(
-    ', ',
-    mapObjToValues(
-      (value, key) => {
-        // Map the key to the inputParamTypeMapper value for that key if given
-        // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
-        return `$${key}: ${resolve(key, value)}!`;
-      },
-      cleanedQueryArguments
-    )
-  );
+    // These are the first line parameter definitions of the query, which list the name and type
+    const params = R.join(
+      ', ',
+      mapObjToValues(
+        (value, key) => {
+          // Map the key to the inputParamTypeMapper value for that key if given
+          // This is only needed when value is an Object since it needs to map to a custom graphql inputtype
+          return `$${key}: ${resolve(key, value)}!`;
+        },
+        cleanedQueryArguments
+      )
+    );
 
-  const parenWrapIfNotEmpty = str => R.unless(R.isEmpty, str => `(${str})`, str);
+    const parenWrapIfNotEmpty = str => R.unless(R.isEmpty, str => `(${str})`, str);
 
-  // These are the second line arguments that map parameters to variables
-  const args = R.join(
-    ', ',
-    mapObjToValues((value, key) => {
-      return `${key}: $${key}`;
-    }, cleanedQueryArguments)
-  );
+    // These are the second line arguments that map parameters to variables
+    const args = R.join(
+      ', ',
+      mapObjToValues((value, key) => {
+        return `${key}: $${key}`;
+      }, cleanedQueryArguments)
+    );
 
-  // Only use parens if there are actually variables/arguments
-  const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(cleanedQueryArguments));
+    // Only use parens if there are actually variables/arguments
+    const variableString = R.ifElse(R.length, R.always(params), R.always(''))(R.keys(cleanedQueryArguments));
 
-  const clientTokenIfClientQuery = R.ifElse(R.prop('client'), R.always('@client'), R.always(null))(queryConfig);
+    const clientTokenIfClientQuery = R.ifElse(R.prop('client'), R.always('@client'), R.always(null))(queryConfig);
 
-  // Either we have a query queryName or fragment queryName on queryArguments.__typename
-  // I think fragments never need args so only queryArguments.__typename should be specified for fragment queryies
-  const queryOrFragment = R.ifElse(
-    R.prop('isFragment'),
-    R.always(`fragment ${queryName}Fragment on ${R.prop('__typename', props)}`),
-    R.always(`query ${queryName}`)
-  )(queryConfig);
+    // Either we have a query queryName or fragment queryName on queryArguments.__typename
+    // I think fragments never need args so only queryArguments.__typename should be specified for fragment queryies
+    const queryOrFragment = R.ifElse(
+      R.prop('isFragment'),
+      R.always(`fragment ${queryName}Fragment on ${R.prop('__typename', props)}`),
+      R.always(`query ${queryName}`)
+    )(queryConfig);
 
-  // Unless we are creating a fragment, wrap the outputParams in the name of the type we are querying
-  const unlessFragment = content => R.ifElse(
-    R.prop('isFragment'),
-    R.always(null),
-    R.always(content)
-  )(queryConfig);
+    // Unless we are creating a fragment, wrap the outputParams in the name of the type we are querying
+    const unlessFragment = content => R.ifElse(
+      R.prop('isFragment'),
+      R.always(null),
+      R.always(content)
+    )(queryConfig);
 
-  // If we pass in a query name based on a mutation, such as 'createSettings' or 'updateSettings',
-  // we need to remove the verb from the outputParams and lowercase
-  const removedCreateUpdateQueryName = R.compose(
-    lowercase,
-    n => R.replace(/^(create|update)/, '', n)
-  )(queryName)
-  const output = R.join('', compact([
-    unlessFragment(R.join(' ', compact([strPathOr(removedCreateUpdateQueryName, 'queryRootName', queryConfig), parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
-    formatOutputParams(outputParams),
-    unlessFragment('}')
-  ]));
+    // If we pass in a query name based on a mutation, such as 'createSettings' or 'updateSettings',
+    // we need to remove the verb from the outputParams and lowercase
+    const removedCreateUpdateQueryName = R.compose(
+      lowercase,
+      n => R.replace(/^(create|update)/, '', n)
+    )(queryName)
+    const output = R.join('', compact([
+      unlessFragment(R.join(' ', compact([strPathOr(removedCreateUpdateQueryName, 'queryRootName', queryConfig), parenWrapIfNotEmpty(args), clientTokenIfClientQuery, '{']))),
+      formatOutputParams(outputParams),
+      unlessFragment('}')
+    ]));
 
-  // We use the queryName as the label of the query and the name that matches the schema
-  return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
+    // We use the queryName as the label of the query and the name that matches the schema
+    return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
   ${output}
 }`;
-});
+  });
 
 /**
  * Composes normalizeProps onto options.variables function if already defined by the caller.
@@ -268,88 +280,88 @@ const modifyApolloConfigFuncsForQuery = (apolloConfig, {normalizeProps, query, s
  *  If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs
  */
 export const makeQueryContainer = v(R.curry(
-  (apolloConfig,
-   {name, readInputTypeMapper, outputParams, normalizeProps},
-   props
-  ) => {
-    // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
-    const nameTitle = R.compose(capitalize, singularize)(name);
-    const readInputTypeMapperOrDefault = R.defaultTo(
-      {
-        'data': `${nameTitle}DataTypeof${nameTitle}TypeRelatedReadInputType`
-      },
-      readInputTypeMapper
-    );
-
-    // See if the query is ready to run
-    const skip = strPathOr(false, 'options.skip', apolloConfig);
-    // If not skip, process the props
-    const winnowedProps = R.ifElse(
-      () => skip,
-      () => ({}),
-      props => R.compose(
-        // Normalize the props if needed. This removes top-level key/values that might be in the object that
-        // aren't expected/needed by the API
-        props => {
-          return (normalizeProps || R.identity)(props);
+    (apolloConfig,
+     {name, readInputTypeMapper, outputParams, normalizeProps},
+     props
+    ) => {
+      // Limits the arguments the query uses based on apolloConfig.options.variables(props) if specified
+      const nameTitle = R.compose(capitalize, singularize)(name);
+      const readInputTypeMapperOrDefault = R.defaultTo(
+        {
+          'data': `${nameTitle}DataTypeof${nameTitle}TypeRelatedReadInputType`
         },
-        props => {
-          // Use apolloConfig.options.variables function to filter if specified.
-          // This extracts the needed props for the query
-          return _winnowRequestProps(apolloConfig, props);
-        }
-      )(props)
-    )(props);
-    const query = gql`${makeQuery(
-      name, 
-      readInputTypeMapperOrDefault, 
-      outputParams, 
-      winnowedProps
-    )}`;
-    // Compose in options.variables: normalizeProps and compose in a debug onSuccess and onError log message
-    const modifiedApolloConfig = modifyApolloConfigFuncsForQuery(apolloConfig, {
-      normalizeProps,
-      query,
-      skip,
-      winnowedProps
-    });
-    const componentOrTask = authApolloQueryContainer(
-      modifiedApolloConfig,
-      query,
-      // Non-winnowed props because the component does calls its options.variables function
-      props
-    );
-    /*
-    TODO how do we log only when the query is actually run? Is there something on the Query component we can use?
-    log.debug(`Creating Query:\n${
-      print(query)
-    }\nArguments:\n${
-      R.ifElse(
+        readInputTypeMapper
+      );
+
+      // See if the query is ready to run
+      const skip = strPathOr(false, 'options.skip', apolloConfig);
+      // If not skip, process the props
+      const winnowedProps = R.ifElse(
         () => skip,
-        () => 'Props are not ready',
-        (winnowedProps) => JSON.stringify(winnowedProps)
-      )(winnowedProps)
-    }\n`);
-     */
-    return R.when(
-      componentOrTask => 'run' in componentOrTask,
-      // If it's a task report the result. Components have to run their query
-      componentOrTask => {
-        log.debug(`makeQueryContainer Attempting query task:\n${
-          print(query)
-        }\nArguments:\n${
-          inspect(winnowedProps, false, 10)
-        }\n`);
-        return R.map(
-          queryResponse => {
-            log.debug(`makeQueryContainer for ${name} succeeded with response: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
-            return queryResponse;
+        () => ({}),
+        props => R.compose(
+          // Normalize the props if needed. This removes top-level key/values that might be in the object that
+          // aren't expected/needed by the API
+          props => {
+            return (normalizeProps || R.identity)(props);
           },
-          componentOrTask
-        );
-      }
-    )(componentOrTask);
-  }),
+          props => {
+            // Use apolloConfig.options.variables function to filter if specified.
+            // This extracts the needed props for the query
+            return _winnowRequestProps(apolloConfig, props);
+          }
+        )(props)
+      )(props);
+      const query = gql`${makeQuery(
+        name,
+        readInputTypeMapperOrDefault,
+        outputParams,
+        winnowedProps
+      )}`;
+      // Compose in options.variables: normalizeProps and compose in a debug onSuccess and onError log message
+      const modifiedApolloConfig = modifyApolloConfigFuncsForQuery(apolloConfig, {
+        normalizeProps,
+        query,
+        skip,
+        winnowedProps
+      });
+      const componentOrTask = authApolloQueryContainer(
+        modifiedApolloConfig,
+        query,
+        // Non-winnowed props because the component does calls its options.variables function
+        props
+      );
+      /*
+      TODO how do we log only when the query is actually run? Is there something on the Query component we can use?
+      log.debug(`Creating Query:\n${
+        print(query)
+      }\nArguments:\n${
+        R.ifElse(
+          () => skip,
+          () => 'Props are not ready',
+          (winnowedProps) => JSON.stringify(winnowedProps)
+        )(winnowedProps)
+      }\n`);
+       */
+      return R.when(
+        componentOrTask => 'run' in componentOrTask,
+        // If it's a task report the result. Components have to run their query
+        componentOrTask => {
+          log.debug(`makeQueryContainer Attempting query task:\n${
+            print(query)
+          }\nArguments:\n${
+            inspect(winnowedProps, false, 10)
+          }\n`);
+          return R.map(
+            queryResponse => {
+              log.debug(`makeQueryContainer for ${name} succeeded with response: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+              return queryResponse;
+            },
+            componentOrTask
+          );
+        }
+      )(componentOrTask);
+    }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
     ['queryOptions', PropTypes.shape({
@@ -397,7 +409,7 @@ export const createRequestVariables = (apolloComponent, props) => {
 export const apolloQueryResponsesContainer = (
   apolloConfig,
   {
-    containerName='apolloQueryResponsesContainer',
+    containerName = 'apolloQueryResponsesContainer',
     resolvedPropsContainer,
     queryContainers,
     runContainerQueries = true

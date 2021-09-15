@@ -195,7 +195,7 @@ export const addMutateKeyToMutationResponse = ({silent}, response) => {
     },
     response => {
       const updated = duplicateKey(R.lensPath(['result', 'data']), createOrUpdateKey, ['mutate'], response);
-      const name = R.head(R.keys(updated.result.data.mutate));
+      const name = R.head(R.keys(R.omit(['__typename'], updated.result.data.mutate)));
       const obj = strPathOr(null, `result.data.mutate.${name}`, updated);
       // Copy the return value at create... or update... to mutate
       const deleted = R.when(R.identity, () => '(DELETE)')(strPathOr('', 'deleted', obj));

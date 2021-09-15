@@ -168,7 +168,7 @@ export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) =>
       // output for the read fragment
       outputParams,
       // Write without @client fields
-      force: true,
+      requireClientFields: false,
       singleton: true
     },
     tokenAuth

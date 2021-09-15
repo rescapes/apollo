@@ -175,12 +175,12 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
     R.pick(['__typename', 'render'], props)
   );
   // Write the fragment
-  const fragment = gql`${makeFragmentQuery(
+  const fragment = makeFragmentQuery(
   `${name}WithClientFields`,
    readInputTypeMapper,
     outputParams, 
     R.pick(['__typename'], winnowedProps)
-  )}`;
+  );
 
   // Pausing this because fragments run over and over
   // log.debug(`Read Cache Fragment:\n${print(fragment)}\nArguments:\n${inspect(R.pick([idField], winnowedProps), false, 2)}\n`);

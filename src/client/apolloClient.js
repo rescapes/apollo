@@ -9,6 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import {ApolloConsumer} from '@apollo/client';
+import pluralize from 'pluralize';
 import {inspect} from 'util';
 import * as AC from '@apollo/client';
 import * as R from 'ramda';
@@ -240,19 +241,27 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
         const outputParams = reqStrPathThrowing('outputParams', typePolicy);
         makeCacheMutation(
           // Use the store for writing if we don't have an apolloClient
-          {store: inMemoryCache},
+          {store: inMemoryCache, options: {preserveNulls: true}},
           {
             name: reqStrPathThrowing('name', typePolicy),
             // output for the read fragment
             outputParams: outputParams,
-            // Write without @client fields
-            force: true,
-            singleton: true
+            singleton: true,
           },
           R.merge(
             {__typename: typeName},
-            // Set all outputParams to null for our initial query values
-            applyDeepWithKeyWithRecurseArraysAndMapObjs((l, r, key) => null, (k, v) => v, outputParams)
+            // Set all outputParams to null or empty for our initial query values
+            applyDeepWithKeyWithRecurseArraysAndMapObjs(
+              (l, r, key) => {
+                return null
+              },
+              (k, v) => {
+                // Set array type things to []. These actually get removed when writing to the cache, but better
+                // than writing null for an array I guess
+                return pluralize.isPlural(k) ? [] : v
+              },
+              outputParams
+            )
           )
         );
       }

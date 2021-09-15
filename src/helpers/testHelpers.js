@@ -27,25 +27,30 @@ import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHe
 
 /**
  * The config for test. We add some cache only properties to
+ * @param {Object} typeConfig See typePolicies for an example
  */
-export const localTestConfig = {
-  // Says to create/update the settings for each test
-  forceMutateSettings: true,
-  settings,
-  settingsConfig: {
-    settingsOutputParams: defaultSettingsOutputParams,
-    cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-    cacheIdProps: defaultSettingsCacheIdProps,
-    // These are only used to store settings for a non-auth user. Not needed if
-    // we allow no auth querying of the default settings
-    defaultSettingsTypenames
-  },
-  apollo: {
-    writeDefaultsCreator: writeConfigToServerAndCacheContainer,
-    stateLinkResolvers: defaultStateLinkResolvers,
-    cacheOptions: cacheOptions(typePoliciesConfigLocal)
+export const _localTestConfig = typeConfig => {
+  return {
+    // Says to create/update the settings for each test
+    forceMutateSettings: true,
+    settings,
+    settingsConfig: {
+      settingsOutputParams: defaultSettingsOutputParams,
+      cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
+      cacheIdProps: defaultSettingsCacheIdProps,
+      // These are only used to store settings for a non-auth user. Not needed if
+      // we allow no auth querying of the default settings
+      defaultSettingsTypenames
+    },
+    apollo: {
+      writeDefaultsCreator: writeConfigToServerAndCacheContainer,
+      stateLinkResolvers: defaultStateLinkResolvers,
+      cacheOptions: cacheOptions(typeConfig)
+    }
   }
 };
+export const localTestConfig = _localTestConfig(typePoliciesConfigLocal)
+export const extendLocalTestConfig = extraTypePoliciesConfig => _localTestConfig(R.merge(typePoliciesConfigLocal, R.values(extraTypePoliciesConfig)))
 
 
 export const settingsConfig = {
@@ -58,8 +63,8 @@ export const settingsConfig = {
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An authorized client}
  */
-export const localTestAuthTask = () => {
-  return initializeAuthorizedTask(R.merge({settingsConfig}, localTestConfig));
+export const localTestAuthTask = (extraTypePoliciesConfig = {}) => {
+  return initializeAuthorizedTask(R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig)));
 };
 
 /**
