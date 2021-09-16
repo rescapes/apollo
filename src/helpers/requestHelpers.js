@@ -476,7 +476,7 @@ const func = obj => {
  * Removes outputParams that are not represented in the given props.
  * This is used for cache writing as we want to write a fragment using output props that match
  * the props being written, and nothing more. Since props have arrays and outputParams do not (because
- * they match graphql syntax). the props are deep converted so that arrays because scalar items
+ * they match graphql syntax). the props are deep converted to arrays because scalar items
  * that marge all the props of each array item into a single object. Then these modified props can
  * be compared
  * @param {Object} props Props
@@ -503,7 +503,6 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
     flattenObj
   )(outputParams);
 };
-
 
 /**
  * Generates RelatedReadInputType names for a class based on the given keys

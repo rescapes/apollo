@@ -18,7 +18,7 @@ import {
   strPathOr
 } from '@rescapes/ramda'
 import * as R from 'ramda';
-import {concatCacheMutation, makeCacheMutation} from './mutationCacheHelpers.js';
+import {concatCacheMutation, makeCacheMutation, makeCacheMutationContainer} from './mutationCacheHelpers.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
@@ -37,6 +37,8 @@ import {settingsLocalQueryContainerDefault} from './defaultContainers';
 import {mapTaskOrComponentToNamedResponseAndInputs} from "./containerHelpers.js";
 import {composeFuncAtPathIntoApolloConfig} from "./queryHelpers.js";
 import {ap} from "ramda";
+import {deleteTokenCookieMutationRequestContainer} from "../stores/tokenAuthStore.js";
+import {apolloClientReadFragmentCache} from "../client/apolloClient.js";
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',
@@ -155,13 +157,16 @@ describe('mutationCacheHelpers', () => {
     const props2 = {
       spooky: {
         __typename: typename,
-        blocks: [{__typename: blockTypename, id: 72}, {__typename: blockTypename, id: 73}, {__typename: blockTypename, id: 71}],
+        blocks: [{__typename: blockTypename, id: 72}, {__typename: blockTypename, id: 73}, {
+          __typename: blockTypename,
+          id: 71
+        }],
         michael: 'hey buster'
       }
     }
     const blockSelectionPathLookup = {
       // Identify routes as unique by key
-      ['blocks']: ['id']
+      blocks: ['id']
     };
 
     const blocksSelectionTypePolicy = {
@@ -169,6 +174,9 @@ describe('mutationCacheHelpers', () => {
       keyFields: [],
       fields: ['blocks'],
       idPathLookup: blockSelectionPathLookup,
+      arrayMergeStrategyPropLookup: {
+        blocks: 'concat'
+      },
       cacheOnlyFieldLookup: {},
       // These are for the singleton initial null write
       name: 'selectedBlocks',
@@ -179,51 +187,57 @@ describe('mutationCacheHelpers', () => {
       // Just update cache-only values like we would on the browser
       mapToNamedResponseAndInputs('concattedValues',
         ({apolloConfig}) => {
-          return concatCacheMutation(
-            composeFuncAtPathIntoApolloConfig(
-              apolloConfig,
-              'options.variables',
-              props => R.prop('spooky', props)
-            ),
-            {
-              name: 'selectedBlocks',
-              outputParams: selectedBlocksOutputParams,
-              readInputTypeMapper: {},
-              idPathLookup: blockSelectionPathLookup,
-              // The props represent a singleton because the items being concatted
-              // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
-              singleton: true
-            },
-            props2
+          return deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {}).chain(
+            () => {
+              return concatCacheMutation(
+                apolloConfig,
+                {
+                  name: 'selectedBlocks',
+                  outputParams: selectedBlocksOutputParams,
+                  readInputTypeMapper: {},
+                  idPathLookup: blockSelectionPathLookup,
+                  // The props represent a singleton because the items being concatted
+                  // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
+                  singleton: true
+                },
+                props1
+              )
+            }
+          ).chain(
+            () => {
+              return concatCacheMutation(
+                composeFuncAtPathIntoApolloConfig(
+                  apolloConfig,
+                  'options.variables',
+                  props => R.prop('spooky', props)
+                ),
+                {
+                  name: 'selectedBlocks',
+                  outputParams: selectedBlocksOutputParams,
+                  readInputTypeMapper: {},
+                  idPathLookup: blockSelectionPathLookup,
+                  // The props represent a singleton because the items being concatted
+                  // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
+                  singleton: true
+                },
+                props2
+              )
+            }
           )
         }
       ),
-      // Just update cache-only values like we would on the browser
-      mapToNamedResponseAndInputs('initialValues',
-        ({apolloConfig}) => {
-          return concatCacheMutation(
-            apolloConfig,
-            {
-              name: 'selectedBlocks',
-              outputParams: selectedBlocksOutputParams,
-              readInputTypeMapper: {},
-              idPathLookup: blockSelectionPathLookup,
-              // The props represent a singleton because the items being concatted
-              // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
-              singleton: true
-            },
-            props1
-          )
-        }
+      /*
+      mapToNamedResponseAndInputs('apolloConfig',
+        ({apolloConfig}) => deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {})
       ),
+       */
       mapToNamedResponseAndInputs('apolloConfig',
         () => localTestAuthTask({blockSelection: blocksSelectionTypePolicy})
       )
     ])({}).run().listen(defaultRunConfig({
       onResolved:
-        ({initialValues, concattedValues}) => {
-          expect(strPathOr(null, 'data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithId)).toContain('happy');
-          expect(strPathOr(null, 'data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithKey)).toContain('happy');
+        ({concattedValues}) => {
+          expect(R.length(concattedValues.blocks) == 4)
         }
     }, errors, done));
   }, 100000)

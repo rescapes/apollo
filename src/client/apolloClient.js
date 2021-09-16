@@ -40,7 +40,7 @@ import PropTypes from 'prop-types';
 import MutationOnMount from '../helpers/mutationOnMount.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers.js';
 
-const {persistCache, LocalStorageWrapper} = defaultNode(ACP);
+const {persistCache, LocalStorageWrapper, CachePersistor} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
 
@@ -104,21 +104,18 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
           cache,
           persistor
         });
-        // Use existing cache data if defined. This is only relevant for passing an unauthorized client's
-        // cache values
-        // TODO restore no longer expects an argument
-        // We probably have to do something manual here if we ever have cacheData from disk
-        if (cacheData) {
-          apolloClient.cache.restore(cacheData);
-        }
+        apolloClient.persistor = persistor
         // Once createPersistedCacheTask we can create the apollo client
         return of({
-          apolloClient
+          // Sadly there is no reference to the persistor that can be gleaned from the ApolloProvider
+          // so we messily add it to the client here. boo!
+          apolloClient,
+          persistor
         });
       },
       mapToNamedResponseAndInputs('persistor',
         ({cache}) => {
-          // Create the persisted cache and resolves nothing
+          // Create the persisted cache and resolves the CachePersistor
           return createPersistedCacheTask(cache);
         }
       ),
@@ -243,7 +240,7 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
           // Use the store for writing if we don't have an apolloClient
           {store: inMemoryCache, options: {preserveNulls: true}},
           {
-            name: reqStrPathThrowing('name', typePolicy),
+            name: `nullSingletonInit${reqStrPathThrowing('name', typePolicy)}`,
             // output for the read fragment
             outputParams: outputParams,
             singleton: true,
@@ -275,13 +272,18 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
  * Creates a persisted cache
  * https://github.com/apollographql/apollo-cache-persist
  * @param cache
- * @return {*}
+ * @return {Object} The CachePersitor after waiting for persitor.restore()
  */
 const createPersistedCacheTask = (cache) => {
-  return fromPromised(() => persistCache({
-    cache,
-    storage: new LocalStorageWrapper(localStorage)
-  }))();
+  return fromPromised(() => {
+      const persistor = new CachePersistor({
+        storage: localStorage,
+        cache,
+        debug: true,
+      })
+      return persistor.restore().then(() => persistor);
+    }
+  )();
 };
 
 /**
@@ -312,7 +314,7 @@ const _completeApolloClient = ({stateLinkResolvers, links, cache}) => {
     connectToDevTools: true
   });
 
-  apolloClient.__CREATED__ = moment().format('HH-mm-SS');
+  apolloClient.__CREATED__ = moment().format();
   return apolloClient;
 };
 

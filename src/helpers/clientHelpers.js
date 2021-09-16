@@ -13,7 +13,7 @@ import {
   mergeDeepWithRecurseArrayItemsByAndMergeObjectByRight,
   omitDeep,
   reqStrPathThrowing,
-  strPathOr
+  strPathOr, toArrayIfNot
 } from '@rescapes/ramda';
 import {parseApiUrl} from '@rescapes/helpers';
 import {
@@ -52,7 +52,7 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields, idPathLookup, cacheOnlyFieldLookup, keyFields, name, outputParams}) => {
+      ({type, fields, idPathLookup, arrayMergeStrategyPropLookup, cacheOnlyFieldLookup, keyFields, name, outputParams}) => {
         return {
           [type]: {
             keyFields,
@@ -70,7 +70,13 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
                         log.debug(`Merge field for type ${type}, field ${field}`);
                         return mergeField({
                             mergeObjects,
-                            idPathLookup,
+                            // Always make __ref the last resort for array id matching, since items are
+                            // often stored in the cache with just a __ref
+                            idPathLookup: R.map(ids => R.append('__ref', ids), idPathLookup || {}),
+                            // How to merge items at various paths. If not specified the default merge is used,
+                            // which is a deep object merge and a right deep-merge. The only override right
+                            // now is to specify 'concat' for array fields
+                            arrayMergeStrategyPropLookup,
                             // Get the lookup of child fields that are cache only. This can be child fields
                             // of the object or of the array item objects
                             cacheOnlyFieldLookup: R.propOr({}, field, cacheOnlyFieldLookup)
@@ -101,12 +107,16 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  * @param {Object} config.idPathLookup Id path lookup for objects wihtout ids
  * @param {Object} config.cacheOnlyFieldLookup For fields that only exist in the cache. Keyed by field name
  * and valued with true
+ * @param {Object} config.arrayMergeStrategyPropLookup
+ * How to merge arrays for certain fields. If not specified the default merge is used,
+ * which is a deep object merge and a right deep-merge. The only override right
+ * now is to specify 'concat' for array fields
  * @param {String} field The current field of existent and incoming
  * @param {Object} existing Existing cache item
  * @param {Object} incoming Incoming cache write item
  * @return {Object} The merged cache object
  */
-const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, existing, incoming) => {
+const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup, arrayMergeStrategyPropLookup}, field, existing, incoming) => {
   // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
   // Remove incoming keys from existing and clone it to unfreeze it.
   // since it comes from the cache and will be written to the cache
@@ -162,6 +172,24 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup}, field, e
       return firstMatchingPathLookup(idPathLookup, field, item);
     },
     (existing, incoming) => {
+      // Apply arrayMergeStrategy to arrays
+      if (R.all(Array.isArray, [existing, incoming])) {
+        const mergeStrategyLookup = R.propOr(null, field, arrayMergeStrategyPropLookup);
+        if (mergeStrategyLookup) {
+          return R.cond([
+            [R.equals('concat'), () => {
+              // Duplicates will have been removed already. Just concat
+              return R.concat(existing, incoming)
+            }],
+            [R.T, strategy => {
+              throw new Error(`Unknown array merge strategy ${strategy} for field ${field}`)
+            }]
+          ])(mergeStrategyLookup)
+        }
+        else {
+          return incoming
+        }
+      }
       // Update incoming to have existing cache fields. Default to null so there is always
       // a value in the cache. Otherwise Apollo freaks out and keeps getting missing field errors
       const updatedIncoming = getUpdatedIncoming(existing, incoming);

@@ -13,7 +13,7 @@ import {ApolloConsumer} from '@apollo/client';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
-import {containerForApolloType} from '../helpers/containerHelpers.js';
+import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from '../helpers/containerHelpers.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
@@ -198,6 +198,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
                 // Clear the token so apolloClient is no longer authenticated
                 // This will reset the apolloClient to unauthenticated and clear the cache
                 localStorage.removeItem('token');
+                strPathOr(apolloConfig.apolloClient.persistor, 'persistor', apolloConfig).purge();
                 await apolloClientFromConsumer.clearStore();
               }
             }
@@ -211,22 +212,29 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
         props
       );
     },
-    ({render}) => {
-      // If a component, supply the apolloClient from the ApolloConsumer so that update can call clearStore()
-      return R.ifElse(
-        R.has('apolloClient'),
-        of,
-        () => {
-          return e(
-            ApolloConsumer,
-            {},
-            apolloClientFromConsumer => {
-              return render(R.merge({apolloClientFromConsumer}, props))
-            }
-          );
-        }
-      )(apolloConfig);
-    }
+    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'apolloClientFromConsumer',
+      ({render}) => {
+        // If a component, supply the apolloClient from the ApolloConsumer so that update can call clearStore()
+        return R.ifElse(
+          R.has('apolloClient'),
+          apolloConfig => of(R.prop('apolloClient', apolloConfig)),
+          () => {
+            return e(
+              ApolloConsumer,
+              {},
+              apolloClientFromConsumer => {
+                return containerForApolloType(
+                  apolloConfig,
+                  {
+                    render,
+                    response: apolloClientFromConsumer
+                  }
+                )
+              }
+            );
+          }
+        )(apolloConfig);
+      })
   ])(props);
 });
 
