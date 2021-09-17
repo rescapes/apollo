@@ -30,6 +30,7 @@ import {
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 
 const {gql} = defaultNode(AC);
+const {MissingFieldError} = defaultNode(AC);
 
 const log = loggers.get('rescapeDefault');
 
@@ -109,46 +110,58 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  * Both resolve to the cache value
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
-  // Not using the client directive here, rather we'll do a direct cache read with this query
-  const winnowedProps = _winnowRequestProps(apolloConfig, props);
-  const query = gql`${makeQuery(
-    name, 
-    readInputTypeMapper, 
-    outputParams, 
-    winnowedProps
-  )}`;
-  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
-  return composeWithComponentMaybeOrTaskChain([
-    ({response, ...props}) => {
-      // If it's not a component response
-      if (R.propOr(false, 'data', response)) {
-        log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
-      } else {
-        log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
-      }
+  try {
+    // Not using the client directive here, rather we'll do a direct cache read with this query
+    const winnowedProps = _winnowRequestProps(apolloConfig, props);
+    const query = gql`${makeQuery(
+      name,
+      readInputTypeMapper,
+      outputParams,
+      winnowedProps
+    )}`;
+    log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
+    return composeWithComponentMaybeOrTaskChain([
+      ({response, ...props}) => {
+        // If it's not a component response
+        if (R.propOr(false, 'data', response)) {
+          log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
+        } else {
+          log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
+        }
+        return containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(props),
+            response
+          }
+        );
+      },
+      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
+        props => {
+          return authApolloClientOrComponentQueryCacheContainer(
+            apolloConfig,
+            {
+              query
+            },
+            R.merge(
+              winnowedProps,
+              pickRenderProps(props)
+            )
+          );
+        })
+    ])(props);
+  } catch (e) {
+    if (R.is(MissingFieldError, e)) {
       return containerForApolloType(
         apolloConfig,
         {
           render: getRenderPropFunction(props),
-          response
+          response: null
         }
       );
-    },
-    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
-      props => {
-        return authApolloClientOrComponentQueryCacheContainer(
-          apolloConfig,
-          {
-            query
-          },
-          R.merge(
-            winnowedProps,
-            pickRenderProps(props)
-          )
-        );
-      })
-  ])(props);
-
+    }
+    throw e;
+  }
 });
 
 /**
@@ -176,9 +189,9 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
   );
   // Write the fragment
   const fragment = makeFragmentQuery(
-  `${name}WithClientFields`,
-   readInputTypeMapper,
-    outputParams, 
+    `${name}WithClientFields`,
+    readInputTypeMapper,
+    outputParams,
     R.pick(['__typename'], winnowedProps)
   );
 

@@ -18,7 +18,6 @@ import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './com
 import * as AC from '@apollo/client';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 
-const {MissingFieldError} = defaultNode(AC);
 
 const {of} = T;
 
@@ -80,32 +79,18 @@ export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, p
 
 
 export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props) => {
-  // Unfortunately a cache miss throws
-  try {
-    return makeQueryFromCacheContainer(
-      composeFuncAtPathIntoApolloConfig(
-        apolloConfig,
-        'options.variables',
-        props => {
-          // We always query settings by key, because we cache it that way and don't care about the id
-          return R.pick(['key'], props);
-        }
-      ),
-      {name: 'settings', readInputTypeMapper, outputParams},
-      props
-    );
-  } catch (e) {
-    if (R.is(MissingFieldError, e)) {
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(props),
-          response: null
-        }
-      );
-    }
-    throw e;
-  }
+  return makeQueryFromCacheContainer(
+    composeFuncAtPathIntoApolloConfig(
+      apolloConfig,
+      'options.variables',
+      props => {
+        // We always query settings by key, because we cache it that way and don't care about the id
+        return R.pick(['key'], props);
+      }
+    ),
+    {name: 'settings', readInputTypeMapper, outputParams},
+    props
+  );
 };
 
 /**

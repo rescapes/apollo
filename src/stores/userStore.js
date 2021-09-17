@@ -57,36 +57,22 @@ export const userReadInputTypeMapper = {
  * @returns {Task|Object} The authenticated user as a task or apollo component
  */
 export const authenticatedUserLocalContainer = (apolloConfig, props) => {
-  // Unfortunately a cache miss throws
-  try {
-    return makeQueryFromCacheContainer(
-      R.merge(apolloConfig,
-        {
-          options: {
-            variables: () => {
-              return {};
-            },
-            // Pass through error so we can handle it in the component
-            errorPolicy: 'all',
-            partialRefetch: true
-          }
+  return makeQueryFromCacheContainer(
+    R.merge(apolloConfig,
+      {
+        options: {
+          variables: () => {
+            return {};
+          },
+          // Pass through error so we can handle it in the component
+          errorPolicy: 'all',
+          partialRefetch: true
         }
-      ),
-      {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
-      props
-    );
-  } catch (e) {
-    if (R.is(MissingFieldError, e)) {
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(props),
-          response: null
-        }
-      );
-    }
-    throw e;
-  }
+      }
+    ),
+    {name: 'currentUser', readInputTypeMapper: userReadInputTypeMapper, outputParams: userOutputParams},
+    props
+  );
 };
 
 /**
