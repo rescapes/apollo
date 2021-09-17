@@ -15,18 +15,17 @@ import {
   defaultRunConfig,
   mapToNamedPathAndInputs,
   mapToNamedResponseAndInputs,
-  strPathOr
+  strPathOr,
+  taskToPromise
 } from '@rescapes/ramda'
 import * as R from 'ramda';
-import {concatCacheMutation, makeCacheMutation, makeCacheMutationContainer} from './mutationCacheHelpers.js';
+import {makeCacheMutationContainer} from './mutationCacheHelpers.js';
 import {
   defaultSettingsCacheIdProps,
   defaultSettingsCacheOnlyObjs,
-  defaultSettingsOutputParams, settingsTypeIdPathLookup
+  defaultSettingsOutputParams
 } from './defaultSettingsStore.js';
 import T from 'folktale/concurrency/task/index.js'
-
-const {of} = T;
 import {createSampleSettingsTask} from './defaultSettingsStore.sample.js';
 import {
   createCacheOnlyPropsForSettings,
@@ -34,11 +33,10 @@ import {
   settingsQueryContainer
 } from './settingsStore.js';
 import {settingsLocalQueryContainerDefault} from './defaultContainers';
-import {mapTaskOrComponentToNamedResponseAndInputs} from "./containerHelpers.js";
 import {composeFuncAtPathIntoApolloConfig} from "./queryHelpers.js";
-import {ap} from "ramda";
 import {deleteTokenCookieMutationRequestContainer} from "../stores/tokenAuthStore.js";
-import {apolloClientReadFragmentCache} from "../client/apolloClient.js";
+
+const {of} = T;
 
 // A blend of values from the server and the cache-only values
 const someSettingsKeys = ['id', 'key', 'data.api', 'data.overpass', 'data.testAuthorization.username',
@@ -143,9 +141,12 @@ describe('mutationCacheHelpers', () => {
     }, errors, done));
   }, 1000000);
 
-  test('concatCacheMutation', done => {
+  test('concatCacheMutation', async () => {
+    expect.assertions(2);
+    // TODO There is some crazy problem with chaining tasks that causes the cache to get values
+    // earlier than it should. Use await+taskToPromise solves the problem.
+    // I'm hoping this is something that only occurs with tasks and node, and not components
     const selectedBlocksOutputParams = {blocks: {id: true}, buster: true, michael: true}
-    const errors = [];
     const typename = 'BlockSelectionType'
     const blockTypename = 'BlockType'
     // Normally the props structure would always be the same. This is for testing
@@ -182,65 +183,42 @@ describe('mutationCacheHelpers', () => {
       name: 'selectedBlocks',
       outputParams: selectedBlocksOutputParams
     };
-
-    composeWithChain([
-      // Just update cache-only values like we would on the browser
-      mapToNamedResponseAndInputs('concattedValues',
-        ({apolloConfig}) => {
-          return deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {}).chain(
-            () => {
-              return concatCacheMutation(
-                apolloConfig,
-                {
-                  name: 'selectedBlocks',
-                  outputParams: selectedBlocksOutputParams,
-                  readInputTypeMapper: {},
-                  idPathLookup: blockSelectionPathLookup,
-                  // The props represent a singleton because the items being concatted
-                  // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
-                  singleton: true
-                },
-                props1
-              )
-            }
-          ).chain(
-            () => {
-              return concatCacheMutation(
-                composeFuncAtPathIntoApolloConfig(
-                  apolloConfig,
-                  'options.variables',
-                  props => R.prop('spooky', props)
-                ),
-                {
-                  name: 'selectedBlocks',
-                  outputParams: selectedBlocksOutputParams,
-                  readInputTypeMapper: {},
-                  idPathLookup: blockSelectionPathLookup,
-                  // The props represent a singleton because the items being concatted
-                  // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
-                  singleton: true
-                },
-                props2
-              )
-            }
-          )
-        }
-      ),
-      /*
-      mapToNamedResponseAndInputs('apolloConfig',
-        ({apolloConfig}) => deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {})
-      ),
-       */
-      mapToNamedResponseAndInputs('apolloConfig',
-        () => localTestAuthTask({blockSelection: blocksSelectionTypePolicy})
+    const apolloConfig = await taskToPromise(
+      localTestAuthTask({blockSelection: blocksSelectionTypePolicy}).chain(
+        apolloConfig => deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {}).map(() => apolloConfig)
       )
-    ])({}).run().listen(defaultRunConfig({
-      onResolved:
-        ({concattedValues}) => {
-          expect(R.length(concattedValues.blocks) == 4)
-        }
-    }, errors, done));
-  }, 100000)
+    )
+    const mutationOptions =     {
+        idField: 'id',
+        name: 'selectedBlocks',
+        outputParams: selectedBlocksOutputParams,
+        readInputTypeMapper: {},
+        idPathLookup: blockSelectionPathLookup,
+        // The props represent a singleton because the items being concatted
+        // deeper in the props and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids and themselves have ids.
+        singleton: true
+      }
 
+    // Write 2 blocks
+    const concattedValuesResponseInitial = await taskToPromise(makeCacheMutationContainer(
+      apolloConfig,
+      mutationOptions,
+      props1
+    ))
+    expect(R.length(concattedValuesResponseInitial.blocks)).toBe(2)
+
+    // Write 3 blocks, 1 of which is a duplicate, resulting in 4 concatinated blocks
+    const concattedValuesResponse = await taskToPromise(makeCacheMutationContainer(
+      composeFuncAtPathIntoApolloConfig(
+        apolloConfig,
+        'options.variables',
+        props => R.prop('spooky', props)
+      ),
+      mutationOptions,
+      props2
+    ))
+
+    expect(R.length(concattedValuesResponse.blocks)).toBe(4)
+  }, 5000)
 });
 

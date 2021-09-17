@@ -68,11 +68,9 @@ const log = loggers.get('rescapeDefault');
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
- * @returns {Object} Task that resolves to and object with the results of the query. Successful results
- * are in obj.data[name]. Errors are in obj.errors. Since the queries are stored in data[name], multiple queries
- * of different could be merged together into the data field. This also matches what Apollo components expect.
- * If you need the value in a Result.Ok or Result.Error to halt operations on error, use requestHelpers.mapQueryContainerToNamedResultAndInputs.
- */
+ * @returns {Object} The cached data read from cache after writing to it. It's important to read the cache
+ * after writing since the write often merges data already in the cache.
+ **/
 export const makeCacheMutation = v(R.curry(
     (apolloConfig,
      {
@@ -185,15 +183,14 @@ export const makeCacheMutation = v(R.curry(
       }`);
 
       apolloClientOrStore.writeFragment({fragment: writeFragment, id, data: propsWithPossibleMerge});
-      // Read to verify that the write succeeded.
+      // Read to get the written data, which might have been merged with existing data
       // If this throws then we did something wrong
       try {
-        const test = apolloClientOrStore.readFragment({fragment: writeFragment, id});
+        return apolloClientOrStore.readFragment({fragment: writeFragment, id});
       } catch (e) {
-        log.error(`Could not read the fragment just written to the cache. Props ${inspect(props)}`);
+        log.error(`Could not read the fragment just written to the cache. Props ${inspect(propsWithPossibleMerge)}`);
         throw e;
       }
-      return propsWithPossibleMerge;
     }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
@@ -446,52 +443,3 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
     R.toPairs(cacheOnlyObjectTypeNames(name, cacheOnlyObjs))
   );
 };
-
-/**
- * Combines a cache query with a mutation, concatting the given props to what is already in the cache
- * after checking for uniqueness.
- *
- * Props to concat can be extracted using the apolloConfig.options.variables function. Since we don't
- * support operating on props as array, the array being concatted must be stored at a key such as
- * {selection: [...]}}. Any arrays found in the props will be deep-merge concatted based on id uniqueness
- *
- * id uniqueness defaults to checking the 'id' field of each item in the array. However this can be
- * overridden using options.idField.
- * @param apolloConfig
- * @param {Object} options
- * @param {String} options.name
- * @param {Object} options.outputParams
- * @param {String} [options.idField] Default 'id' The id field of the items being concatted
- * @param {Object} [options.idPathLookup] Default {} Specifies how ids in objects in props are found.
- * @param {Boolean} [options.singleton] Default false. Set true if the outer object represented by the props
- * is singleton, meaning it doesn't have an id and there is only one instance that is stored in the cache.
- * This is often the case when storing cache-only data is based on a single visual component, like a drop-down
- * E.g. {selection: {blocks: [{id: 1}, ...]}} would be {['selection.blocks']: ['id']}
- * Always use an array for the value since ids can be stored by the cache by concatting field values
- * @param {Object} props
- * @returns {Object} Task or Component resolving to the new stored list of values
- */
-export const concatCacheMutation = (
-  apolloConfig,
-  {
-    name,
-    outputParams,
-    readInputTypeMapper: {},
-    idField = 'id',
-    idPathLookup = {},
-    singleton = false,
-  },
-  props
-) => {
-  return makeCacheMutationContainer(
-    apolloConfig,
-    {
-      name,
-      outputParams,
-      idField,
-      idPathLookup,
-      singleton
-    },
-    props
-  );
-}
