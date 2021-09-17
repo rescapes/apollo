@@ -8,8 +8,11 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import T from 'folktale/concurrency/task/index.js';
+import * as AC from '@apollo/client';
+import {ApolloServer} from 'apollo-server'
 import * as R from 'ramda';
-import {keyStringToLensPath} from '@rescapes/ramda';
+import {composeWithChain, defaultNode, keyStringToLensPath, reqStrPathThrowing} from '@rescapes/ramda';
 import settings from './privateSettings.js';
 import PropTypes from 'prop-types';
 import {v} from '@rescapes/validate';
@@ -23,7 +26,10 @@ import {
 } from './defaultSettingsStore.js';
 import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
 import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers.js';
+import {compose, composeWith} from "ramda";
 
+const {gql} = defaultNode(AC);
+const {fromPromised} = T;
 
 /**
  * The config for test. We add some cache only properties to
@@ -71,21 +77,45 @@ export const localTestAuthTask = (extraTypePoliciesConfig = {}) => {
  * Task to return and authorized client for tests
  * Returns an object {apolloClient:An unauthorized client}
  */
-export const localTestNoAuthTask = () => {
+export const localTestNoAuthTask = (extraTypePoliciesConfig = {}) => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
   localStorage.removeItem('token');
   return initializeNoAuthTask(
-    R.merge(
-      {
-        settingsConfig: {
-          cacheOnlyObjs: defaultSettingsCacheOnlyObjs,
-          cacheIdProps: defaultSettingsCacheIdProps,
-          settingsOutputParams: defaultSettingsOutputParams
-        }
-      }, localTestConfig
-    )
-  );
+    R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
+  )
 };
+
+export const localTestNoServerTask = (extraTypePoliciesConfig = {}) => {
+  // Clear the localStorage. TODO this might need to be keyed for parallel tests
+  localStorage.removeItem('token');
+  const typeDefs = gql`
+  type Query {
+    hello: String
+    resolved: String
+  }
+`;
+
+  const server = new ApolloServer({
+    typeDefs,
+    mocks: true,
+  });
+  const config = R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
+  return composeWithChain([
+    ({url}) => {
+      console.log(`🚀 Server ready at ${url}`)
+      return initializeNoAuthTask(
+        config
+      )
+    },
+    () => {
+      return fromPromised(() => server.listen({
+        port: reqStrPathThrowing('settings.data.api.port', config)
+      }))()
+    }
+  ])()
+
+};
+
 
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency

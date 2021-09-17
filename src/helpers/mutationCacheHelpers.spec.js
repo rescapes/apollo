@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {expectKeys, localTestAuthTask} from './testHelpers.js';
+import {expectKeys, localTestAuthTask, localTestNoServerTask} from './testHelpers.js';
 import {
   composeWithChain,
   defaultRunConfig,
@@ -141,7 +141,7 @@ describe('mutationCacheHelpers', () => {
     }, errors, done));
   }, 1000000);
 
-  test('concatCacheMutation', async () => {
+  test('makeCacheMutationContainerConcatArrays', async () => {
     expect.assertions(2);
     // TODO There is some crazy problem with chaining tasks that causes the cache to get values
     // earlier than it should. Use await+taskToPromise solves the problem.
@@ -183,10 +183,9 @@ describe('mutationCacheHelpers', () => {
       name: 'selectedBlocks',
       outputParams: selectedBlocksOutputParams
     };
+    // No interaction with the server is needed for this test since we're just caching
     const apolloConfig = await taskToPromise(
-      localTestAuthTask({blockSelection: blocksSelectionTypePolicy}).chain(
-        apolloConfig => deleteTokenCookieMutationRequestContainer(apolloConfig, {}, {}).map(() => apolloConfig)
-      )
+      localTestNoServerTask({blockSelection: blocksSelectionTypePolicy})
     )
     const mutationOptions =     {
         idField: 'id',
