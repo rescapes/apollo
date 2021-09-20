@@ -149,22 +149,7 @@ describe('mutationCacheHelpers', () => {
     const selectedBlocksOutputParams = {blocks: {id: true}, buster: true, michael: true}
     const typename = 'BlockSelectionType'
     const blockTypename = 'BlockType'
-    // Normally the props structure would always be the same. This is for testing
-    const props1 = {
-      __typename: typename,
-      blocks: [{__typename: blockTypename, id: 70}, {__typename: blockTypename, id: 71}],
-      buster: 'hey brother'
-    }
-    const props2 = {
-      spooky: {
-        __typename: typename,
-        blocks: [{__typename: blockTypename, id: 72}, {__typename: blockTypename, id: 73}, {
-          __typename: blockTypename,
-          id: 71
-        }],
-        michael: 'hey buster'
-      }
-    }
+
     const blockSelectionPathLookup = {
       // Identify routes as unique by key
       blocks: ['id']
@@ -183,6 +168,23 @@ describe('mutationCacheHelpers', () => {
       name: 'selectedBlocks',
       outputParams: selectedBlocksOutputParams
     };
+
+    // Normally the props structure would always be the same. This is for testing
+    const props1 = {
+      __typename: typename,
+      blocks: [{__typename: blockTypename, id: 70}, {__typename: blockTypename, id: 71}],
+      buster: 'hey brother'
+    }
+    const props2 = {
+      spooky: {
+        __typename: typename,
+        blocks: [{__typename: blockTypename, id: 72}, {__typename: blockTypename, id: 73}, {
+          __typename: blockTypename,
+          id: 71
+        }],
+        michael: 'hey buster'
+      }
+    }
     // No interaction with the server is needed for this test since we're just caching
     const apolloConfig = await taskToPromise(
       localTestNoServerTask({blockSelection: blocksSelectionTypePolicy})

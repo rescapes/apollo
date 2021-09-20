@@ -48,7 +48,6 @@
     "inflected": "^2.1.0",
     "jest-enzyme": "^7.1.2",
     "jsdom-global": "^3.0.2",
-    "node-fetch": "3.0.0",
     "object-hash": "^2.2.0",
     "path": "^0.12.7",
     "pluralize": "^8.0.0",
