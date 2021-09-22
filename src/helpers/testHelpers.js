@@ -8,6 +8,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import {isNode} from "browser-or-node";
 import T from 'folktale/concurrency/task/index.js';
 import * as AC from '@apollo/client';
 import {ApolloServer} from 'apollo-server'
@@ -26,10 +27,9 @@ import {
 } from './defaultSettingsStore.js';
 import {cacheOptions, typePoliciesConfigLocal} from '../config.js';
 import {initializeAuthorizedTask, initializeNoAuthTask} from './initializationHelpers.js';
-import {compose, composeWith} from "ramda";
 
 const {gql} = defaultNode(AC);
-const {fromPromised} = T;
+const {fromPromised, of} = T;
 
 /**
  * The config for test. We add some cache only properties to
@@ -85,7 +85,20 @@ export const localTestNoAuthTask = (extraTypePoliciesConfig = {}) => {
   )
 };
 
+
 export const localTestNoServerTask = (extraTypePoliciesConfig = {}) => {
+  const config = R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
+  return testNoServerTask(extraTypePoliciesConfig, config)
+}
+/**
+ * For node this starts a apollo-server as a mock so we can test caching.
+ * In the browser environment this connects to the given
+ * @param extraTypePoliciesConfig
+ * @param config Config that points to a running node server for the browser case. For node we create a mock server
+ * ourselves.
+ * @returns {*}
+ */
+export const testNoServerTask = (extraTypePoliciesConfig = {}, config = null) => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
   localStorage.removeItem('token');
   const typeDefs = gql`
@@ -95,24 +108,33 @@ export const localTestNoServerTask = (extraTypePoliciesConfig = {}) => {
   }
 `;
 
-  const server = new ApolloServer({
-    typeDefs,
-    mocks: true,
-  });
-  const config = R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
-  return composeWithChain([
-    ({url}) => {
-      console.log(`🚀 Server ready at ${url}`)
-      return initializeNoAuthTask(
-        config
-      )
-    },
-    () => {
-      return fromPromised(() => server.listen({
-        port: reqStrPathThrowing('settings.data.api.port', config)
-      }))()
-    }
-  ])()
+  if (isNode) {
+    const server = new ApolloServer({
+      typeDefs,
+      mocks: true,
+    });
+    return composeWithChain([
+      ({url}) => {
+        console.log(`🚀 Server ready at ${url}`)
+        return initializeNoAuthTask(
+          config
+        )
+      },
+      () => {
+        return fromPromised(() => server.listen({
+          port: reqStrPathThrowing('settings.data.api.port', config)
+        }))()
+      }
+    ])()
+  }
+  else {
+    // For the web environment use the remote server.
+    // We won't actually use the client connection so we could at some point make a client that doesn't
+    // connect to a server (doesn't have an http-link) but I don't know how to do that
+
+
+    return of({})
+  }
 
 };
 
