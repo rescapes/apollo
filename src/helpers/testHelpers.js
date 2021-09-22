@@ -11,7 +11,6 @@
 import {isNode} from "browser-or-node";
 import T from 'folktale/concurrency/task/index.js';
 import * as AC from '@apollo/client';
-import {ApolloServer} from 'apollo-server'
 import * as R from 'ramda';
 import {composeWithChain, defaultNode, keyStringToLensPath, reqStrPathThrowing} from '@rescapes/ramda';
 import settings from './privateSettings.js';
@@ -101,33 +100,35 @@ export const localTestNoServerTask = (extraTypePoliciesConfig = {}) => {
 export const testNoServerTask = (extraTypePoliciesConfig = {}, config = null) => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
   localStorage.removeItem('token');
-  const typeDefs = gql`
-  type Query {
-    hello: String
-    resolved: String
-  }
-`;
 
-  if (isNode) {
-    const server = new ApolloServer({
-      typeDefs,
-      mocks: true,
-    });
-    return composeWithChain([
-      ({url}) => {
-        console.log(`🚀 Server ready at ${url}`)
-        return initializeNoAuthTask(
-          config
-        )
-      },
-      () => {
-        return fromPromised(() => server.listen({
-          port: reqStrPathThrowing('settings.data.api.port', config)
-        }))()
-      }
-    ])()
-  }
-  else {
+  // TODO  I can't use apolloServer because the browser can't deal with apollo-server because it tries to access express
+  if (false && isNode) {
+    /*
+const typeDefs = gql`
+type Query {
+  hello: String
+  resolved: String
+}
+`;
+  const server = new ApolloServer({
+    typeDefs,
+    mocks: true,
+  });
+  return composeWithChain([
+    ({url}) => {
+      console.log(`🚀 Server ready at ${url}`)
+      return initializeNoAuthTask(
+        config
+      )
+    },
+    () => {
+      return fromPromised(() => server.listen({
+        port: reqStrPathThrowing('settings.data.api.port', config)
+      }))()
+    }
+  ])()
+ */
+  } else {
     // For the web environment use the remote server.
     // We won't actually use the client connection so we could at some point make a client that doesn't
     // connect to a server (doesn't have an http-link) but I don't know how to do that
