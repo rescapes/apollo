@@ -394,44 +394,49 @@ export const _winnowRequestProps = (apolloConfig, props) => {
   // Remove _typename props that might be left from the result of previous Apollo requests from response props such
   // as queryFoo or mutateFoo.
   // Also remove the render and children prop if not done by options.variables. We never want these is our request
-  return (strPathOr('options.preserveNulls', apolloConfig) ? R.identity : compact)(R.mapObjIndexed((value, prop) => {
-    return R.ifElse(
-      prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
-      () => {
-        // Deep omit __typename
-        return R.compose(
-          ...R.map(path => {
-            return value => R.when(
-              v => pathOr(false, path, v),
-              v => {
-                return R.over(
-                  R.lensPath(path),
-                  data => {
-                    return data && omitDeepBy(_prop => {
-                        return R.startsWith('__typename', _prop);
-                      },
-                      data
-                    );
-                  },
-                  v
-                );
-              }
-            )(value);
-            // Look for __typename here in the queries/mutations
-          }, [['data'], ['result', 'data']])
-        )(value);
-      },
-      prop => {
-        // Remove render and children
-        return R.when(
+  const compactUnlessPreservingNulls = strPathOr(false, 'options.preserveNulls', apolloConfig) ? R.identity : compact
+  return compactUnlessPreservingNulls(
+    R.mapObjIndexed((value, prop) => {
+        return R.ifElse(
+          prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
           () => {
-            return R.includes(prop, ['render', 'children']);
+            // Deep omit __typename
+            return R.compose(
+              ...R.map(path => {
+                return value => R.when(
+                  v => pathOr(false, path, v),
+                  v => {
+                    return R.over(
+                      R.lensPath(path),
+                      data => {
+                        return data && omitDeepBy(_prop => {
+                            return R.startsWith('__typename', _prop);
+                          },
+                          data
+                        );
+                      },
+                      v
+                    );
+                  }
+                )(value);
+                // Look for __typename here in the queries/mutations
+              }, [['data'], ['result', 'data']])
+            )(value);
           },
-          () => null
-        )(value);
-      }
-    )(prop);
-  }, resolvedProps));
+          prop => {
+            // Remove render and children
+            return R.when(
+              () => {
+                return R.includes(prop, ['render', 'children']);
+              },
+              () => null
+            )(value);
+          }
+        )(prop);
+      },
+      resolvedProps
+    )
+  );
 };
 
 /**
@@ -574,7 +579,7 @@ export const createReadInputTypeMapper = (className, keys) => {
  * @param {Object} props The props to process
  * @returns {Object} The modified props
  */
-export const relatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields={}}, props) => {
+export const relatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields = {}}, props) => {
   const updatedProps = R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
       const lens = R.compose(...R.chain(

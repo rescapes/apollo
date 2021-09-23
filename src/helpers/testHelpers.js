@@ -101,6 +101,7 @@ export const testNoServerTask = (extraTypePoliciesConfig = {}, config = null) =>
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
   localStorage.removeItem('token');
 
+  mockApolloClient
   // TODO  I can't use apolloServer because the browser can't deal with apollo-server because it tries to access express
   if (false && isNode) {
     /*
