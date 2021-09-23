@@ -9,7 +9,6 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import hash from 'object-hash'
-import {ApolloConsumer} from '@apollo/client';
 import {inspect} from 'util';
 import * as R from 'ramda';
 import * as AC from '@apollo/client';
@@ -34,7 +33,7 @@ import {e} from '../helpers/componentHelpers.js';
 import {makeQueryFromCacheContainer} from "./queryCacheHelpers.js";
 import {flattenObj} from "@rescapes/ramda/src/functions.js";
 
-const {gql} = defaultNode(AC);
+const {gql, ApolloConsumer} = defaultNode(AC);
 
 const {of} = T;
 
