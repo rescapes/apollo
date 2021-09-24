@@ -104,7 +104,6 @@ export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props)
  * for each application
  * @param {Object} props
  * @param {Object} props.key Required unless using id
- * @param {Object} [props.__typename] Specify the __typename explicitly if it's not the default SettingsType
  * @param {Object} [props.render] Required for component queries
  * @returns {Task|Object} For hits, task or component resolving to {data: settings object}
  * otherwise resolves to {data: null}
@@ -118,8 +117,7 @@ export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, pro
   try {
     return composeWithComponentMaybeOrTaskChain([
       ({authTokenResponse, ...props}) => {
-        // If __typename is not specified merge it into props. Implementors might have their own type name
-        // for settings
+        // We need the typename
         const propsWithTypename = R.merge({'__typename': 'SettingsType'}, props)
         // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
         const authenticated = strPathOr(false, 'data.token', authTokenResponse);

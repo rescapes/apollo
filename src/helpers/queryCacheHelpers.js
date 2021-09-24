@@ -227,11 +227,16 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
           },
           R.omit(['__typename', idField], props),
           // Use the Typename:{"field":"value"} format if idField is not id. The cache seems to require this
-          R.unless(() => R.equals('id', idField), value => {
-            return `${reqStrPathThrowing('__typename', props)}:{"${idField}":"${value}"}`;
-          })(
-            reqStrPathThrowing(idField, props)
-          )
+          R.has('apolloClient', apolloConfig) ?
+            // Use identify if the apollo client is already available
+            apolloConfig.apolloClient.cache.identify(props) :
+            // TODO generate it ourselves. Instead we should conditionally put in an ApolloProvider to get
+            // the ApolloClient and use the identify func
+            R.unless(() => R.equals('id', idField), value => {
+              return `${reqStrPathThrowing('__typename', props)}:{"${idField}":"${value}"}`;
+            })(
+              reqStrPathThrowing(idField, props)
+            )
         );
       })
   ])(winnowedProps);
