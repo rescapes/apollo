@@ -65,9 +65,9 @@ export {
   optionsWithWinnowedProps,
   omitUnrepresentedOutputParams,
   createReadInputTypeMapper,
-  relatedObjectsToIdForm,
   VERSION_PROPS,
-  versionOutputParamsMixin
+  versionOutputParamsMixin,
+  getPathObjects
 } from './helpers/requestHelpers.js';
 
 

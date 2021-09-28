@@ -30,7 +30,7 @@ import {
 import * as R from 'ramda';
 import Result from 'folktale/result/index.js';
 
-const {mapped, over} = ramdaLens;
+const {mapped, over, view} = ramdaLens;
 
 // Many of our graphql classes implement versioning. Make sure these values are never submitted in mutations
 // since they are managed by the server.
@@ -579,7 +579,7 @@ export const createReadInputTypeMapper = (className, keys) => {
  * @param {Object} props The props to process
  * @returns {Object} The modified props
  */
-export const relatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields = {}}, props) => {
+export const updateRelatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields = {}}, props) => {
   const updatedProps = R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
       const lens = R.compose(...R.chain(
@@ -627,3 +627,63 @@ export const relatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllo
   // Omit anything that didn't exist
   return omitDeepBy((k, v) => typeof (v) === 'undefined', updatedProps);
 };
+
+/**
+ * Given props gets the objects at relatedPropPaths, a dot-separated path that can include references to arrays
+ * @param {String} propPath dot-separated path, such as 'foo.bars.things' where the plural words
+ * are expected to point to arrays (except 'data' which is understood to be singular)
+ * @param {[String]} [allowedFields] Default null. Fields to grab in addition to id from the target objects
+ * pointed to by relatedPropPaths. If null then take all fields. If empty, only take id
+ * @param {Object} props Props to extract objects from with relatedPropPaths
+ * @returns {[Objects]} The matching objects with props limited to id + relatedPropPathsToAllowedFields
+ */
+export const getPathObjects = ({propPath, allowedFields = []}, props) => {
+  const propsPathList = R.split('.', propPath);
+  const lens = R.compose(...R.addIndex(R.chain)(
+    (pathSegment, i) => R.ifElse(
+      // E.g. moose is both plural and singular, so is treated as singular
+      // Also don't treat 'data' as plural. This is a special case
+      key => R.complement(R.or)(
+        pluralize.isSingular(key),
+        R.equals('data', key)
+      ),
+      // Array property. Used mapped to create a lens into each item
+      // Do don't this if we're on the final item of propPath though
+      str => [R.lensProp(str), mapped],
+      str => [R.lensProp(str)]
+    )(pathSegment),
+    propsPathList
+  ));
+  try {
+    // TODO there's a bug in ramda-lens view or something I don't understand, such that view can't deal with arrys
+    // So instead just cheat by pushing value that match in over
+    const values = []
+    // Use over to "update" the target to only have the props we want, id + relatedPropPathsToAllowedFields
+    over(
+      lens,
+      obj => {
+        return R.when(
+          R.identity,
+          // If relatedPropPathsToAllowedFields contains an entry for propPath, do a custom pick. Otherwise
+          // just pick id. If relatedPropPathsToAllowedFields is null, take all
+          obj => {
+            const value = allowedFields !== null ? R.pick(
+              R.concat(['id'], allowedFields),
+              obj
+            ) : obj
+            values.push(value)
+          }
+        )(obj);
+      },
+      props
+    )
+    return values
+  } catch (e) {
+    // ramdaLens' over isn't written correctly, so it throws when props are undefined. Ignore it.
+    if (R.is(TypeError, e)) {
+      return []
+    } else {
+      throw e;
+    }
+  }
+}
