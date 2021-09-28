@@ -226,8 +226,10 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
             fragment
           },
           R.omit(['__typename', idField], props),
-          // Use the Typename:{"field":"value"} format if idField is not id. The cache seems to require this
-          R.has('apolloClient', apolloConfig) ?
+          // Use the Typename:{"field":"value"} format if idField is not id.
+          // We can use apolloConfig.apolloClient.cache.identify(props) if we have an apolloClient, except
+          // that singletons don't work
+          R.has('apolloClient', apolloConfig) && R.propOr(null, 'id', props) !== R.propOr(null, '__typename', props) ?
             // Use identify if the apollo client is already available
             apolloConfig.apolloClient.cache.identify(props) :
             // TODO generate it ourselves. Instead we should conditionally put in an ApolloProvider to get
