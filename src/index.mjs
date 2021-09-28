@@ -67,7 +67,8 @@ export {
   createReadInputTypeMapper,
   VERSION_PROPS,
   versionOutputParamsMixin,
-  getPathObjects
+  getPathObjects,
+  updateRelatedObjectsToIdForm
 } from './helpers/requestHelpers.js';
 
 
