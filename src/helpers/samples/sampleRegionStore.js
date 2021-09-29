@@ -2,7 +2,7 @@ import {filterOutReadOnlyVersionProps, makeMutationRequestContainer} from '../mu
 import * as R from 'ramda';
 import {makeQueryContainer} from '../queryHelpers.js';
 import {loggers} from '@rescapes/log';
-import {getPathObjects} from '../requestHelpers.js';
+import {getPathObjects, updateRelatedObjectsToIdForm} from '../requestHelpers.js';
 import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 
 export const userStateReadInputTypeMapper = {
@@ -42,7 +42,7 @@ export const readInputTypeMapper = {
 export const normalizeSampleRegionPropsForMutating = region => {
   return R.compose(
     // Make sure related objects only have an id
-    region => getPathObjects({relatedPropPaths: RELATED_PROPS}, region),
+    region => updateRelatedObjectsToIdForm({relatedPropPaths: RELATED_PROPS}, region),
     region => filterOutReadOnlyVersionProps(region)
   )(region);
 };

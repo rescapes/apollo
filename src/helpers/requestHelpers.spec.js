@@ -10,25 +10,26 @@
  */
 
 import {
-  resolveGraphQLType,
-  formatOutputParams,
+  createReadInputTypeMapper,
   formatInputParams,
+  formatOutputParams,
   mapQueryContainerToNamedResultAndInputs,
-  pickGraphqlPaths,
-  pickGraphqlPathsOver,
   omitClientFields,
   omitUnrepresentedOutputParams,
-  createReadInputTypeMapper,
-  getPathObjects
+  pickGraphqlPaths,
+  pickGraphqlPathsOver,
+  resolveGraphQLType,
+  updateRelatedObjectsToIdForm
 } from './requestHelpers.js';
 import Result from 'folktale/result/index.js';
 import T from 'folktale/concurrency/task/index.js'
-const {of} = T;
 import * as R from 'ramda';
-import {reqStrPathThrowing, reqStrPath, taskToPromise, defaultNode} from '@rescapes/ramda'
+import {defaultNode, reqStrPath, reqStrPathThrowing, taskToPromise} from '@rescapes/ramda'
 import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 import {print} from 'graphql';
 import * as AC from '@apollo/client';
+
+const {of} = T;
 
 const {gql} = defaultNode(AC)
 
@@ -303,8 +304,8 @@ describe('requestHelpers', () => {
     });
   });
 
-  test('getPathObjects', () => {
-    expect(getPathObjects({
+  test('updateRelatedObjectsToIdForm', () => {
+    expect(updateRelatedObjectsToIdForm({
       relatedPropPaths: [
         'drooling.moose',
         'scapegoats',
