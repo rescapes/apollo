@@ -19,7 +19,7 @@ import {
   omitClientFields,
   omitUnrepresentedOutputParams,
   createReadInputTypeMapper,
-  relatedObjectsToIdForm
+  getPathObjects
 } from './requestHelpers.js';
 import Result from 'folktale/result/index.js';
 import T from 'folktale/concurrency/task/index.js'
@@ -303,8 +303,8 @@ describe('requestHelpers', () => {
     });
   });
 
-  test('relatedObjectsToIdForm', () => {
-    expect(relatedObjectsToIdForm({
+  test('getPathObjects', () => {
+    expect(getPathObjects({
       relatedPropPaths: [
         'drooling.moose',
         'scapegoats',

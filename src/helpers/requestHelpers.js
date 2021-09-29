@@ -639,8 +639,8 @@ export const updateRelatedObjectsToIdForm = ({relatedPropPaths, relatedPropPaths
  */
 export const getPathObjects = ({propPath, allowedFields = []}, props) => {
   const propsPathList = R.split('.', propPath);
-  const lens = R.compose(...R.addIndex(R.chain)(
-    (pathSegment, i) => R.ifElse(
+  const lens = R.compose(...R.chain(
+    pathSegment => R.ifElse(
       // E.g. moose is both plural and singular, so is treated as singular
       // Also don't treat 'data' as plural. This is a special case
       key => R.complement(R.or)(
