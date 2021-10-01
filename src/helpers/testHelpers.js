@@ -84,63 +84,6 @@ export const localTestNoAuthTask = (extraTypePoliciesConfig = {}) => {
   )
 };
 
-
-export const localTestNoServerTask = (extraTypePoliciesConfig = {}) => {
-  const config = R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
-  return testNoServerTask(extraTypePoliciesConfig, config)
-}
-/**
- * For node this starts a apollo-server as a mock so we can test caching.
- * In the browser environment this connects to the given
- * @param extraTypePoliciesConfig
- * @param config Config that points to a running node server for the browser case. For node we create a mock server
- * ourselves.
- * @returns {*}
- */
-export const testNoServerTask = (extraTypePoliciesConfig = {}, config = null) => {
-  // Clear the localStorage. TODO this might need to be keyed for parallel tests
-  localStorage.removeItem('token');
-
-  mockApolloClient
-  // TODO  I can't use apolloServer because the browser can't deal with apollo-server because it tries to access express
-  if (false && isNode) {
-    /*
-const typeDefs = gql`
-type Query {
-  hello: String
-  resolved: String
-}
-`;
-  const server = new ApolloServer({
-    typeDefs,
-    mocks: true,
-  });
-  return composeWithChain([
-    ({url}) => {
-      console.log(`🚀 Server ready at ${url}`)
-      return initializeNoAuthTask(
-        config
-      )
-    },
-    () => {
-      return fromPromised(() => server.listen({
-        port: reqStrPathThrowing('settings.data.api.port', config)
-      }))()
-    }
-  ])()
- */
-  } else {
-    // For the web environment use the remote server.
-    // We won't actually use the client connection so we could at some point make a client that doesn't
-    // connect to a server (doesn't have an http-link) but I don't know how to do that
-
-
-    return of({})
-  }
-
-};
-
-
 /**
  * Duplicate or rescape-helpers-test to avoid circular dependency
  * Convenient way to check if an object has a few expected keys at the given path
