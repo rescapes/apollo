@@ -40,7 +40,7 @@ export const containerForApolloType = R.curry((apolloConfig, responseAndOptional
     },
     responseAndOptionalRender => {
       const {render, response} = responseAndOptionalRender;
-      if (render === response.render) {
+      if (R.has('render', response) && render === response.render) {
         // Don't pass the above render prop through if the response.render is the same,
         // it means we at the end of a composition of components and the render function is
         // being applied, so we don't want to pass it as props again and risk calling it lower down
