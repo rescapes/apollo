@@ -433,12 +433,13 @@ export const apolloQueryResponsesContainer = (
  * to resolvedPropsContainer
  * @param apolloConfig
  * @param config
+ * @param config.runContainerQueries
  * @param config.containerName
  * @param config.queryContainers
  * @param props
  * @returns {*}
  */
-export const queryResponsesContainer = (apolloConfig, {containerName, queryContainers}, props) => {
+export const queryResponsesContainer = (apolloConfig, {runContainerQueries, containerName, queryContainers}, props) => {
   // Wait for all the queries to finish
   return nameComponent(containerName, props => {
     const queryContainersOrNone = runContainerQueries && queryContainers ? queryContainers : {};
