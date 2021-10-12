@@ -1,6 +1,6 @@
 {
   "name": "@rescapes/apollo",
-  "version": "0.1.590",
+  "version": "0.1.591",
   "description": "Apollo Helpers for Rescape Projects",
   "main": "./src/index.mjs",
   "module": "./src/index.mjs",
