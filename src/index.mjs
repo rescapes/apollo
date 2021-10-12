@@ -39,6 +39,7 @@ export {
   makeQuery,
   makeQueryContainer,
   apolloQueryResponsesContainer,
+  queryResponsesContainer,
   createRequestVariables,
   composeFuncAtPathIntoApolloConfig,
   logicalOrValueAtPathIntoApolloConfig

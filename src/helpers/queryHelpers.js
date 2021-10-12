@@ -417,39 +417,56 @@ export const apolloQueryResponsesContainer = (
   {render}
 ) => {
   return composeWithComponentMaybeOrTaskChain([
-    // Wait for all the queries to finish
-    nameComponent(containerName, props => {
-      const queryContainersOrNone = runContainerQueries && queryContainers ? queryContainers : {};
-      // Each query resolves and the values are assigned to the key and merged with the props
-      // This is similar to how react-adopt calls our Apollo request components
-      return composeWithComponentMaybeOrTaskChain([
-          ...R.reverse(
-            mapObjToValues(
-              (container, key) => {
-                return mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, key,
-                  props => container(props)
-                );
-              },
-              queryContainersOrNone
-            )
-          ),
-          // Just resolve to the props if there are no query containers
-          props => containerForApolloType(
-            apolloConfig,
-            {
-              render: getRenderPropFunction(props),
-              response: props
-            }
-          )
-        ]
-      )(props);
-    }),
+    props => {
+      return queryResponsesContainer(apolloConfig, {queryContainers, containerName}, props)
+    },
     // Resolve the props the container
-    () => {
+    ({render}) => {
       return resolvedPropsContainer(apolloConfig, {render});
     }
   ])({render});
 };
+
+/***
+ * Like apolloQueryResponsesContainer, but doesn't resolve props first.
+ * This is used by the test framework that needs to get the query responses in between recursive calls
+ * to resolvedPropsContainer
+ * @param apolloConfig
+ * @param config
+ * @param config.containerName
+ * @param config.queryContainers
+ * @param props
+ * @returns {*}
+ */
+export const queryResponsesContainer = (apolloConfig, {containerName, queryContainers}, props) => {
+  // Wait for all the queries to finish
+  return nameComponent(containerName, props => {
+    const queryContainersOrNone = runContainerQueries && queryContainers ? queryContainers : {};
+    // Each query resolves and the values are assigned to the key and merged with the props
+    // This is similar to how react-adopt calls our Apollo request components
+    return composeWithComponentMaybeOrTaskChain([
+        ...R.reverse(
+          mapObjToValues(
+            (container, key) => {
+              return mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, key,
+                props => container(props)
+              );
+            },
+            queryContainersOrNone
+          )
+        ),
+        // Just resolve to the props if there are no query containers
+        props => containerForApolloType(
+          apolloConfig,
+          {
+            render: getRenderPropFunction(props),
+            response: props
+          }
+        )
+      ]
+    )(props);
+  })(props)
+}
 
 /**
  * Modifies apolloConfig's 'options.variables', 'onComplete', 'onError', or other function, composing the given
