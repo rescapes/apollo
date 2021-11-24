@@ -1,5 +1,8 @@
-import {useMutation, useQuery} from '@apollo/client';
+import * as AC from '@apollo/client';
 import * as R from 'ramda'
+import {defaultNode} from "@rescapes/ramda";
+
+const {useMutation, useQuery} = defaultNode(AC)
 
 // Copied from the apollo Query HOC component definition that doesn't seem supported anymore
 export function Query(props) {
@@ -9,6 +12,7 @@ export function Query(props) {
   const result = useQuery(query, options);
   return result ? children(result) : null;
 }
+
 // Copied from the apollo Mutation HOC component definition that doesn't seem supported anymore
 export function Mutation(props) {
   const _a = useMutation(props.mutation, props)
