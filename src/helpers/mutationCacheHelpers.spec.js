@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {expectKeys, localTestAuthTask, localTestNoServerTask} from './testHelpers.js';
+import {expectKeys, localTestAuthTask} from './testHelpers.js';
 import {
   composeWithChain,
   defaultRunConfig,
@@ -186,10 +186,8 @@ describe('mutationCacheHelpers', () => {
       }
     }
     // No interaction with the server is needed for this test since we're just caching
-    const apolloConfig = await taskToPromise(
-      localTestNoServerTask({blockSelection: blocksSelectionTypePolicy})
-    )
-    const mutationOptions =     {
+    const apolloConfig = await taskToPromise(localTestAuthTask({blockSelection: blocksSelectionTypePolicy}))
+    const mutationOptions = {
         idField: 'id',
         name: 'selectedBlocks',
         outputParams: selectedBlocksOutputParams,

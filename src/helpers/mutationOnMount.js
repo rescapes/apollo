@@ -15,9 +15,9 @@ import {print} from 'graphql';
 import React from 'react';
 import {e} from '../helpers/componentHelpers.js';
 import * as R from 'ramda';
-import {Mutation} from '@apollo/client/react/components'
 import {inspect} from 'util';
 import {loggers} from '@rescapes/log';
+import {Mutation} from "../client/hocHelpers.js";
 
 const {act} = testUtils;
 const log = loggers.get('rescapeDefault');

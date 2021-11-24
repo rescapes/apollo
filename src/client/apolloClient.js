@@ -14,7 +14,6 @@ import * as AC from '@apollo/client';
 import * as R from 'ramda';
 import T from 'folktale/concurrency/task/index.js';
 import maybe from 'folktale/maybe/index.js';
-import {Mutation, Query} from '@apollo/client/react/components'
 import {e} from '../helpers/componentHelpers.js';
 import * as ACP from 'apollo3-cache-persist';
 import {print} from 'graphql';
@@ -23,7 +22,7 @@ import {
   applyDeepWithKeyWithRecurseArraysAndMapObjs,
   compact,
   composeWithChain,
-  defaultNode, duplicateKey,
+  defaultNode,
   mapToNamedResponseAndInputs,
   memoizedTaskWith,
   promiseToTask,
@@ -38,12 +37,12 @@ import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import MutationOnMount from '../helpers/mutationOnMount.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers.js';
+import {onError} from 'apollo-link-error';
+import {Mutation, Query} from "./hocHelpers.js";
 
 const {persistCache, LocalStorageWrapper, CachePersistor} = defaultNode(ACP);
 
 const {fromPromised, of} = T;
-
-import {onError} from 'apollo-link-error';
 
 const {ApolloClient, ApolloLink, createHttpLink, InMemoryCache, ApolloConsumer} = defaultNode(AC);
 const {Just} = maybe;
