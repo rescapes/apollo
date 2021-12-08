@@ -690,7 +690,7 @@ export const authApolloQueryContainer = R.curry((config, query, props) => {
  * @param {Object} config.cacheData Existing cache data if any
  * @param {Object} config.cacheOptions
  * @param {Object} config.cacheOptions.typePolicies See createInMemoryCache
- * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {String} config.uri Graphpl URL, e.g.  'http://127.0.0.1:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers: Resolvers for the stateLink, meaning local caching
  * Optionally {resolvers: ..., defaults: ...} to include default values
  * @param {String} authToken The auth token created from logging in

@@ -118,7 +118,7 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
  * @param {Object} config
  * @param {Object} [config.cacheData] Existing cache data from a no auth apolloClient
  * @param {Object} config.cacheOptions
- * @param {String} config.uri Graphpl URL, e.g.  'http://localhost:8000/api/graphql';
+ * @param {String} config.uri Graphpl URL, e.g.  'http://127.0.0.1:8000/api/graphql';
  * @param {Object} config.stateLinkResolvers Resolvers for the stateLink, meaning local caching
  * @param {Function} config.writeDefaultsContainer Writes defaults to the cache and optionally
  * writes the settings to the database and/or cache

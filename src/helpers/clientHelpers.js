@@ -214,7 +214,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup, arrayMerg
  * @param {Object} config.settings.data
  * @param {Object} config.settings.data.api
  * @param {String} [config.settings.data.api.protocol] E.g. 'http'
- * @param {String} [config.settings.data.api.host] E.g. 'localhost'
+ * @param {String} [config.settings.data.api.host] E.g. '127.0.0.1'
  * @param {String} [config.settings.data.api.port] E.g. '8008'
  * @param {String} [config.settings.data.api.path] E.g. '/graphql/'
  * @param {String} [config.settings.data.api.uri] Uri to use instead of the above parts
