@@ -8,7 +8,7 @@ const {useMutation, useQuery} = defaultNode(AC)
 export function Query({children, query, render, ...props}) {
   const result = useQuery(query, props);
   return result ? children(result) : null;
-}}
+}
 
 // Copied from the apollo Mutation HOC component definition that doesn't seem supported anymore
 export function Mutation(props) {
