@@ -5,11 +5,8 @@ import {defaultNode} from "@rescapes/ramda";
 const {useMutation, useQuery} = defaultNode(AC)
 
 // Copied from the apollo Query HOC component definition that doesn't seem supported anymore
-export function Query(props) {
-  const children = props.children;
-  const query = props.query
-  const options = R.omit(["children", "render", "query"], props);
-  const result = useQuery(query, options);
+export function Query({children, query, render, ...props}) {
+  const result = useQuery(query, props);
   return result ? children(result) : null;
 }}
 
