@@ -15,13 +15,13 @@ import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from '../helpers/containerHelpers.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
-import {reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {defaultNode, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
 import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {e} from '../helpers/componentHelpers.js';
 
 const {of} = T;
-const {ApolloConsumer} = AC
+const {ApolloConsumer} = defaultNode(AC)
 
 export const tokenAuthOutputParams = {
   token: 1,
