@@ -24,7 +24,7 @@ import {reqStrPathThrowing} from '@rescapes/ramda'
 export default {
   key: 'default',
   data: {
-    domain: 'localhost',
+    domain: '127.0.0.1',
     api: {
       protocol: 'http',
       host: '127.0.0.1',
