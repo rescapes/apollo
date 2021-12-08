@@ -8,7 +8,7 @@ const {useMutation, useQuery} = defaultNode(AC)
 export function Query(props) {
   const children = props.children;
   const query = props.query
-  const options = R.omit(["children", "query"], props);
+  const options = R.omit(["children", "render", "query"], props);
   const result = useQuery(query, options);
   return result ? children(result) : null;
 }}
