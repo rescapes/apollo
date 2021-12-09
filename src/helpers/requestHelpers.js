@@ -539,7 +539,7 @@ export const createReadInputTypeMapper = (className, keys, prefix=null) => {
             [
               R.equals('data'), key => {
               // Put the class name at the start, since the data's type name is LocationDataType, etc
-              return `${capitalize(prefix) || ''}${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+              return `${capitalize(prefix || '')}${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
             }
             ],
             [
@@ -547,13 +547,13 @@ export const createReadInputTypeMapper = (className, keys, prefix=null) => {
               key => {
                 // Remove the plural ending for to-manys and put in an array
                 const depluralizedKey = pluralize.singular(key);
-                return `[${capitalize(prefix) || ''}${capitalize(depluralizedKey)}Typeof${capitalizedClassName}TypeRelatedReadInputType]`;
+                return `[${capitalize(prefix || '')}${capitalize(depluralizedKey)}Typeof${capitalizedClassName}TypeRelatedReadInputType]`;
               }
             ],
             [
               R.T,
               key => {
-                return `${capitalize(prefix) || ''}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+                return `${capitalize(prefix || '')}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
               }
             ]
           ]
