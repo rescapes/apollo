@@ -515,13 +515,15 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
  * declaration. These are based on conventions in rescape-graphene.
  * TODO it would be much better to generate these by reading the remote schema
  * @param {String} className Lower case class name, such as 'location'
- * @param [{String}] keys Related types and json types that the query might need to filtered by
+ * @param {[String]} keys Related types and json types that the query might need to filtered by
+ * @param {String} [prefix] Default null. Occasionally needed for types whose Graphql name doesn't match the underlying
+ * class field name. Adds a prefix to InputTypes
  * @return {Object} And object with a key matching each of keys and each value in the form
  * ${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`,
  * which matches the way rescape-graphene dynamically creates read input types
  * Exceptions are for geojson keys, which result in `FeatureCollectionDataTypeof${capitalizedClassName}TypeRelatedReadInputType`
  */
-export const createReadInputTypeMapper = (className, keys) => {
+export const createReadInputTypeMapper = (className, keys, prefix=null) => {
   const capitalizedClassName = capitalize(className);
   return R.fromPairs(
     R.map(key => {
@@ -537,7 +539,7 @@ export const createReadInputTypeMapper = (className, keys) => {
             [
               R.equals('data'), key => {
               // Put the class name at the start, since the data's type name is LocationDataType, etc
-              return `${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+              return `${capitalize(prefix) || ''}${capitalizedClassName}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
             }
             ],
             [
@@ -545,13 +547,13 @@ export const createReadInputTypeMapper = (className, keys) => {
               key => {
                 // Remove the plural ending for to-manys and put in an array
                 const depluralizedKey = pluralize.singular(key);
-                return `[${capitalize(depluralizedKey)}Typeof${capitalizedClassName}TypeRelatedReadInputType]`;
+                return `[${capitalize(prefix) || ''}${capitalize(depluralizedKey)}Typeof${capitalizedClassName}TypeRelatedReadInputType]`;
               }
             ],
             [
               R.T,
               key => {
-                return `${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
+                return `${capitalize(prefix) || ''}${capitalize(key)}Typeof${capitalizedClassName}TypeRelatedReadInputType`;
               }
             ]
           ]
