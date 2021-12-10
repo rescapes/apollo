@@ -91,7 +91,7 @@ describe('mutationHelpers', () => {
   test('filterOutNullDeepAndEmpty', () => {
     // All null keys are removed and smacky is removed because it ends up being an empty dict
     const obj = {x: null, y: [1, {aa:1, bb:null}, 'quack'], z: {smith: {some: ['times', 'is', {wrong: null, smacky: {bill: null}}]}}}
-    expect(filterOutNullDeepAndEmpty(obj)).toEqual(
+    expect(filterOutNullAndEmptyDeep(obj)).toEqual(
       {y: [1, {aa:1}, 'quack'], z: {smith: {some: ['times', 'is', {}]}}}
     )
   })

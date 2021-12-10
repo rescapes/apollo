@@ -311,7 +311,7 @@ export const mutationParts = (
  * @param props
  * @returns {*}
  */
-export const filterOutNullDeepAndEmpty = props => {
+export const filterOutNullAndEmptyDeep = props => {
   return R.compose(
     // Top-level filter
     props => {
