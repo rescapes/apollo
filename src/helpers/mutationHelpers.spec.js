@@ -10,7 +10,12 @@
  */
 
 import {sampleResourceMutationOutputParams, sampleResourceProps} from './samples/sampleData.js';
-import {filterOutNullDeep, makeMutation, makeMutationRequestContainer, mutationParts} from './mutationHelpers.js';
+import {
+  filterOutNullAndEmptyDeep,
+  makeMutation,
+  makeMutationRequestContainer,
+  mutationParts
+} from './mutationHelpers.js';
 import {localTestAuthTask} from './testHelpers.js';
 import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
 import * as R from 'ramda';
@@ -88,11 +93,12 @@ describe('mutationHelpers', () => {
         }
     }, errors, done));
   }, 10000);
-  test('filterOutNullDeepAndEmpty', () => {
+  test('filterOutNullAndEmptyDeep', () => {
     // All null keys are removed and smacky is removed because it ends up being an empty dict
-    const obj = {x: null, y: [1, {aa:1, bb:null}, 'quack'], z: {smith: {some: ['times', 'is', {wrong: null, smacky: {bill: null}}]}}}
-    expect(filterOutNullAndEmptyDeep(obj)).toEqual(
-      {y: [1, {aa:1}, 'quack'], z: {smith: {some: ['times', 'is', {}]}}}
+    // semi isn't removed because we don't remove empty arrays
+    const obj = {x: null, y: [1, {aa:1, bb:null}, 'quack'], z: {smith: {some: ['times', 'is', { semi: [], moo: {}}, {wrong: null, smacky: {bill: null}}]}}}
+    expect(filterOutNullAndEmptyDeep({}, obj)).toEqual(
+      {y: [1, {aa:1}, 'quack'], z: {smith: {some: ['times', 'is', {semi: []}, {}]}}}
     )
   })
 });

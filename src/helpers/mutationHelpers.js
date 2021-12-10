@@ -308,10 +308,15 @@ export const mutationParts = (
 /**
  * Deeply removes null keys from objects and objects within arrays. Also remove empty objects that results
  * from removing nulls (but not the top-level object)
+ * @param options
+ * @param [options.removeEmptyArrays] Default false. Empty arrays often indicate a list that got updated from
+ * filled to empty, so don't remove by default.
+ * @param [options.removeEmptyObjects] Default true. Removes empty objects that result from removing nulls
+ * Empty objects don't usually signify anything meaningful
  * @param props
  * @returns {*}
  */
-export const filterOutNullAndEmptyDeep = props => {
+export const filterOutNullAndEmptyDeep = ({removeEmptyArrays = false, removeEmptyObjects = true}, props) => {
   return R.compose(
     // Top-level filter
     props => {
@@ -321,8 +326,16 @@ export const filterOutNullAndEmptyDeep = props => {
     props => {
       return applyDeepWithKeyWithRecurseArraysAndMapObjs(
         (k, l, _) => l,
-        (k, v) => {
-          return filterWithKeys((v, k) => !(R.isNil(v) || (R.is(Object, v) && isEmpty(v))), v)
+        (_, v) => {
+          return filterWithKeys((v, k) => !(
+              R.isNil(v) ||
+              isEmpty(v) && (
+                (Array.isArray(v) && removeEmptyArrays) ||
+                (!Array.isArray(v) && R.is(Object, v) && removeEmptyObjects)
+              )
+            ),
+            v
+          )
         },
         props
       );
