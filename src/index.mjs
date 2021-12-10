@@ -49,7 +49,8 @@ export {
   makeMutationRequestContainer,
   mutationParts,
   filterOutReadOnlyVersionProps,
-  filterOutNullDeleteProps
+  filterOutNullDeleteProps,
+  filterOutNullDeepAndEmpty
 } from './helpers/mutationHelpers.js';
 export {
   makeCacheMutationContainer, makeCacheMutation, createCacheOnlyProps, mergeCacheable

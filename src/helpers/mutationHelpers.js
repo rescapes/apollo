@@ -23,6 +23,7 @@ import {
   authApolloComponentMutationContainer
 } from '../client/apolloClient.js';
 import {
+  applyDeepWithKeyWithRecurseArraysAndMapObjs,
   capitalize,
   composeWithMap,
   defaultNode,
@@ -37,6 +38,7 @@ import {v} from '@rescapes/validate';
 import PropTypes from 'prop-types';
 import {loggers} from '@rescapes/log';
 import {addMutateKeyToMutationResponse} from './containerHelpers.js';
+import {isEmpty} from "ramda";
 
 const {gql} = defaultNode(AC);
 
@@ -131,101 +133,101 @@ ${mutationName}${variableMappingString} {
  *  doesn't need to know if the request was a create or update
  */
 export const makeMutationRequestContainer = v(R.curry(
-  (apolloConfig,
-   {
-     name, outputParams,
-     // These are only used for simple mutations where there is no complex input type
-     mutationNameOverride = null, flattenVariables = false
-   },
-   props) => {
-    // Get the variable definition, arguments and outputParams
-    const {variablesAndTypes, variableNames, namedProps, namedOutputParams, crud} = mutationParts(
-      apolloConfig,
-      {name, outputParams: omitClientFields(outputParams), flattenVariables},
-      props
-    );
+    (apolloConfig,
+     {
+       name, outputParams,
+       // These are only used for simple mutations where there is no complex input type
+       mutationNameOverride = null, flattenVariables = false
+     },
+     props) => {
+      // Get the variable definition, arguments and outputParams
+      const {variablesAndTypes, variableNames, namedProps, namedOutputParams, crud} = mutationParts(
+        apolloConfig,
+        {name, outputParams: omitClientFields(outputParams), flattenVariables},
+        props
+      );
 
-    // create|update[Model Name]
-    const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
+      // create|update[Model Name]
+      const createOrUpdateName = R.when(R.isNil, () => `${crud}${capitalize(name)}`)(mutationNameOverride);
 
-    let mutation;
-    try {
-      mutation = gql`${makeMutation(
-          createOrUpdateName,
-          variablesAndTypes ,
-          namedOutputParams
-        )}`;
-    } catch (e) {
-      log.error(`Unable to create mutation with the following properties: ${inspect({
-        createOrUpdateName,
-        variablesAndTypes,
-        namedOutputParams
-      })}. Mutation string: ${
-        makeMutation(
+      let mutation;
+      try {
+        mutation = gql`${makeMutation(
           createOrUpdateName,
           variablesAndTypes,
           namedOutputParams
-        )
-      }`);
-      throw e;
-    }
+        )}`;
+      } catch (e) {
+        log.error(`Unable to create mutation with the following properties: ${inspect({
+          createOrUpdateName,
+          variablesAndTypes,
+          namedOutputParams
+        })}. Mutation string: ${
+          makeMutation(
+            createOrUpdateName,
+            variablesAndTypes,
+            namedOutputParams
+          )
+        }`);
+        throw e;
+      }
 
-    return R.cond([
-      // If we have an ApolloClient
-      [apolloConfig => R.has('apolloClient', apolloConfig),
-        apolloConfig => {
-          const skip = strPathOr(false, 'options.skip', apolloConfig);
-          log.debug(`${skip ? 'Skipping' : 'Running'} Mutation Task:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)}\n\n`);
-          return composeWithMap([
-            response => {
-              if (!skip) {
-                log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
+      return R.cond([
+        // If we have an ApolloClient
+        [apolloConfig => R.has('apolloClient', apolloConfig),
+          apolloConfig => {
+            const skip = strPathOr(false, 'options.skip', apolloConfig);
+            log.debug(`${skip ? 'Skipping' : 'Running'} Mutation Task:\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)}\n\n`);
+            return composeWithMap([
+              response => {
+                if (!skip) {
+                  log.debug(`Successfully ran mutation: ${createOrUpdateName}`);
+                }
+                // name is null if mutationNameOverride is used
+                return R.compose(
+                  response => addMutateKeyToMutationResponse({name}, response),
+                  // Put response.data in result to match component mutations
+                  ({data, ...rest}) => ({result: {data}, ...rest})
+                )(response);
+              },
+              () => {
+                return authApolloClientMutationRequestContainer(
+                  apolloConfig,
+                  {
+                    mutation,
+                    name
+                  },
+                  namedProps
+                );
               }
-              // name is null if mutationNameOverride is used
-              return R.compose(
-                response => addMutateKeyToMutationResponse({name}, response),
-                // Put response.data in result to match component mutations
-                ({data, ...rest})=> ({result: {data}, ...rest})
-              )(response);
-            },
-            () => {
-              return authApolloClientMutationRequestContainer(
+            ])();
+          }
+        ],
+        // If we have an Apollo Component
+        [() => R.has('render', props),
+          // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
+          // Above we're using an Apollo client so we have a task and leave to the caller to run
+          () => {
+            //log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)})}\n\n`);
+            return R.chain(
+              component => {
+                // Remove the Just
+                return component;
+              },
+              authApolloComponentMutationContainer(
                 apolloConfig,
-                {
-                  mutation,
-                  name
-                },
-                namedProps
-              );
-            }
-          ])();
-        }
-      ],
-      // If we have an Apollo Component
-      [() => R.has('render', props),
-        // Since we're using a component unwrap the Just to get the underlying wrapped component for Apollo/React to use
-        // Above we're using an Apollo client so we have a task and leave to the caller to run
-        () => {
-          //log.debug(`\`Preparing Mutation Component (that can run with mutation()):\n\n${print(mutation)}\nArguments:\n${inspect(namedProps, false, 10)})}\n\n`);
-          return R.chain(
-            component => {
-              // Remove the Just
-              return component;
-            },
-            authApolloComponentMutationContainer(
-              apolloConfig,
-              mutation,
-              // Allow render through along with the namedProps
-              R.merge(R.pick(['render'], props), namedProps)
-            )
-          );
-        }
-      ],
-      [R.T, () => {
-        throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${inspect(props, false, 10)}`);
-      }]
-    ])(apolloConfig);
-  }),
+                mutation,
+                // Allow render through along with the namedProps
+                R.merge(R.pick(['render'], props), namedProps)
+              )
+            );
+          }
+        ],
+        [R.T, () => {
+          throw new Error(`apolloConfig doesn't have an Apollo client and props has no render function for a component query: Config: ${inspect(apolloConfig)} props: ${inspect(props, false, 10)}`);
+        }]
+      ])(apolloConfig);
+    }),
   [
     ['apolloConfig', PropTypes.shape().isRequired],
     ['mutationOptions', PropTypes.shape({
@@ -302,3 +304,28 @@ export const mutationParts = (
 
   return {variablesAndTypes, variableNames, namedOutputParams, namedProps: filteredNamedProps, crud};
 };
+
+/**
+ * Deeply removes null keys from objects and objects within arrays. Also remove empty objects that results
+ * from removing nulls (but not the top-level object)
+ * @param props
+ * @returns {*}
+ */
+export const filterOutNullDeepAndEmpty = props => {
+  return R.compose(
+    // Top-level filter
+    props => {
+      return filterWithKeys((v, k) => !R.isNil(v), props)
+    },
+    // Recurse filter
+    props => {
+      return applyDeepWithKeyWithRecurseArraysAndMapObjs(
+        (k, l, _) => l,
+        (k, v) => {
+          return filterWithKeys((v, k) => !(R.isNil(v) || (R.is(Object, v) && isEmpty(v))), v)
+        },
+        props
+      );
+    }
+  )(props)
+}
