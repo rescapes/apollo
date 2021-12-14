@@ -42,6 +42,7 @@ export {
   queryResponsesContainer,
   createRequestVariables,
   composeFuncAtPathIntoApolloConfig,
+  composeFuncBeforeAtPathIntoApolloConfig,
   logicalOrValueAtPathIntoApolloConfig
 } from './helpers/queryHelpers.js';
 export {

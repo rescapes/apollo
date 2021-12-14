@@ -478,12 +478,30 @@ export const queryResponsesContainer = (apolloConfig, {runContainerQueries, cont
  * @returns {*}
  */
 export const composeFuncAtPathIntoApolloConfig = (apolloConfig, strPath, func) => {
+  return _composeFuncAtPathIntoApolloConfig(apolloConfig, {strPath}, func);
+};
+export const composeFuncBeforeAtPathIntoApolloConfig = (apolloConfig, strPath, func) => {
+  return _composeFuncAtPathIntoApolloConfig(apolloConfig, {strPath, placement: 'before'}, func);
+};
+// composeFuncAtPathIntoApolloConfig with the option of placing func first in the composition if placement='before'
+const _composeFuncAtPathIntoApolloConfig = (apolloConfig, {strPath, placement = 'after'}, func) => {
+  const funcs = variables => {
+    return [
+      props => {
+        return func(props)
+      },
+      props => R.when(() => R.is(Function, variables), variables)(props)
+    ]
+  }
   return R.over(
     R.lensPath(R.split('.', strPath)),
     variables => {
-      return props => R.compose(
-        props => func(props),
-        props => R.when(() => R.is(Function, variables), variables)(props)
+      return props => R.compose(...R.when(
+          () => R.equals('before', placement),
+          funcs => {
+            return R.reverse(funcs)
+          }
+        )(funcs(variables))
       )(props);
     },
     apolloConfig
