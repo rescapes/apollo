@@ -152,6 +152,12 @@ export const callMutationNTimesAndConcatResponses = (
                                                                                responses,
                                                                                render
                                                                              }) => {
+        if (R.any(R.prop('skip'), responses)) {
+          throw new Error(`One or more mutation responses have skip=true, indicating that required properties were not supplied to the mutation(s): ${
+            JSON.stringify(R.map(R.omit(['mutation']), responses))
+          }`)
+        }
+
         return mutateOnceAndWaitContainer(apolloConfig, {responsePath}, responses, render);
       }),
       ...R.reverse(R.times(i => {
