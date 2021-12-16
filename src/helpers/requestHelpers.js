@@ -386,8 +386,8 @@ export const winnowRequestProps = (
 ) => {
   const func = strPathOr(R.identity, 'options.variables', apolloConfig);
   const resolvedProps = R.when(R.is(Function), R.applyTo(props))(func);
-  // Unless preserveTypeNames is true, remove _typename props that might be left from the result of previous Apollo
-  // requests from response props such as queryFoo or mutateFoo.
+  // Unless preserveTypeNames is true, remove __typename props from query and mutation responses
+  // that might be left from the result of previous Apollo requests from response props such as queryFoo or mutateFoo.
   // Also remove the render and children prop if not done by options.variables. We never want these is our request
   const compactUnlessPreservingNulls = strPathOr(false, 'options.preserveNulls', apolloConfig) ? R.identity : compact
   return R.compose(
@@ -398,9 +398,6 @@ export const winnowRequestProps = (
         return R.ifElse(
           prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
           () => {
-            if (preserveTypeNames) {
-              return value;
-            }
             // Deep omit __typename
             return R.compose(
               ...R.map(path => {
