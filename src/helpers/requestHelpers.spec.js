@@ -68,8 +68,7 @@ describe('requestHelpers', () => {
       }
     }
   }
-}
-`);
+}`);
   });
 
   test('pickPaths', () => {

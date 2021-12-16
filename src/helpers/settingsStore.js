@@ -6,21 +6,22 @@ import {
   mapTaskOrComponentToNamedResponseAndInputs
 } from './containerHelpers.js';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
-import {defaultNode, omitDeepPaths, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
+import {omitDeepPaths, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {v} from '@rescapes/validate';
 import * as R from 'ramda';
 import PropTypes from 'prop-types';
 import T from 'folktale/concurrency/task/index.js';
 import {makeCacheMutationContainer} from './mutationCacheHelpers.js';
 import {loggers} from '@rescapes/log';
-import {makeQueryFromCacheContainer, makeReadFragmentFromCacheContainer} from './queryCacheHelpers.js';
+import {
+  queryFromCacheContainer,
+  makeQueryFromCacheContainer,
+  makeReadFragmentFromCacheContainer
+} from './queryCacheHelpers.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
-import * as AC from '@apollo/client';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 
-
 const {of} = T;
-
 const log = loggers.get('rescapeDefault');
 
 /**
@@ -56,7 +57,7 @@ export const createCacheOnlyPropsForSettings = ({cacheOnlyObjs, cacheIdProps}, p
  * @params {Object} apolloConfig The Apollo config. See makeQueryContainer for options
  * @params {Array|Object} outputParams OutputParams for the query such as defaultSettingsOutputParams
  * @params {Object} props Arguments for the Settings query. This can be {} or null to not filter.
- * @returns {Task} A Task containing the Settingss in an object with obj.data.settings or errors in obj.errors
+ * @returns {Task} A Task containing the Settings in an object with obj.data.settings or errors in obj.errors
  */
 export const settingsQueryContainer = v(R.curry((apolloConfig, {outputParams}, props) => {
     return makeQueryContainer(
@@ -109,78 +110,19 @@ export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props)
  * otherwise resolves to {data: null}
  */
 export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
-  // TODO we are doing a cache fragment read for now because
-  // a cache query read was failing to match. When we mutate the cache we don't
-  // get a query under ROOT_QUERY, so we can't use a cache query.
-  // We need to change our cache mutations to be writes instead of fragment writes
-  // Unfortunately a cache miss throws
-  try {
-    return composeWithComponentMaybeOrTaskChain([
-      ({authTokenResponse, ...props}) => {
-        // We need the typename
-        const propsWithTypename = R.merge({'__typename': 'SettingsType'}, props)
-        // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
-        const authenticated = strPathOr(false, 'data.token', authTokenResponse);
+  return queryFromCacheContainer(
+    apolloConfig, {
+      name: 'settings',
+      readInputTypeMapper,
+      outputParams,
+      typename: 'SettingsType',
+      allowUnauthenticated: true,
+      idField: 'key'
+    }, props
+  )
+}
 
-        const omitAuthFields = authenticated ? [] : ['id'];
-        if (false && authenticated) {
-          // TODO this is disabled because I havne't figured out wow to get writeQuery
-          // to actually put values in the cache, which means that readQuery fails
-          // because we are writing fragments and not queries, so no query matches
-          return settingsLocalQueryContainer(
-            apolloConfig,
-            {name: 'settings', readInputTypeMapper, outputParams: outputParams, idField: 'key'},
-            propsWithTypename
-          );
-        } else {
-          return composeWithComponentMaybeOrTaskChain([
-            // Return just the cache response
-            response => {
-              return containerForApolloType(
-                apolloConfig,
-                {
-                  render: getRenderPropFunction(props),
-                  response: R.merge({
-                      // Simulate a successful load status for our component status check
-                      // TODO this is hacky
-                      networkStatus: 7, loading: false, called: true
-                    },
-                    response)
-                }
-              );
-            },
-            props => makeReadFragmentFromCacheContainer(
-              apolloConfig,
-              {
-                name: 'settings',
-                readInputTypeMapper,
-                outputParams: R.omit(omitAuthFields, outputParams),
-                idField: 'key'
-              },
-              props
-            )
-          ])(propsWithTypename);
-        }
-      },
-      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
-        ({render}) => {
-          return queryLocalTokenAuthContainer(apolloConfig, {render});
-        }
-      )
-    ])(props);
-  } catch (e) {
-    if (R.is(MissingFieldError, e)) {
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(props),
-          response: null
-        }
-      );
-    }
-    throw e;
-  }
-};
+
 /**
  * Makes a Settings mutation
  * @param {Object} apolloConfig Configuration of the Apollo Client when using one inst

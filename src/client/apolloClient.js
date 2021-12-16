@@ -30,7 +30,7 @@ import {
   retryTask,
   strPathOr
 } from '@rescapes/ramda';
-import fetch from 'node-fetch';
+import _fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
@@ -39,6 +39,7 @@ import MutationOnMount from '../helpers/mutationOnMount.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers.js';
 import {onError} from 'apollo-link-error';
 import {Mutation, Query} from "./hocHelpers.js";
+import fetchRetry from 'fetch-retry'
 
 const {persistCache, LocalStorageWrapper, CachePersistor} = defaultNode(ACP);
 
@@ -56,6 +57,12 @@ const logLink = new ApolloLink((operation, forward) => {
     return result;
   });
 });
+
+const fetch = fetchRetry(_fetch, {
+  retries: 5,
+  retryDelay: 800
+});
+
 /**
  * Creates an ApolloClient.
  * @param {Object} config

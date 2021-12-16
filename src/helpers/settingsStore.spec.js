@@ -29,7 +29,8 @@ describe('settingsStore', () => {
           return settingsCacheFragmentContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams},
-            {key: 'default', __typename: 'SettingsType'});
+            {key: 'default', __typename: 'SettingsType'}
+          );
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',
@@ -40,7 +41,8 @@ describe('settingsStore', () => {
           return settingsCacheFragmentContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams},
-            {key: 'default', __typename: 'SettingsType'});
+            {key: 'default', __typename: 'SettingsType'}
+          );
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',

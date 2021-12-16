@@ -97,7 +97,9 @@ export {
 
 } from './helpers/containerHelpers.js';
 export {callMutationNTimesAndConcatResponses} from './containers/multipleMutations.js'
-export {mutationRequestWithMutateOnceAndWaitContainer, mutateOnceAndWaitContainer} from './containers/mutateOnceAndWait.js'
+export {
+  mutationRequestWithMutateOnceAndWaitContainer, mutateOnceAndWaitContainer
+} from './containers/mutateOnceAndWait.js'
 export {typePoliciesWithMergeObjects, createLocalStorageAuthContainer} from './helpers/clientHelpers.js';
 export {
   writeDefaultSettingsToCacheContainer,
@@ -121,7 +123,7 @@ export {
   cacheOptions
 } from './config.js';
 export {
-  makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer
+  makeQueryFromCacheContainer, makeClientQuery, makeQueryWithClientDirectiveContainer, queryFromCacheContainer
 } from './helpers/queryCacheHelpers.js';
 export {firstMatchingPathLookup} from './helpers/utilityHelpers.js';
 export {
