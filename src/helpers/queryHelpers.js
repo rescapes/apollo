@@ -487,10 +487,10 @@ export const composeFuncBeforeAtPathIntoApolloConfig = (apolloConfig, strPath, f
 const _composeFuncAtPathIntoApolloConfig = (apolloConfig, {strPath, placement = 'after'}, func) => {
   const funcs = variables => {
     return [
-      props => {
-        return func(props)
+      (...args) => {
+        return func(...args)
       },
-      props => R.when(() => R.is(Function, variables), variables)(props)
+      (...args) => R.when(() => R.is(Function, variables), variables)(...args)
     ]
   }
   return R.over(

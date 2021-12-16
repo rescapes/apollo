@@ -117,14 +117,13 @@ export const sampleMutateRegionContainer = (apolloConfig, {}, props) => {
             )(normalizeSampleRegionPropsForMutating(props.region));
           },
           update: (store, {data, ...rest}) => {
-            const region = strPathOr(null,  'updateRegion.region', data)
+            const region = strPathOr(null, 'updateRegion.region', data)
             if (R.propOr(false, 'deleted', region)) {
               // Evict all regions queries. It would be better to only
               // evict those that matched our object, but this isn't  possible
               store.evict({ fieldName: 'regions' });
             }
           },
-
           errorPolicy: 'all',
           partialRefetch: true
         }

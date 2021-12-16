@@ -292,7 +292,6 @@ export const queryFromCacheContainer = (
               apolloConfig,
               'options.variables',
               props => {
-                // We always query settings by key, because we cache it that way and don't care about the id
                 return R.pick([idField], props);
               }
             ),
