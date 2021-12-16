@@ -22,7 +22,7 @@ import {
   strPathOr
 } from '@rescapes/ramda';
 import * as R from 'ramda';
-import {_winnowRequestProps, formatOutputParams, omitClientFields, resolveGraphQLType} from './requestHelpers.js';
+import {winnowRequestProps, formatOutputParams, omitClientFields, resolveGraphQLType} from './requestHelpers.js';
 import {v} from '@rescapes/validate';
 import {loggers} from '@rescapes/log';
 import {singularize} from 'inflected';
@@ -308,7 +308,7 @@ export const makeQueryContainer = v(R.curry(
           props => {
             // Use apolloConfig.options.variables function to filter if specified.
             // This extracts the needed props for the query
-            return _winnowRequestProps(apolloConfig, props);
+            return winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
           }
         )(props)
       )(props);

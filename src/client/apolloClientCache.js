@@ -16,7 +16,7 @@ import {e} from '../helpers/componentHelpers.js';
 import {containerForApolloType} from '../helpers/containerHelpers.js';
 import {getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import * as AC from '@apollo/client';
-import {_winnowRequestProps} from '../helpers/requestHelpers.js';
+import {winnowRequestProps} from '../helpers/requestHelpers.js';
 import * as R from 'ramda';
 import {apolloClientReadFragmentCache} from './apolloClient.js';
 import {reqStrPathThrowing, defaultNode} from '@rescapes/ramda';
@@ -47,7 +47,7 @@ const log = loggers.get('rescapeDefault');
  * @returns {Object} The cache result
  */
 export const authApolloClientQueryCache = R.curry((apolloConfig, options, props) => {
-  const winnowedProps = _winnowRequestProps(apolloConfig, props);
+  const winnowedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
   // readQuery isn't a promise, just a direct call I guess
   log.debug(`Query cache: ${print(options.query)} props: ${inspect(winnowedProps)}`);
   try {

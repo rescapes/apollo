@@ -27,7 +27,7 @@ import {
 } from '../client/apolloClientCache.js';
 import {_makeQuery, composeFuncAtPathIntoApolloConfig, makeFragmentQuery, makeQuery} from './queryHelpers.js';
 import {loggers} from '@rescapes/log';
-import {_winnowRequestProps} from './requestHelpers.js';
+import {winnowRequestProps} from './requestHelpers.js';
 import {
   composeWithComponentMaybeOrTaskChain,
   getRenderPropFunction,
@@ -120,7 +120,7 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
   try {
     // Not using the client directive here, rather we'll do a direct cache read with this query
-    const winnowedProps = _winnowRequestProps(apolloConfig, props);
+    const winnowedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
     const query = gql`${makeQuery(
       name,
       readInputTypeMapper,
@@ -192,7 +192,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
 }, props) => {
   // Apply apolloConfig.options.variables, but maintain __typename for the cache lookup
   const winnowedProps = R.merge(
-    _winnowRequestProps(apolloConfig, props),
+    winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props),
     R.pick(['__typename', 'render'], props)
   );
   // Write the fragment

@@ -371,35 +371,36 @@ export const optionsWithWinnowedProps = (apolloConfig, props) => {
  * @param {Object} apolloConfig Apollo config
  * @param {Object} apolloConfig.options
  * @param {Function|Object} apolloConfig.options.variables A unary function that expects props and returns the winnowed props
- * If an object then props are ignored and these values are returned. This would only occur if the variables were constant,
- * which seems unlikely, but matches Apollo's possible configuration
- * @param {Object} props Props to winnow
- * @returns {Object} The winnowed props
- */
-/**
- * Given an apolloConfig with options.variables, where variables is a function, this runs
- * the props through the variables function to deliver the props that the query will be built upon.
- * @param {Object} apolloConfig Apollo config
- * @param {Object} apolloConfig.options
- * @param {Function|Object} apolloConfig.options.variables A unary function that expects props and returns the winnowed props
  * @param {Object} [apolloConfig.options.preserveNulls] Default false. Used only by caching initial values of singletons
  * If an object then props are ignored and these values are returned. This would only occur if the variables were constant,
  * which seems unlikely, but matches Apollo's possible configuration
+ * @param {Object} objects
+ * @param {Boolean} [objects.preserveTypeNames] Default false. Leave in __typename when using for cache updates
  * @param {Object} props Props to winnow
  * @returns {Object} The winnowed props
  */
-export const _winnowRequestProps = (apolloConfig, props) => {
+export const winnowRequestProps = (
+  apolloConfig,
+  {preserveTypeNames = false},
+  props
+) => {
   const func = strPathOr(R.identity, 'options.variables', apolloConfig);
   const resolvedProps = R.when(R.is(Function), R.applyTo(props))(func);
-  // Remove _typename props that might be left from the result of previous Apollo requests from response props such
-  // as queryFoo or mutateFoo.
+  // Unless preserveTypeNames is true, remove _typename props that might be left from the result of previous Apollo
+  // requests from response props such as queryFoo or mutateFoo.
   // Also remove the render and children prop if not done by options.variables. We never want these is our request
   const compactUnlessPreservingNulls = strPathOr(false, 'options.preserveNulls', apolloConfig) ? R.identity : compact
-  return compactUnlessPreservingNulls(
+  return R.compose(
+    props => {
+      return compactUnlessPreservingNulls(props)
+    },
     R.mapObjIndexed((value, prop) => {
         return R.ifElse(
           prop => R.startsWith('query', prop) || R.startsWith('mutate', prop),
           () => {
+            if (preserveTypeNames) {
+              return value;
+            }
             // Deep omit __typename
             return R.compose(
               ...R.map(path => {
@@ -433,10 +434,9 @@ export const _winnowRequestProps = (apolloConfig, props) => {
             )(value);
           }
         )(prop);
-      },
-      resolvedProps
+      }
     )
-  );
+  )(resolvedProps);
 };
 
 /**
@@ -523,7 +523,7 @@ export const omitUnrepresentedOutputParams = (props, outputParams) => {
  * which matches the way rescape-graphene dynamically creates read input types
  * Exceptions are for geojson keys, which result in `FeatureCollectionDataTypeof${capitalizedClassName}TypeRelatedReadInputType`
  */
-export const createReadInputTypeMapper = (className, keys, prefix=null) => {
+export const createReadInputTypeMapper = (className, keys, prefix = null) => {
   const capitalizedClassName = capitalize(className);
   return R.fromPairs(
     R.map(key => {

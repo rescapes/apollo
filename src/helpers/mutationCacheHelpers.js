@@ -25,7 +25,7 @@ import PropTypes from 'prop-types';
 import {composeFuncAtPathIntoApolloConfig, makeFragmentQuery, makeQuery, makeWriteQuery} from './queryHelpers.js';
 import T from 'folktale/concurrency/task/index.js';
 import {loggers} from '@rescapes/log';
-import {_winnowRequestProps, omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
+import {winnowRequestProps, omitClientFields, omitUnrepresentedOutputParams} from './requestHelpers.js';
 import {firstMatchingPathLookup} from './utilityHelpers.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './componentHelpersMonadic.js';
@@ -86,7 +86,7 @@ export const makeCacheMutation = v(R.curry(
 
       // If apolloConfig.options.variables is specified, this winnows the props to whatever we want to cache
       // If can also resolve the props to an array of items if we are concatting with existing cache array or empty array
-      const resolvedProps = _winnowRequestProps(apolloConfig, props)
+      const resolvedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props)
 
       // Use the apolloClient or store
       const apolloClientOrStore = R.propOr(R.prop('store', apolloConfig), 'apolloClient', apolloConfig);

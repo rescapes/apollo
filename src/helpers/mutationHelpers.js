@@ -12,7 +12,7 @@
 import {inspect} from 'util';
 import * as R from 'ramda';
 import {
-  _winnowRequestProps,
+  winnowRequestProps,
   formatOutputParams,
   omitClientFields,
   resolveGraphQLType,
@@ -272,7 +272,7 @@ export const mutationParts = (
 ) => {
   // Limits the props with apolloConfig.options.variables if specified
   // This keeps extra variables out of the mutation when we are composing queries/mutations
-  const winnowedProps = _winnowRequestProps(apolloConfig, props);
+  const winnowedProps = winnowRequestProps(apolloConfig, {}, props);
   // Determine crud type from the presence of the id in the props
   const crud = R.ifElse(R.has('id'), R.always('update'), R.always('create'))(winnowedProps);
   // Create|Update[Model Name]InputType]

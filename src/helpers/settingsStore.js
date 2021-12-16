@@ -157,7 +157,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {
         options: {
           update: (store, {data, ...rest}) => {
             const _response = {result: {data}, ...rest};
-            // Add mutate to response.data so we dont' have to guess if it's a create or update
+            // Add mutate to response.data so we don't have to guess if it's a create or update
             const settings = reqStrPathThrowing(
               'result.data.mutate.settings',
               addMutateKeyToMutationResponse({silent: true}, _response)
@@ -192,14 +192,14 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {
  * Mutates the settings in the cache
  * @param apolloConfig
  * @param outputParams
- * @param props
- * @param settings
+ * @param existingSettingsWithCacheOnly
+ * @param incomingSettings
  * @returns [{Object}] The result of one or more cache mutations, usually not needed
  */
-export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, props, settings) => {
+export const makeSettingsCacheMutation = (apolloConfig, {outputParams}, existingSettingsWithCacheOnly, incomingSettings) => {
 
   // Add the cache only values to the persisted settings
-  const propsWithCacheOnlyItems = mergeCacheable({}, settings, props);
+  const propsWithCacheOnlyItems = mergeCacheable({}, incomingSettings, existingSettingsWithCacheOnly);
 
   // Cache by both key and id, normally we read the cache using the key
   // If the user isn't authenticated, only cache by key, since we haven't gotten the settings from the database
