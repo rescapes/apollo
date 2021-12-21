@@ -535,7 +535,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
                 log.warn("Attempt to call a mutation function whose variables are not ready. No-op");
               },
               mutate => {
-                log.debug(`Calling mutation ${print(mutation)} with args ${inspect(R.length(args) ? args[0] : props, false, 10)}`);
+                log.debug(`Calling mutation ${print(mutation)} with args ${JSON.stringify(R.length(args) ? args[0] : props)}`);
                 return mutate(...args).catch(
                   error => {
                     log.debug('Mutation threw an error. This will not be thrown but handled by the components')
