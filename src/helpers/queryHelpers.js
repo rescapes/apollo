@@ -523,3 +523,12 @@ export const logicalOrValueAtPathIntoApolloConfig = (apolloConfig, strPath, valu
   )
 }
 
+/**
+ * Sets apolloConfig.options.skip = apolloConfig.options.skip || true unless value is truthy
+ * @param {Object} apolloConfig The ApolloConfig
+ * @param {Object|Boolean} value A truthy or falsy value
+ * @return {Object} The ApolloConfig with options.skip set
+ */
+export const skipUnless = (apolloConfig, value) => {
+  return logicalOrValueAtPathIntoApolloConfig(apolloConfig, 'options.skip', !value)
+}

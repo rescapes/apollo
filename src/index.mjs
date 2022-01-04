@@ -43,7 +43,8 @@ export {
   createRequestVariables,
   composeFuncAtPathIntoApolloConfig,
   composeFuncBeforeAtPathIntoApolloConfig,
-  logicalOrValueAtPathIntoApolloConfig
+  logicalOrValueAtPathIntoApolloConfig,
+  skipUnless
 } from './helpers/queryHelpers.js';
 export {
   makeMutation,
