@@ -2,9 +2,9 @@ import {
   composeWithComponentMaybeOrTaskChain,
   getRenderPropFunction,
   nameComponent
-} from "../helpers/componentHelpersMonadic";
+} from "../helpers/componentHelpersMonadic.js";
 import {compact, reqStrPathThrowing, strPathOr, toArrayIfNot} from "@rescapes/ramda";
-import {addMutateKeyToMutationResponse, containerForApolloType} from "../helpers/containerHelpers";
+import {addMutateKeyToMutationResponse, containerForApolloType} from "../helpers/containerHelpers.js";
 import {loggers} from '@rescapes/log';
 import * as R from 'ramda'
 import React from 'react';

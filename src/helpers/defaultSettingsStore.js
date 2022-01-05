@@ -10,7 +10,6 @@ import T from 'folktale/concurrency/task/index.js';
 import {queryLocalTokenAuthContainer} from '../stores/tokenAuthStore.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 import {e} from '../helpers/componentHelpers.js';
-import {mutateOnceAndWaitContainer} from "../containers/mutateOnceAndWait";
 
 const {of} = T;
 const log = loggers.get('rescapeDefault');

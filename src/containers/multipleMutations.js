@@ -3,7 +3,7 @@ import {
   containerForApolloType,
   mapTaskOrComponentToConcattedNamedResponseAndInputs,
   mapTaskOrComponentToNamedResponseAndInputs
-} from "../helpers/containerHelpers";
+} from "../helpers/containerHelpers.js";
 import React from 'react';
 import moment from 'moment';
 import * as R from 'ramda';
