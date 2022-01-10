@@ -263,6 +263,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
  * @param {Boolean} [options.allowUnauthenticated] Default false. Allows to query the cache for data
  * if the user is not authenticated. This only works for data such as settings that can be cached by
  * a key property.
+ * @param {Boolean} [options.singleton] Default false, if true then idField is not used
  * @param {String} [options.idField] Default 'id'.
  * @param {Object} props
  * @param {Object} props.render Render prop
@@ -275,6 +276,7 @@ export const queryFromCacheContainer = (
     readInputTypeMapper,
     typename,
     allowUnauthenticated = false,
+    singleton = false,
     idField = 'id'
   },
   props
@@ -285,7 +287,7 @@ export const queryFromCacheContainer = (
       ({authTokenResponse, ...props}) => {
         // We need the typename
         const propsWithTypename = R.merge({'__typename': typename}, props)
-        const authenticated = strPathOr(false, 'data.token', authTokenResponse);
+        const authenticated = strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse);
         if (authenticated) {
           return makeQueryFromCacheContainer(
             composeFuncAtPathIntoApolloConfig(
@@ -301,35 +303,17 @@ export const queryFromCacheContainer = (
         } else {
           // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
           const omitAuthFields = authenticated ? [] : ['id'];
-          return composeWithComponentMaybeOrTaskChain([
-            // Return just the cache response
-            response => {
-              return containerForApolloType(
-                apolloConfig,
-                {
-                  render: getRenderPropFunction(props),
-                  response: R.merge({
-                      // Simulate a successful load status for our component status check
-                      // TODO this is hacky
-                      networkStatus: 7, loading: false, called: true
-                    },
-                    response
-                  )
-                }
-              );
-            },
-            // TODO can this be makeQueryFromCacheContainer instead now?
-            props => makeReadFragmentFromCacheContainer(
+          return makeQueryFromCacheContainer(
+            composeFuncAtPathIntoApolloConfig(
               apolloConfig,
-              {
-                name,
-                readInputTypeMapper,
-                outputParams: R.omit(omitAuthFields, outputParams),
-                idField
-              },
-              props
-            )
-          ])(propsWithTypename);
+              'options.variables',
+              props => {
+                return singleton ? {} : R.pick([idField], props);
+              }
+            ),
+            {name, readInputTypeMapper, outputParams: R.omit(omitAuthFields,outputParams)},
+            propsWithTypename
+          )
         }
       },
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',

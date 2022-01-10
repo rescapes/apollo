@@ -57,8 +57,21 @@ export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryAr
   // https://github.com/apollographql/react-apollo/issues/3316
   return _makeQuery({}, queryName, inputParamTypeMapper, process.env.USE_MOCKS ? omitClientFields(outputParams) : outputParams, queryArguments);
 };
+
+/**
+ * Converts the TypeName to the object name. E.g SettingsType to settings or ObtainJSONToken to obtainJSONToken
+ * @param typeName
+ * @return {*}
+ */
+export const typeNameToQueryName = typeName => {
+  return R.compose(
+    R.when(R.endsWith('Type'), R.slice(0, -1 * R.length('Type'))),
+    lowercase
+  )(typeName)
+}
+
 export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, outputParams, queryArguments) => {
-  return _makeQuery({queryRootName: lowercase(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+  return _makeQuery({queryRootName: typeNameToQueryName(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 };
 
 /**
@@ -347,14 +360,27 @@ export const makeQueryContainer = v(R.curry(
         componentOrTask => 'run' in componentOrTask,
         // If it's a task report the result. Components have to run their query
         componentOrTask => {
-          log.debug(`makeQueryContainer Attempting query task:\n${
-            print(query)
-          }\nArguments:\n${
-            inspect(winnowedProps, false, 10)
-          }\n`);
+          if (!skip) {
+            log.debug(`makeQueryContainer Attempting query task:\n${
+              print(query)
+            }\nArguments:\n${
+              inspect(winnowedProps, false, 10)
+            }\n`);
+          }
+          else {
+            log.debug(`makeQueryContainer Skipping query task:\n${
+              print(query)
+            }\nArguments:\n${
+              inspect(winnowedProps, false, 10)
+            }\n`);
+          }
           return R.map(
             queryResponse => {
-              log.debug(`makeQueryContainer for ${name} succeeded with response: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+              if (skip) {
+                log.debug(`makeQueryContainer for ${name} skipped`)
+              } else {
+                log.debug(`makeQueryContainer for ${name} succeeded with response: ${replaceValuesWithCountAtDepthAndStringify(2, queryResponse)}`);
+              }
               return queryResponse;
             },
             componentOrTask

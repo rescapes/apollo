@@ -90,7 +90,7 @@ describe('mutationCacheHelpers', () => {
         }
       ),
       // See if the all correct settings in the cache
-      mapToNamedPathAndInputs('settingsWithId', 'data.settings.0',
+      mapToNamedPathAndInputs('settingsWithId', 'data.settings',
         ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
           return settingsQueryContainer(
             {

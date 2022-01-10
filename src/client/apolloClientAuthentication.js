@@ -63,7 +63,7 @@ export const writeDefaultsAndQueryCurrentUserContainer = (
       // Once we have the Apollo client, sync localStorage.getItem('token') with
       // what is in the Apollo Cache from previous session. We use localStorage as
       // a mirror of the cache value when the cache isn't in scope
-      const token = strPathOr(null, 'data.token', tokenAuthResponse);
+      const token = strPathOr(null, 'data.obtainJSONWebToken.token', tokenAuthResponse);
       if (token) {
         localStorage.setItem('token', token);
       } else {

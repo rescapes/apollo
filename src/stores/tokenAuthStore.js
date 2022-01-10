@@ -17,7 +17,7 @@ import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from '../helpers/componentHelpersMonadic.js';
 import {defaultNode, reqStrPathThrowing, strPathOr} from '@rescapes/ramda';
 import {makeCacheMutation} from '../helpers/mutationCacheHelpers.js';
-import {makeReadFragmentFromCacheContainer} from '../helpers/queryCacheHelpers.js';
+import {makeReadFragmentFromCacheContainer, queryFromCacheContainer} from '../helpers/queryCacheHelpers.js';
 import {e} from '../helpers/componentHelpers.js';
 
 const {of} = T;
@@ -48,7 +48,7 @@ export const tokenAuthTypePolicy = {
 
 /**
  * Look for the auth token in the cache so we know if we can get an authenticated client
- * This doesn't work with a cache query so I'm currently using a fragement read
+ * This doesn't work with a cache query so I'm currently using a fragment read
  * TokenAuth is a singleton in the cache so it doesn't need any props
  * @param {Object} apolloConfig
  * @param {Object} apolloConfig.apolloClient Needed for both component and client queries
@@ -58,18 +58,18 @@ export const tokenAuthTypePolicy = {
 export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
   // Unfortunately a cache miss throws
   try {
-    return makeReadFragmentFromCacheContainer(
+    return queryFromCacheContainer(
       apolloConfig,
       {
-        name: 'tokenAuth',
+        name: 'obtainJSONWebToken',
+        //name: 'tokenAuth',
         readInputTypeMapper: tokenAuthReadInputTypeMapper,
-        outputParams: tokenAuthOutputParams
+        outputParams: tokenAuthOutputParams,
+        singleton: true,
+        typename: 'ObtainJSONWebToken',
       },
-      // Pass all the props including the render function. Only __typenmae and id are needed by the fragment read
-      R.merge(props,
-        // Singleton so id is just the type
-        {__typename: 'ObtainJSONWebToken', id: 'ObtainJSONWebToken'}
-      )
+      // No props are needed since it's a singleton, so nothing is needed here except a render prop for components
+      props
     )
   } catch (e) {
     return containerForApolloType(

@@ -109,7 +109,7 @@ export const settingsLocalQueryContainer = (apolloConfig, {outputParams}, props)
  * @returns {Task|Object} For hits, task or component resolving to {data: settings object}
  * otherwise resolves to {data: null}
  */
-export const settingsCacheFragmentContainer = (apolloConfig, {outputParams}, props) => {
+export const settingsCacheContainer = (apolloConfig, {outputParams}, props) => {
   return queryFromCacheContainer(
     apolloConfig, {
       name: 'settings',

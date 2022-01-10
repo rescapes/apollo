@@ -150,7 +150,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
               render: getRenderPropFunction(render),
               // This isn't actually used, but either gets the existing settings or the ones that were just created
               response: R.prop('skip', settingsFromServer) ||
-              (!R.length(strPathOr([], 'data.settings', settingsFromServer)) && R.and(strPathOr(false, 'data.token', authTokenResponse))) ?
+              (!R.length(strPathOr([], 'data.settings', settingsFromServer)) && R.and(strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse))) ?
                 reqStrPathThrowing('result.data.mutate.settings', settingsWithoutCacheValues) :
                 strPathOr(null, 'data.settings', settingsFromServer)
             }
@@ -166,7 +166,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
             R.ifElse(
               // If we are authenticated and the local settings have changed from the server (unlikely),
               // mutate the server settings
-              () => config['forceMutateSettings'] && R.and(strPathOr(false, 'data.token', authTokenResponse),
+              () => config['forceMutateSettings'] && R.and(strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse),
                 R.complement(R.equals)(R.merge(R.omit(['render'], props), _settings), _settings)
               ),
               () => {

@@ -1,6 +1,6 @@
 import {composeWithChain, defaultRunConfig, mapToNamedResponseAndInputs, strPathOr} from '@rescapes/ramda';
 import {localTestAuthTask, localTestNoAuthTask} from '../helpers/testHelpers.js';
-import {settingsCacheFragmentContainer, settingsQueryContainer} from './settingsStore.js';
+import {settingsCacheContainer, settingsQueryContainer} from './settingsStore.js';
 import {defaultSettingsOutputParams} from './defaultSettingsStore.js';
 
 describe('settingsStore', () => {
@@ -9,7 +9,7 @@ describe('settingsStore', () => {
     composeWithChain([
       mapToNamedResponseAndInputs('settingsAuthResponseAfterServer',
         ({apolloConfig}) => {
-          return settingsCacheFragmentContainer(
+          return settingsCacheContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams},
             {key: 'default', __typename: 'SettingsType'});
@@ -26,7 +26,7 @@ describe('settingsStore', () => {
       ),
       mapToNamedResponseAndInputs('settingsAuthResponse',
         ({apolloConfig}) => {
-          return settingsCacheFragmentContainer(
+          return settingsCacheContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams},
             {key: 'default', __typename: 'SettingsType'}
@@ -34,11 +34,11 @@ describe('settingsStore', () => {
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',
-      () => localTestAuthTask(),
+        () => localTestAuthTask(),
       ),
       mapToNamedResponseAndInputs('settingsNoAuthResponse',
         ({apolloConfig}) => {
-          return settingsCacheFragmentContainer(
+          return settingsCacheContainer(
             apolloConfig,
             {outputParams: defaultSettingsOutputParams},
             {key: 'default', __typename: 'SettingsType'}
@@ -46,16 +46,18 @@ describe('settingsStore', () => {
         }
       ),
       mapToNamedResponseAndInputs('apolloConfig',
-      () => localTestNoAuthTask()
+        () => localTestNoAuthTask()
       )
     ])({}).run().listen(defaultRunConfig(
       {
         onResolved:
           ({settingsNoAuthResponse, settingsAuthResponse, settingsAuthResponseAfterServer}) => {
             expect(strPathOr(false, 'data', settingsNoAuthResponse)).toBeTruthy();
+            expect(strPathOr(false, 'data.settings.id', settingsNoAuthResponse)).toBeFalsy()
             expect(strPathOr(false, 'data', settingsAuthResponse)).toBeTruthy();
+            expect(strPathOr(false, 'data.settings.id', settingsAuthResponse)).toBeTruthy();
           }
       }, errors, done)
     );
-  }, 200000);
+  }, 100000);
 });

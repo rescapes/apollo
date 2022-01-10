@@ -52,13 +52,13 @@ describe('tokenAuthStore', () => {
       mapToNamedPathAndInputs(
         'refreshToken', 'result.data.refreshToken.payload',
         ({apolloConfig: {apolloClient}, tokenAuth, verifyToken}) => {
-          return refreshTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
+          return refreshTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.obtainJSONWebToken.token', tokenAuth)});
         }
       ),
       mapToNamedPathAndInputs(
         'verifyToken', 'result.data.verifyToken.payload',
         ({apolloConfig: {apolloClient}, tokenAuth}) => {
-          return verifyTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.token', tokenAuth)});
+          return verifyTokenMutationRequestContainer({apolloClient}, {}, {token: strPathOr(null, 'data.obtainJSONWebToken.token', tokenAuth)});
         }
       ),
       mapToNamedResponseAndInputs('tokenAuth',
@@ -67,7 +67,7 @@ describe('tokenAuthStore', () => {
           return queryLocalTokenAuthContainer(apolloConfig, {});
         }
       ),
-      mapToNamedPathAndInputs('settings', 'data.settings.0',
+      mapToNamedPathAndInputs('settings', 'data.settings',
         ({apolloConfig}) => {
           return settingsQueryContainer(
             apolloConfig,
@@ -112,7 +112,7 @@ describe('tokenAuthStore', () => {
           }
       }, errors, done)
     );
-  }, 10000000);
+  }, 10000);
 
 });
 

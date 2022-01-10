@@ -50,16 +50,11 @@ export const authApolloClientQueryCache = R.curry((apolloConfig, options, props)
   const winnowedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
   // readQuery isn't a promise, just a direct call I guess
   log.debug(`Query cache: ${print(options.query)} props: ${inspect(winnowedProps)}`);
-  try {
-    return {
-      data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({variables: winnowedProps, ...options})
-    };
-  } catch (e) {
-    if (!R.is(MissingFieldError, e)) {
-      throw e;
-    }
-    return {data: null};
-  }
+  // See @apollo/client/cache/inmemory/inMemoryCache.js:89 That is where MissingFieldError is caught and uselessly
+  // thrown away, so if you need to know why the query failed put a breakpoint there.
+  return {
+    data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({variables: winnowedProps, ...options})
+  };
 });
 
 /**
