@@ -118,58 +118,45 @@ export const makeQueryWithClientDirectiveContainer = R.curry((
  * Both resolve to the cache value
  */
 export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInputTypeMapper, outputParams}, props) => {
-  try {
-    // Not using the client directive here, rather we'll do a direct cache read with this query
-    const winnowedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
-    const query = gql`${makeQuery(
-      name,
-      readInputTypeMapper,
-      outputParams,
-      winnowedProps
-    )}`;
-    log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
-    return composeWithComponentMaybeOrTaskChain([
-      ({response, ...props}) => {
-        // If it's not a component response
-        if (R.propOr(false, 'data', response)) {
-          log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
-        } else {
-          log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
-        }
-        return containerForApolloType(
-          apolloConfig,
-          {
-            render: getRenderPropFunction(props),
-            response
-          }
-        );
-      },
-      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
-        props => {
-          return authApolloClientOrComponentQueryCacheContainer(
-            apolloConfig,
-            {
-              query
-            },
-            R.merge(
-              winnowedProps,
-              pickRenderProps(props)
-            )
-          );
-        })
-    ])(props);
-  } catch (e) {
-    if (R.is(MissingFieldError, e)) {
+  // Not using the client directive here, rather we'll do a direct cache read with this query
+  const winnowedProps = winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props);
+  const query = gql`${makeQuery(
+    name,
+    readInputTypeMapper,
+    outputParams,
+    winnowedProps
+  )}`;
+  log.debug(`Cache Query:\n\n${print(query)}\nArguments:\n${inspect(winnowedProps, false, 10)}\n`);
+  return composeWithComponentMaybeOrTaskChain([
+    ({response, ...props}) => {
+      // If it's not a component response
+      if (R.propOr(false, 'data', response)) {
+        log.debug(`makeQueryFromCacheContainer for ${name} responded: ${replaceValuesWithCountAtDepthAndStringify(2, response)}`);
+      } else {
+        log.debug(`makeQueryFromCacheContainer for ${name} responded with no data`);
+      }
       return containerForApolloType(
         apolloConfig,
         {
           render: getRenderPropFunction(props),
-          response: null
+          response
         }
       );
-    }
-    throw e;
-  }
+    },
+    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'response',
+      props => {
+        return authApolloClientOrComponentQueryCacheContainer(
+          apolloConfig,
+          {
+            query
+          },
+          R.merge(
+            winnowedProps,
+            pickRenderProps(props)
+          )
+        );
+      })
+  ])(props);
 });
 
 /**
@@ -282,56 +269,43 @@ export const queryFromCacheContainer = (
   props
 ) => {
 
-  try {
-    return composeWithComponentMaybeOrTaskChain([
-      ({authTokenResponse, ...props}) => {
-        // We need the typename
-        const propsWithTypename = R.merge({'__typename': typename}, props)
-        const authenticated = strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse);
-        if (authenticated) {
-          return makeQueryFromCacheContainer(
-            composeFuncAtPathIntoApolloConfig(
-              apolloConfig,
-              'options.variables',
-              props => {
-                return R.pick([idField], props);
-              }
-            ),
-            {name, readInputTypeMapper, outputParams},
-            props
-          );
-        } else {
-          // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
-          const omitAuthFields = authenticated ? [] : ['id'];
-          return makeQueryFromCacheContainer(
-            composeFuncAtPathIntoApolloConfig(
-              apolloConfig,
-              'options.variables',
-              props => {
-                return singleton ? {} : R.pick([idField], props);
-              }
-            ),
-            {name, readInputTypeMapper, outputParams: R.omit(omitAuthFields,outputParams)},
-            propsWithTypename
-          )
-        }
-      },
-      mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
-        ({render}) => {
-          return queryLocalTokenAuthContainer(apolloConfig, {render});
-        }
-      )
-    ])(props);
-  } catch (e) {
-    if (R.is(MissingFieldError, e)) {
-      return containerForApolloType(
-        apolloConfig,
-        {
-          render: getRenderPropFunction(props),
-          response: null
-        }
-      );
-    }
-    throw e;
-  }
+  return composeWithComponentMaybeOrTaskChain([
+    ({authTokenResponse, ...props}) => {
+      // We need the typename
+      const propsWithTypename = R.merge({'__typename': typename}, props)
+      const authenticated = strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse);
+      if (authenticated) {
+        return makeQueryFromCacheContainer(
+          composeFuncAtPathIntoApolloConfig(
+            apolloConfig,
+            'options.variables',
+            props => {
+              return R.pick([idField], props);
+            }
+          ),
+          {name, readInputTypeMapper, outputParams},
+          props
+        );
+      } else {
+        // Omit id from the outputParams if not authenticated. If we don't then we get a cache miss
+        const omitAuthFields = authenticated ? [] : ['id'];
+        return makeQueryFromCacheContainer(
+          composeFuncAtPathIntoApolloConfig(
+            apolloConfig,
+            'options.variables',
+            props => {
+              return singleton ? {} : R.pick([idField], props);
+            }
+          ),
+          {name, readInputTypeMapper, outputParams: R.omit(omitAuthFields, outputParams)},
+          propsWithTypename
+        )
+      }
+    },
+    mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
+      ({render}) => {
+        return queryLocalTokenAuthContainer(apolloConfig, {render});
+      }
+    )
+  ])(props);
 };
