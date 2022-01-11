@@ -52,8 +52,12 @@ export const authApolloClientQueryCache = R.curry((apolloConfig, options, props)
   log.debug(`Query cache: ${print(options.query)} props: ${inspect(winnowedProps)}`);
   // See @apollo/client/cache/inmemory/inMemoryCache.js:89 That is where MissingFieldError is caught and uselessly
   // thrown away, so if you need to know why the query failed put a breakpoint there.
+  // returnPartialData should allow the cache to return data even if no all data in the query is cached
   return {
-    data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({variables: winnowedProps, ...options})
+    data: reqStrPathThrowing('apolloClient', apolloConfig).readQuery({
+      variables: winnowedProps, ...options,
+      returnPartialData: true,
+    })
   };
 });
 
