@@ -52,15 +52,12 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
   // Each type
   return R.mergeAll(
     R.map(
-      ({type, fields, idPathLookup, arrayMergeStrategyPropLookup, cacheOnlyFieldLookup, keyFields, name, outputParams}) => {
+      ({type, fields, idPathLookup, arrayMergeStrategyPropLookup, cacheOnlyFieldLookup, ...rest}) => {
         return {
           [type]: {
-            keyFields,
-            // name and outputParams are only for singletons that need to be initialized to null in the cache
-            // so that observing queries can respond to the first write (namely for ObtainJSONWebToken)
-            name,
-            outputParams,
-            // Each field
+            // Other config values: name, type, keyFields, singular
+            ...rest,
+            // The merge function for each field, used by Apollo to merge incoming cache objects with existing
             fields: fields && R.mergeAll(
               R.map(
                 field => {

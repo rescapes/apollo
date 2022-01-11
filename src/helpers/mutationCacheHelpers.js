@@ -19,7 +19,7 @@ import {
   defaultNode, lowercase,
   mergeDeepWithRecurseArrayItemsByRight,
   pickDeepPaths,
-  reqStrPathThrowing, toNamedResponseAndInputs
+  reqStrPathThrowing, toArrayIfNot, toNamedResponseAndInputs
 } from '@rescapes/ramda';
 import PropTypes from 'prop-types';
 import {
@@ -38,6 +38,7 @@ import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction} from './com
 import {e} from '../helpers/componentHelpers.js';
 import {makeQueryFromCacheContainer} from "./queryCacheHelpers.js";
 import {flattenObj} from "@rescapes/ramda/src/functions.js";
+import pluralize from "pluralize";
 
 const {gql, ApolloConsumer} = defaultNode(AC);
 
@@ -64,12 +65,15 @@ const log = loggers.get('rescapeDefault');
  * @param {Boolean} [mutationConfig.mergeFromCacheFirst] Default false. If true do a deep merge with the existing
  * value in cache before writing. This usually isn't needed because the cache is configured with type policies that
  * do the merging.
- * @param {Boolean} [requireClientFields] Default false. If true requires that at least one @client directive
+ * @param {Boolean} [mutationConfig.requireClientFields] Default false. If true requires that at least one @client directive
  * is present in the outputParams. This is used for mutations whose update method writes additional data to
  * the cache. It ensures that there actually is additional data to write to the cache.
  * if true, outputParams must contain @client directives that match values in props. Otherwise this function will not write
  * anything to the cache that wasn't written by the mutation itself. Set false for cache-only mutations.
- * @param {Boolean} [singleton] Default false. When true, don't use an id, but assume only on instance is being cached
+ * @param {Boolean} [mutationConfig.singleton] Default false. When true, don't use an id, but assume only on instance is being cached
+ * @param {Boolean} [mutationConfig.singular] Default false. Indicates that the corresponding server query returns
+ * a singular instance, not a list. Most queries return a list and must therefore be cached as a list when
+ * caching explicitly with this function
  * @param {Object} props The properties to pass to the query.
  * @param {Object} props.id The id property is required to do a cache mutation so we know what to update and how
  * to find it again
@@ -85,7 +89,8 @@ export const makeCacheMutation = v(R.curry(
        idPathLookup,
        mergeFromCacheFirst,
        requireClientFields = false,
-       singleton = false
+       singleton = false,
+       singular = false
      },
      props) => {
 
@@ -136,13 +141,21 @@ export const makeCacheMutation = v(R.curry(
       )
       }`;
 
-      // We have to wrap the data in the query (e.g. settingsType) which comes from the typename (e.g. SettingsType)
-      const data = {[typeNameToQueryName(props.__typename)]: propsWithPossibleMerge}
+      // Most of our queries comes back from the API as a list, even if they are for a single id. The exception
+      // are built in ones like JSONAuthToken. Thus we need to cache as a list to match what the server returns.
+      const data = {
+        // We have to wrap the data in the query (e.g. settings) which comes from the typename (e.g. SettingsType)
+        [typeNameToQueryName(props.__typename)]: R.unless(
+          // Unless singular is passed as true, wrap the queried instances in a list
+          R.always(singular),
+          // Put the dat in a list if the queryContainerName is plural
+          toArrayIfNot
+        )(propsWithPossibleMerge)
+      }
       log.debug(`Write Cache Query: ${
         print(writeQuery)
-      } ${idField}: ${id ? {[idField]: id} : {}} 
-      data ${
-        inspect(props, null, 10)
+      }\ndata ${
+        inspect(data, null, 10)
       }`);
 
       apolloClientOrStore.writeQuery({query: writeQuery, variables: id ? {[idField]: id} : {}, data});

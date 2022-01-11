@@ -67,7 +67,7 @@ describe('tokenAuthStore', () => {
           return queryLocalTokenAuthContainer(apolloConfig, {});
         }
       ),
-      mapToNamedPathAndInputs('settings', 'data.settings',
+      mapToNamedPathAndInputs('settings', 'data.settings.0',
         ({apolloConfig}) => {
           return settingsQueryContainer(
             apolloConfig,

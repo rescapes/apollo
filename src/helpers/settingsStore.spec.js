@@ -53,9 +53,9 @@ describe('settingsStore', () => {
         onResolved:
           ({settingsNoAuthResponse, settingsAuthResponse, settingsAuthResponseAfterServer}) => {
             expect(strPathOr(false, 'data', settingsNoAuthResponse)).toBeTruthy();
-            expect(strPathOr(false, 'data.settings.id', settingsNoAuthResponse)).toBeFalsy()
+            expect(strPathOr(false, 'data.settings.0.id', settingsNoAuthResponse)).toBeFalsy()
             expect(strPathOr(false, 'data', settingsAuthResponse)).toBeTruthy();
-            expect(strPathOr(false, 'data.settings.id', settingsAuthResponse)).toBeTruthy();
+            expect(strPathOr(false, 'data.settings.0.id', settingsAuthResponse)).toBeTruthy();
           }
       }, errors, done)
     );

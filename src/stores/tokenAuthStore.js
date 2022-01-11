@@ -38,6 +38,8 @@ export const tokenAuthTypePolicy = {
   // Indicates Singleton. Only one exists in the cache. This also means that the value will be written to the cache
   // as null initially so that updates to the cache trigger observing queries to re-fire
   keyFields: [],
+  // Indicates the API returns a singular instance for this type, which is atypical
+  singular: true,
   // This is for the singleton initial null write
   name: 'tokenAuthStore',
   outputParams: {
@@ -170,7 +172,9 @@ export const mutateTokenAuthCache = (apolloConfig, {outputParams}, tokenAuth) =>
       outputParams,
       // Write without @client fields
       requireClientFields: false,
-      singleton: true
+      singleton: true,
+      // Indicates that the API returns a single instance, not a list like normal API calls
+      singular: true,
     },
     tokenAuth
   );

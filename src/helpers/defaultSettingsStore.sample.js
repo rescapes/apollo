@@ -40,11 +40,11 @@ import {makeSettingsMutationContainer, settingsQueryContainer} from './settingsS
  * what was written to the server with what is only stored in the cache. settings contains what was only
  * stored on the server
  */
-export const createSampleSettingsTask = (apolloConfig) => {
+export const createSampleSettingsTask = apolloConfig => {
   return R.composeK(
     // Now query and force it to got to the server.
     // This MUST use omitClientFields or the query will return data: null
-    mapToNamedPathAndInputs('settingsFromServerOnly', 'data.settings',
+    mapToNamedPathAndInputs('settingsFromServerOnly', 'data.settings.0',
       ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
         return settingsQueryContainer(
           {
@@ -60,7 +60,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     ),
     // Now query for the server and cache-only props. This should match data in the cache and not need the server
     // So let's force it go to the server so we are sure that the server and cache-only values work
-    mapToNamedPathAndInputs('settingsFromCache', 'data.settings',
+    mapToNamedPathAndInputs('settingsFromCache', 'data.settings.0',
       ({settingsWithoutCacheValues, apolloConfig: {apolloClient}, defaultSettingsOutputParams}) => {
         return settingsQueryContainer(
           {
@@ -79,7 +79,7 @@ export const createSampleSettingsTask = (apolloConfig) => {
     // However the result of this query correctly merges that from the server with the cache-only values
     // It seems like the query itself must run once before the same data can be found in the cache, since
     // Apollo doesn't know how many values the query might return
-    mapToNamedPathAndInputs('settingsFromQuery', 'data.settings',
+    mapToNamedPathAndInputs('settingsFromQuery', 'data.settings.0',
       ({settingsWithoutCacheValues, apolloConfig, defaultSettingsOutputParams}) => {
         return settingsQueryContainer(
           apolloConfig,

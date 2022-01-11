@@ -249,6 +249,8 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
             // output for the read fragment
             outputParams: outputParams,
             singleton: true,
+            // If true indicates that the type is returned from the API as a single instance, not a list
+            singular: strPathOr(false, 'singular', typePolicy)
           },
           R.merge(
             {__typename: typeName},

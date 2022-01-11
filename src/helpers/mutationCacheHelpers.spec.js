@@ -49,7 +49,7 @@ describe('mutationCacheHelpers', () => {
     const errors = [];
     composeWithChain([
       // See if the all the settings are still in the cache
-      mapToNamedPathAndInputs('settings', 'data.settings',
+      mapToNamedPathAndInputs('settings', 'data.settings.0',
         ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
           return settingsQueryContainer(
             {
@@ -63,16 +63,16 @@ describe('mutationCacheHelpers', () => {
           );
         }
       ),
-      (apolloConfig) => createSampleSettingsTask(apolloConfig),
+      apolloConfig => createSampleSettingsTask(apolloConfig),
       () => localTestAuthTask()
     ])().run().listen(defaultRunConfig({
       onResolved:
         ({settings, settingsFromQuery}) => {
-          expectKeys(someSettingsKeys, R.head(settings));
-          expectKeys(someSettingsKeys, R.head(settingsFromQuery));
+          expectKeys(someSettingsKeys, settings);
+          expectKeys(someSettingsKeys, settingsFromQuery);
         }
     }, errors, done));
-  }, 100000);
+  }, 25000);
 
   test('makeMutationWithClientDirectiveContainerModifyCacheOnlyValues', done => {
     const errors = [];
@@ -90,7 +90,7 @@ describe('mutationCacheHelpers', () => {
         }
       ),
       // See if the all correct settings in the cache
-      mapToNamedPathAndInputs('settingsWithId', 'data.settings',
+      mapToNamedPathAndInputs('settingsWithId', 'data.settings.0',
         ({settingsWithoutCacheValues, apolloConfig: {apolloClient}}) => {
           return settingsQueryContainer(
             {
@@ -139,7 +139,7 @@ describe('mutationCacheHelpers', () => {
           expect(strPathOr(null, 'data.mapbox.mapboxAuthentication.mapboxApiAccessToken', settingsWithKey)).toContain('happy');
         }
     }, errors, done));
-  }, 1000000);
+  }, 25000);
 
   test('makeCacheMutationContainerConcatArrays', async () => {
     expect.assertions(2);
