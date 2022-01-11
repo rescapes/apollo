@@ -624,7 +624,12 @@ export const updateRelatedObjectsToIdForm = ({relatedPropPaths, relatedPropPaths
     relatedPropPaths
   );
   // Omit anything that didn't exist
-  return omitDeepBy((k, v) => typeof (v) === 'undefined', updatedProps);
+
+  const nonRequestProps = filterWithKeys((v,k) => R.either(R.startsWith('query'), R.startsWith('mutate'))(k), updatedProps)
+  return R.merge(
+    omitDeepBy((k, v) => typeof (v) === 'undefined', R.omit(R.keys(nonRequestProps), updatedProps)),
+    nonRequestProps
+  );
 };
 
 /**
