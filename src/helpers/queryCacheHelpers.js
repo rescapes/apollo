@@ -250,6 +250,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
  * @param {Boolean} [options.allowUnauthenticated] Default false. Allows to query the cache for data
  * if the user is not authenticated. This only works for data such as settings that can be cached by
  * a key property.
+ * @param {Boolean} [optoins.skipAuthentication] Default false. Used to prevent infinite recursion
  * @param {Boolean} [options.singleton] Default false, if true then idField is not used
  * @param {String} [options.idField] Default 'id'.
  * @param {Object} props
@@ -263,6 +264,7 @@ export const queryFromCacheContainer = (
     readInputTypeMapper,
     typename,
     allowUnauthenticated = false,
+    skipAuthentication = false,
     singleton = false,
     idField = 'id'
   },
@@ -304,7 +306,16 @@ export const queryFromCacheContainer = (
     },
     mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'authTokenResponse',
       ({render}) => {
-        return queryLocalTokenAuthContainer(apolloConfig, {render});
+        // skipAuthentication prevents infinite recursion when queryLocalTokenAuthContainer calls this function
+        return skipAuthentication ?
+          containerForApolloType(
+            apolloConfig,
+            {
+              render,
+              response: {}
+            }
+          ) :
+          queryLocalTokenAuthContainer(apolloConfig, {render});
       }
     )
   ])(props);

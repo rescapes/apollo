@@ -64,7 +64,8 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
       apolloConfig,
       {
         name: 'obtainJSONWebToken',
-        //name: 'tokenAuth',
+        // Prevents infinite recursion since queryFromCacheContainer normally calls queryLocalTokenAuthContainer
+        skipAuthentication: true,
         readInputTypeMapper: tokenAuthReadInputTypeMapper,
         outputParams: tokenAuthOutputParams,
         singleton: true,
