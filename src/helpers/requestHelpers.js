@@ -579,6 +579,10 @@ export const createReadInputTypeMapper = (className, keys, prefix = null) => {
  * @returns {Object} The modified props
  */
 export const updateRelatedObjectsToIdForm = ({relatedPropPaths, relatedPropPathsToAllowedFields = {}}, props) => {
+  const requestProps = filterWithKeys((v,k) => R.either(R.startsWith('query'), R.startsWith('mutate'))(k), props)
+  if (R.length(requestProps)) {
+    throw new Error('Detected Apollo request props in updateRelatedObjectsToIdForm. This means props are wrong. Props should only be the instance being queried/mutated')
+  }
   const updatedProps = R.reduce((props, propPath) => {
       const propsPathList = R.split('.', propPath);
       const lens = R.compose(...R.chain(
@@ -624,12 +628,7 @@ export const updateRelatedObjectsToIdForm = ({relatedPropPaths, relatedPropPaths
     relatedPropPaths
   );
   // Omit anything that didn't exist
-
-  const requestProps = filterWithKeys((v,k) => R.either(R.startsWith('query'), R.startsWith('mutate'))(k), updatedProps)
-  return R.merge(
-    omitDeepBy((k, v) => typeof (v) === 'undefined', R.omit(R.keys(requestProps), updatedProps)),
-    requestProps
-  );
+  return omitDeepBy((k, v) => typeof (v) === 'undefined', updatedProps)
 };
 
 /**
