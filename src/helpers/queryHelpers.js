@@ -198,6 +198,7 @@ export const _makeQuery = memoizedWith(((queryConfig, queryName, inputParamTypeM
     ]));
 
     // We use the queryName as the label of the query and the name that matches the schema
+    // Note that this can be pretty-printed with print once converted to graphql
     return `${queryOrFragment} ${parenWrapIfNotEmpty(variableString)} { 
   ${output}
 }`;

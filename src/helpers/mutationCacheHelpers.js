@@ -136,7 +136,8 @@ export const makeCacheMutation = v(R.curry(
           queryName: `write${capitalize(name)}`,
           typeName: props.__typename,
           inputParamTypeMapper: {},
-          outputParams: minimizedOutputParams
+          outputParams: minimizedOutputParams,
+          singular,
         },
         id ? {[idField]: id} : {}
       )
