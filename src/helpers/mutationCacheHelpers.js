@@ -132,11 +132,12 @@ export const makeCacheMutation = v(R.curry(
         }, props)
       )(resolvedProps);
 
-      const writeQuery = gql`${makeWriteQuery(
-        `write${capitalize(name)}`,
-        props.__typename,
-        {},
-        minimizedOutputParams,
+      const writeQuery = gql`${makeWriteQuery({
+          queryName: `write${capitalize(name)}`,
+          typeName: props.__typename,
+          inputParamTypeMapper: {},
+          outputParams: minimizedOutputParams
+        },
         id ? {[idField]: id} : {}
       )
       }`;
@@ -145,7 +146,7 @@ export const makeCacheMutation = v(R.curry(
       // are built in ones like JSONAuthToken. Thus we need to cache as a list to match what the server returns.
       const data = {
         // We have to wrap the data in the query (e.g. settings) which comes from the typename (e.g. SettingsType)
-        [typeNameToQueryName(props.__typename)]: R.unless(
+        [typeNameToQueryName({singular}, props.__typename)]: R.unless(
           // Unless singular is passed as true, wrap the queried instances in a list
           R.always(singular),
           // Put the dat in a list if the queryContainerName is plural

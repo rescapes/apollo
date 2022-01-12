@@ -34,6 +34,7 @@ import T from 'folktale/concurrency/task/index.js';
 import {composeWithComponentMaybeOrTaskChain, getRenderPropFunction, nameComponent} from './componentHelpersMonadic.js';
 import {containerForApolloType, mapTaskOrComponentToNamedResponseAndInputs} from './containerHelpers.js';
 import {flattenObj} from "@rescapes/ramda/src/functions.js";
+import pluralize from "pluralize";
 
 const {gql} = defaultNode(AC);
 
@@ -60,18 +61,35 @@ export const makeQuery = (queryName, inputParamTypeMapper, outputParams, queryAr
 
 /**
  * Converts the TypeName to the object name. E.g SettingsType to settings or ObtainJSONToken to obtainJSONToken
+ * @param {Object} config
+ * @param {Boolean} [config.singular] Default false, indicates that the type is singular and shouldn't be pluralized
  * @param typeName
  * @return {*}
  */
-export const typeNameToQueryName = typeName => {
+export const typeNameToQueryName = ({singular}, typeName) => {
   return R.compose(
+    R.unless(R.always(singular), pluralize),
     R.when(R.endsWith('Type'), R.slice(0, -1 * R.length('Type'))),
     lowercase
   )(typeName)
 }
 
-export const makeWriteQuery = (queryName, typeName, inputParamTypeMapper, outputParams, queryArguments) => {
-  return _makeQuery({queryRootName: typeNameToQueryName(typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
+/***
+ * Makes a query to write to the cache
+ * @param {Object} config
+ * @param config.queryName
+ * @param config.typeName
+ * @param config.inputParamTypeMapper
+ * @param config.outputParams
+ * @param [config.singular] Default false. If true then the corresponding query returns a single item so the
+ * cached data should also. Normally we cache data as a list since most queries return lists
+ * @param {Object} queryArguments The id and value or empty for singletons
+ * @return {Object} The graphql query
+ */
+export const makeWriteQuery = (
+  {queryName, typeName, inputParamTypeMapper, outputParams, singular=false},
+    queryArguments) => {
+  return _makeQuery({queryRootName: typeNameToQueryName({singular}, typeName)}, queryName, inputParamTypeMapper, outputParams, queryArguments);
 };
 
 /**
