@@ -10,7 +10,13 @@
  */
 import * as AC from '@apollo/client';
 const {gql} = defaultNode(AC)
-import {mapToNamedPathAndInputs, reqStrPathThrowing, taskToPromise, defaultNode} from '@rescapes/ramda'
+import {
+  mapToNamedPathAndInputs,
+  reqStrPathThrowing,
+  taskToPromise,
+  defaultNode,
+  composeWithChain
+} from '@rescapes/ramda'
 import {localTestAuthTask} from '../helpers/testHelpers.js';
 import {makeMutationRequestContainer} from '../helpers/mutationHelpers.js';
 import T from 'folktale/concurrency/task/index.js'
@@ -47,7 +53,7 @@ describe('apolloClient', () => {
     };
     // Make sample region. This will update if the key: 'earth' already exists, since key is a unique prop on Region
     // and there is not automatic incrementor on region
-    const response = await taskToPromise(R.composeK(
+    const response = await taskToPromise(composeWithChain([
       // Allow the result to be found in the cache by using the @client directive
       mapToNamedPathAndInputs('region', 'data.regions.0',
         ({apolloClient, region}) => makeQueryWithClientDirectiveContainer(
@@ -98,7 +104,7 @@ describe('apolloClient', () => {
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask()
       )
-      )({props})
+      ])({props})
     );
     expect(reqStrPathThrowing('region', response)).toBeTruthy();
   }, 20000);

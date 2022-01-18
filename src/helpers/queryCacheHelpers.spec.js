@@ -10,7 +10,7 @@
  */
 
 import {makeQueryContainer} from './queryHelpers.js';
-import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs} from '@rescapes/ramda'
+import {defaultRunConfig, reqStrPathThrowing, mapToNamedPathAndInputs, composeWithChain} from '@rescapes/ramda'
 import {expectKeys, localTestAuthTask} from './testHelpers.js';
 import * as R from 'ramda';
 import {makeMutationRequestContainer} from './mutationHelpers.js';
@@ -22,7 +22,7 @@ const {of} = T
 describe('queryCacheHelpers', () => {
 
   test('testCachedQuery', done => {
-    const task = R.composeK(
+    const task = composeWithChain([
       // Query normally to confirm it's in the cache
       // We use fetchPolicy: 'cache-only' to force this. I assume this works but can't verify
       ({apolloClient, region}) => makeQueryContainer(
@@ -102,7 +102,7 @@ describe('queryCacheHelpers', () => {
         )
       ),
       () => localTestAuthTask()
-    )();
+    ])();
     const errors = [];
     task.run().listen(defaultRunConfig({
       onResolved:

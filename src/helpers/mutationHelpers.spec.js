@@ -17,11 +17,19 @@ import {
   mutationParts
 } from './mutationHelpers.js';
 import {localTestAuthTask} from './testHelpers.js';
-import {capitalize, defaultRunConfig, mapToNamedPathAndInputs, reqStrPathThrowing, defaultNode} from '@rescapes/ramda'
+import {
+  capitalize,
+  defaultRunConfig,
+  mapToNamedPathAndInputs,
+  reqStrPathThrowing,
+  defaultNode,
+  composeWithChain
+} from '@rescapes/ramda'
 import * as R from 'ramda';
 import moment from 'moment';
 import {print} from 'graphql';
 import * as AC from '@apollo/client';
+import {compose} from "ramda";
 const {gql} = defaultNode(AC)
 
 describe('mutationHelpers', () => {
@@ -58,7 +66,7 @@ describe('mutationHelpers', () => {
   });
 
   test('makeMutationRequestContainer', done => {
-    const task = R.composeK(
+    const task = composeWithChain([
       ({apolloClient}) => makeMutationRequestContainer(
         {apolloClient},
         {
@@ -82,7 +90,7 @@ describe('mutationHelpers', () => {
       mapToNamedPathAndInputs('apolloClient', 'apolloClient',
         () => localTestAuthTask()
       )
-    )();
+    ])();
     const errors = [];
     task.run().listen(defaultRunConfig({
       onResolved:

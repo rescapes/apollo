@@ -11,7 +11,7 @@
 
 import * as R from 'ramda';
 import settings from './privateSettings.js';
-import {mapToNamedPathAndInputs} from '@rescapes/ramda'
+import {composeWithChain, mapToNamedPathAndInputs} from '@rescapes/ramda'
 import moment from 'moment';
 import {omitClientFields} from './requestHelpers.js';
 import {
@@ -41,7 +41,7 @@ import {makeSettingsMutationContainer, settingsQueryContainer} from './settingsS
  * stored on the server
  */
 export const createSampleSettingsTask = apolloConfig => {
-  return R.composeK(
+  return composeWithChain([
     // Now query and force it to got to the server.
     // This MUST use omitClientFields or the query will return data: null
     mapToNamedPathAndInputs('settingsFromServerOnly', 'data.settings.0',
@@ -102,7 +102,7 @@ export const createSampleSettingsTask = apolloConfig => {
         );
       }
     )
-  )(
+  ])(
     // Settings is merged into the overall application state
     {
       apolloConfig,
