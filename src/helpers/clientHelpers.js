@@ -121,24 +121,21 @@ const mergeField = (
     arrayMergeStrategyPropLookup
   }, field, existing, incoming) => {
   // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
-  // Remove incoming keys from existing and clone it to unfreeze it.
-  // since it comes from the cache and will be written to the cache
+  // Remove incoming keys from existing
+  // TODO. This doesn't make any sense. Why remove income keys and them merge them back in?
+  /*
   const clone = existing => R.unless(
     R.isNil,
     R.compose(
-      unfrozen => {
-        return R.mergeRight(existing, unfrozen)
+      limitedExisting => {
+        return R.mergeRight(existing, limitedExisting)
       },
-      // Should be unneeded
-      // I used to use R.clone here, but it now requires that everything hasOwnProperty--apollo objects don't all
-      //unfrozen => {
-      //  return JSON.parse(JSON.stringify(unfrozen))
-      //},
       existing => {
         return R.omit(R.keys(incoming || {}), existing)
       }
     )
   )(existing);
+   */
 
   // Merge array items by given the configured id path or default to id,
   // but drop existing items that have no match in incoming
@@ -205,7 +202,7 @@ const mergeField = (
       const updatedIncoming = getUpdatedIncoming(existing, incoming);
       // Handle objects with mergeObjects
       return mergeObjects(
-        clone(existing),
+        existing,
         updatedIncoming
       );
     },
