@@ -39,7 +39,9 @@ import MutationOnMount from '../helpers/mutationOnMount.js';
 import {addMutateKeyToMutationResponse, containerForApolloType} from '../helpers/containerHelpers.js';
 import {onError} from 'apollo-link-error';
 import {Mutation, Query} from "./hocHelpers.js";
-import fetchRetry from 'fetch-retry'
+import { RetryLink } from "@apollo/client/link/retry";
+
+const link = new RetryLink();
 
 const {persistCache, LocalStorageWrapper, CachePersistor} = defaultNode(ACP);
 
@@ -62,6 +64,8 @@ const fetch = fetchRetry(_fetch, {
   retries: 5,
   retryDelay: 800
 });
+
+const abortController = new AbortController();
 
 /**
  * Creates an ApolloClient.
@@ -133,13 +137,26 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
         () => {
           const httpLink = createHttpLink({
             fetch,
-            uri
+            uri,
+          });
+          // Retry failed server requests https://www.apollographql.com/docs/react/api/link/apollo-link-retry/
+          const retryLink = new RetryLink({
+            delay: {
+              initial: 300,
+              max: Infinity,
+              jitter: true
+            },
+            attempts: {
+              max: 5,
+              retryIf: (error, _operation) => !!error
+            }
           });
 
           const authLink = createAuthLink();
-          // TODO I think our error link is out of data
+          // TODO I think our error link is out of date
           const errorLink = createErrorLink();
           return of([
+            retryLink,
             errorLink,
             authLink,
             // Terminal link, has to be last
