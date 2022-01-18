@@ -138,7 +138,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
   return (apolloClient, {cacheOnlyObjs, cacheIdProps, settingsOutputParams}, {render}) => {
     const apolloConfig = compact({apolloClient});
     // Only the settings are written to the server
-    const props = R.merge(R.prop('settings', config), {render});
+    const props = R.mergeRight(R.prop('settings', config), {render});
     const defaultSettingsTypenames = reqStrPathThrowing('settingsConfig.defaultSettingsTypenames', config);
     return composeWithComponentMaybeOrTaskChain([
       mapTaskOrComponentToNamedResponseAndInputs(apolloConfig, 'void',
@@ -167,7 +167,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
               // If we are authenticated and the local settings have changed from the server (unlikely),
               // mutate the server settings
               () => config['forceMutateSettings'] && R.and(strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse),
-                R.complement(R.equals)(R.merge(R.omit(['render'], props), _settings), _settings)
+                R.complement(R.equals)(R.mergeRight(R.omit(['render'], props), _settings), _settings)
               ),
               () => {
                 // if config['forceMutateSettings'] and authenticated
@@ -176,7 +176,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
                 return makeSettingsMutationContainer(
                   apolloConfig,
                   {cacheOnlyObjs, cacheIdProps, outputParams: settingsOutputParams},
-                  R.merge(props, R.pick(['id'], settings))
+                  R.mergeRight(props, R.pick(['id'], settings))
                 );
               },
               () => {
@@ -190,10 +190,10 @@ export const writeConfigToServerAndCacheContainer = (config) => {
                   (k, l, r) => {
                     if (Array.isArray(l)) {
                       // Merge the typename of defaultSettingsTypenames into each item of arrays
-                      return R.map(item => R.merge(item, r), l)
+                      return R.map(item => R.mergeRight(item, r), l)
                     } else {
                       // Merge the typename of defaultSettingsTypenames into the obj
-                      return R.merge(l, r)
+                      return R.mergeRight(l, r)
                     }
                   },
                   props,
@@ -226,7 +226,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
           return settingsQueryContainerDefault(
             apolloConfig,
             {outputParams: settingsOutputParams},
-            R.merge({token: localStorage.getItem('token')}, props)
+            R.mergeRight({token: localStorage.getItem('token')}, props)
           );
         }
       )

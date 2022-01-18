@@ -109,7 +109,7 @@ export const queryLocalTokenAuthContainer = (apolloConfig, props) => {
  */
 export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams = tokenAuthOutputParams}, props) => {
   return makeMutationRequestContainer(
-    R.merge(
+    R.mergeRight(
       apolloConfig,
       {
         options: {
@@ -134,7 +134,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
                 // Apollo Client in their context
                 localStorage.setItem('token', reqStrPathThrowing('token', tokenAuth));
                 // Use the store for writing if we don't have an apolloClient
-                mutateTokenAuthCache(R.merge({store}, apolloConfig), {outputParams}, tokenAuth);
+                mutateTokenAuthCache(R.mergeRight({store}, apolloConfig), {outputParams}, tokenAuth);
 
                 return ({store, response});
               }
@@ -151,7 +151,7 @@ export const tokenAuthMutationContainer = R.curry((apolloConfig, {outputParams =
       flattenVariables: true
     },
     // Defaults are used to tell makeMutationRequestContainer about the expected variable types
-    R.merge({username: '', password: ''}, props)
+    R.mergeRight({username: '', password: ''}, props)
   );
 });
 
@@ -192,7 +192,7 @@ export const deleteTokenCookieMutationRequestContainer = R.curry((apolloConfig, 
   return composeWithComponentMaybeOrTaskChain([
     ({apolloClientFromConsumer, ...props}) => {
       return makeMutationRequestContainer(
-        R.merge(
+        R.mergeRight(
           apolloConfig,
           {
             options: {
@@ -256,7 +256,7 @@ export const deleteRefreshTokenCookieMutationRequestContainer = R.curry((apolloC
   // TODO the server is currently complaining graphql.error.located_error.GraphQLLocatedError: Error decoding signature
   // I don't currently use this API method anyway
   return makeMutationRequestContainer(
-    R.merge(
+    R.mergeRight(
       apolloConfig,
       {
         options: {

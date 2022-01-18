@@ -109,7 +109,7 @@ export const createSampleSettingsTask = apolloConfig => {
       defaultSettingsOutputParams,
       // Give the default settings a new to create a new settings object in the database
       // Normally we just have the default settings in the database
-      props: R.merge(
+      props: R.mergeRight(
         settings,
         {key: `test${moment().format('HH-mm-SS')}`}
       )

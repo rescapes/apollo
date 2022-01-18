@@ -71,7 +71,7 @@ export const mapTaskOrComponentToMergedResponse = (apolloConfig, componentOrTask
         apolloConfig,
         {
           render: getRenderPropFunction(args),
-          response: R.merge(args, response)
+          response: R.mergeRight(args, response)
         }
       );
     },
@@ -120,7 +120,7 @@ export const mapTaskOrComponentToNamedResponseAndInputs = (apolloConfig, name, c
           apolloConfig,
           {
             render: getRenderPropFunction(args),
-            response: R.merge(args, {[name]: _response})
+            response: R.mergeRight(args, {[name]: _response})
           }
         );
       }),

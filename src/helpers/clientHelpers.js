@@ -120,7 +120,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup, arrayMerg
   const clone = existing => R.unless(
     R.isNil,
     R.compose(
-      unfrozen => R.merge(existing, unfrozen),
+      unfrozen => R.mergeRight(existing, unfrozen),
       R.clone,
       R.omit(R.keys(incoming || {}))
     )

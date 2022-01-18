@@ -58,7 +58,7 @@ export const userReadInputTypeMapper = {
  */
 export const authenticatedUserLocalContainer = (apolloConfig, props) => {
   return makeQueryFromCacheContainer(
-    R.merge(apolloConfig,
+    R.mergeRight(apolloConfig,
       {
         options: {
           variables: () => {
@@ -85,7 +85,7 @@ export const authenticatedUserLocalContainer = (apolloConfig, props) => {
  */
 export const currentUserQueryContainer = v(R.curry((apolloConfig, outputParams, props) => {
     return makeQueryContainer(
-      R.merge(apolloConfig, {
+      R.mergeRight(apolloConfig, {
         options: {
           // Skip if the user isn't authenticated. If we allow unauthenticated requests, it seems to cache
           // the response and not query again

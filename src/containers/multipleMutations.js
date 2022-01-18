@@ -189,9 +189,9 @@ export const callMutationNTimesAndConcatResponses = (
                 // Pass count to the propVariationFunc so it can be used, but don't let it through to the
                 // actual mutation props
                 R.omit(['item'],
-                  R.merge(
+                  R.mergeRight(
                     R.pick(['render'], props),
-                    propVariationFunc(R.merge(R.omit(['responses'], props), {item}))
+                    propVariationFunc(R.mergeRight(R.omit(['responses'], props), {item}))
                   )
                 )
               );
@@ -223,7 +223,7 @@ export const callMutationNTimesAndConcatResponses = (
             queryForExistingContainer(
               apolloConfig,
               {outputParams: outputParams || {id: true}},
-              R.merge(existingMatchingProps, {render})
+              R.mergeRight(existingMatchingProps, {render})
             ) :
             containerForApolloType(
               apolloConfig,

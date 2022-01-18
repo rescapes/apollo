@@ -55,7 +55,7 @@ export const _localTestConfig = typeConfig => {
   }
 };
 export const localTestConfig = _localTestConfig(typePoliciesConfigLocal)
-export const extendLocalTestConfig = extraTypePoliciesConfig => _localTestConfig(R.merge(typePoliciesConfigLocal, R.values(extraTypePoliciesConfig)))
+export const extendLocalTestConfig = extraTypePoliciesConfig => _localTestConfig(R.mergeRight(typePoliciesConfigLocal, R.values(extraTypePoliciesConfig)))
 
 
 export const settingsConfig = {
@@ -69,7 +69,7 @@ export const settingsConfig = {
  * Returns an object {apolloClient:An authorized client}
  */
 export const localTestAuthTask = (extraTypePoliciesConfig = {}) => {
-  return initializeAuthorizedTask(R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig)));
+  return initializeAuthorizedTask(R.mergeRight({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig)));
 };
 
 /**
@@ -80,7 +80,7 @@ export const localTestNoAuthTask = (extraTypePoliciesConfig = {}) => {
   // Clear the localStorage. TODO this might need to be keyed for parallel tests
   localStorage.removeItem('token');
   return initializeNoAuthTask(
-    R.merge({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
+    R.mergeRight({settingsConfig}, extendLocalTestConfig(extraTypePoliciesConfig))
   )
 };
 

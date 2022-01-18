@@ -360,7 +360,7 @@ export const makeCacheMutationContainer = v(R.curry(
               ApolloConsumer,
               {},
               apolloClient => {
-                const _apolloConfig = R.merge(apolloConfig, {apolloClient});
+                const _apolloConfig = R.mergeRight(apolloConfig, {apolloClient});
                 const data = _makeCacheMutation(_apolloConfig);
                 return containerForApolloType(
                   apolloClient,
@@ -455,7 +455,7 @@ export const createCacheOnlyProps = ({name, cacheOnlyObjs, cacheIdProps}, props)
           return R.unless(
             R.isNil,
             pathValue => {
-              return R.merge(pathValue, {__typename: value});
+              return R.mergeRight(pathValue, {__typename: value});
             }
           )(pathValue);
         }

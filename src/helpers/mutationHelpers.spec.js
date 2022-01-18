@@ -42,7 +42,7 @@ describe('mutationHelpers', () => {
         outputParams: sampleResourceMutationOutputParams
       },
       // If we are composing with other queries/mutations, we might have extra props that we want to ignore
-      R.merge(sampleResourceProps, {sillyPropWeDontUse: 1})
+      R.mergeRight(sampleResourceProps, {sillyPropWeDontUse: 1})
     );
 
     // create|update[Model Name]

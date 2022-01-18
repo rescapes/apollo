@@ -28,7 +28,7 @@ describe('monadHelpersComponent', () => {
   // Render function component that does something and renders the children function that is given to it
   // This would typically do something asynchronous
   const componentConsumingARenderProp = ({children, ...props}) => {
-    const loadedData = R.merge(props, {data: {keyCount: R.length(R.keys(props))}});
+    const loadedData = R.mergeRight(props, {data: {keyCount: R.length(R.keys(props))}});
     return children(loadedData);
   };
   // This wraps component in container by creating and outer function (Looks like chainWith)
@@ -39,7 +39,7 @@ describe('monadHelpersComponent', () => {
     // This function is a component that passes props to container that have a children function
     // added to render the component. Component might or might not also expect a children function.
     return props => {
-      return renderPropConsumingComponent(R.merge(
+      return renderPropConsumingComponent(R.mergeRight(
         props,
         {
           // This will be called be returned by renderPropConsumingComponent
@@ -62,7 +62,7 @@ describe('monadHelpersComponent', () => {
       return children(props);
     }
 
-    const loadedData = R.merge(
+    const loadedData = R.mergeRight(
       props,
       {
         data: R.over(
@@ -78,13 +78,13 @@ describe('monadHelpersComponent', () => {
   };
 
   const renderPropComponentLoading = props => {
-    const loadedData = R.merge(props, {data: {loading: true}});
+    const loadedData = R.mergeRight(props, {data: {loading: true}});
     return props.children(loadedData);
   };
 
   const higherOrderComponentMaybe = container => component => {
     return Maybe.Just(props => {
-      return container(R.merge(
+      return container(R.mergeRight(
         props,
         {
           children: componentProps => {
@@ -107,9 +107,9 @@ describe('monadHelpersComponent', () => {
    */
   const childrenPropToRenderPropCallingChild = R.curry((childComponent, component) => {
     return ({children, ...props}) => {
-      return component(R.merge(props, {
+      return component(R.mergeRight(props, {
         children: p => {
-          return childComponent(R.merge(p, {children}));
+          return childComponent(R.mergeRight(p, {children}));
         }
       }));
     };
@@ -130,7 +130,7 @@ describe('monadHelpersComponent', () => {
   // the inner function on the next compose line
   const componentOrTaskConsumingARenderProp = (config, props) => {
     // Do something to the props like an hoc component would
-    const modifiedProps = R.merge(
+    const modifiedProps = R.mergeRight(
       props, {
         data: {
           keyCount: R.length(R.keys(props))
@@ -156,7 +156,7 @@ describe('monadHelpersComponent', () => {
       return children(props);
     }
 
-    const loadedData = R.merge(
+    const loadedData = R.mergeRight(
       props,
       {
         data: R.over(
@@ -246,7 +246,7 @@ describe('monadHelpersComponent', () => {
         // By passing the props to the outermost component, it sends us into the nested components from each level
         // that have instructions to render a child at that level using the render prop
         return ({children, ...props}) => {
-          return componentExpectingRenderProp(R.merge(props, {
+          return componentExpectingRenderProp(R.mergeRight(props, {
             children: p => {
               return children(p);
             }
@@ -257,9 +257,9 @@ describe('monadHelpersComponent', () => {
         // Wrap componentExpectingRenderProp in a component that provides it with props.children render function
         return ({children: outerChildrenRenderProp, ...props}) => {
           // Take the children function from above and wrap it so it renders the component at this level
-          return componentExpectingRenderProp(R.merge(props, {
+          return componentExpectingRenderProp(R.mergeRight(props, {
             children: p => {
-              return dependentComponentConsumingARenderProp(R.merge(p, {children: outerChildrenRenderProp}));
+              return dependentComponentConsumingARenderProp(R.mergeRight(p, {children: outerChildrenRenderProp}));
             }
           }));
         };
@@ -267,9 +267,9 @@ describe('monadHelpersComponent', () => {
       componentExpectingRenderProp => {
         return ({children: outerChildrenRenderProp, ...props}) => {
           // Take the children function above and wrap it so it renders the component at this level
-          return componentExpectingRenderProp(R.merge(props, {
+          return componentExpectingRenderProp(R.mergeRight(props, {
             children: p => {
-              return dependentComponentConsumingARenderProp(R.merge(p, {children: outerChildrenRenderProp}));
+              return dependentComponentConsumingARenderProp(R.mergeRight(p, {children: outerChildrenRenderProp}));
             }
           }));
         };
@@ -282,7 +282,7 @@ describe('monadHelpersComponent', () => {
       }
     )();
 
-    expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
+    expect(hoc(R.mergeRight(outerProps, {children: simpleComponent}))).toEqual(
       `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
@@ -299,7 +299,7 @@ describe('monadHelpersComponent', () => {
      * @return {*}
      */
     const childrenToRenderProp = R.curry((component, {children, ...props}) => {
-      return component(R.merge(props, {
+      return component(R.mergeRight(props, {
         children: p => {
           return children(p);
         }
@@ -312,9 +312,9 @@ describe('monadHelpersComponent', () => {
      * us to build-up the children via the render prop
      */
     const childrenToWrappedRenderProp = R.curry((component, childComponent, {children, ...props}) => {
-      return component(R.merge(props, {
+      return component(R.mergeRight(props, {
         children: p => {
-          return childComponent(R.merge(p, {children}));
+          return childComponent(R.mergeRight(p, {children}));
         }
       }));
     });
@@ -342,7 +342,7 @@ describe('monadHelpersComponent', () => {
       }
     )();
 
-    expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
+    expect(hoc(R.mergeRight(outerProps, {children: simpleComponent}))).toEqual(
       `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
@@ -360,7 +360,7 @@ describe('monadHelpersComponent', () => {
       }
     ])();
 
-    expect(hoc(R.merge(outerProps, {children: simpleComponent}))).toEqual(
+    expect(hoc(R.mergeRight(outerProps, {children: simpleComponent}))).toEqual(
       `I rendered a ${inspect({"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 2"}})}`
     );
   });
@@ -388,10 +388,10 @@ describe('monadHelpersComponent', () => {
     const composedForTask = composed({task: true});
     const composedForComponent = composed({});
 
-    const params = R.merge({_noReact: true}, outerProps);
+    const params = R.mergeRight({_noReact: true}, outerProps);
     // Call composed with the component then the props, which is how we'll do it in the real
     // world when we treat composed as an HOC wrapping component
-    expect(composedForComponent(R.merge(params, {children: simpleComponent}))).toEqual(
+    expect(composedForComponent(R.mergeRight(params, {children: simpleComponent}))).toEqual(
       `I rendered a ${inspect({"_noReact":true,"jello":"squish","stone":"squash","data":{"keyCount":"dynamite dynamite 4"}})}`
     );
     const errors = [];

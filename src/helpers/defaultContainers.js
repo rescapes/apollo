@@ -30,12 +30,12 @@ import {compact} from '@rescapes/ramda';
 export const settingsQueryContainerDefault = (apolloConfig, {outputParams}, {token, ...props}) => {
   return nameComponent('settingsQueryContainerDefault',
     settingsQueryContainer(
-      R.merge(apolloConfig, {
+      R.mergeRight(apolloConfig, {
         options: {
           skip: !R.propOr(localStorage.getItem('token'), 'token', props),
           variables: props => {
             // Default to key: 'default' if id is not specified
-            return R.merge(
+            return R.mergeRight(
               R.unless(R.prop('id'), () => ({key: 'default'}))(props),
               compact(R.pick(['id', 'key'], props))
             );
@@ -59,11 +59,11 @@ export const settingsQueryContainerDefault = (apolloConfig, {outputParams}, {tok
 export const settingsLocalQueryContainerDefault = (apolloConfig, {outputParams}, {token, ...props}) => {
   return nameComponent('settingsLocalQueryContainerDefault',
     settingsCacheContainer(
-      R.merge(apolloConfig, {
+      R.mergeRight(apolloConfig, {
         options: {
           variables: props => {
             // Default to key: 'default' if id is not specified
-            return R.merge(
+            return R.mergeRight(
               R.unless(R.prop('id'), () => ({key: 'default'}))(props),
               compact(R.pick(['id', 'key'], props))
             );

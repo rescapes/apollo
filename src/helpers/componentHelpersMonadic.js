@@ -57,7 +57,7 @@ export const embedComponents = (config, childComponent, parentComponent) => {
     if (R.propOr(false, '_noReact', config)) {
       return parentComponent(
         nameComponent(displayName, props => {
-          return childComponent(R.merge(props, {
+          return childComponent(R.mergeRight(props, {
               children: grandchildren,
               render: grandchildren
             }
@@ -69,7 +69,7 @@ export const embedComponents = (config, childComponent, parentComponent) => {
     return nameComponent(displayName, props => {
       // Pass a modified version of childComponent that adds a children render prop
       return parentComponent(nameComponent(displayName, p => {
-        return childComponent(R.merge(p, {
+        return childComponent(R.mergeRight(p, {
           children: props.children,
           render: props.children
         }));
@@ -136,7 +136,7 @@ export const composeWithComponentMaybeOrTaskChain = list => {
             // Delay evaluation by wrapping in a function expecting the children component
             // so we can link the first called component in list (the last one) to the second (the penultimate)
             return nameComponent(f.displayName || 'compFunc', children => {
-              return f(R.merge(props, {[renderProp]: children}));
+              return f(R.mergeRight(props, {[renderProp]: children}));
             });
           };
         },

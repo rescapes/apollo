@@ -77,7 +77,7 @@ export const regionOutputParams = {
 
 export const sampleQueryRegionsContainer = (apolloConfig, {}, props) => {
   return makeQueryContainer(
-    R.merge(
+    R.mergeRight(
       apolloConfig,
       {
         options: {
@@ -104,7 +104,7 @@ export const sampleQueryRegionsContainer = (apolloConfig, {}, props) => {
 
 export const sampleMutateRegionContainer = (apolloConfig, {}, props) => {
   return makeMutationRequestContainer(
-    R.merge(
+    R.mergeRight(
       apolloConfig,
       {
         options: {

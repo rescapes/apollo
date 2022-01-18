@@ -151,7 +151,7 @@ export const makeSettingsMutationContainer = v(R.curry((apolloConfig, {
   outputParams
 }, props) => {
   return makeMutationRequestContainer(
-    R.merge(
+    R.mergeRight(
       apolloConfig,
       {
         options: {
@@ -257,7 +257,7 @@ export const makeSettingsCacheMutationContainer = (apolloConfig, {outputParams},
                 // output for the read fragment
                 outputParams
               },
-              R.merge(propsWithCacheOnlyItems, {render})
+              R.mergeRight(propsWithCacheOnlyItems, {render})
             );
           }
         );

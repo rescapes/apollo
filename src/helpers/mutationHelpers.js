@@ -218,7 +218,7 @@ export const makeMutationRequestContainer = v(R.curry(
                 apolloConfig,
                 mutation,
                 // Allow render through along with the namedProps
-                R.merge(R.pick(['render'], props), namedProps)
+                R.mergeRight(R.pick(['render'], props), namedProps)
               )
             );
           }

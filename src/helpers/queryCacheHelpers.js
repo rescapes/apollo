@@ -150,7 +150,7 @@ export const makeQueryFromCacheContainer = R.curry((apolloConfig, {name, readInp
           {
             query
           },
-          R.merge(
+          R.mergeRight(
             winnowedProps,
             pickRenderProps(props)
           )
@@ -178,7 +178,7 @@ export const makeReadFragmentFromCacheContainer = R.curry((apolloConfig, {
   outputParams
 }, props) => {
   // Apply apolloConfig.options.variables, but maintain __typename for the cache lookup
-  const winnowedProps = R.merge(
+  const winnowedProps = R.mergeRight(
     winnowRequestProps(apolloConfig, {preserveTypeNames: true}, props),
     R.pick(['__typename', 'render'], props)
   );
@@ -274,7 +274,7 @@ export const queryFromCacheContainer = (
   return composeWithComponentMaybeOrTaskChain([
     ({authTokenResponse, ...props}) => {
       // We need the typename
-      const propsWithTypename = R.merge({'__typename': typename}, props)
+      const propsWithTypename = R.mergeRight({'__typename': typename}, props)
       const authenticated = strPathOr(false, 'data.obtainJSONWebToken.token', authTokenResponse);
       if (authenticated) {
         return makeQueryFromCacheContainer(

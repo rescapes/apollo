@@ -24,7 +24,7 @@ export const e = React.createElement;
  */
 export const componentRenderedWithChildrenRenderProp = component => {
   return ({render, children, ...props}) => {
-    return component(R.merge(props, {
+    return component(R.mergeRight(props, {
       render: p => {
         return render ? render(p) : children(p);
       }
@@ -45,9 +45,9 @@ export const componentRenderedWithChildrenRenderPropMaybe = component => {
  */
 export const componentAndChildRenderedWithRenderProp = R.curry((childComponent, component) => {
   return ({render, ...props}) => {
-    return component(R.merge(props, {
+    return component(R.mergeRight(props, {
       render: p => {
-        return childComponent(R.merge(p, {render}));
+        return childComponent(R.mergeRight(p, {render}));
       }
     }));
   };

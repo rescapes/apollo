@@ -94,7 +94,7 @@ const abortController = new AbortController();
  */
 export const getOrCreateApolloClientTask = memoizedTaskWith(
   obj => {
-    return R.merge(
+    return R.mergeRight(
       R.pick(['uri'], obj),
       // For each typePolicy, return the key of each cacheOption and the field names. Not the merge function
       R.map(
@@ -130,7 +130,7 @@ export const getOrCreateApolloClientTask = memoizedTaskWith(
       ),
       mapToNamedResponseAndInputs('cache',
         ({cacheOptions, makeCacheMutation}) => {
-          return of(createInMemoryCache(R.merge(cacheOptions, {makeCacheMutation})));
+          return of(createInMemoryCache(R.mergeRight(cacheOptions, {makeCacheMutation})));
         }
       ),
       mapToNamedResponseAndInputs('links',
@@ -269,7 +269,7 @@ const createInMemoryCache = ({typePolicies, makeCacheMutation}) => {
             // If true indicates that the type is returned from the API as a single instance, not a list
             singular: strPathOr(false, 'singular', typePolicy)
           },
-          R.merge(
+          R.mergeRight(
             {__typename: typeName},
             // Set all outputParams to null or empty for our initial query values
             applyDeepWithKeyWithRecurseArraysAndMapObjs(
@@ -380,7 +380,7 @@ export const noAuthApolloClientMutationRequestTask = (apolloConfig, options) => 
   const mutationOptions = R.omit(['apolloClient'], apolloConfig);
   log.debug(`noAuthApolloClientMutationRequestTask: ${print(options.mutation)} props: ${inspect(options.variables)}`);
   return fromPromised(
-    () => reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.merge(mutationOptions, options))
+    () => reqStrPathThrowing('apolloClient', apolloConfig).mutate(R.mergeRight(mutationOptions, options))
   )();
 };
 
@@ -409,7 +409,7 @@ export const authApolloClientMutationRequestContainer = R.curry((apolloConfig, o
   const mutationOptions = R.propOr({}, ['options'], apolloConfig);
   return fromPromised(() => (
     apolloClient.mutate(
-      R.merge(
+      R.mergeRight(
         mutationOptions, {
           variables: props,
           ...R.pick(['mutation'], options)
@@ -454,7 +454,7 @@ export const authApolloClientQueryContainer = R.curry((apolloConfig, query, prop
   }
   const task = fromPromised(() => {
     return apolloClient.query(
-      R.merge(
+      R.mergeRight(
         {
           query
         },
@@ -527,7 +527,7 @@ export const authApolloComponentMutationContainer = v(R.curry((apolloConfig, mut
     props => {
       return e(
         MutationComponent,
-        R.merge(
+        R.mergeRight(
           {mutation},
           // Merge options with the variables that have already been limited
           R.mergeAll([
@@ -611,7 +611,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
   const winnowedProps = optionsWithWinnowedProps(apolloConfig, props);
   return e(
     Query,
-    R.merge(
+    R.mergeRight(
       {query},
       winnowedProps
     ),
@@ -647,7 +647,7 @@ export const authApolloComponentQueryContainer = R.curry((apolloConfig, query, {
         );
       }
       const renderedComponent = (render || children)(
-        R.merge(
+        R.mergeRight(
           // Since the response has no good indication of a skipped query, except loading=false and data=undefined,
           // Put the skip status in.
           {skip},
