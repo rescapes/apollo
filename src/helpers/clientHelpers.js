@@ -129,10 +129,11 @@ const mergeField = (
       unfrozen => {
         return R.mergeRight(existing, unfrozen)
       },
+      // Should be unneeded
       // I used to use R.clone here, but it now requires that everything hasOwnProperty--apollo objects don't all
-      unfrozen => {
-        return JSON.parse(JSON.stringify(unfrozen))
-      },
+      //unfrozen => {
+      //  return JSON.parse(JSON.stringify(unfrozen))
+      //},
       existing => {
         return R.omit(R.keys(incoming || {}), existing)
       }
