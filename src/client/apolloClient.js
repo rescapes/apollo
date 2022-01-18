@@ -30,7 +30,7 @@ import {
   retryTask,
   strPathOr
 } from '@rescapes/ramda';
-import _fetch from 'node-fetch';
+import fetch from 'node-fetch';
 import {loggers} from '@rescapes/log';
 import {optionsWithWinnowedProps} from '../helpers/requestHelpers.js';
 import {v} from '@rescapes/validate';
@@ -59,13 +59,6 @@ const logLink = new ApolloLink((operation, forward) => {
     return result;
   });
 });
-
-const fetch = fetchRetry(_fetch, {
-  retries: 5,
-  retryDelay: 800
-});
-
-const abortController = new AbortController();
 
 /**
  * Creates an ApolloClient.
