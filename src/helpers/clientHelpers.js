@@ -113,16 +113,29 @@ export const typePoliciesWithMergeObjects = typesWithFields => {
  * @param {Object} incoming Incoming cache write item
  * @return {Object} The merged cache object
  */
-const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup, arrayMergeStrategyPropLookup}, field, existing, incoming) => {
+const mergeField = (
+  {
+    mergeObjects,
+    idPathLookup,
+    cacheOnlyFieldLookup,
+    arrayMergeStrategyPropLookup
+  }, field, existing, incoming) => {
   // https://www.apollographql.com/docs/react/v3.0-beta/caching/cache-field-behavior/
   // Remove incoming keys from existing and clone it to unfreeze it.
   // since it comes from the cache and will be written to the cache
   const clone = existing => R.unless(
     R.isNil,
     R.compose(
-      unfrozen => R.mergeRight(existing, unfrozen),
-      R.clone,
-      R.omit(R.keys(incoming || {}))
+      unfrozen => {
+        return R.mergeRight(existing, unfrozen)
+      },
+      // I used to use R.clone here, but it now requires that everything hasOwnProperty--apollo objects don't all
+      unfrozen => {
+        return JSON.parse(JSON.stringify(unfrozen))
+      },
+      existing => {
+        return R.omit(R.keys(incoming || {}), existing)
+      }
     )
   )(existing);
 
@@ -182,8 +195,7 @@ const mergeField = ({mergeObjects, idPathLookup, cacheOnlyFieldLookup, arrayMerg
               throw new Error(`Unknown array merge strategy ${strategy} for field ${field}`)
             }]
           ])(mergeStrategyLookup)
-        }
-        else {
+        } else {
           return incoming
         }
       }
