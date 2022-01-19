@@ -215,7 +215,7 @@ export const writeConfigToServerAndCacheContainer = (config) => {
         ({settingsFromServer, render}) => {
           if (!R.prop('skip', settingsFromServer) && !R.prop('data', settingsFromServer)) {
             // Wait for loading
-            return nameComponent('settingsFromServer', e('div', {}, 'loading'));
+            return nameComponent('settingsFromServer', e('div', {}, 'loading settingsFromServer'));
           }
           return queryLocalTokenAuthContainer(apolloConfig, {render});
         }

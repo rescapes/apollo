@@ -110,7 +110,7 @@ class MutateResponsesOnce extends React.Component {
     // See if our responses are loaded (not relevant for tasks, only components)
     // If not, wait
     if (R.length(objects) !== R.length(this.props.responses)) {
-      return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading'));
+      return nameComponent('mutateOnceAndWaitContainer', e('div', {}, 'loading mutateOnceAndWaitContainer'));
     }
 
     return getRenderPropFunction({render: this.props.render})({

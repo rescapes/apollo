@@ -167,7 +167,7 @@ export const callMutationNTimesAndConcatResponses = (
             ({existingItemResponses, deletedItems, ...props}) => {
               if (R.prop('loading', existingItemResponses)) {
                 // For component requests, return loading until existingItems finish loading
-                return nameComponent('callMutationNTimesAndConcatResponses', e('div', {}, 'loading'));
+                return nameComponent('callMutationNTimesAndConcatResponses', e('div', {}, 'loading callMutationNTimesAndConcatResponses'));
               }
 
               // If we didn't force delete and we have an existing item, use it
