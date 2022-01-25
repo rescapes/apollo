@@ -25,19 +25,22 @@ const log = loggers.get('rescapeDefault');
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// TODO settings like mapbox and overpass should be moved out of @rescapes/apollo to @rescapes/region, since
+// they are specific to rescape-based applications and not to Apollo configuration
+// Settings Typenames are explicitly listed here because for unauthenticated users we write the local settings
+// the cache, so we can't get the typenames from the server like we do for authenticated users
 export const defaultSettingsTypenames =
   {
     __typename: 'SettingsType',
     data: {
       __typename: 'SettingsDataType',
-      api: {
-        _typename: 'SettingsApiDataType'
-      },
-      overpass: {
-        _typename: 'SettingsOverpassDataType'
-      },
+      api: {_typename: 'SettingsApiDataType'},
+      overpass: {_typename: 'SettingsOverpassDataType'},
       mapbox: {
-        _typename: 'MapboxApiDataType'
+        _typename: 'MapboxApiDataType',
+        mapboxAuthentication: {_typename: 'MapboxAuthenticationDataType'},
+        mapboxViewport: {_typename: 'MapboxViewportDataType'},
+        mapboxStyle: {_typename: 'MapboxStyleDataType'}
       }
     }
   };
@@ -73,6 +76,14 @@ export const defaultSettingsOutputParams = {
           zoom: 1,
           latitude: 1,
           longitude: 1
+        },
+        style: {
+          // Color of hovered over geojson
+          hoveredColor: 1,
+          // Color of highlighted geojson
+          highlightedColor: 1,
+          // Mapbox Style Url
+          mapboxStyleUrl: 1
         }
       }
   }
